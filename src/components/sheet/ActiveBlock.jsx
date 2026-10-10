@@ -1,14 +1,19 @@
 import { useMemo, useState } from 'react';
 import UsePrompt from './UsePrompt.jsx';
 import useFoldedGroups from './useFoldedGroups.js';
-import { GroupHead } from './parts.jsx';
+import { Gated, GroupHead } from './parts.jsx';
+import { AmmoPips } from './itemParts.jsx';
 import CostOrbs from '../CostOrbs.jsx';
 import BrewWindow from './BrewWindow.jsx';
 import EnchantWindow from './EnchantWindow.jsx';
-import AmbushWindow from './AmbushWindow.jsx';
+import EphemeralWindow from './EphemeralWindow.jsx';
 import StealWindow from './StealWindow.jsx';
-import { moveCount, quickBar, spendUse } from '../../lib/combatBar.js';
+import { BladeBind } from './BladeBlock.jsx';
+import { moveCount, quickBar } from '../../lib/combatBar.js';
+import { barAccent } from '../../lib/tagColors.js';
+import { usePlayCard } from './usePlayCard.js';
 import { brewSetFor } from '../../lib/brews.js';
+import { bladeState } from '../../lib/spellblade.js';
 import { trickSetFor } from '../../lib/tricks.js';
 
 /**
@@ -51,12 +56,26 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
   /* Whether the Ephemeral Enchantment shelf is up. Unlike brewing it opens
      *before* anything is paid: see `pays` in combatBar.js. */
   const [enchanting, setEnchanting] = useState(false);
-  /* The two Trickster windows, as `{ talent, card }` or null. AMBUSH opens
-     before the payment because the weapon decides the price; STEAL opens after
-     it, because the two Action Points bought the attempt and the window is only
-     deciding what came out of the pocket. See src/lib/tricks.js. */
-  const [ambushing, setAmbushing] = useState(null);
+  /* And the Spellquill's, as the card it was raised from, or null. Same reason
+     it opens before the payment: EPHEMERAL SPELL SCROLLS prints 2 Action Points
+     and `X` Willpower, and the `X` is the rung of a spell nobody has chosen yet.
+     See EphemeralWindow.jsx. */
+  const [scribing, setScribing] = useState(null);
+  /* The Trickster's window, as `{ talent, card }` or null. STEAL opens after the
+     payment, because the two Action Points bought the attempt and the window is
+     only deciding what came out of the pocket. AMBUSH had one of these too, until
+     it turned out to have nothing to ask: it rides the one plain attack a weapon
+     teaches, so the chip knows the price and pays it. See src/lib/tricks.js. */
   const [stealing, setStealing] = useState(null);
+  /* The Spellblade's window, or null. It opens *before* anything is paid, the
+     way the Ephemeral Enchantment shelf does and for the same reason: BOUND EDGE
+     asks which weapon and which of the three, and a use charged before the
+     questions can be answered is one that can be backed out of for two
+     Willpower. See BladeBlock.jsx. */
+  const [binding, setBinding] = useState(null);
+
+  // Paying, telling the table and rolling, in one place. See usePlayCard.js.
+  const play = usePlayCard({ character, patch });
 
   const groups = useMemo(() => quickBar(character), [character]);
   const total = moveCount(groups);
@@ -70,19 +89,39 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
       setEnchanting(true);
       return;
     }
-    if (move.pays === 'window' && move.opens === 'ambush') {
-      const talent = trickSetFor(character?.talents, move.card?.id);
-      if (talent) {
-        setAmbushing({ talent, card: move.card });
-        return;
-      }
+
+    /* And the fading leaf, for the same reason: what it costs in Willpower is
+       the rung of whichever spell goes on it. The card rides along, because it
+       is what the window's own prompt charges against. */
+    if (move.pays === 'window' && move.opens === 'scribe') {
+      setScribing(move.card ?? null);
+      return;
+    }
+
+    /* And the binding pays in its own window for the same reason. Matched on the
+       card, because a sheet holding two blade sets holds two bonds and each card
+       binds its own. */
+    if (move.pays === 'window' && move.opens === 'blade') {
+      const state = bladeState(character).find((row) =>
+        row.talent.cards.some((card) => card.id === move.card?.id)
+      );
+      if (state) setBinding(state);
+      return;
     }
 
     setRequest({
-      name: move.card?.name ?? move.name,
+      name: move.name,
       source: move.source,
       ap: move.ap,
+      /* And what the card printed before something the caster carries cut it, so
+         the prompt can show the cost being revised rather than a number that
+         dropped for no stated reason. See cardCost in cardText.js. */
+      apWas: move.apWas ?? null,
+      apCutFrom: move.apCutFrom ?? [],
       wp: move.wp,
+      /* And the same for the other orb, which a Runebearer's runes are the first
+         thing to move: a rune fires for no Willpower whatever the spell prints. */
+      wpWas: move.wpWas ?? null,
       variable: move.variable,
       converts: move.converts,
       opens: move.opens,
@@ -90,13 +129,21 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
       modifiers: move.modifiers,
       note: move.note,
       extra: move.extra,
+      /* And what is loaded, so the preview says it before the trigger does. The
+         chip already knows: the magazine was read building the bar. */
+      ammo: move.ammo ?? null,
+      ammoMax: move.charges ?? 0,
+      ammoLeft: (move.charges ?? 0) - (move.used ?? 0),
     });
   }
 
-  /** The spend itself lives in combatBar.js, shared with block 3. */
+  /** Paying, telling the table and rolling all live in usePlayCard.js now,
+      shared with block 3 and with a creature's own bar. */
   function confirmUse(mode, amount, options) {
-    const body = spendUse(request, character, mode, amount, options);
-    if (Object.keys(body).length > 0) patch(body);
+    /* A BREW spends nothing here: its printed cost is "x" and what it actually
+       costs is worked out in the window below, which is where it is paid and
+       where the one line about it is written. */
+    play(request, mode, amount, options, { tell: request.opens !== 'brew' });
 
     /* A card may say that using it opens something. BREW does: what a Brew
        costs is the sum of what goes into it, so the window is where the cost is
@@ -166,14 +213,22 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
         />
       )}
 
-      {ambushing && (
-        <AmbushWindow
-          talent={ambushing.talent}
-          card={ambushing.card}
+      {scribing && (
+        <EphemeralWindow
           character={character}
+          card={scribing}
           patch={patch}
           readOnly={readOnly}
-          onClose={() => setAmbushing(null)}
+          onClose={() => setScribing(null)}
+        />
+      )}
+
+      {binding && (
+        <BladeBind
+          character={character}
+          state={binding}
+          patch={patch}
+          onClose={() => setBinding(null)}
         />
       )}
 
@@ -204,9 +259,25 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
  * One move, in the width half a block has: what it is called and what it
  * costs, in the colour of what it is.
  *
- * The accent is the card's own `ac-kind-*`, the same class the printed card
- * wears, so a spell reads violet here, a talent amber and a belt item green.
- * A column of chips can then be read by colour before it is read by name.
+ * **The colour is the card's school, and what kind of thing it is when it has
+ * none.** Jules, 2026-09-03: "in the quick bar give the block the color of their
+ * spell like wild, fire ect. Give a color to other effect so they can be [read]
+ * better at a glance." So a Fire spell is the orange the Fire family wears
+ * everywhere else and a Wild spell is Wild's green, which is the same colour
+ * their chips already take on the effects tracker and in the codex's own filter
+ * row — the bar was the last place on the sheet still printing every spell the
+ * one violet.
+ *
+ * Everything with no school takes `KIND_COLORS`, and the change there is that a
+ * basic action is no longer a weapon attack. The codex gives both `kind:
+ * 'ability'`, correctly, and on a block where they stand in one column that
+ * left the row you reach for in a fight looking exactly like the row that says
+ * you can climb a wall. See barAccent in tagColors.js, which is the one place
+ * either question is answered.
+ *
+ * The class stays and stays first: `ac-kind-*` is what the printed card wears, it
+ * is what every other chip on the sheet reads, and it is the fallback for a card
+ * `barAccent` has nothing to say about. The inline accent only overrides it.
  *
  * A charged item shows what is left of it as a small number rather than as
  * dots. Five dots at this size are five grey pixels; a 2 is a 2. It sits with
@@ -221,25 +292,51 @@ export function BarChip({ move, readOnly, onUse }) {
   const { card, variable, spent, charges, used } = move;
   const remaining = charges > 0 ? charges - used : null;
 
+  const accent = barAccent(card);
+
   return (
-    <button
-      type="button"
+    <Gated
       className={`bar-chip ac-kind-${card?.kind ?? 'ability'}${spent ? ' is-spent' : ''}`}
+      style={accent ? { '--ac-accent': accent } : undefined}
       onClick={onUse}
-      disabled={readOnly || spent}
-      /* A chip can be refused for more than one reason now, and they do not read
-         the same: a flask is spent, while a Martial Move has nowhere to ride
-         because one is already waiting. So the row says which, in its own words,
-         and falls back to the flask's wording for everything that has none. */
+      /* A chip can be refused for more than one reason, and they do not read the
+         same: a flask is spent, while a Martial Move has nowhere to ride because
+         one is already waiting. So the chip says which, in its own words, and
+         falls back to the flask's wording for everything that has none.
+
+         `why` rather than `disabled` + `title`, which is what this was: the reason
+         has been written since the day the chip was, and a disabled button
+         receives no mouse events, so no reader has ever been able to see it. See
+         Gated in parts.jsx. A read-only sheet is not gated with a sentence —
+         nothing on it can be pressed and saying so forty times is noise. */
+      why={
+        spent ? move.spentNote ?? `${move.name} is spent.` : null
+      }
+      disabled={readOnly && !spent}
       title={
-        spent
-          ? move.spentNote ?? `${move.name} is spent`
-          : `${move.name} · ${move.source}`
+        [
+          `${move.name} · ${move.source}`,
+          /* A chip is 16 pixels of orb and has no room to strike a number
+             through, so the one place it has left says what came off. The prompt
+             behind the tap prints it properly. */
+          move.apWas ? `${move.apWas} Action Points cut to ${move.ap}` : null,
+          move.wpWas ? `${move.wpWas} Willpower cut to ${move.wp || 'none'}` : null,
+        ]
+          .filter(Boolean)
+          .join(' · ')
       }
     >
       <span className="bar-chip-name">{move.name}</span>
 
-      {!spent && remaining !== null && (
+      {/* A magazine is drawn rather than counted. A round is a shape a player
+          recognises at a glance and "×2" is a number they have to read, and the
+          two rows that matter mid-fight are the gun that is about to click empty
+          and the Reload beside it. See AmmoPips in itemParts.jsx. */}
+      {!spent && move.ammo && (
+        <AmmoPips ammo={move.ammo} charges={charges} used={used} />
+      )}
+
+      {!spent && !move.ammo && remaining !== null && (
         <span className="bar-chip-left" title={`${remaining} left`}>
           &times;{remaining}
         </span>
@@ -258,6 +355,6 @@ export function BarChip({ move, readOnly, onUse }) {
           )}
         </span>
       )}
-    </button>
+    </Gated>
   );
 }

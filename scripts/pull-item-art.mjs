@@ -33,9 +33,11 @@
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import sharp from 'sharp';
+import { writeArtManifest } from './emit-art-manifest.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DATA = path.join(ROOT, 'data');
@@ -100,6 +102,23 @@ const ALIASES = {
      the file is the garment that piece is, so this is where it goes — which is
      also why that piece's id is `leather-vest`. */
   'Leather Tunic': 'Leather Leggings.jpg',
+
+  /* Seven of the twenty four from `data/Potions/`, 2026-08-27. The same seven
+     pull-card-art.mjs carries and for the same reasons, because every file in that
+     folder is both an item's picture and a card's: three misspellings, three files
+     naming the thing where the sheet names the row, and `Poison (2).jpg`, which is
+     what a browser calls a second download.
+
+     Two tables rather than one shared one, because these scripts share no module
+     and never have. The note over that copy is the long one; renaming a file
+     retires both entries at once. */
+  'Draught of Cleansing': 'Draguth of cleansing.jpg',
+  'Explosive Concoction': 'Explosive Concotion.jpg',
+  'Shrink Elixir': 'Shrinking Elixir.jpg',
+  'Healing Potion': 'Healing.jpg',
+  'Elixir of Chaos': 'Chaos Potion.jpg',
+  'Seafarer’s Elixir': 'Seafarer elixir.jpg',
+  Poison: 'Poison (2).jpg',
 };
 
 /* ------------------------------------------------------------------- the sheet */
@@ -205,10 +224,27 @@ const SHELVES = new Set(CATEGORY_ORDER.map(flatten));
 /** The folder both scripts walk. Kept in step with pull-card-art.mjs. */
 const ONE_OFF = 'of';
 
+/**
+ * A folder named for a *kind* of item rather than for the shelf it stands on.
+ *
+ * `data/Potions/` landed 2026-08-27 with the whole potion shelf: twenty four
+ * 1024x1024 plates, one for each row of the sheet beside them. Every one of them
+ * stands on Belt Gear, so the folder is not a shelf and cannot be claimed by
+ * `SHELVES`; and every one of them is a consumable that teaches exactly one card,
+ * so pull-card-art.mjs claims the folder too. That is the `data/OF/` arrangement
+ * again, and for the same reason: the 128px tile and the card plate are different
+ * crops of one painting, and neither script reports the other's work as missing.
+ *
+ * ITEM_FOLDERS in pull-card-art.mjs is this same claim from the other side. The
+ * two lists are kept in step by hand, the way ONE_OFF is.
+ */
+const KIND_FOLDERS = new Set(['potions']);
+
 function pictures() {
   if (!existsSync(DATA)) return [];
 
-  const mine = (name) => SHELVES.has(flatten(name)) || flatten(name) === ONE_OFF;
+  const mine = (name) =>
+    SHELVES.has(flatten(name)) || KIND_FOLDERS.has(flatten(name)) || flatten(name) === ONE_OFF;
 
   return readdirSync(DATA, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && mine(entry.name))
@@ -337,69 +373,47 @@ for (const item of ITEMS) {
   if (!art.has(item.id)) problems.push(`${item.name}: no picture in the folder`);
 }
 
+/* ------------------------------------------------------ the version on a URL
+
+   A redraw keeps the filename and changes the pixels, which is the one shape of
+   change a cache cannot see. `/items/blazing-suns.webp` was the same URL before
+   and after the Fire drop of 2026-08-26, so every browser and every Cloudflare
+   edge holding the old painting went on serving it: the drop reached the disk,
+   the lookup and the build, and readers still saw what they already had. Jules
+   reported it the next morning as the spell preview showing the old picture, and
+   it was not the preview. It was every surface that draws card art.
+
+   So the URL carries eight characters of the file's own content hash. Same bytes,
+   same URL, and a run that changes nothing changes nothing in the diff; new bytes,
+   new URL, and every cache in the chain misses on it at once, with no purge to
+   remember and nothing to do by hand.
+
+   A query string rather than a hashed filename, because the file on disk keeps
+   the name a person would look for and Cloudflare's default cache key already
+   includes the query. A hashed *filename* would also work and would leave the old
+   file behind on every redraw, which is a second thing to clean up.
+
+   **The thumbnail rides the full picture's hash rather than carrying its own.**
+   The two are cut from one source in the same pass and are only ever written
+   together, so they cannot disagree, and one token per card keeps the lookup one
+   flat map of one string. */
+const version = (file) =>
+  createHash('sha256').update(readFileSync(file)).digest('hex').slice(0, 8);
+
 /* ------------------------------------------------------------ write the lookup */
 
-const rows = [...art.entries()]
-  .sort((a, b) => a[0].localeCompare(b[0]))
-  .map(([id, src]) => `  '${id}': '${src}',`)
-  .join('\n');
-
-writeFileSync(
-  path.join(ROOT, 'src/lib/itemArt.js'),
-  `/**
- * Item art, keyed by item id.
- *
- * Generated by scripts/pull-item-art.mjs — do not edit by hand. Run \`npm run
- * art:items\` after adding a picture to a folder under data/.
- *
- * The pictures are the designer's, and they arrive as a folder of 2048x2048
- * JPEGs — 2.4 MB apiece. They are not served that way: the plates that draw
- * them are a 40px icon tile and a 360px item card, so the script cuts each one
- * to ${WIDTH}px and ${THUMB_WIDTH}px of WebP in public/items/ and the whole set
- * ships with the site for Cloudflare to serve from the edge.
- *
- * Two sizes, because there are two plates, and the small one is not a nicety:
- * a browser list is nine tiles at once and every block in the inventory draws
- * one, so the tile is the commonest picture on the sheet and the card is the
- * rarest.
- *
- * ------------------------------------------------------------------ the gate
- * Nothing here decides who *sees* a picture. Codex art is a paid capability
- * (see \`showsArt\` in tiers.js), checked at the moment of drawing in
- * useCodexArt.js. This file only says what the picture is.
- */
-
-const ITEM_ART = {
-${rows}
-};
-
-/** The art for one item, or null for an item that has none yet. */
-export function artFor(id) {
-  return ITEM_ART[id] ?? null;
-}
-
-/** The small square cut of it, for the ${THUMB_WIDTH / 2}px icon tiles. */
-export function thumbFor(id) {
-  const full = ITEM_ART[id];
-  return full ? full.replace(/\\.webp$/, '-thumb.webp') : null;
-}
-
-/**
- * The same list of items with their art attached, for the codex to wrap its
- * own arrays in. An item that has no picture keeps \`art_url: null\` rather
- * than losing the field, so a reader never has to guess whether the absence is
- * missing art or a missing lookup.
- */
-export function withArt(items) {
-  return items.map((item) => ({
-    ...item,
-    art_url: artFor(item.id),
-    art_thumb: thumbFor(item.id),
-  }));
-}
-`,
-  'utf8'
-);
+const written = writeArtManifest({
+  root: ROOT,
+  set: 'items',
+  ids: [...art.keys()],
+  what: 'Item',
+  noun: 'item',
+  script: 'pull-item-art.mjs',
+  run: 'art:items',
+  big: `${WIDTH}px, the item card`,
+  small: `${THUMB_WIDTH}px, the 40px icon tile`,
+  thumbFor: '40px icon tiles',
+});
 
 /* ------------------------------------------------------------------ the report */
 

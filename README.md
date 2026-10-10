@@ -13,7 +13,9 @@ Built with React 19 + Vite + React Router, with Supabase for auth and storage.
 2. Open **SQL Editor** and run the contents of [`supabase/schema.sql`](supabase/schema.sql).
    It creates `profiles`, `characters`, `abilities` and `inventory_items`, turns on row-level
    security so each account only ever sees its own data and adds a trigger that creates a
-   profile row on signup. The script is safe to re-run.
+   profile row on signup. It also makes the `portraits` storage bucket every uploaded picture
+   goes into, with the policies that hold an account to its own folder and its own ceiling. The
+   script is safe to re-run.
 3. Go to **Project Settings → API** and copy the *Project URL* and the *anon public* key.
 
 ## 2. Configure the app
@@ -50,10 +52,19 @@ Open http://localhost:5173.
 | --- | --- |
 | `/` | Landing page with a live ability-card showcase |
 | `/register`, `/login` | Signup with email confirmation, login, password recovery |
-| `/codex` | Colour-token registry: damage types, attributes, resources, card anatomy |
-| `/dashboard` | Your characters · dossier cards, create, delete |
+| `/faq` | The questions the landing page raises: the money, the missing art, who builds it |
+| `/rules` | How to play, in a screen, with the Game Master's one page under it |
+| `/rules/rulebook` | The whole rulebook, rendered from `docs/rulebook.md` and never retyped |
+| `/rules/cards` | Every card in the game, filterable, with the card itself a tap behind |
+| `/rules/items` | Every item: what it does, what it weighs, what it costs |
+| `/rules/bestiary` | The creatures, a line each, with the block behind them |
+| `/rules/glossary` | Every defined term, searchable, plus the colour key |
+| `/dashboard` | Your characters · dossier cards, create, delete. Signed out, the characters kept on this device |
 | `/characters/:id` | The character sheet · **public**, editable only by owner or admin |
-| `/account` | Display name and password |
+| `/characters/:id/new` | Making a character · four ways in, and `?path=` says which one |
+| `/account` | Display name, password and the subscription |
+| `/pictures` | Every picture you have uploaded, what is using it and how much room is left |
+| `/premium` | What Premium adds, and where it is bought. Open signed out |
 
 ### Who can do what
 
@@ -80,6 +91,205 @@ There is deliberately no way to grant admin from inside the app.
 Your **dashboard** still lists only your own characters. Public read doesn't mean discoverable,
 it means shareable by link.
 
+### What an account is worth
+
+Four tiers, on a ladder, in `profiles.role`. Every tier has everything the one below it has.
+
+| | Characters | Campaigns you run | Creatures you forge | Pictures | Physics dice | Card art |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Free** | 3 | 1 | none | 10 | flat table | empty plates |
+| **Premium** | 25 | 5 | 50 | 100 | ✅ | empty plates |
+| **Friend** | 25 | 5 | 50 | 100 | ✅ | ✅ |
+| **Admin** | 50 | 20 | 60 | 300 | ✅ | ✅ |
+
+Premium is $3 a month or $30 a year through Stripe. **Friend** is the same thing given rather than sold,
+with the card art switched on as well, and it is handed out by hand from the SQL editor:
+
+```sql
+update public.profiles set role = 'friend'
+where id = (select id from auth.users where email = 'they@example.com');
+```
+
+Card art sits at `friend` rather than at `premium` on purpose. What is sold has to be something
+that will still be there next month, and the codex is still being drawn. Move
+`CAPABILITIES.art` in `src/lib/tiers.js` to `'premium'` when it is finished.
+
+Four of those numbers are ceilings rather than capabilities, and all four are enforced twice:
+`src/lib/tiers.js` is what the interface offers, and `supabase/schema.sql` is what actually
+refuses the write. For characters, campaigns and creatures that is a trigger on the table; for
+pictures it is a policy on the storage bucket. **Change one and change the other.** The checkers
+catch it for creatures and for pictures; nothing catches it for the other two.
+
+Every ceiling is checked on insert only, so a lapsed subscription takes nothing away. An account
+that held five campaigns keeps all five, open and editable, and simply cannot start a sixth until
+it is back under the free ceiling. Nothing anybody made is ever deleted for not paying.
+
+### Taking money
+
+The app is a static build with no server of its own, so billing is four Supabase Edge Functions in
+`supabase/functions/` and nothing else. The shape of it is one rule: **the browser never writes a
+tier and never decides one.**
+
+1. The player presses Go Premium. `create-checkout-session` reads who they are from their verified
+   token, looks the plan up in an allowlist and hands back a Stripe-hosted checkout URL.
+2. They pay on Stripe's own domain. No card field is ever served from this origin.
+3. Stripe posts events to `stripe-webhook`, which verifies the signature, records the event id so a
+   retry cannot double-count, re-reads the customer's subscriptions from Stripe and writes them to
+   `public.subscriptions`.
+4. `public.apply_entitlements` derives `profiles.role` from that. It is the only thing that writes
+   a tier, it never touches a `friend` or an `admin`, and it keeps Premium alive while a failed
+   card is being retried.
+5. The open tab hears the change over Realtime and the badge flips. `checkout-status` is the
+   fallback for a webhook that is slow, and `customer-portal` opens Stripe's own page for changing
+   a card or cancelling.
+
+The redirect back from Stripe is never treated as proof of payment. The webhook is.
+
+#### Setting it up
+
+In Stripe: make a product with a recurring price, give it an eligible **product tax code**
+(`txcd_10103000`, SaaS for personal use), copy the price id and add a webhook endpoint at
+`https://<project-ref>.supabase.co/functions/v1/stripe-webhook` subscribed to the nine events in
+`HANDLED` at the top of `supabase/functions/stripe-webhook/index.ts`: the subscription lifecycle
+including `paused` and `resumed`, `checkout.session.completed`, `invoice.paid`,
+`invoice.payment_failed` and `charge.dispute.created`. Turn the Customer portal on under Settings,
+Billing. Prefer a **restricted** key over a secret one.
+
+Then, with the Supabase CLI:
+
+```bash
+supabase secrets set STRIPE_SECRET_KEY=rk_live_... STRIPE_WEBHOOK_SECRET=whsec_... \
+  STRIPE_PRICE_MONTHLY=price_... SITE_URL=https://your-site.example
+supabase functions deploy create-checkout-session customer-portal checkout-status stripe-webhook
+```
+
+Three optional flags go alongside those, all off unless set to `true`. `STRIPE_MANAGED_PAYMENTS`
+asks Stripe to sell as merchant of record. **Activating it in the Dashboard is not enough on
+its own**, because the Checkout Session has to ask for it too. One that does not is an ordinary
+sale with the tax left to you. `STRIPE_AUTOMATIC_TAX` is the opposite arrangement and is ignored
+when the first is on. `STRIPE_REQUIRE_TOS` adds the agreement tickbox and needs a terms URL saved
+under the account's public details; point it at `/terms`.
+
+`supabase/config.toml` is what keeps JWT verification off for `stripe-webhook` and on for the other
+three. Check it held in the Dashboard under Edge Functions after every deploy, because the CLI has
+been known to lose the setting. A webhook deployed with verification **on** rejects every Stripe
+call, and one where the signature check is skipped would let anybody grant themselves Premium.
+
+Re-run `supabase/schema.sql` for the billing tables, the character slot trigger and the profile row
+on Realtime. Then set `SITE_URL` and test the whole path with `stripe listen --forward-to` and a
+test card.
+
+The content security policy in `public/_headers` names the Supabase project by host, and the build
+fills that in from `VITE_SUPABASE_URL`, so the deploy host needs that variable set in its own
+build environment, not just in your `.env.local`. Build without it and the policy names no Supabase
+host at all: the site loads, and every call fails as `Failed to fetch` with the reason only in the
+browser console. The build says so on the way past.
+
+Money also means paperwork, and it lives in `src/lib/legal.js`. Terms, privacy and refunds are at
+`/terms`, `/privacy` and `/refunds`, rendered from one component, linked from the footer of every
+page and from the pricing page itself where a cardholder can read them before paying. Every fact a
+lawyer would ask for (the registered name, the address, the contact mailbox) is in `SELLER` in
+that one file and nowhere else.
+
+**Those fields ship as placeholders.** While any is left, the pages carry a draft banner and
+`npm run lint:legal` fails, which is deliberate: a terms page that quietly names `[Entity name],
+Inc.` as the contracting party is not a contract, and it is the first thing a cardholder's bank
+reads during a dispute. Fill them in, then have a lawyer read the result. The documents describe
+what this site actually does, which is their value, but nobody qualified has looked at them.
+
+An EU or UK subscriber has fourteen days to change their mind whatever else is agreed. Whether the
+sales tax is yours to file depends on **Stripe Managed Payments**, at
+`dashboard.stripe.com/settings/managed-payments`: accept its terms there, set
+`STRIPE_MANAGED_PAYMENTS=true` on the functions, and Stripe becomes the seller and handles indirect
+tax in 80-odd countries. Worth doing before the first live payment. Without it you are the merchant
+of record and US state sales tax nexus is your problem.
+
+Prices are **tax inclusive**: the $3 on the pricing page is the whole of what a card is charged,
+wherever the buyer lives, and any sales tax or VAT comes out of it rather than being added to it.
+That is a deliberate choice and the page depends on it: every price on `/premium` is written
+without an "plus tax" qualifier, which is only honest under inclusive pricing, and it is what EU
+consumer price-display law requires of a consumer price.
+
+Two traps guard it. Stripe's own recommendation is **Automatic**, which resolves to *exclusive* for
+USD and CAD. Pick **Inclusive** explicitly at `dashboard.stripe.com/settings/tax` or US buyers are
+charged $3 plus tax against a page that promised $3. And the setting is only a default for prices
+that have no `tax_behavior` of their own: Stripe does not allow `tax_behavior` to be changed once it
+has been set on a price, so a price created as exclusive can never become inclusive and has to be
+replaced with a new one. Check a price before trusting the account default, and if the pricing model
+ever moves to exclusive, `PLAN_NOTE` and the per-plan copy in `src/lib/premium.js` have to say so.
+
+### Characters without an account
+
+Nobody has to sign up to find out what the sheet does. **Characters** in the site bar opens the
+vault signed out as well, and a character made there is saved in the browser's own storage under
+an id that starts with `local-`: the same blank row, the same four ways in, the same sheet,
+autosaving to the device instead of to the database. Up to three fit on one device.
+
+What a device-only character cannot do is exactly what an account is for:
+
+- **Nobody else can open it.** The link only resolves in the browser that holds the row. The
+  Share button on its sheet opens the offer to keep it instead of copying a link.
+- **It cannot sit at a table.** A campaign seats database rows. The sheet mounts none of the table
+  plumbing (no log blocks, no fight, no reaction window), the join box lists only saved
+  characters and a Game Master who pastes its link is told why it was refused.
+- **Clearing the browser's data takes it with it.**
+
+The sheet says so with an amber **On this device** badge in its bar, and asks once, on the way out
+of the creation screen, whether to keep the character. Signed out, the offer is a signup or a
+login. Signed in, it is one button, **Save to my account**, which inserts the row under the
+account, removes the device copy and opens the new sheet at its permanent link. The dashboard
+makes the same offer for every device character still sitting outside the account, in an **On
+This Device** section under the vault, and the login and signup pages say which characters are
+waiting. A full vault (six characters) refuses the move until one is deleted.
+
+`src/lib/localCharacters.js` is the device shelf and `src/lib/api.js` branches on the id, so
+nothing above the data layer knows there are two shelves.
+
+### Pictures
+
+Every picture on the site is uploaded rather than linked, and one upload is kept in **three
+shapes**, because the site draws the same picture in three frames that disagree about what a
+picture is:
+
+| Shape | Ratio | Written | Where it is drawn |
+| --- | --- | --- | --- |
+| `portrait` | 9:16 | 576x1024 | The dashboard's dossier card, and any tall frame |
+| `plate` | 4:3 | 768x576 | The sheet's identity frame, card art, a creature's brief |
+| `face` | 1:1 | 512x512 | The log, the party bar, the roster, a minion's square |
+
+The player frames all three themselves when they upload, dragging and zooming each one with the
+other two live beside it. A `master` capped at 1280px is kept as well, so the framing can be moved
+later without finding the original again, and nothing else ever draws it. Five objects a picture,
+about 320 KB all in:
+
+```
+<user id>/<image id>.master.webp     <image id>.portrait.webp
+<image id>.plate.webp                <image id>.face.webp
+<image id>.meta.json                 where the three crops were left
+```
+
+**No column was added for any of this.** A sheet still holds one `portrait_url`, a creature one, a
+campaign one, and each holds the `portrait` URL. Every frame calls `viewUrl(url, 'face')` (or
+`'plate'`) and gets the sibling file, because the only difference between the four addresses is one
+path segment. `viewUrl` hands back anything it does not recognise untouched, so a link pasted before
+the uploader existed still draws, and it is idempotent, so a portrait copied into a campaign log row
+last month still resolves to the shape the log wants today. See `src/lib/imageViews.js`.
+
+Cropping is baked into the files rather than applied in CSS for one reason: the campaign log copies
+a portrait URL into the row when the row is written and nothing may ever go back and edit that. A
+re-crop overwrites the same four addresses, so every sheet, creature and log row pointing at the
+picture shows the new framing without anything being found and rewritten.
+
+There is no table behind the shelf. Storage is the record, `list()` is the only query, and the
+ceiling is enforced by a policy on the bucket that counts the account's own pictures
+(`public.image_room`), with `file_size_limit` refusing any object over 1 MiB whatever the browser
+claims it encoded. A row and a file can disagree, and the way they disagree in practice is a file
+with no row: bytes an account is paying for and cannot see in order to delete.
+
+The conversion is all client-side, in a canvas: whatever is uploaded (PNG, JPEG, WebP, AVIF, GIF)
+is decoded with its EXIF rotation applied, cropped three ways, re-encoded as WebP and capped.
+Nothing the player chose is ever stored.
+
 ### Live viewing
 
 Anyone *viewing* a sheet sees changes appear within about a second, no reload: stats, resources,
@@ -103,12 +313,18 @@ Five tabs, all auto-saving (edits batch for ~0.7s, then write; the top bar shows
 - **Abilities**: your deck of cards. Create, edit, duplicate and delete, with a live preview
   beside the form. Search and filter by card type. An empty deck offers a sample deck
   transcribed from the printed cards.
-- **Inventory**: five blocks. Armor down the body, the two weapons in hand, the trinkets you
-  wear, the five belt loops and the inventory itself across two blocks, down to one on a phone.
-  Every slot opens the codex; every row of the inventory asks where the thing goes. A Magic
-  Burden meter counts all the worked magic on you against Level + Mind + 10. **Make an Enchanted
-  Item** on the codex browser's head builds a piece out of one base and any number of workings,
-  names it, gives it a picture and hands it over as a pasteable code.
+- **Inventory**: a bag across the top, then five blocks. Armor down the body, the two weapons in
+  hand, the trinkets you wear, the five belt loops and the inventory itself across two blocks,
+  down to one on a phone. Every slot opens the codex; every row of the inventory asks where the
+  thing goes. Two meters count what you are carrying. Magic Burden counts the worked magic on
+  you against Level + Mind + 10 and refuses anything past it. Weight counts everything you own,
+  pack included, against ten kilos a point of Physique plus whatever your bag adds, and refuses
+  nothing: past your capacity your Movement Speed is halved, and 30% past it you cannot move at
+  all. **Make an Enchanted Item** on the codex browser's head builds a piece out of one base and
+  any number of workings, names it, gives it a picture and hands it over as a pasteable code,
+  and **Write a Spell Scroll** beside it does the same for a scroll: any spell in the codex, any
+  Power Words on it, named and coded. Every row of the pack can also be **handed to somebody at
+  your table**.
 - **Lore**: portrait, concept line, appearance, personality, backstory, allies.
 - **Advancement**: what your character *chose*, level by level. One block per level, level 1
   first and a new one below it each time you level: level 1 asks for a talent set, a lineage, a
@@ -116,29 +332,110 @@ Five tabs, all auto-saving (edits batch for ~0.7s, then write; the top bar shows
   even level buys a talent rank, and every odd level after the first gives an attribute point and
   a skill learned from the whole codex.
 
-A global **Metric / Imperial** switch converts movement, and the choice is remembered locally.
+A global **Metric / Imperial** switch converts movement and weight, and the choice is remembered
+locally.
 
-The Character tab is six fixed blocks, and their order is yours to set: grab the dotted strip at
-the top of a block and drag it to another slot, or focus that strip and use the arrow keys. The
-arrangement is saved on the character (`characters.block_order`), so it follows the sheet to any
-device and anyone viewing the sheet sees the same layout.
+The Character tab is six fixed blocks, and both their order and the grid they sit on are yours to
+set. **Arrange blocks** opens a small drawing of the tab: choose a canvas of 1 to 9 columns, then
+drag a block onto another to trade their places, or tap one and tap where it should go. The arrow
+keys move whichever block has focus. That count is a ceiling rather than a promise, since a block
+is a hard 360x640 everywhere: the tab takes as many columns as the window is wide enough for, so
+nine is nine on a wall and one on a phone. The drawing never scrolls at any count: the tiles are
+sized to fit the height the dialog can give, so you are always looking at the whole shape.
+
+**Blank space is part of the arrangement.** Move a block and it leaves a hole where it was, and the
+hole stays: a tab can be two blocks, a gap and a third. There is always one spare cell past the
+last block, so there is always somewhere to make one.
+
+**And two side trays.** Down either edge of the drawing is a rail of two slots: the left tray and
+the right tray. A block moved onto one comes off the grid and is pinned to the edge of the window
+instead, where it does not scroll with the tab, so your quick bar and the fight you are in are one
+tap away wherever the tab is scrolled to. On a desktop a handle pulls the tray open and the canvas
+gives up the width to make room for it, so the blocks lay themselves out in the space that is left
+and take as many columns as fit between the trays. They sit against the open tray rather than
+floating in the middle of what is left: the space between your quick bar and the blocks beside it is
+the same gap there is between two blocks, and whatever room is over goes to the far edge of the
+window. A window too narrow to hold both trays and a block between them opens one at a time. On a phone there is no room beside anything, so the four
+slots become four handles at the corners of the screen edges, and one of them opens its block over
+the whole screen until you slide it off.
+
+All three halves are saved on the character (`characters.block_order`, `characters.block_columns`
+and `characters.block_trays`), so they follow the sheet to any device and anyone viewing the sheet
+sees the same layout. The Abilities and Inventory tabs open the same dialog from their own button,
+each with a count, an arrangement and trays of its own, and so does a campaign's Overview.
 
 ### Martial Moves
 
 A **Martial Move** is a third kind of card, beside a spell and a talent card: a trained manoeuvre
-you buy *before* an attack, which then rides the next weapon attack you make.
+you **add to a weapon attack** rather than take instead of one.
 
-Three sets teach them: a Guardian's Shield Expertise, a Duelist's Dexterous and a Feral Cursed's
-Beast Within, and each hands over a hand to choose out of the pool in `src/lib/martial.js`, the
-same way a Mycomancer chooses spells. How many you know grows with your rank, and Rank 2 opens the
-Adept moves while Rank 3 opens Master.
+Four sets teach them: a Guardian's Shield Expertise, a Duelist's Dexterous, a Colossus's Martial
+Training and a Feral Cursed's Beast Within, and each hands over a hand to choose out of the pool in
+`src/lib/martial.js`, the same way a Mycomancer chooses spells. How many you know grows with your
+rank, and Rank 2 opens the Adept moves while Rank 3 opens Master. The Pact of Ordenance hands them
+over too, as boons rather than as a hand.
 
-Paying for one lays it on the **Temporary Effects** tracker, where it sits until you swing. While
-it is there, every place the sheet prints that attack says what it is carrying: *"This attack
-will Wing Clip and Reckless"*, and the card prints the advantage as a green arrow with the number
-of d4 in it. Making the attack spends the move, hit or miss. One move rides a swing; a Master
-Duelist's Sharp and a Master Feral Cursed's Bestial Frenzy each allow two, and a chip with nowhere
-to ride says so rather than taking your Willpower.
+What the weapon in your hand is worth is read off the same set. A Duelist has advantage and a point
+of Defense with a one-handed weapon; a Colossus has advantage with a Great Weapon, a die size on
+every Heavy or Great Melee swing from Rank 2, and another die *per move on the attack* from Rank 3.
+
+**You add one inside the attack's own use prompt**, before the cost is paid. The moves you hold are
+listed there with what each costs and ticking one folds it into the swing on the spot. The price
+lands on the same pay button as the attack's Action Points: the card beside the buttons shows the
+advantage as a green arrow with the number of d4 in it, the extra damage die appears in the damage,
+and a line under the list says what the swing will do ("This attack will Wing Clip and Reckless").
+A move costs **Willpower alone** for that reason: the Action Points belong to the attack it rides.
+
+One move rides a swing. A Master Duelist's Sharp, a Master Colossus's Perfect Technique, a Master
+Feral Cursed's Bestial Frenzy and a Master Guardian's Perfect Guard each allow two, and at Rank 2
+each set has a card that lets its moves reach a *Special* Weapon Attack as well as the plain one.
+
+### Handing something over
+
+Anything in your pack can be given to somebody else at your table. Tap the row, then **Hand it
+over**, pick who, and it is gone from your inventory.
+
+Nothing writes to their sheet, because nothing may: a sheet is the only writer of its own
+numbers and RLS enforces it. So a gift is a conversation over the table log instead. The thing
+comes off your pack and the row carries it; a panel stands up on their screen; and **their** own
+client is what writes it into their inventory. Say no and it comes back to you on its own, the
+next time your sheet hears the refusal or the next time you open it.
+
+Between the offer and the answer the thing belongs to nobody. That is deliberate: leaving it on
+your sheet until they answer would let both of you spend it.
+
+A made thing travels whole, with its workings, its name and its picture, and it keeps its
+identity: the ring in their pack is the ring that was in yours, where a pasted code would only
+ever be a copy. A written-in note travels too. Two things do not: a pact-bound weapon, which is
+the entity's rather than yours, and a spell scroll in fading ink, which cannot be copied by
+code either since it expires at *your* next Long Rest.
+
+The whole trade is on the table log, so the party sees it go past.
+
+### The Temporary Effects tracker
+
+The bottom of the Character tab holds what is **running on you**: a name, how many of your turns it
+has left, and something to read. A row counted in turns ticks down when you start one, and a
+condition goes on as "until it ends" because being grappled does not run out, it is broken.
+
+**A row can move your numbers.** A card whose printed text names something the sheet already holds
+bends it for as long as the row is up, and takes it back off when the row comes off. Giant Growth
+doubles your Movement Speed and Empowers your damage, Barkskin raises your Defense by 1, Kindle
+Weapon makes the blade deal Fire. The tile changes, the tooltip under it credits the card by name,
+and the row itself says what it is doing. Nothing is written to your sheet: it is the same bend an
+Ephemeral Enchantment makes, applied where the sheet is read. See `src/lib/riders.js` for the
+table and what each entry was read from.
+
+**What is running on you is often not yours.** So the picker searches two shelves: what your own
+sources, hands and belt hand you, and the whole codex. When the druid across the table casts Giant
+Growth on you, nothing is spent on your sheet and no source of yours has heard of the spell, so you
+search the codex, take the card and your Speed doubles. A card taken off either shelf lands the
+same way and carries the same rider, because a rider is keyed on the card and never on who paid for
+it. Search your own cards for something you do not have and the footer says how many the codex
+holds and offers to look there.
+
+The turn count is filled in from whatever the card's own text says, which is a suggestion and never
+a rule: the dial is right there and the table decides.
 
 ### The Feral Form
 
@@ -161,8 +458,23 @@ violet-flame **Willpower** badges, a green or red **advantage arrow** when the h
 grey chevron type banner, a heavy condensed title and black-on-white rules text with an optional
 secondary section (e.g. *Blood Tithe*).
 
-Card text is authored in a mini-markdown: wrap keywords in `**double asterisks**` to bold them,
-and leave a blank line between paragraphs.
+Card text is authored in a mini-markdown. Leave a blank line between paragraphs, and bold with
+`**double asterisks**` for the three things a player scans a card for: how far, at whom and for
+how long. Nothing else takes bold. A defined term is not bolded but looked up, because every
+keyword in `src/lib/keywords.js` is already coloured and carries its own explanation wherever it
+is printed. The full rule is at the top of that file.
+
+### The printed order
+
+Every list of cards on the sheet is in one order, and it is the order the card's own banner reads:
+the rung, then the school, then the family. So a wall of spells goes Novice, then Adept, then
+Master, and inside each of those the Primal spells stay together, and inside Primal the Flora ones
+do. Inside a family the codex order stands, because that order is the designer's.
+
+`src/lib/cardOrder.js` is the whole of it and the only place a school or a family is ranked.
+Nothing else on the sheet sorts cards. Items read the same way with rarity in place of the rung:
+Common, Uncommon, Rare, Epic, Legendary, then what the thing is, then the name. Rarity sorts inside
+a category shelf and never across one.
 
 ### Rules maths
 
@@ -187,4 +499,30 @@ npm run dev      # dev server
 npm run build    # production build to dist/
 npm run preview  # serve the production build
 npm run lint     # eslint
+```
+
+Nineteen checkers prove things eslint cannot. Each takes `--list` to print every case it walked
+rather than only what it found:
+
+```bash
+npm run lint:text      # no em dashes and no Oxford commas in anything a player reads
+npm run lint:math      # every stat tooltip adds up to the number above it
+npm run lint:halves    # every card's optional half is priced off its own prose
+npm run lint:riders    # every tracker rider reaches the sheet and comes back off
+npm run lint:weapons   # every weapon's cards match the cost table it was built from
+npm run lint:potions   # every potion's two prices come off its own Willpower column
+npm run lint:order     # every school and family has a place in the printed order
+npm run lint:cards     # every card's text is inside the ceiling and spelled one way
+npm run lint:dice      # every ruling the roller makes about a throw
+npm run lint:log       # a use and its throws gather back into one chain
+npm run lint:layout    # block orders, blank cells and trays all round-trip
+npm run lint:creatures # every creature scales along the character's own curve
+npm run lint:combat    # targets counted, landings soaked, boundaries rolled
+npm run lint:moves     # every Martial Move is ticked on inside an attack
+npm run lint:plan      # every card says what it rolls
+npm run lint:help      # every offer made after a roll is one that could help
+npm run lint:legal     # no checkout can ship pointing at an unfinished contract
+npm run lint:crossroads # every id in the Crossroads pool names something real
+npm run lint:walkthrough # every step of the Walkthrough points at a rule that exists
+npm run lint:images    # picture slots, the three shapes and the crop clamp
 ```

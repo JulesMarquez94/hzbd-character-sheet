@@ -14,9 +14,17 @@
  *    increase ,return ect."
  *
  * ------------------------------------------------------------------ the rider
- * So AMBUSH is not a thing you do to a target, it is a thing you do to your own
+ * So a rider is not a thing you do to a target, it is a thing you do to your own
  * next swing, and the swing has to *show* it before it is made. That is a
  * pending rider, and this file is where one lives.
+ *
+ * **AMBUSH was the reason this half exists and it is not here any more.** On
+ * 2026-09-03 it became a granted Martial Move, chosen and paid for inside the
+ * swing's own prompt, which is a strictly better answer to the sentence quoted
+ * above: the attack does not merely reflect the increase, the increase is bought
+ * as part of it. See "the granted three" in talents.js. What is left riding is
+ * STEAL's Poison row, which is a menu outcome rather than an ability and has no
+ * moment of its own to be chosen in.
  *
  * A rider is stored on the effects tracker, as an ordinary row carrying a
  * `trick` object. Nothing new was added to the schema for it, because the
@@ -26,26 +34,35 @@
  * Ephemeral Enchantment and its `ench` key — see enchanting.js). A rider you
  * cannot see is a rider you will forget you paid for.
  *
- *   { trick: { id: 'ambush', elevate: 2 } }   the next Weapon Attack is
- *                                            Elevated twice
+ *   { trick: { id: 'ambush', elevate: 2, advantage: 1 } }
+ *                                            the next Weapon Attack is made
+ *                                            with Advantage and Elevated twice
  *   { trick: { id: 'poison', flat: 1 } }      and deals another 1 x Instinct
  *
  * `elevate` is a number because it is history: "a number of times equal to the
  * Willpower paid" is about what was actually paid, and a Trickster who swaps
  * weapons afterwards does not get a different answer. `flat` is a *multiplier*
  * on Instinct rather than a number, because Poison says "equal to your Instinct
- * Attribute" and means the Instinct you have when you swing.
+ * Attribute" and means the Instinct you have when you swing. `advantage` is a
+ * number of d4s, stored rather than derived for the same reason the Elevate is:
+ * the row is the receipt for what the Willpower bought.
  *
  * "Lost on use" is `spendTricks`, and the sheet spends them at the one moment it
  * can be sure a weapon attack happened: when one is paid for.
  *
  * ------------------------------------------------------- what counts as a swing
- * The glossary is the authority and it is narrow: a Weapon Attack is "either of
- * the two attacks the weapon in your hands teaches you". So both of a weapon's
- * cards carry a rider, the printed one and the special one, and neither Shield
- * Block nor a reload does — those are tagged Weapon *Move*, which is the
- * designer's own distinction and the reason this can be read off the tags rather
- * than guessed at.
+ * The glossary is broad: a Weapon Attack is "either of the two attacks the weapon
+ * in your hands teaches you". Neither Shield Block nor a reload is one of the two
+ * — those are tagged Weapon *Move*, which is the designer's own distinction and
+ * the reason any of this can be read off the tags rather than guessed at.
+ *
+ * AMBUSH is narrower than the glossary, and that narrowing is Jules's own ruling
+ * on 2026-08-21: "Ambush only apply on Weapon Attack, not special attack." So an
+ * ambush rides the plain attack a weapon teaches, and the special one neither
+ * prints it nor spends it. A stolen Poison keeps the broad reading and rides
+ * either, which is the reading a Martial Move keeps as well (moves.js). That is
+ * why `trickRides` exists rather than one test for every rider: one swing can be
+ * the wrong attack for one rider and the right one for another.
  *
  * ------------------------------------------------------------------- the table
  * STEAL is the other half. Its four rows are on the set's own `tricks.steal`
@@ -65,6 +82,9 @@ import { getTalent, normalizeTalents } from './talents.js';
 
 /** The set this file is about. One id, in one place. */
 export const TRICKSTER = 'trickster';
+
+/** The one rider narrower than the glossary. See "what counts as a swing" above. */
+const AMBUSH = 'ambush';
 
 /* -------------------------------------------------------------- the set */
 
@@ -130,6 +150,42 @@ export function isWeaponAttack(card) {
   return (card?.tags ?? []).some((tag) => /Weapon Attack$/i.test(String(tag)));
 }
 
+/**
+ * Whether a card is the *plain* attack a weapon teaches, rather than its special
+ * one.
+ *
+ * The narrower of the two tests, and the one an AMBUSH is measured against. Every
+ * weapon in the codex teaches exactly one card tagged `Weapon Attack`, so this is
+ * one card per weapon and there is nothing left to choose between: the price of an
+ * ambush is knowable the moment a weapon is in hand, which is what let the window
+ * that used to ask go away.
+ */
+export function isPlainAttack(card) {
+  return (card?.tags ?? []).some((tag) => /^Weapon Attack$/i.test(String(tag).trim()));
+}
+
+/**
+ * Whether one rider payload rides this card.
+ *
+ * The one place the narrowing lives, and it is read by both halves of a rider's
+ * life: `trickRider` below prints it and `spendTricks` spends it, so the swing
+ * that carries a rider is always the swing that takes it off. An ambush laid and
+ * then followed by a Triple Strike is still waiting afterwards, because it was
+ * never riding that swing.
+ *
+ * **Only STEAL's Poison row lays one of these now.** AMBUSH became a granted
+ * Martial Move on 2026-09-03 and nothing writes an `ambush` payload any more, so
+ * the narrowing on that id is here for the rows already sitting on people's
+ * trackers: somebody mid-session has one they paid Willpower for, and it goes on
+ * behaving exactly as it did until the swing spends it. Deleting the branch would
+ * have quietly widened it onto a Special Weapon Attack, which is the one thing
+ * the ruling it came from forbids.
+ */
+export function trickRides(trick, card) {
+  if (!trick) return false;
+  return trick.id === AMBUSH ? isPlainAttack(card) : isWeaponAttack(card);
+}
+
 /** A stored effects list, whatever shape it arrived in. */
 function rows(effects) {
   if (Array.isArray(effects)) return effects;
@@ -143,22 +199,28 @@ function rows(effects) {
 }
 
 /**
- * Every rider waiting on this character's next weapon attack, oldest first.
+ * Every rider waiting on this character's next weapon attack, oldest first, or
+ * every rider waiting on *this* attack when one is handed in.
  *
  * A row that has run out of turns is still a row until the turn it ran out on
  * ends, and a rider that has expired must not still be adding damage — so
  * anything counted down to nothing is left out here while staying on the block,
  * which is the same thing the tracker itself does.
  */
-export function pendingTricks(effects) {
+export function pendingTricks(effects, card = null) {
   return rows(effects).filter(
-    (row) => row && typeof row === 'object' && row.trick && row.turns !== 0
+    (row) =>
+      row &&
+      typeof row === 'object' &&
+      row.trick &&
+      row.turns !== 0 &&
+      (card === null || trickRides(row.trick, card))
   );
 }
 
 /**
  * The rider a card is carrying, summed, as the modifier shape the card
- * renderers already understand: `{ elevate, flat }`.
+ * renderers already understand: `{ elevate, flat, advantage, advantaged }`.
  *
  * `flat` comes back as a multiplier on Instinct rather than a number of damage,
  * because that is what Poison is, and the card is the thing that knows which
@@ -166,18 +228,83 @@ export function pendingTricks(effects) {
  *
  * Elevate stacks — the glossary says so outright — so two riders on one swing
  * add up, capped at a d12 by `elevateDie` where the number is actually printed.
+ *
+ * Advantage does not, and that is the one place these two part company: "unless
+ * they say otherwise effects don't stack from the same source", so two ambushes
+ * bought for one swing are two payments of Elevate and one arrow. Deduped by the
+ * card the arrow came off, here, because this is the one place the sum happens.
+ * `advantaged` is what lent it, named, which is what the arrow credits.
+ *
+ * Only the riders that ride this card, which is `trickRides`' business rather
+ * than this one's: a Special Weapon Attack is a weapon attack and a stolen Poison
+ * rides it, while the ambush on the tracker beside it does not.
  */
 export function trickRider(effects, card) {
-  if (!isWeaponAttack(card)) return null;
-
   let elevate = 0;
   let flat = 0;
-  for (const row of pendingTricks(effects)) {
+  const arrows = new Map();
+
+  for (const row of pendingTricks(effects, card)) {
     elevate += Math.max(0, Number(row.trick.elevate) || 0);
     flat += Math.max(0, Number(row.trick.flat) || 0);
+
+    const arrow = trickArrow(row);
+    if (arrow) arrows.set(arrow.id, arrow);
   }
 
-  return elevate > 0 || flat > 0 ? { elevate, flat } : null;
+  const lent = [...arrows.values()];
+  const advantage = lent.reduce((sum, arrow) => sum + arrow.advantage, 0);
+
+  return elevate > 0 || flat > 0 || advantage > 0
+    ? { elevate, flat, advantage, advantaged: lent.map((arrow) => arrow.name) }
+    : null;
+}
+
+/**
+ * How many d4s of Advantage a rider payload carries.
+ *
+ * The one function that knows an AMBUSH is "made with Advantage", and it is a
+ * number rather than a flag because the arrow on the card adds it to everything
+ * else bending the same roll.
+ *
+ * A payload laid before the number was written onto it still carries it: AMBUSH
+ * has always been made with Advantage, and the alternative is a Trickster
+ * mid-session losing the arrow they have already paid the Willpower for. That
+ * reading is here rather than at the two call sites so a rider normalized on the
+ * way out of storage and one read straight off the tracker cannot disagree.
+ */
+export function trickAdvantage(trick) {
+  const paid = trick?.advantage ?? (trick?.id === AMBUSH ? 1 : 0);
+  return Math.max(0, Math.floor(Number(paid) || 0));
+}
+
+/**
+ * The Advantage one tracker row is lending and the card lending it, as
+ * `{ id, name, advantage }`, or null.
+ *
+ * Two arrows are drawn off this: the one on the attack the rider is waiting on
+ * (`trickRider` above) and the one on the row itself (`effectAdvantage` in
+ * moves.js). They are the same claim, so they read the same function.
+ */
+export function trickArrow(row) {
+  const trick = row?.trick;
+  if (!trick) return null;
+
+  const advantage = trickAdvantage(trick);
+  return advantage > 0 ? { id: trick.id, name: trickName(trick.id), advantage } : null;
+}
+
+/**
+ * The card a rider was bought off, named — what the arrow credits.
+ *
+ * Off the codex rather than off the row, because the row's own name carries the
+ * attack it was bought for ("Ambush · Daggers - Triple Strike") and an arrow is
+ * crediting the ability, not the swing. Falls back to the set for a rider with no
+ * card of its own: a stolen Poison has none, and lends no Advantage either.
+ */
+function trickName(id) {
+  const set = getTalent(TRICKSTER);
+  return (set?.cards ?? []).find((card) => card.id === id)?.name ?? set?.name ?? 'Trickster';
 }
 
 /* `withTrickRider` used to live here: a weapon card's modifiers with this file's
@@ -190,87 +317,135 @@ export function trickRider(effects, card) {
    they swing, and the card it is about to be printed on may be a Physique card. */
 
 /**
- * The effects list with every rider taken off it.
+ * The effects list with every rider this attack carried taken off it, or null if
+ * it carried none.
  *
  * "Thi should be lost on use" — and it is lost whether the swing hit or missed,
  * because AMBUSH's Willpower buys the attempt: Advantage applies to the roll,
  * and the roll has happened. Nothing here asks about the outcome, so nothing
  * here can be wrong about it.
+ *
+ * What it does ask about is the card, because a rider that did not ride this
+ * swing was not spent by it: a Trickster who ambushes and then makes a Triple
+ * Strike has made an attack and still has the ambush. Same test the printing side
+ * reads, so the two can never disagree about which swing a rider belonged to.
  */
-export function spendTricks(effects) {
+export function spendTricks(effects, card) {
   const list = rows(effects);
-  const kept = list.filter((row) => !(row && typeof row === 'object' && row.trick));
+  const kept = list.filter(
+    (row) => !(row && typeof row === 'object' && row.trick && trickRides(row.trick, card))
+  );
   return kept.length === list.length ? null : kept;
 }
 
-/* ------------------------------------------------------------------ ambush */
+/* -------------------------------------------------------------- the opening
+ *
+ * "Add to skulk the[n] it remove[s] the cost of hide whenever you land a
+ * critical hit." Jules, 2026-09-03.
+ *
+ * The second pending thing a Trickster carries, and it is a rider on a *price*
+ * rather than on a swing: land a Critical Hit and the next {{Hide}} is free.
+ * Everything else about it is the same shape as an ambush was. It is a row on
+ * the tracker, laid at the moment the crit is judged and taken off at the moment
+ * the Hide is paid for, because a discount you cannot see is a discount you will
+ * forget you have.
+ *
+ * **No payload on the row.** An ambush stored three numbers because they were
+ * history — what a particular Willpower actually bought. This buys one thing and
+ * the card is the receipt, so the row *is* the opening: a standing SKULK row
+ * means the next Hide is free, and there is nothing else to remember. The card
+ * says how much comes off and `hideModifiers` in combatBar.js reads it there.
+ *
+ * The row is open-ended on purpose. Nothing in the sentence puts a clock on it,
+ * so nothing here invents one: it stands until the Hide spends it, a rest sweeps
+ * it or somebody takes it off by hand. Flagged as a ruling in data/README.md.
+ */
 
-/** The dice count in an expression: 2 out of "2d6 + 2*stat", 0 out of "stat". */
-function diceCount(expression) {
-  const match = /(\d*)d\d+/i.exec(String(expression || ''));
-  if (!match) return 0;
-  return Number(match[1] || 1);
+/** The Rank 1 card that gives the opening, and the action it discounts. */
+export const SKULK = 'skulk';
+const HIDE = 'hide';
+
+/**
+ * Whether this character has SKULK: the Trickster set, at a rank that has
+ * reached the card.
+ *
+ * Read off the set's own cards rather than against the number 1, so a codex that
+ * moves the card up a rung moves this with it.
+ */
+export function hasSkulk(talents) {
+  const trickster = tricksterOf(talents);
+  if (!trickster) return false;
+
+  const card = (trickster.talent.cards ?? []).find((entry) => entry.id === SKULK);
+  return Boolean(card) && card.rank <= trickster.rank;
+}
+
+/** Whether a free Hide is standing on this character right now. */
+export function hideOpening(effects) {
+  return rows(effects).some(
+    (row) => row && typeof row === 'object' && row.card === SKULK && row.turns !== 0
+  );
 }
 
 /**
- * What AMBUSH costs to ride one attack: "the weapon number of base damage dice
- * before enchant or boost".
+ * The row a landed Critical Hit lays, or null when this character has no SKULK
+ * or is already carrying the opening.
  *
- * The card's own printed expression, which is what "before enchant or boost"
- * asks for — an Empowering enchantment adds dice at the moment of printing and
- * has no business raising the price of an ambush. A card with no dice at all
- * cannot be ambushed with and comes back 0, which is how the window refuses it.
- *
- * The two attacks a weapon teaches can differ. A Longbow shoots for 2d6 and
- * takes aim for 3d6, so an ambush costs 2 one way and 3 the other and is
- * Elevated to match. That is why the choice is the player's and the window asks.
+ * Null for the second crit in a chain as well as for the second in a fight: one
+ * free Hide is one free Hide, and a row laid twice would still only ever pay for
+ * one. That is `layEffect`'s same-source law, answered here rather than relied on
+ * so the caller writes nothing at all when there is nothing to write.
  */
-export function ambushCost(card) {
-  const body = String(card?.body ?? '');
-  let most = 0;
-  for (const [, expression] of body.matchAll(/\[\[([^\]]+)\]\]/g)) {
-    most = Math.max(most, diceCount(expression));
-  }
-  return most;
-}
+export function openingEffect(character) {
+  if (!hasSkulk(character?.talents) || hideOpening(character?.effects)) return null;
 
-/**
- * The attacks in hand that AMBUSH can ride, each with what it costs.
- *
- * `cards` is handed in rather than read, because the weapon in a character's
- * hands is items.js's business and this file is a leaf. Anything with no damage
- * dice is left out: it has no price, so there is nothing to pay and nothing to
- * Elevate.
- */
-export function ambushOptions(cards) {
-  return (cards ?? [])
-    .filter(isWeaponAttack)
-    .map((card) => ({ card, wp: ambushCost(card) }))
-    .filter((option) => option.wp > 0);
-}
-
-/** The rider AMBUSH lays, as an effect row for the tracker. */
-export function ambushEffect(option) {
   return {
-    name: `Ambush · ${option.card.name}`,
-    note:
-      `Made with Advantage, and Elevated ${times(option.wp)} on a hit. ` +
-      'Lost the moment you swing.',
+    name: 'Skulk',
+    card: SKULK,
     turns: null,
-    until: null,
-    from: 'Trickster',
-    trick: { id: 'ambush', elevate: option.wp },
+    from: 'A critical hit',
   };
 }
 
-/* ------------------------------------------------------------------- steal */
+/**
+ * The effects list with the opening spent, or null when this use did not spend
+ * one.
+ *
+ * Only HIDE spends it, and it spends it whether or not the roll beats anybody's
+ * Grit: what the card takes off is the *cost*, and the cost has been paid the
+ * moment the action is taken. Same argument `spendTricks` makes one screen up.
+ */
+export function spendOpening(effects, card) {
+  if (card?.id !== HIDE) return null;
 
-/** "once", "twice", and then plainly. */
-function times(n) {
-  if (n === 1) return 'once';
-  if (n === 2) return 'twice';
-  return `${n} times`;
+  const list = rows(effects);
+  const kept = list.filter(
+    (row) => !(row && typeof row === 'object' && row.card === SKULK && row.turns !== 0)
+  );
+  return kept.length === list.length ? null : kept;
 }
+
+/* -------------------------------------------------------------------- gone
+ *
+ * `ambushCost`, `ambushOption`, `ambushLine` and `ambushEffect` stood here until
+ * 2026-09-03. AMBUSH became a granted Martial Move that day — see "the granted
+ * three" in talents.js — so nothing prices it off the weapon in hand any more,
+ * nothing writes it onto the tracker, and nothing has a sentence to print about
+ * what it will do when the swing comes: it is added inside the swing's own prompt
+ * and paid for there, and the printed card shows both halves before a point is
+ * spent. `moveWillpower` in martial.js is what the price arithmetic became, one
+ * line of it, because "1 Willpower per Damage Die" is now a rate a move can
+ * carry rather than a function of its own.
+ *
+ * `diceCount` went with them, and that is the whole reason this note is here
+ * rather than a silent deletion: `swingDice` in martial.js is the same reading,
+ * moved to the file that now needs it.
+ *
+ * What stayed is everything above and everything below — the reading side of a
+ * rider, and STEAL. See the note over `trickRides`.
+ */
+
+/* ------------------------------------------------------------------- steal */
 
 /** A character's Instinct, floored, which is what every row on the table reads. */
 function instinctOf(character) {

@@ -1,13 +1,28 @@
 import { useMemo, useState } from 'react';
+import AnswerWindow from './AnswerWindow.jsx';
 import EffectPrompt from './EffectPrompt.jsx';
 import EnchantWindow from './EnchantWindow.jsx';
 import RestPrompt from './RestPrompt.jsx';
 import RollArrow from '../RollArrow.jsx';
+import TurnPrompt from './TurnPrompt.jsx';
+import { cardAccent } from '../../lib/tagColors.js';
+import { liveShift } from '../../lib/characterModel.js';
+import { getCard } from '../../lib/weapons.js';
 import { isEnchanter } from '../../lib/enchanting.js';
 import { effectAdvantage } from '../../lib/moves.js';
+import { asksOf, effectLine, openAsks, riderLine } from '../../lib/riders.js';
+import { statusOf } from '../../lib/statuses.js';
 import { RESTS, restPrice } from '../../lib/rest.js';
+import { rollPlan } from '../../lib/rollPlan.js';
+import { turnTriggers } from '../../lib/turnTriggers.js';
 import { useCardStack } from '../../context/card-stack.js';
+import { useCampaignLog } from '../../context/campaign-log.js';
+import { useDiceTray } from '../../context/dice-tray.js';
+import { useFight } from '../../context/fight.js';
+import { restEvent, turnDoneEvent, turnEvent } from '../../lib/campaignLog.js';
 import {
+  answerEffect,
+  breaksOnAction,
   combatReactionGrant,
   combatShieldGrant,
   dropEffect,
@@ -46,18 +61,181 @@ import {
  */
 export default function TurnBlock({ character, patch, readOnly = false }) {
   const [adding, setAdding] = useState(false);
+  /* Which row's open questions are being answered, by id. See AnswerWindow. */
+  const [answering, setAnswering] = useState(null);
   // Which rest is being considered ('short' | 'long'), or null.
   const [resting, setResting] = useState(null);
   /* Whether the Ephemeral Enchantment shelf is up, raised from the tracker's own
      add prompt. The same window the quick bar raises. */
   const [enchanting, setEnchanting] = useState(false);
+  /* What the turn press found waiting on this boundary, held while the reminder
+     is up. Null the rest of the time, which is nearly all of it. */
+  const [reminder, setReminder] = useState(null);
   const stack = useCardStack();
+  const tray = useDiceTray();
+  /* The clock is the one thing on this block the whole table wants to see. A
+     turn crossed between two casts is what makes a log read as a fight rather
+     than as a list. See campaignLog.js. */
+  const { log, tables } = useCampaignLog();
+  const fight = useFight();
 
   const turn = turnState(character);
   const effects = useMemo(() => normalizeEffects(character.effects), [character.effects]);
 
+  /**
+   * What the button may be, for a character seated at a table.
+   *
+   * Jules, 2026-09-01: "when a character is connected to a campaign, he cannot
+   * start combat himself... the turn management buttons should be disabled
+   * when you are not in your turn. Outside of combat, replace it with 'Not in
+   * an Encounter'." So a linked sheet's turn is the table's to hand out:
+   *
+   *   mid-turn        End Turn, always pressable — closing your own turn is
+   *                   yours whatever the table is doing, and the runner already
+   *                   refuses an end from anybody it is not waiting on.
+   *   your turn       Start Turn, live: the order is standing on you.
+   *   somebody else   Start Turn, dead, saying whose turn it is.
+   *   no fight        one dead button reading "Not in an Encounter". The bell
+   *                   is the Game Master's: rolling initiative enters this
+   *                   sheet into the fight by itself (see TurnCall.jsx).
+   *
+   * Null for a sheet at no table, which keeps solo play exactly as it was:
+   * Start Combat, Start Turn, End Turn, all by hand.
+   */
+  const seat = useMemo(() => {
+    if ((tables ?? []).length === 0) return null;
+
+    if (turn.live) {
+      return {
+        move: 'end',
+        label: 'End Turn',
+        on: true,
+        note: 'Nothing is spent by ending a turn. It closes it, and your End Turn is what moves the table on.',
+      };
+    }
+
+    const mine = fight?.fights?.find((entry) => entry.upCharacter === character.id) ?? null;
+    if (mine) {
+      return {
+        move: 'turn',
+        label: 'Start Turn',
+        on: true,
+        note: `Starting brings your Action Points back to ${character.ap_max} and takes a turn off everything below.`,
+      };
+    }
+
+    const running = fight?.fights?.[0] ?? null;
+    if (running) {
+      return {
+        move: 'turn',
+        label: 'Start Turn',
+        on: false,
+        note: `${running.upName ?? 'Somebody'} is up. This wakes when the order reaches you, and a panel at the side of the screen calls your turn.`,
+      };
+    }
+
+    return {
+      move: null,
+      label: 'Not in an Encounter',
+      on: false,
+      note: 'Fights are started from the Game Master’s table. When initiative is rolled there, this sheet enters the fight by itself.',
+    };
+  }, [tables, fight, turn.live, character.id, character.ap_max]);
+
   const running = effects.filter((effect) => effect.turns !== 0).length;
   const ended = effects.length - running;
+
+  /* What the rows below add up to on the *tiles*, which sit on other blocks —
+     the sentence used to live next to the numbers it bent, and moved here so the
+     tracker is the one block that talks about what is running. The tiles still
+     show the bent number, and a hovered tile still prints its own arithmetic.
+     Empty for anyone with nothing running, which is nearly everyone.
+
+     Only the tiles. What is riding your *attacks* had a twin line here for a
+     day and lost it ("the On your attack block is redundant. The tracker
+     already tells you that", 2026-08-29): every riding row below already wears
+     its arrow and prints what it does under its own name, so the sum was the
+     list repeating itself one line up. The stats line survives because the
+     numbers it accounts for are not on this block. */
+  const shift = useMemo(() => liveShift(character), [character]);
+
+  /**
+   * The one button, pressed.
+   *
+   * Two of the three moves cross a turn boundary, and either of those stops for
+   * a reminder when there is one to give. Entering a fight crosses nothing and
+   * goes straight through, as does a boundary with nothing waiting on it, which
+   * is what keeps the reminder from becoming the thing you dismiss twice a round
+   * without reading. See turnTriggers.js.
+   */
+  /**
+   * The table told, in the word the runner listens for.
+   *
+   * Ending a turn writes `turnDoneEvent` — the same row the turn call's cover
+   * writes — rather than a plain turn row, because the two are one act: "when
+   * Lark presses End Turn it should end the turn" (Jules, 2026-09-01), off
+   * this block as readily as off the cover. The runner stays the judge of
+   * whether it *moves* anything: it advances only when the ender is the one it
+   * is waiting on, so an out-of-order end still cannot drag the fight forward,
+   * and on a sheet at no table the row is just the log line it always was.
+   */
+  function tellTurn(move) {
+    if (move === 'end') log(turnDoneEvent(character, turn.n));
+    else log(turnEvent(move, character, turn));
+  }
+
+  function press() {
+    /* The seated reading wins where there is one: a linked sheet's button is
+       Start Turn or End Turn and never Start Combat, whatever solo state the
+       column holds. */
+    const move = seat ? seat.move : turn.move;
+    if (!move) return;
+
+    const when = move === 'turn' ? 'start' : move === 'end' ? 'end' : null;
+    const found = when ? turnTriggers(character, when) : null;
+
+    if (found?.any) {
+      setReminder(found);
+      return;
+    }
+
+    patch(MOVES[move](character));
+    tellTurn(move);
+  }
+
+  /**
+   * What a tracked row deals, rolled off the row itself.
+   *
+   * "You can click on the tracked effect like wall of fire to roll damage" —
+   * the wall stands on your tracker because you cast it, and the moment
+   * something walks into it is not a turn boundary, so the row is the only
+   * place the roll can live. The card's own value links are thrown in printed
+   * order, named after the row, onto the table log for everyone: landing the
+   * number on an enemy is the Game Master's, from their own page.
+   */
+  function rollEffect(effect, links) {
+    void (async () => {
+      for (const link of links) {
+        const result = await tray.present({
+          ...link,
+          name: effect.name,
+          note: character?.name ?? '',
+          log: true,
+        });
+        if (!result) return;
+      }
+    })();
+  }
+
+  /** The value links a row's card carries, or null for the rows that roll
+      nothing. What decides whether the row wears a Roll button. */
+  function throwable(effect) {
+    if (!tray || readOnly) return null;
+    const card = getCard(effect.card);
+    if (!card) return null;
+    const links = rollPlan(card, character).filter((link) => link.shape === 'value');
+    return links.length > 0 ? links : null;
+  }
 
   return (
     <div className="cell-scroll turn-block">
@@ -86,11 +264,18 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
       {/* ---------- THE TURN ---------- */}
       <div className="block-head">
         <span className="stat-category-label">Turn</span>
-        {turn.started && (
+        {/* Leaving combat by hand is solo play's button alone. A seated sheet
+            enters and leaves the fight on the table's own bell — see
+            TurnCall.jsx — and a player who could ring themselves out mid-fight
+            would be a runner announcing turns to a sheet that left. */}
+        {turn.started && !seat && (
           <button
             type="button"
             className="turn-reset"
-            onClick={() => patch(endCombat())}
+            onClick={() => {
+              patch(endCombat());
+              log(turnEvent('reset', character, turn));
+            }}
             disabled={readOnly}
             title="Set the count back to nothing. Whatever you are tracking stays."
           >
@@ -106,14 +291,14 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
 
       <button
         type="button"
-        className={`turn-btn turn-btn-${turn.move}`}
-        onClick={() => patch(MOVES[turn.move](character))}
-        disabled={readOnly}
+        className={`turn-btn turn-btn-${seat ? (seat.move ?? 'combat') : turn.move}`}
+        onClick={press}
+        disabled={readOnly || (seat ? !seat.on : false)}
       >
-        {turn.label}
+        {seat ? seat.label : turn.label}
       </button>
 
-      <p className="turn-note">{turnNote(turn, character)}</p>
+      <p className="turn-note">{seat ? seat.note : turnNote(turn, character)}</p>
 
       {/* ---------- WHAT IS RUNNING ---------- */}
       <div className="block-head fx-head">
@@ -122,6 +307,16 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
           {running} running{ended > 0 ? `, ${ended} just ended` : ''}
         </span>
       </div>
+
+      {/* The sum, above the list: the head says how many are running and this
+          line says what that adds up to on the tiles. Pinned with the head
+          rather than scrolling with the rows, because an accounting line that
+          can scroll out of sight accounts for nothing. */}
+      {shift.length > 0 && (
+        <p className="attr-shift">
+          <b>On your stats:</b> {shift.join(', ')}. Temporary, and not on your sheet.
+        </p>
+      )}
 
       {!readOnly && (
         <button type="button" className="fx-add" onClick={() => setAdding(true)}>
@@ -136,18 +331,39 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
             condition you are under, a blessing somebody laid on you.
           </p>
         ) : (
-          effects.map((effect) => (
-            <EffectRow
-              key={effect.id}
-              effect={effect}
-              readOnly={readOnly}
-              onOpen={effect.card ? () => stack?.openCard(effect.card) : null}
-              onNudge={(delta) => patch({ effects: nudgeEffect(effects, effect.id, delta) })}
-              onDrop={() => patch({ effects: dropEffect(effects, effect.id) })}
-            />
-          ))
+          effects.map((effect) => {
+            const links = throwable(effect);
+            return (
+              <EffectRow
+                key={effect.id}
+                effect={effect}
+                readOnly={readOnly}
+                onOpen={effect.card ? () => stack?.openCard(effect.card) : null}
+                onNudge={(delta) => patch({ effects: nudgeEffect(effects, effect.id, delta) })}
+                onDrop={() => patch({ effects: dropEffect(effects, effect.id) })}
+                onRoll={links ? () => rollEffect(effect, links) : null}
+                /* And the numbers this row needs and the sheet cannot work out:
+                   the caster's Mind, the damage that was dealt, which mode of
+                   the spell was cast. Only on a row that asks for any, which is
+                   nine cards in the codex. See AnswerWindow.jsx. */
+                onAnswer={asksOf(effect).length > 0 ? () => setAnswering(effect.id) : null}
+                asking={openAsks(effect).length}
+              />
+            );
+          })
         )}
       </div>
+
+      {/* The one row's own questions, answered. Held by id rather than by the
+          row itself so a tick of the clock underneath cannot leave the window
+          editing a copy of something that has moved on. */}
+      {answering && (
+        <AnswerWindow
+          effect={effects.find((effect) => effect.id === answering)}
+          onAnswer={(values) => patch({ effects: answerEffect(effects, answering, values) })}
+          onClose={() => setAnswering(null)}
+        />
+      )}
 
       {adding && (
         <EffectPrompt
@@ -179,8 +395,34 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
         <RestPrompt
           kind={resting}
           character={character}
-          onRest={(body) => patch(body)}
+          onRest={(body, taken) => {
+            patch(body);
+            log(
+              restEvent(resting, character, {
+                action: taken?.action ?? null,
+                supplies: restPrice(character, resting),
+              })
+            );
+          }}
           onClose={() => setResting(null)}
+        />
+      )}
+
+      {/* Read off the move the button was showing when it was pressed rather
+          than off `turn` now, so a reminder left open through somebody else's
+          write still confirms the press it was raised for. */}
+      {reminder && (
+        <TurnPrompt
+          triggers={reminder}
+          character={character}
+          patch={readOnly ? null : patch}
+          onConfirm={() => {
+            const move = reminder.when === 'start' ? 'turn' : 'end';
+            patch(MOVES[move](character));
+            tellTurn(move);
+            setReminder(null);
+          }}
+          onClose={() => setReminder(null)}
         />
       )}
     </div>
@@ -247,7 +489,20 @@ function turnNote(turn, character) {
  * row there has to be this row: same count, same nudges, same card behind it.
  * See MinionBlock.jsx, which is where BarChip goes too.
  */
-export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop }) {
+export function EffectRow({
+  effect,
+  readOnly,
+  onOpen,
+  onNudge,
+  onDrop,
+  onRoll = null,
+  bends = true,
+  /* The numbers this row needs told and the sheet cannot work out: the caster's
+     Mind, the damage that was dealt, which mode was cast. Null on every row that
+     asks for none, which is nearly every row. See AnswerWindow.jsx. */
+  onAnswer = null,
+  asking = 0,
+}) {
   const over = effect.turns === 0;
   const open = effect.turns === null;
   /* What this row is doing to a roll, when it is doing anything: a Martial Move
@@ -255,12 +510,53 @@ export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop }) {
      last clause of the note that asked for the arrow at all. An expired row is
      doing nothing, so it loses the badge while it sits here saying "Ended". */
   const arrow = over ? null : effectAdvantage(effect);
+  /* And what it is doing to the *sheet*, for the rows that do anything to it.
+     GIANT GROWTH has already doubled the Speed tile by the time this row is
+     drawn, and the row is the only place that can say which one did it. Off the
+     same table the doubling came from, so the words and the arithmetic cannot
+     drift apart. Dropped along with the arrow once the row has ended.
+
+     `bends` is false on a creature's tracker: a rider is read off the character's
+     own effects column, so a line here promising a doubled Speed would be
+     describing something that did not happen. See MinionBlock.jsx. A condition
+     says what it does wherever it sits, because "no Actions while it lasts" is
+     true of a stunned goblin whether or not any tile moved for it. */
+  const does = over ? null : statusOf(effect.status) ? effectLine(effect) : bends ? riderLine(effect.card) : null;
+  /* And what school it came out of, as a colour. "tracker should use tag
+     coloring like spell school", 2026-08-28: a block with six things running on
+     it is read by scanning, and until now every row on it was the same cyan
+     whether it was a Fire spell, a Shadow spell or a note about being grappled.
+     The rule down the left edge is the family's shade of its school's hue, off
+     the same table the chips on a card's banner use, so a row and its card are
+     visibly the same thing. A row with no school keeps the block's own cyan.
+     See cardAccent in tagColors.js. */
+  const accent = cardAccent(getCard(effect.card)?.tags);
+  /* A row acting breaks, and whether you have moved since it went down. HIDE is
+     the one so far. The count says nothing because nothing is counting it, and
+     the moment you do anything the pill says the row is on its way out rather
+     than letting it vanish at the end of the turn. See combatTurn.js. */
+  const breaks = !over && breaksOnAction(getCard(effect.card));
+  const acted = breaks && Boolean(effect.stirred);
 
   return (
-    <div className={`fx-row${over ? ' is-over' : ''}`}>
+    <div
+      className={`fx-row${over ? ' is-over' : ''}${accent ? ' has-accent' : ''}`}
+      style={accent ? { '--fx-accent': accent } : undefined}
+    >
       <div className="fx-row-top">
-        <span className={`fx-turns${open ? ' is-open' : ''}${over ? ' is-over' : ''}`}>
-          {over ? 'Ended' : open ? '∞' : effect.turns}
+        <span
+          className={`fx-turns${open && !acted ? ' is-open' : ''}${over ? ' is-over' : ''}${
+            acted ? ' is-breaking' : ''
+          }`}
+          title={
+            breaks
+              ? acted
+                ? 'You acted this turn. This ends when the turn does.'
+                : 'Acting breaks this. Until then it stays.'
+              : undefined
+          }
+        >
+          {over ? 'Ended' : acted ? 'Ends' : open ? '∞' : effect.turns}
         </span>
 
         <span className="fx-name-box">
@@ -269,6 +565,45 @@ export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop }) {
         </span>
 
         {arrow && <RollArrow {...arrow} size={20} />}
+
+        {/* What the row deals, rolled off the row: a wall of fire clicked the
+            moment something walks into it. Only on a row whose card rolls a
+            value, and never on one that has ended. See rollPlan. */}
+        {onRoll && !over && !readOnly && (
+          <button
+            type="button"
+            className="fx-step fx-roll"
+            onClick={onRoll}
+            aria-label={`Roll what ${effect.name} deals`}
+            title="Roll what this deals"
+          >
+            Roll
+          </button>
+        )}
+
+        {/* And the numbers it is waiting on. Drawn as a question while any are
+            open, because a row bending nothing and saying nothing is a row that
+            reads as a bug; once they are answered it stays as a quiet way back
+            in, since the caster's Mind was a guess somebody may want to correct. */}
+        {onAnswer && !over && !readOnly && (
+          <button
+            type="button"
+            className={`fx-step fx-roll${asking > 0 ? ' is-open' : ''}`}
+            onClick={onAnswer}
+            aria-label={
+              asking > 0
+                ? `${effect.name} needs ${asking} ${asking === 1 ? 'number' : 'numbers'}`
+                : `Change what ${effect.name} was told`
+            }
+            title={
+              asking > 0
+                ? 'This needs a number before it changes anything.'
+                : 'What this was told. Tap to change it.'
+            }
+          >
+            {asking > 0 ? '?' : '✓'}
+          </button>
+        )}
 
         {!readOnly && (
           <span className="fx-tools">
@@ -304,9 +639,11 @@ export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop }) {
         )}
       </div>
 
+      {does && <span className="fx-does">{does}</span>}
+
       {onOpen ? (
         <button type="button" className="fx-read" onClick={onOpen}>
-          {effect.note || 'Read the card'}
+          {effect.note || (effect.status ? 'Read the card that did it' : 'Read the card')}
         </button>
       ) : (
         effect.note && <span className="fx-note">{effect.note}</span>

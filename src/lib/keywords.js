@@ -1,21 +1,44 @@
 /**
  * The glossary — the words on a card that mean something exact.
  *
- * Exactly three things on a card are allowed to stand out from the prose, and
+ * Exactly four things on a card are allowed to stand out from the prose, and
  * this file holds the third:
  *
  *   an attribute    Mind, Instinct, Physique, in that attribute's colour
  *   a damage type   Sharp, Decay, Force, in its own
  *   a keyword       a *defined term*. It wears its colour and answers what it
  *                   means when you point at it.
+ *   a **parameter** how far, at whom, for how long. Weight, never colour.
  *
- * Nothing else. The card bodies used to carry `**bold**` for emphasis as well
- * — distances, durations, the clause that mattered — and that emphasis was
- * removed from the codex outright, because a card with thirty emphasised
- * phrases has nothing emphasised at all. The renderer still understands the
- * marker, for cards a player types into their own Abilities tab, but no card
- * in this codex uses it. If you are tempted to bold something, either it is a
- * defined term and belongs in this file, or it is prose and belongs plain.
+ * ------------------------------------------------------------------- the bold
+ * The fourth is new, and it is narrow on purpose. Card bodies once carried
+ * `**bold**` for emphasis in general — whatever clause the writer thought
+ * mattered — and that emphasis was removed from the codex outright, because a
+ * card with thirty emphasised phrases has nothing emphasised at all.
+ *
+ * On Jules's instruction of 2026-08-25 it is back, spending its one mark on the
+ * three things a player scans a card for and on nothing else:
+ *
+ *   range      "within **9 meters (30 feet)**", "a **6-meter (20-foot)** radius"
+ *   targeting  the target the card *declares* — "**an entity**", "**all
+ *              entities**", "**up to two entities**". Never a back-reference:
+ *              "the target" and "the entity" point at something already named
+ *              and are prose.
+ *   duration   "for **10 turns (1 minute)**", "**until your next Long Rest**".
+ *              A measured span, or the rest or turn it runs to. A condition is
+ *              not a duration: "until it is destroyed" stays plain.
+ *
+ * A phrase already lit is not bolded on top of being lit: MOVE prints
+ * "[[speed]] meters" and the live value is louder than any weight. A term
+ * inside a bolded phrase keeps its own colour, which is the point of the two
+ * marks being different — "**all entities**" is a scope wearing a defined word.
+ *
+ * If you are tempted to bold anything else, either it is a defined term and
+ * belongs in this file, or it is prose and belongs plain.
+ *
+ * Every parser that reads card prose takes the markers off first, in one place:
+ * see `cardProse` in cardText.js. A marker in the middle of a phrase is
+ * invisible to a reader and fatal to a regex.
  *
  * A keyword is matched wherever it appears, so Willpower is violet every time
  * it is printed and never violet in one card and plain in the next. The
@@ -53,8 +76,12 @@
  *   Empowered    adds a die (2d6 becomes 3d6). **Elevate** is the one that grows
  *                the die (d6 becomes d8). The codex had one doing the other's job;
  *                see the note in cardText.js.
- *   Critical Hit is a maximum result on an Attack Roll. It cannot be "a natural
- *                20": a Roll in this game is 2d6 plus an attribute.
+ *   Critical Hit is a Roll landing 6 or more above the DC, and a Critical Failure
+ *                is one landing 6 or more below it. It cannot be "a natural 20":
+ *                a Roll in this game is 2d6 plus an attribute. Until 2026-08-30
+ *                this entry read "a maximum result on an Attack Roll", which was
+ *                the rule before Jules settled the four bands the roller judges
+ *                against. See the bands in dice.js.
  *
  * What is still provisional is what no sheet has covered yet: asleep, marked
  * and unconscious. **Stunned left that list on 2026-08-20** — ICE BLOCK spells
@@ -130,7 +157,7 @@ export const KEYWORDS = [
     terms: ['Shield'],
     color: 'var(--stat-shield)',
     detail:
-      'Damage soaked before it reaches Health. Caps at half your maximum Health, and whatever it cannot absorb carries straight through.',
+      'Damage soaked before it reaches Health, and whatever it cannot absorb carries straight through. Caps at half your maximum Health unless an effect says otherwise. A Long Rest takes whatever is left of it.',
   },
   {
     id: 'bleeding-out',
@@ -231,12 +258,35 @@ export const KEYWORDS = [
       '(2d6 becomes 3d6).',
   },
   {
+    /**
+     * The rule Jules gave on 2026-08-30, in his own words as far as they go:
+     * "when you roll max value on a damage or healing dice that dice explode
+     * and you roll a dice of a category above. So if you roll an 8 on a d8 you
+     * roll an additional d10 and add to the total." The two edges after it are
+     * his rulings from the same day: the chain keeps going, and the ladder caps.
+     *
+     * `Exploding Dice` rather than `explodes`, which is not a spare choice. Three
+     * spells already say a corpse or a seed "explodes", and a term that matched
+     * those would hang a dice rule off a body going off. No card states this rule
+     * yet, so the entry lights nothing today and is here for when one does. Where
+     * a player actually meets it is the roller: see dieTitle in DiceSurface.jsx.
+     */
+    id: 'exploding',
+    terms: ['Exploding Dice'],
+    color: 'var(--level-amber)',
+    detail:
+      'When you roll the maximum value on a damage or healing die, that die explodes: roll an ' +
+      'additional die of the category above and add it to the total. An 8 on a d8 throws a d10. ' +
+      'A die that explodes into another maximum explodes again, and a d12 throws another d12.',
+  },
+  {
     id: 'critical',
     terms: ['Critical Hit', 'critical'],
     color: 'var(--level-amber)',
     detail:
-      'A maximum success outcome on an Attack Roll that guarantees a hit and maximizes or ' +
-      'amplifies damage dealt or secondary effects.',
+      'A Roll that lands 6 or more above the DC. It guarantees a hit and maximizes the damage ' +
+      'dealt, and a maximized damage die explodes the way any other one does. A Roll that lands ' +
+      '6 or more below the DC is a Critical Failure.',
   },
 
   /* --------------------------------------------------------- what you swing */
@@ -248,7 +298,7 @@ export const KEYWORDS = [
   },
   {
     id: 'ranged-attack',
-    terms: ['Ranged Attack'],
+    terms: ['Ranged Attacks', 'Ranged Attack'],
     color: 'var(--dmg-sharp)',
     detail: 'An attack made at distance, rolled against the target’s Defense.',
   },
@@ -265,6 +315,17 @@ export const KEYWORDS = [
     detail:
       'A trained manoeuvre bought with a talent, used alongside a weapon attack rather than instead of one.',
   },
+  /* Violet and not the move's amber, which is the same line the card accent and
+     the quick-bar chip both draw: a weave is added to a swing the way a move is
+     and is magic the way a spell is, and a colour here says what a thing is. See
+     KIND_COLORS in tagColors.js. */
+  {
+    id: 'weave',
+    terms: ['Weaves', 'Weave'],
+    color: 'var(--haze-glow)',
+    detail:
+      'Magic bought with a talent and released through a weapon attack, arriving where the attack lands.',
+  },
 
   /* ------------------------------------------------------------ the clock */
   {
@@ -273,7 +334,8 @@ export const KEYWORDS = [
     color: 'var(--copper)',
     detail:
       'An 8-hour break that consumes 10 Supplies. Successfully completing a Long Rest fully ' +
-      'restores your Health and Willpower, and allows you to perform 1 Long Rest Action.',
+      'restores your Health and Willpower, takes whatever Shield is left and allows you to ' +
+      'perform 1 Long Rest Action.',
   },
   {
     id: 'short-rest',
@@ -348,6 +410,20 @@ export const KEYWORDS = [
       'Rest or regain any amount of Health.',
   },
   {
+    /* SICKNESS's own foot, word for word: the Death sheet (pulled 2026-08-26)
+       spells it out under the card as "Diseased: The afflicted entity receives -1
+       to all attributes until they take a long rest". The gloss then came off the
+       card, which is the trade BURN, BLIND and SHADOW BIND all made before it.
+
+       It is the only state in the codex that moves every attribute at once, and
+       the one card that inflicts it is the one card that spreads it. */
+    id: 'diseased',
+    terms: ['diseased'],
+    color: 'var(--dmg-decay)',
+    detail:
+      'The afflicted entity receives -1 to all attributes until they take a Long Rest.',
+  },
+  {
     /* The Elemental cards' own parenthesis, word for word — CLOAK OF FLAMES and
        SLAG SHOT both spell it out at their foot, and a defined term is never
        glossed in prose as well. Pulled 2026-08-20. */
@@ -355,6 +431,40 @@ export const KEYWORDS = [
     terms: ['burn'],
     color: 'var(--dmg-fire)',
     detail: 'The entity becomes vulnerable to Fire damage until they take a Short Rest.',
+  },
+  {
+    /* Here because BURN above has been defined in terms of it since 2026-08-20 and
+       the word was never lit, and because ENBRITTLE on the Death sheet (pulled
+       2026-08-26) closes with the gloss outright: "(note vulnerable means takes
+       double damage from the damage type.)". A parenthesis on a card is what this
+       file exists to absorb, so the sentence moved here and the parenthesis went.
+
+       It lights in three places now rather than one: ENBRITTLE, BURN's own detail
+       and the Nightmare Curse in enchantments.js, which has said "You are
+       vulnerable to the damage dealt by your own Nightmare Wall spell" with
+       nothing behind the word since the school arrived. All three mean the
+       doubling. */
+    id: 'vulnerable',
+    terms: ['vulnerable'],
+    color: 'var(--stat-health)',
+    detail: 'A vulnerable entity takes double damage from that damage type.',
+  },
+  {
+    /* STONEFLESH's own parenthesis, pulled 2026-08-26. The Earth cell glosses the
+       word inside its own sentence, "(reistance means halved damaged)", and a
+       defined term is never glossed in prose as well. The trade BURN made when the
+       Elemental school arrived and VULNERABLE above made on the Death sheet.
+
+       It lands beside VULNERABLE on purpose: the two are one rule read from both
+       ends, doubled against halved, and only one end of it was written down. Five
+       card bodies have printed this word with nothing behind it since each of them
+       arrived — UMBRAL FORM's resistance to all damage, DRACONIC SCALES' chosen
+       type, AMPHIBIAN's Cold, the Cauldron Keeper's hardened scale and now
+       STONEFLESH. All five light. */
+    id: 'resistance',
+    terms: ['resistance', 'resistant'],
+    color: 'var(--stat-shield)',
+    detail: 'A resistant entity takes half damage from that damage type.',
   },
   {
     id: 'rooted',
@@ -397,6 +507,43 @@ export const KEYWORDS = [
     detail: 'The entity cannot take Actions or Reactions until the effect ends.',
   },
   {
+    /* Not provisional, and never was in doubt: SHADOW BIND (pulled 2026-08-25)
+       spells Constrained out at its own foot, and this is that sentence word for
+       word. The same trade ICE BLOCK made for Stunned above.
+
+       The Trickster's AMBUSH has named this status since 2026-08-23, beside
+       Stunned and Grappled, with nothing behind the word. It is lit now. */
+    id: 'constrained',
+    terms: ['constrained'],
+    color: 'var(--stat-health)',
+    detail:
+      'Constrained entities cannot take actions but are still aware of their surroundings.',
+  },
+  {
+    /* Not provisional either, and this one was asked for outright: UNDO's cell on
+       the Time sheet (pulled 2026-08-25) ends with a note to the developer rather
+       than card text, "lets add the interrupted key word whcih means the next
+       action in question does not happen but the cost is still spent". So the
+       definition is the designer's and the note came off the card, which is the
+       same trade SHADOW BIND made for Constrained above.
+
+       Interrupted is not Stunned and the difference is the bill. A stunned entity
+       takes no Actions at all; an interrupted one loses the Action it was taking
+       and has already paid for it.
+
+       It is printed on a card body as of 2026-09-03: CONCUSS was rewritten that
+       day into a reaction that stops what it answered, and this is the word for
+       what it does. Until then the term appeared once outside the Time family, in
+       the old CONCUSS's *summary*, where it meant the ordinary English thing — a
+       summary is plain text and never goes through CardText, so it was never lit
+       and never needed rewording. Now the term and the card agree. */
+    id: 'interrupted',
+    terms: ['interrupted'],
+    color: 'var(--stat-ap)',
+    detail:
+      'The Action in question does not happen, but its cost is still spent.',
+  },
+  {
     id: 'incapacitated',
     terms: ['incapacitated'],
     color: 'var(--stat-health)',
@@ -417,23 +564,95 @@ export const KEYWORDS = [
       'Below 0 Health and going. Stabilize stops it, and a second full bar of damage ends it.',
   },
   {
+    /* **New on 2026-09-02, and it took Wound's old job.** Jules, redesigning the
+       Martial Move system: "Bleed: stackable status that deal 1d6 damage at the
+       start turn of entities. Remove 1 stack when receive 1 heal." That is the
+       designer's own sentence, tidied for grammar and nothing else, the same
+       trade every term on this shelf has made.
+
+       Two things in it are worth reading twice. It is **stackable**, which the
+       old Wound was, and each stack is its own 1d6 — REND lays one per Damage
+       Die the swing rolled, so a big hit bleeds badly. And healing takes **one
+       stack**, not the whole effect: the old Wound came off entirely at the
+       first point of Health, which made any healing at all a full cure.
+
+       The damage has no type, which is the designer's word for it: "deal 1d6
+       damage". The old Wound's was Decay, and a bleed is not decay. Untyped
+       damage is not new in this codex (four Primal Masters deal it) and a type
+       nobody stated would be this file inventing one. Flagged in
+       data/README.md. Coloured with Health rather than with a damage type for
+       the same reason.
+
+       CAUTERIZE has named this status since the Fire family was written ("this
+       removes any Bleed or Poison effect") with nothing behind the word. It is
+       lit now, which is the same thing that happened to Constrained when SHADOW
+       BIND finally defined it. */
+    id: 'bleed',
+    terms: ['Bleed'],
+    color: 'var(--stat-health)',
+    detail:
+      'Stackable effect. The entity takes 1d6 damage at every one of its Turn Starts. ' +
+      'It loses one stack whenever it receives healing.',
+  },
+  {
     id: 'wound',
     terms: ['Wounds', 'Wound'],
     color: 'var(--dmg-decay)',
-    /* Not on the Status & Terms tab. The WOUND plate defines it outright at the
-       foot of its own card, in a parenthesis, and that sentence is quoted here
-       word for word rather than paraphrased — the same trade BLIND and FRIGHTFUL
-       ROAR made. The gloss then came off the card body, because a term that
-       carries its own explanation must never be spelled out in prose as well.
+    /* **Redefined on 2026-09-02**, in the same breath as the Martial Move
+       redesign: "Wound: singular status that make weapon and speacial weapon
+       attack again the target empowred." So a Wound is no longer damage over
+       time, it is an opening: everything that comes at the target with a weapon
+       in its hands hits harder. Bleed above is what took over the old job, and
+       the pair of them swapped roles rather than one being added.
 
-       Unlike those two, the card's own name *is* the term, and that is fine:
-       "will inflict a Wound on the target" is the word being used for what it
-       means. Gore Armor and Vampiric Touch were reworded because their titles
-       collided with an unrelated stat and an unrelated range, which is a
+       The old sentence was the WOUND plate's own, quoted word for word off the
+       foot of the card. This one is the designer's own too, and the plate it
+       came off is a line in chat rather than a cell in a sheet.
+
+       **The clock is the old card's and the ruling is open.** Jules gave the
+       effect and no duration, and the sentence it replaced ended "until they
+       receive healing or they take a rest". That clause is kept rather than
+       reinvented: it is the only clock this term has ever had, the tracker
+       already understands both halves of it, and a status with no end is a
+       status that never comes off. Flagged in data/README.md.
+
+       **Singular** is the word Jules used and it is the difference that matters
+       at a table: two Wounds are one Wound, so WOUND laid twice on the same
+       target buys nothing the second time. It is also the stacking law this
+       codex already keeps — an effect does not stack with itself from the same
+       source — said on the term instead of on the card.
+
+       Unlike BLIND and FRIGHTFUL ROAR, the card's own name *is* the term, and
+       that is fine: "inflicts a Wound on the target" is the word being used for
+       what it means. Gore Armor and Vampiric Touch were reworded because their
+       titles collided with an unrelated stat and an unrelated range, which is a
        different fault from a card named after the thing it does. */
     detail:
-      'Stackable effect that cause the entity to take 1d6 decay damage at every one of its ' +
-      'turn starts until they receive healing or they take a rest.',
+      'Singular effect. Weapon attacks made against the entity are Empowered. It lasts until ' +
+      'the entity receives healing or takes a rest.',
+  },
+  {
+    /* GORE BLAST's own foot on the Death sheet (pulled 2026-08-26), and the same
+       trade WOUND above made: the card named a compound effect and then spent
+       three lines explaining it, so the explanation is here and the card keeps
+       only what it grants.
+
+       **What it does is the term and how long is the card's.** GORE BLAST prints
+       "for 5 turns", the way BLIND prints "until their next Turn End" over the top
+       of the blinded keyword. That split is not cosmetic: effectDuration in
+       combatTurn.js reads a duration off the card's own prose, so a count that
+       moved in here would leave the tracker with nothing to count.
+
+       The damage is the caster's attribute and is written out rather than lit,
+       because a detail is one static sentence and has no card under it to resolve
+       a live value against. It is the first term in this file whose number is not
+       its own, and it is worth a look. */
+    id: 'corpse-carrion',
+    terms: ['Corpse Carrion'],
+    color: 'var(--dmg-decay)',
+    detail:
+      'The afflicted entity takes the caster’s attribute in Decay damage at every one of ' +
+      'its Turn Starts.',
   },
 
   /* ------------------------------------------------------------- distances
@@ -472,7 +691,7 @@ export const KEYWORDS = [
    */
   {
     id: 'turn-start',
-    terms: ['Turn Start'],
+    terms: ['Turn Starts', 'Turn Start'],
     color: 'var(--stat-ap)',
     detail:
       'The moment your turn opens, before you have spent anything. Upkeeps are paid here and effects that tick, tick here.',
@@ -639,7 +858,7 @@ export const KEYWORDS = [
   },
   {
     id: 'attack-roll',
-    terms: ['Attack Roll'],
+    terms: ['Attack Rolls', 'Attack Roll'],
     color: 'var(--copper)',
     detail:
       'A Roll made to hit a target. The attack succeeds if the total result equals or ' +

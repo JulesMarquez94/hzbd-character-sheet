@@ -2,15 +2,40 @@ import { useLayoutEffect, useRef } from 'react';
 import CardText from './CardText.jsx';
 import CostOrbs from './CostOrbs.jsx';
 import RollArrow from './RollArrow.jsx';
-import { cardBanner } from '../lib/cardText.js';
+import { cardBanner, cardCost, cardTitle } from '../lib/cardText.js';
 import useCodexArt from './useCodexArt.js';
 import './AbilityCard.css';
+
+/* How small the rules text may be set before a card gives up on fitting. Low,
+   because nothing below it is a scroll any more: on Jules's instruction of
+   2026-08-25 a card does not scroll, so this is the whole of the room a dense
+   card has. Nothing in the codex reaches it. */
+const TEXT_FLOOR = 0.5;
+
+/* The name shrinks with the text, but only half as far and never past this.
+   It used to be set at one size on every card, deliberately, so that no two
+   cards disagreed about how big a card name is — and that was the right trade
+   while the last lines of a dense card could scroll. They cannot now, so the
+   name gives up a little of its room rather than the rules text giving up all
+   of the shrinking, and half as fast so the heading still reads as one. */
+const NAME_FLOOR = 0.72;
+const nameFit = (fit) => Math.max(NAME_FLOOR, 1 - (1 - fit) * 0.5);
+
+/* Enough halvings to land within a percent of the largest size that fits. */
+const FIT_STEPS = 7;
 
 /**
  * A card dealt at a fixed size has to hold whatever is printed on it. This
  * measures the rules text once it is laid out and, when it runs past the
  * bottom edge, steps the type down until it fits — the way a card is set
  * rather than the way a web page scrolls.
+ *
+ * Searched rather than calculated. One `box / natural` is only the right answer
+ * while everything in the box scales together, and the heading does not: it
+ * shrinks at half the rate, so a card holding a 60px title and 400px of text
+ * needs a smaller scale than the ratio of the two heights predicts, and the
+ * single pass this used to do left the difference hanging past the bottom edge
+ * for the scrollbar to catch. There is no scrollbar to catch it now.
  */
 function useFitText(enabled, signature) {
   const ref = useRef(null);
@@ -20,22 +45,39 @@ function useFitText(enabled, signature) {
     if (!enabled || !node) return undefined;
 
     /**
-     * Set full size, read what that costs, set the scale that fits — all in
-     * one synchronous pass, so the measurement can never read a size that a
-     * pending render is about to change.
+     * Set a size, read what it costs, keep the largest that fits — all in one
+     * synchronous pass, so a measurement can never read a size that a pending
+     * render is about to change.
      */
     function fitNow() {
       const el = ref.current;
       if (!el) return;
-      el.style.setProperty('--ac-fit', '1');
-      const natural = el.scrollHeight;
-      const box = el.clientHeight;
+
+      const set = (scale) => {
+        el.style.setProperty('--ac-fit', String(scale));
+        el.style.setProperty('--ac-name-fit', String(nameFit(scale)));
+      };
+      // Reading scrollHeight straight after writing the property is what makes
+      // this a measurement of the size just set rather than of the last one.
+      const fits = (scale) => {
+        set(scale);
+        return el.scrollHeight <= el.clientHeight + 1;
+      };
+
       // The card's proportions are fixed — the art plate keeps its 4:3 window
       // whatever the text needs — so the type is the only thing that gives.
-      // The floor is where it stops being readable at arm's length; a card
-      // dense enough to hit it scrolls its last lines rather than shrinking on.
-      const scale = natural > box + 1 ? Math.max(0.62, (box / natural) * 0.98) : 1;
-      el.style.setProperty('--ac-fit', String(scale));
+      if (fits(1)) return;
+
+      let small = TEXT_FLOOR;
+      let large = 1;
+      for (let step = 0; step < FIT_STEPS; step += 1) {
+        const middle = (small + large) / 2;
+        if (fits(middle)) small = middle;
+        else large = middle;
+      }
+      // `small` is the last size known to fit, and the loop's final write may
+      // have been a larger one that did not.
+      set(small);
     }
 
     fitNow();
@@ -142,6 +184,10 @@ function SparkIcon() {
  *                  roll this card asks for — a Duelist's one-handed weapon, a
  *                  Martial Move riding the swing — drawn as one arrow in the
  *                  corner. See RollArrow.jsx and attackModifiers in moves.js.
+ *                  `apCut`, `apFloor` and `apCutFrom` are a holder taking
+ *                  Action Points *off* the printed cost — an Arcanist's PERFECT
+ *                  CASTING — drawn as the old number struck through beside the
+ *                  orb. See cardCost in cardText.js.
  */
 export default function AbilityCard({
   ability,
@@ -163,8 +209,17 @@ export default function AbilityCard({
   const artUrl = useCodexArt()(ability.art_url, artSource);
 
   const typeLine = cardBanner(ability);
-  const apCost = ability.ap_cost ?? ability.ap;
-  const wpCost = ability.wp_cost ?? ability.wp;
+  /* What the card is headed with. A weapon card is headed with the move alone
+     and names its weapon in the banner instead; every other card heads with its
+     whole name, which is what this hands back. See cardText.js. */
+  const title = cardTitle(ability);
+  /* What it costs in *these* hands. The codex never changes a printed cost, but a
+     holder can: an Arcanist at Rank 3 casts everything in their spellbook for one
+     Action Point less, and the orb has to say so, because this same card is what
+     the pay button is printed beside. See cardCost in cardText.js. */
+  const cost = cardCost(ability, modifiers);
+  const apCost = cost.ap;
+  const wpCost = cost.wp;
 
   /* The plates that carry the little four-point spark: a spell, a skill, and a
      Martial Move, which wears one on all six of the printed Novice cards. */
@@ -187,6 +242,8 @@ export default function AbilityCard({
   const empower = Number(modifiers?.empower) || 0;
   const elevate = Number(modifiers?.elevate) || 0;
   const bonus = Number(modifiers?.bonus) || 0;
+  // And the Healer's step, which only grows the dice that restore Health.
+  const healElevate = Number(modifiers?.healElevate) || 0;
 
   /* And what is happening to the roll this card asks for, drawn as one arrow
      under the cost orbs. Nothing on a codex card carries these: they are the
@@ -208,6 +265,7 @@ export default function AbilityCard({
     empower,
     elevate,
     bonus,
+    healElevate,
     choice,
     choicePrompt,
     onValue,
@@ -216,7 +274,7 @@ export default function AbilityCard({
   const bannerRef = useFitLine(typeLine);
   const bodyRef = useFitText(
     fit,
-    `${name}|${body}|${subBody}|${damage.join()}|${empower}|${elevate}|${bonus}|${choice?.id ?? ''}`
+    `${name}|${body}|${subBody}|${damage.join()}|${empower}|${elevate}|${bonus}|${healElevate}|${choice?.id ?? ''}`
   );
 
   const content = (
@@ -226,7 +284,15 @@ export default function AbilityCard({
         style={artUrl ? { backgroundImage: `url("${artUrl}")` } : undefined}
       >
         <div className="ac-badges">
-          <CostOrbs ap={apCost} wp={wpCost} size={38} className="ac-costs" />
+          <CostOrbs
+            ap={apCost}
+            wp={wpCost}
+            size={38}
+            className="ac-costs"
+            apWas={cost.cut > 0 ? cost.printed : null}
+            wpWas={cost.wpCut > 0 ? cost.wpPrinted : null}
+            cutFrom={cost.from}
+          />
           <RollArrow
             advantage={advantage}
             disadvantage={disadvantage}
@@ -246,7 +312,7 @@ export default function AbilityCard({
 
       {/* --ac-fit is written straight onto this node by useFitText. */}
       <div className="ac-body" ref={bodyRef}>
-        <h3 className="ac-title">{name}</h3>
+        <h3 className="ac-title">{title}</h3>
         <div className="ac-text">
           <CardText text={body} {...textProps} />
         </div>

@@ -1,0 +1,977 @@
+/* The dice tray: the button in the corner, the panel over it, the surface a roll
+   lands on and the window that sets one up.
+
+   ------------------------------------------------------------------ the layers
+   Both z-indexes come off the scale in index.css rather than being picked, and
+   both were wrong the first time in ways worth recording:
+
+     the button and its panel   --z-drawer. It is exactly what that rung is for,
+                                "the panels those two open". Below --z-drawer the
+                                sheet's own sticky tab bar (--z-sticky, 900) and
+                                the site header (1000) paint straight over it.
+     the surface                --z-overlay-top, the rung the card stack is on. A
+                                roll in flight has to be over a modal backdrop
+                                (--z-overlay) and over a dealt card, and the
+                                provider renders it after its children so it wins
+                                the tie against a card stack inside them.
+
+   ------------------------------------------------------------------ the colours
+   Every colour here is a token from index.css. There is no --panel, no --ink and
+   no --line in this app: the surfaces are --panel-teal over --bg-black, the type
+   is --text-silver over --text-muted, and a border is --hairline. Writing those
+   from memory got a brown palette in a teal app, which fallbacks hid.
+
+   ------------------------------------------------------------------- the window
+   The custom roll window styles its own fields rather than borrowing the sheet's
+   .fx-* ones. sheet.css is loaded with the character sheet and the tray is on
+   every page, so a borrowed class is an unstyled form everywhere the sheet is
+   not. */
+
+.dice-fab {
+  position: fixed;
+  left: 18px;
+  bottom: 18px;
+  z-index: var(--z-drawer);
+
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+  border: 1px solid rgba(200, 138, 75, 0.35);
+  background: var(--panel-teal);
+  color: var(--copper);
+  box-shadow: 0 6px 18px rgba(4, 8, 10, 0.55);
+  cursor: pointer;
+  transition: transform 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.dice-fab:hover,
+.dice-fab.is-open {
+  color: var(--copper-bright);
+  border-color: var(--copper);
+  transform: translateY(-2px);
+}
+
+.dice-fab-mark {
+  width: 26px;
+  height: 26px;
+}
+
+/* ------------------------------------------------------------- the panel */
+
+.dice-tray {
+  position: fixed;
+  left: 18px;
+  bottom: 82px;
+  z-index: var(--z-drawer);
+
+  width: 320px;
+  max-width: calc(100vw - 36px);
+  padding: 14px;
+
+  border: 1px solid rgba(200, 138, 75, 0.25);
+  border-top: 3px solid var(--copper);
+  border-radius: 6px;
+  background: var(--panel-teal);
+  box-shadow: 0 10px 30px rgba(4, 8, 10, 0.6);
+}
+
+.dice-tray-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.dice-tray-ladder {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dice-pick {
+  flex: 1 0 auto;
+  min-width: 46px;
+  padding: 7px 4px;
+
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background: var(--inset-bg);
+  color: var(--text-silver);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.dice-pick:hover {
+  border-color: var(--copper);
+  color: var(--copper-bright);
+}
+
+.dice-tray-pool {
+  margin: 10px 0 8px;
+  min-height: 1.4em;
+  font-size: 0.95rem;
+  color: var(--copper-bright);
+}
+
+.dice-tray-empty {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.dice-tray-check {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.dice-tray-tools {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.dice-tray-custom {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px 10px;
+  text-align: left;
+
+  border: 1px dashed var(--hairline);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-silver);
+  font-family: var(--font-body);
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+.dice-tray-custom:hover {
+  border-color: var(--copper);
+  border-style: solid;
+}
+
+.dice-tray-custom-line {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------------- the row
+
+   Panels stand side by side at the right of the screen, and the row is what is
+   anchored there rather than any one of them. Jules, 2026-09-21: "when you have
+   an ongoing roll, and someone else does another roll it pop to the left of the
+   roll box instead of on top."
+
+   So a second roll takes the seat to the left and your own keeps the right-hand
+   end, where the single panel used to stand. Nothing on screen is covered by
+   anything, which is the whole point: a table rolling at once is two rolls to
+   read, not one roll hiding another.
+
+   Below the header's rung would put it under the sticky tab bar, so it keeps
+   the overlay-top rung: a dealt card and a modal are still what it has to win
+   against. The tray's own button holds the bottom left, the knocks the top and
+   bottom right, and this stands between them at mid-height.
+
+   The row takes no clicks and its seats do, so the sheet behind is as pressable
+   between two panels as it was beside one. A phone takes them back further
+   down: there the row is one panel wide and has to catch the swipe. */
+
+/* It spans the screen rather than hugging its panels, and the panels are held
+   at the right end of it by the auto margin below. A row sized to its contents
+   reads as min-content to the flex algorithm the moment a seat is allowed to
+   give any width up, which quietly took 100px off a panel that was on its own
+   with a whole screen to stand in. */
+.dice-rail-wrap {
+  position: fixed;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: var(--z-overlay-top);
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.dice-rail {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-height: 100vh;
+  /* The gutter the surface used to hold off the right edge itself, and room
+     above and below for the panels' own shadows, which the scroll box would
+     otherwise cut off square. */
+  padding: 24px 18px;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+/* No bar across the panels. The dots say how many there are. */
+.dice-rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* A seat is the width the single panel used to be, and gives some of it up
+   before it lets a neighbour hang off the edge of the screen: a roll you cannot
+   see is no better than a roll behind another one. Below 300px it stops giving,
+   and the row scrolls instead. */
+.dice-rail-slot {
+  flex: 0 1 min(400px, calc(100vw - 36px));
+  min-width: min(300px, calc(100vw - 36px));
+  scroll-snap-align: center;
+  pointer-events: auto;
+}
+
+/* What holds the row against the right edge. An auto margin rather than
+   `justify-content: flex-end`, which in a scroll box puts the overflow off the
+   *start* side where nothing can scroll to it. An auto margin gives up and
+   goes to zero the moment there is nothing spare, which is exactly when the
+   row starts scrolling instead. */
+.dice-rail-slot:first-child {
+  margin-left: auto;
+}
+
+/* One dot a panel, only when the row runs past the edge of the screen. Under
+   the right-hand panel, which is the one they are a way back to. */
+.dice-rail-dots {
+  display: flex;
+  gap: 2px;
+  margin-right: 18px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: rgba(9, 17, 21, 0.82);
+  pointer-events: auto;
+}
+
+/* A thumb-sized button around a small mark: the dot is what you see and the
+   button is what you hit. */
+.dice-rail-dot {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dice-rail-dot::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border: 1px solid rgba(200, 138, 75, 0.55);
+  border-radius: 50%;
+}
+
+.dice-rail-dot.is-on::before {
+  border-color: var(--copper);
+  background: var(--copper);
+}
+
+/* ------------------------------------------------------------ the surface
+
+   One seat's worth: the dice, the DC question, the verdict and the four
+   buttons. Jules, 2026-09-04: "Instead of doing a full screen lets do a
+   rectangle that pop on the right side center vertically. So it does not take
+   over everything as it happens." What went then was the backdrop, and what
+   went with the row is the panel's own footing: it is placed by the row now,
+   and sized to its seat. Tapping the panel is what tapping anywhere used to
+   be. */
+
+.dice-surface {
+  width: 100%;
+  max-height: min(82vh, 720px);
+  overflow-y: auto;
+  padding: 18px 18px 16px;
+
+  border: 1px solid rgba(200, 138, 75, 0.35);
+  border-top: 3px solid var(--copper);
+  border-radius: 6px;
+  background: var(--panel-teal);
+  box-shadow: 0 18px 48px rgba(4, 8, 10, 0.7);
+  animation: dice-surface-in 0.18s ease-out;
+}
+
+@keyframes dice-surface-in {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dice-surface {
+    animation: none;
+  }
+}
+
+.dice-stage {
+  width: 100%;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* The stage is a label, not a target: clicks belong to the surface behind it so
+   that "tap anywhere" means anywhere. The controls take theirs back. */
+.dice-stage button,
+.dice-stage input {
+  pointer-events: auto;
+}
+
+/* The action, as a plate at the top of the surface: the card's own art beside
+   its name, framed, so a roll reads as the thing being done. Centered with or
+   without the picture, and never taller than the art. */
+.dice-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 auto;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: 1px solid var(--hairline);
+  background:
+    linear-gradient(180deg, rgba(200, 138, 75, 0.08), rgba(9, 17, 21, 0.6));
+  box-shadow: 0 0 0 1px rgba(9, 17, 21, 0.6);
+  text-align: left;
+}
+
+.dice-head-art {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid rgba(200, 138, 75, 0.35);
+}
+
+.dice-head-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.dice-head-name {
+  font-family: var(--font-headings);
+  font-size: 1.15rem;
+  line-height: 1.2;
+  color: var(--text-silver);
+}
+
+.dice-note {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Whose roll this is, above the name, when it is not yours. It sits first and in
+   the accent colour because that is the question a watcher has: a surface that
+   opened by itself is somebody else's turn, and reading the name of the card
+   before the name of the player gets it the wrong way round. */
+.dice-whose {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--copper);
+}
+
+/* And the whole surface is quieter when nobody here threw the dice. It is
+   something happening at the table rather than something being asked of you. */
+.dice-surface.is-watching .dice-stage {
+  opacity: 0.94;
+}
+
+.dice-asked {
+  margin: 4px 0 20px;
+  font-size: 0.88rem;
+  color: var(--copper);
+}
+
+.dice-dc {
+  margin-left: 8px;
+  color: var(--text-muted);
+}
+
+/* The flat floor holds rows now: the dice that were asked for on the first,
+   then a thin seam, then whatever burst out of them on the second. What was
+   rolled and what the roll did are two different lines. */
+.dice-floor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  min-height: 76px;
+}
+
+.dice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+}
+
+.dice-burst-seam {
+  width: min(70%, 320px);
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 179, 71, 0.55),
+    transparent
+  );
+}
+
+/* The physics table takes a real box to fall in, where the flat floor only needs
+   room for the dice it draws. As wide as the panel, and clipped so a die that
+   gets away does not push the page out. */
+.dice-floor.is-solid {
+  display: block;
+  width: 100%;
+  height: 240px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dice-table {
+  width: 100%;
+  height: 100%;
+}
+
+.dice-table canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* On a phone there is no right side to stand at, and no room for two panels
+   side by side. The row takes the width and sits at the foot, above the tray's
+   own button, one panel to a screen: the second roll is still to the left of
+   the first, it is just a swipe away rather than beside it. Snapping is
+   mandatory here so a swipe lands on a panel and never between two. */
+@media (max-width: 560px) {
+  .dice-rail-wrap {
+    top: auto;
+    bottom: 68px;
+    transform: none;
+    align-items: center;
+  }
+
+  .dice-rail-dots {
+    margin-right: 0;
+  }
+
+  .dice-rail {
+    padding: 16px 10px;
+    scroll-snap-type: x mandatory;
+    /* The row catches the swipe here, so it has to be touchable. It covers the
+       same band of screen the one panel used to. */
+    pointer-events: auto;
+  }
+
+  /* One to a screen, whatever else is in the row. */
+  .dice-rail-slot {
+    flex: 0 0 100%;
+    min-width: 100%;
+  }
+
+  .dice-surface,
+  .react-gate {
+    max-height: 70vh;
+    animation: none;
+  }
+
+  .dice-floor.is-solid {
+    height: 200px;
+  }
+}
+
+/* =========================================================
+   THE REACTION GATE
+   The stack, standing between an action and its dice: the
+   countdown, who is holding it, and the fail question. Same
+   footing as the dice surface, because it is the beat before
+   it: the same panel, in the seat the roll is about to take.
+   See ReactionGate.jsx.
+   ========================================================= */
+.react-gate {
+  width: 100%;
+  max-height: min(82vh, 720px);
+  overflow-y: auto;
+  padding: 18px 18px 16px;
+
+  border: 1px solid rgba(255, 145, 60, 0.4);
+  border-top: 3px solid var(--stat-rp);
+  border-radius: 6px;
+  background: var(--panel-teal);
+  box-shadow: 0 18px 48px rgba(4, 8, 10, 0.7);
+  animation: dice-surface-in 0.18s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-gate {
+    animation: none;
+  }
+}
+
+.react-gate-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: center;
+}
+
+.react-gate-line {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--copper-bright);
+}
+
+.react-gate-holds {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.react-gate-hold {
+  font-size: 0.82rem;
+  color: var(--text-silver);
+  animation: react-hold-pulse 1.6s ease-in-out infinite;
+}
+
+/* Why nobody else is coming: an action gets one reaction, and it has been
+   taken. Said under the hold rather than in the hint at the foot, because it is
+   news about this moment and the hint is the standing rule. */
+.react-gate-only {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+@keyframes react-hold-pulse {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-gate-hold {
+    animation: none;
+  }
+}
+
+.react-gate-override {
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.react-gate-ask {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.react-gate-targets {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* One body and the table's word on it, asked as two choices rather than a
+   toggle: Stands, or Fails. Unanswered is its own honest state, and the
+   confirm below sleeps until every body has one. */
+.react-gate-target {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 150px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  background-color: rgba(9, 17, 21, 0.7);
+  text-align: left;
+  font-family: var(--font-body);
+}
+
+.react-gate-target-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.react-gate-target-says {
+  display: flex;
+  gap: 6px;
+}
+
+.react-gate-say {
+  padding: 2px 10px;
+  border-radius: 3px;
+  border: 1px solid var(--hairline);
+  background-color: rgba(9, 17, 21, 0.6);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.react-gate-say.is-stands.is-on {
+  border-color: var(--def-healing);
+  color: var(--def-healing);
+  background-color: rgba(80, 200, 120, 0.12);
+}
+
+.react-gate-say.is-fails.is-on {
+  border-color: var(--danger-red);
+  color: var(--danger-rose);
+  background-color: rgba(224, 82, 82, 0.12);
+}
+
+.react-gate-target.is-failed {
+  border-color: rgba(224, 82, 82, 0.5);
+  opacity: 0.85;
+}
+
+.react-gate-verdicts {
+  display: flex;
+  gap: 10px;
+}
+
+.react-gate-hint {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------- the answer */
+
+.dice-total {
+  margin: 22px 0 0;
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  justify-content: center;
+}
+
+.dice-flat {
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.dice-sum {
+  font-family: var(--font-headings);
+  font-size: 2.6rem;
+  line-height: 1;
+  color: var(--text-bright);
+}
+
+.dice-verdict {
+  margin: 8px 0 0;
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* The four bands, in the tones VERDICTS gives them in lib/dice.js. A failure is
+   red rather than muted, because this word is what the whole roll was for. */
+.dice-verdict.is-success { color: var(--def-healing); }
+.dice-verdict.is-failure { color: var(--danger-rose); }
+.dice-verdict.is-critical-success { color: var(--level-amber); }
+.dice-verdict.is-critical-failure { color: var(--danger-red); }
+
+/* ------------------------------------------- what can still be done about it
+   Offers made after the dice have stopped: a Karma, a card that adds one. They
+   sit under the verdict because they are about the verdict, and each one names
+   what is paying for it, because "you own a thing that could fix this" is only
+   useful if it says which thing. */
+
+.dice-help {
+  margin-top: 14px;
+}
+
+.dice-help-ask {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-bottom: 7px;
+}
+
+.dice-help-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.dice-help-opt {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 12px;
+
+  border: 1px solid var(--dice-tone, var(--copper));
+  border-radius: 4px;
+  background: var(--inset-bg);
+  color: var(--dice-tone, var(--text-silver));
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.dice-help-opt:hover {
+  background: rgba(234, 242, 248, 0.08);
+}
+
+/* Where it comes from, under the name of what it does. The tooltip carries the
+   whole rule; this is the half a reader needs without hovering. */
+.dice-help-from {
+  font-size: 0.6rem;
+  letter-spacing: 0.03em;
+  opacity: 0.72;
+  color: var(--text-muted);
+}
+
+.dice-call {
+  margin-top: 16px;
+}
+
+.dice-call-ask {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.dice-call-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.dice-call-opt {
+  padding: 7px 12px;
+  border: 1px solid var(--dice-tone, var(--hairline));
+  border-radius: 4px;
+  background: var(--inset-bg);
+  color: var(--dice-tone, var(--text-silver));
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.dice-call-opt:hover {
+  background: rgba(234, 242, 248, 0.08);
+}
+
+.dice-tools {
+  margin-top: 20px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.dice-hint {
+  margin: 12px 0 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* --------------------------------------------------- setting a roll up
+   The custom roll window's own fields. Styled here and not borrowed from
+   sheet.css, which is not loaded on four of the five pages this window opens
+   over. */
+
+.dice-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dice-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dice-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.dice-input {
+  width: 100%;
+  padding: 8px 10px;
+
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background: var(--inset-bg);
+  color: var(--text-silver);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+}
+
+.dice-input:focus {
+  outline: none;
+  border-color: var(--focus-cyan);
+}
+
+.dice-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dice-chip {
+  flex: 1 1 auto;
+  padding: 7px 10px;
+
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background: var(--inset-bg);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.dice-chip:hover {
+  color: var(--text-silver);
+  border-color: var(--copper);
+}
+
+.dice-chip.is-on {
+  border-color: var(--dice-tone, var(--copper));
+  color: var(--dice-tone, var(--copper-bright));
+  background: rgba(200, 138, 75, 0.1);
+}
+
+.dice-chip b {
+  color: var(--dice-tone, var(--text-silver));
+}
+
+.dice-swing {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dice-step {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background: var(--inset-bg);
+  color: var(--text-silver);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dice-step:hover {
+  border-color: var(--copper);
+  color: var(--copper-bright);
+}
+
+.dice-swing-value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 96px;
+}
+
+.dice-swing-n {
+  font-family: var(--font-headings);
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--dice-tone, var(--text-silver));
+}
+
+.dice-swing-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.dice-field-line {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.dice-field-sum {
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+  font-size: 0.9rem;
+  color: var(--copper-bright);
+}
+
+@media (max-width: 560px) {
+  .dice-tray {
+    width: calc(100vw - 36px);
+  }
+
+  .die,
+  .die-shape {
+    width: 56px;
+  }
+
+  .die-shape {
+    height: 56px;
+  }
+
+  .die-face {
+    top: 28px;
+    font-size: 1.3rem;
+  }
+}

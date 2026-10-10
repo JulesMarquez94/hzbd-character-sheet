@@ -1,15 +1,25 @@
 import { useMemo, useState } from 'react';
 import Modal from '../Modal.jsx';
+import { CostOrb } from '../CostOrbs.jsx';
 import { LoadoutChooser } from './LoadoutPick.jsx';
+import BrewRest from './BrewRest.jsx';
 import EnchantAction from './EnchantRest.jsx';
+import { PactFormWall } from './PactPick.jsx';
+import RaiseWindow from './RaiseWindow.jsx';
+import ScribeRest from './ScribeRest.jsx';
+import { Gated } from './parts.jsx';
 import WornEnchants from './WornEnchants.jsx';
 import { useCardStack } from '../../context/card-stack.js';
+import { brewSummary } from '../../lib/alchemy.js';
 import { formatNumber } from '../../lib/characterModel.js';
 import { enchantChanges } from '../../lib/enchanting.js';
-import { heldItem } from '../../lib/items.js';
+import { getItem, heldItem } from '../../lib/items.js';
 import { getEnchantment } from '../../lib/enchantments.js';
 import { getRest, labourAffordable, restActions, restPlan } from '../../lib/rest.js';
-import { pickChanges, toggleLoadoutPick } from '../../lib/loadouts.js';
+import { pickChanges, poolAction, poolOwing, toggleLoadoutPick } from '../../lib/loadouts.js';
+import { rechargeSpend, runeRecharges } from '../../lib/runes.js';
+import { scribeSummary } from '../../lib/scribing.js';
+import { raiseDraft } from '../../lib/undead.js';
 import { setTalentPicks } from '../../lib/talents.js';
 
 /**
@@ -66,6 +76,47 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
   /* The talents column as this window has re-prepared it, or null while it is
      untouched. */
   const [prepared, setPrepared] = useState(null);
+  /* And what an Alchemist has put in the still: recipe ids, one per brew. Its own
+     piece of state rather than part of the draft above, because a flask is not
+     something the `talents` column holds. It becomes pack entries in the rest's
+     own patch. See alchemy.js. */
+  const [brews, setBrews] = useState([]);
+  /* And the form a pact-bound weapon is reshaping into tonight: a weapon id, or
+     null while the blade keeps yesterday's shape. Its own piece of state for
+     the same reason `brews` is — a weapon's form is nothing the `talents` draft
+     holds. It becomes a forged-record write in the rest's own patch. */
+  const [reshaped, setReshaped] = useState(null);
+  /* And which fired runes a Runebearer is lighting again tonight: card ids, held
+     apart from the draft above for the same reason the brews are. It is
+     deliberately **not** part of the action slot and `clearAction` does not
+     touch it: RECHARGED is something a Short Rest does, not something a night is
+     spent on, so it sits beside the plan rather than in the slot. */
+  const [revived, setRevived] = useState([]);
+  /* And the body a Necromancer is standing up tonight: the whole draft the raise
+     window collects, held here rather than in it so that closing the step keeps
+     what was answered and the plan behind it can price the corpse. Its own piece
+     of state for the same reason the brews are: a body is nothing the `talents`
+     column holds. It becomes a row in the `minions` column in the rest's own
+     patch. See undead.js. */
+  const [raised, setRaised] = useState(null);
+  /* And what a Spellquill is writing tonight: the leaves the night's action
+     buys, which are permanent and paid for in Supplies.
+
+     One draft, since 2026-09-10. There were two, and the second held the fading
+     leaves this window prepared above the action slot for free. EPHEMERAL SPELL
+     SCROLLS is a card you play now, off the quick bar, for Action Points and
+     Willpower, so a night has nothing to prepare and nothing to ask. See
+     EphemeralWindow.jsx. */
+  const [scribes, setScribes] = useState([]);
+  /* And the ground an Oathbound is consecrating tonight: `{ set, name, note }`,
+     or null for a night the slot went elsewhere. Held here rather than written
+     as it is typed, like every other draft in this window, so backing out of the
+     rest leaves the room exactly as unconsecrated as it was. See oathbound.js. */
+  const [consecrated, setConsecrated] = useState(null);
+  /* And the vow an Oathbound sat with tonight: a set id, or null. The one action
+     in this window with nothing to ask, so it has no step and the slot is filled
+     the moment it is chosen. */
+  const [meditated, setMeditated] = useState(null);
 
   /* Whether the list of actions is up, and which one's step is. */
   const [menu, setMenu] = useState(false);
@@ -86,15 +137,45 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
      rule. */
   const picked = useMemo(() => (chosen ? [chosen] : []), [chosen]);
   const plan = useMemo(
-    () => restPlan(character, kind, picked, prepared),
-    [character, kind, picked, prepared]
+    () =>
+      restPlan(character, kind, picked, prepared, brews, reshaped, {
+        revived,
+        raised,
+        scribes,
+        consecrated,
+        meditated,
+      }),
+    [
+      character,
+      kind,
+      picked,
+      prepared,
+      brews,
+      reshaped,
+      revived,
+      raised,
+      scribes,
+      consecrated,
+      meditated,
+    ]
   );
+
+  /* What a Short Rest could bring back, per set that can bring anything back.
+     Empty for everybody else, and empty for a Long Rest, which brings the whole
+     slate back on its own. See runes.js. */
+  const recharges = useMemo(() => runeRecharges(character, kind), [character, kind]);
 
   /** Take the slot back, and everything the action had written into the draft. */
   function clearAction() {
     setActionId(null);
     setChosen(null);
     setPrepared(null);
+    setBrews([]);
+    setReshaped(null);
+    setRaised(null);
+    setScribes([]);
+    setConsecrated(null);
+    setMeditated(null);
   }
 
   /** Fill the slot. Whatever was in it, and whatever it did, goes first. */
@@ -102,16 +183,39 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
     setChosen(amount ? { card: row.card, amount: amount.amount, gain: amount.gain } : null);
     // A different action means the last one's work is given back, not added to.
     setPrepared(null);
+    setBrews([]);
+    setReshaped(null);
+    setScribes([]);
+    setRaised(row.kind === 'raise' ? { set: row.state.id } : null);
+    setConsecrated(
+      row.kind === 'sanctuary'
+        ? { set: row.state.id, name: row.state.sanctuary?.name ?? '', note: '' }
+        : null
+    );
+    setMeditated(row.kind === 'meditate' ? row.state.id : null);
     setActionId(row.id);
 
     setMenu(false);
-    // A labour is finished the moment its amount is chosen; the rest need a step.
-    if (row.kind !== 'labour') setStepId(row.id);
+    /* A labour is finished the moment its amount is chosen and a meditation the
+       moment it is chosen at all; everything else needs a step. */
+    if (row.kind !== 'labour' && row.kind !== 'meditate') setStepId(row.id);
   }
 
   if (!rest || !plan) return null;
 
-  const held = action ? summarise(action, { chosen, character, talents }) : null;
+  const held = action
+    ? summarise(action, {
+        chosen,
+        character,
+        talents,
+        brews,
+        reshaped,
+        raised,
+        scribes,
+        consecrated,
+        meditated,
+      })
+    : null;
 
   return (
     <Modal
@@ -144,22 +248,31 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
             <button type="button" className="btn btn-minimal btn-sm" onClick={onClose}>
               Cancel
             </button>
-            <button
-              type="button"
+            <Gated
               className="btn btn-copper btn-sm"
               onClick={() => {
-                onRest(plan.patch);
+                /* The write, and beside it what this rest was spent on. Only
+                   the table log reads the second argument, and a caller that
+                   ignores it is a caller that behaves exactly as it did. */
+                onRest(plan.patch, { action: action?.label ?? null });
                 onClose();
               }}
-              disabled={!plan.affordable}
-              title={
-                plan.affordable
-                  ? undefined
-                  : `${plan.short} more Supplies than the crate holds. Nothing about this rest happens.`
+              why={
+                !plan.affordable
+                  ? `This rest needs ${plan.short} more Supplies than the crate holds. Restock, or take a labour off above. Nothing about the rest happens until you do.`
+                  : /* And a night's action half answered, which used to be taken
+                       anyway: a raising with no name was quietly dropped and the
+                       night was spent on nothing. Jules, 2026-09-10, on choices
+                       generally: they are made before the confirm. The slot has
+                       been saying so in red the whole time, and now the confirm
+                       waits with it. Both ways out are on the slot itself. */
+                    held?.owing
+                    ? `${held.owing} Go back into it and finish, or clear the action, and this rest goes ahead.`
+                    : null
               }
             >
               Yes, rest
-            </button>
+            </Gated>
           </>
         )
       }
@@ -204,6 +317,42 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
               {action ? ', or spend the night on something cheaper' : ''}.
             </p>
           )}
+
+          {/* ---------- WHAT LIGHTS AGAIN ---------- *
+              RECHARGED: "you can bring back up to 4 of your fired runes." A
+              budget spent against a list, which is the only thing a rest gives
+              back that is a *choice*, so it is the only one with a chooser. Above
+              the action slot because it is not one: a Short Rest buys no action
+              at all, and this happens on every Short Rest a Runebearer takes.
+
+              Held by the rune's `key` rather than by the card's id, since a slate
+              may carry the same spell twice and bringing one of the two back has
+              to be a thing this list can say. */}
+          {recharges.map((row) => (
+            <RuneRecharge
+              key={row.talent.id}
+              row={row}
+              chosen={revived}
+              onToggle={(runeKey) =>
+                setRevived((held) =>
+                  held.includes(runeKey) ? held.filter((one) => one !== runeKey) : [...held, runeKey]
+                )
+              }
+            />
+          ))}
+
+          {/* ---------- gone: WHAT FADES BY MORNING ---------- *
+              A Spellquill's fading leaves had a slot here, above the action,
+              because EPHEMERAL SPELL SCROLLS was not one: the night prepared
+              half your Mind plus your rank of them for nothing, and a night
+              spent raising the dead still laid them out.
+
+              Jules reworked the card on 2026-09-10 and it is a card you play
+              now, for 2 Action Points and the spell's own rung in Willpower, so
+              there is nothing for a rest to prepare. The window moved to the
+              quick bar with it: see EphemeralWindow.jsx. What a night still does
+              about them is sweep up yesterday's, and that has never been
+              anything the player had to press. */}
 
           {/* ---------- THE ACTION SLOT ---------- *
               One, because a rest buys one. Empty until you open it, and after
@@ -277,10 +426,32 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
           talent={step.talent}
           character={character}
           state={step.state}
-          onToggle={(cardId) =>
-            setPrepared(toggleLoadoutPick(talents, step.talent.id, cardId, step.state.known))
+          onToggle={(cardId, how) =>
+            setPrepared(toggleLoadoutPick(talents, step.talent.id, cardId, step.state.known, how))
           }
           onClear={() => setPrepared(setTalentPicks(talents, step.talent.id, []))}
+          onClose={() => setStepId(null)}
+        />
+      )}
+
+      {step?.kind === 'alchemy' && (
+        <BrewRest
+          character={character}
+          kind={kind}
+          state={step.state}
+          brews={brews}
+          onDraft={setBrews}
+          onClose={() => setStepId(null)}
+        />
+      )}
+
+      {step?.kind === 'scribe' && (
+        <ScribeRest
+          character={character}
+          kind={kind}
+          state={step.state}
+          draft={scribes}
+          onDraft={setScribes}
           onClose={() => setStepId(null)}
         />
       )}
@@ -293,6 +464,109 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
           onDraft={setPrepared}
           onClose={() => setStepId(null)}
         />
+      )}
+
+      {step?.kind === 'pact' && (
+        <Modal
+          title="Reshape your pact-bound weapon"
+          onClose={() => setStepId(null)}
+          size="page"
+          footer={
+            <>
+              <span className="spacer" />
+              <button type="button" className="btn btn-take btn-sm" onClick={() => setStepId(null)}>
+                ← Back to the rest
+              </button>
+            </>
+          }
+        >
+          <p className="frame-foot" style={{ marginTop: 0 }}>
+            Any form in the codex. The workings laid into it ride along, it keeps its place in your
+            first weapon slot, and nothing about the change costs Supplies. It is written when the
+            rest is.
+          </p>
+          <PactFormWall
+            character={character}
+            current={reshaped ?? step.state.weapon?.base ?? null}
+            onPick={(weaponId) =>
+              setReshaped(weaponId === step.state.weapon?.base ? null : weaponId)
+            }
+          />
+        </Modal>
+      )}
+
+      {/* RAISE THE DEAD, which is the only step that *adds* something to the
+          sheet rather than changing what is there. Everything it collects sits
+          in this window's own draft until the rest is confirmed, exactly like
+          the still and the shelf, so backing out of the night leaves the corpse
+          in the cart. See RaiseWindow.jsx. */}
+      {step?.kind === 'raise' && (
+        <RaiseWindow
+          character={character}
+          row={step}
+          draft={raised}
+          onDraft={setRaised}
+          onClose={() => setStepId(null)}
+        />
+      )}
+
+      {/* CONSECRATION, and the one step in this window that asks for nothing but a
+          name. The ground is real and the sheet has no idea where it is, so what
+          it holds is what the table will call it and whatever the player wants to
+          remember about it. Written when the rest is. */}
+      {step?.kind === 'sanctuary' && (
+        <Modal
+          title={`Consecrate your ${step.state.spec.sanctuary?.label ?? 'Sanctuary'}`}
+          onClose={() => setStepId(null)}
+          footer={
+            <>
+              <span className="spacer" />
+              <button
+                type="button"
+                className="btn btn-take btn-sm"
+                onClick={() => setStepId(null)}
+              >
+                ← Back to the rest
+              </button>
+            </>
+          }
+        >
+          <p className="frame-foot" style={{ marginTop: 0 }}>
+            {step.state.greater
+              ? `A space of its own, shaped by ${step.state.oath.name}: ${step.state.oath.sanctum}. Anyone who takes a Long Rest inside it wakes Bolstered, and holding it costs you ${step.state.spec.sanctuary?.willpower ?? 0} of your maximum Willpower.`
+              : 'One room, no larger. Everything you do inside it is rolled with advantage, and it holds until you consecrate somewhere else.'}
+          </p>
+
+          <label className="form-label" htmlFor="sanctuary-name">
+            What is this place
+          </label>
+          <input
+            className="form-input"
+            id="sanctuary-name"
+            type="text"
+            maxLength={60}
+            value={consecrated?.name ?? ''}
+            placeholder="The back room at the Drowned Crow"
+            onChange={(event) =>
+              setConsecrated((live) => ({ ...live, set: step.state.id, name: event.target.value }))
+            }
+          />
+
+          <label className="form-label" htmlFor="sanctuary-note">
+            Anything worth remembering about it
+          </label>
+          <textarea
+            className="form-input"
+            id="sanctuary-note"
+            rows={3}
+            maxLength={240}
+            value={consecrated?.note ?? ''}
+            placeholder="Second floor, one window, the landlord thinks we are praying"
+            onChange={(event) =>
+              setConsecrated((live) => ({ ...live, set: step.state.id, note: event.target.value }))
+            }
+          />
+        </Modal>
       )}
 
       {step?.kind === 'worn' && (
@@ -315,8 +589,8 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
         >
           <p className="frame-foot" style={{ marginTop: 0 }}>
             Wielder of Wonder: what an Enchanter carries on themselves rather than on a thing.
-            Changed at a Long Rest and never priced, because the card names no price for it. Take
-            one off to make room for another.
+            Changed at a Long Rest and never priced, and it weighs nothing on your Magic Burden.
+            Take one off to make room for another.
           </p>
           <WornEnchants character={character} talents={talents} onChange={setPrepared} tone="rest" />
         </Modal>
@@ -390,21 +664,20 @@ function ActionMenu({ actions, action, character, kind, onTake, onRead }) {
                         const affordable = labourAffordable(character, kind, option);
 
                         return (
-                          <button
-                            type="button"
+                          <Gated
                             key={`${option.amount}-${option.gain}`}
                             className={`rest-opt${option.gain ? ' is-gain' : ''}`}
-                            disabled={!affordable}
                             onClick={() => onTake(row, option)}
-                            title={
+                            title={`${row.label} for ${option.amount} Supplies`}
+                            why={
                               affordable
-                                ? `${row.label} for ${option.amount} Supplies`
-                                : `${option.amount} Supplies is more than the crate holds once the rest is paid for`
+                                ? null
+                                : `${option.amount} Supplies is more than the crate holds once the rest itself is paid for.`
                             }
                           >
                             {option.gain ? '+' : '−'}
                             {option.amount}
-                          </button>
+                          </Gated>
                         );
                       })
                     )
@@ -434,17 +707,176 @@ function ActionMenu({ actions, action, character, kind, onTake, onRead }) {
  * laying anything leaves the slot open, and it says so rather than reading as a
  * night's work finished.
  */
-function summarise(action, { chosen, character, talents }) {
+/**
+ * One slate's fired runes, offered back against a budget.
+ *
+ * Every fired rune is shown rather than only the ones there is still room for,
+ * and the ones past the count are refused with the reason on them. That is how
+ * every other budget on this sheet reads, and hiding them would leave a player
+ * wondering where the rest of their runes went.
+ *
+ * **The budget is a count of runes**, four of them at Master, and it stopped
+ * being a Willpower allowance on 2026-09-09. So the orb beside each name is no
+ * longer a price being paid here: it is what that rune is worth, which is how a
+ * player decides which four to spend the four on. Dearest first, off
+ * `runeRecharges`, so tapping straight down the list is the strong play.
+ *
+ * The same spell inscribed twice is two rows, one per copy, and each is tapped
+ * on its own key.
+ */
+function RuneRecharge({ row, chosen, onToggle }) {
+  const spend = rechargeSpend(row, chosen);
+
+  return (
+    <>
+      <span className="fx-label">
+        Runes to bring back
+        <span className="rest-labour-rule">{row.from}</span>
+      </span>
+
+      <div className="rest-runes">
+        <div className="rest-runes-list">
+          {row.spent.map((rune) => {
+            const on = chosen.includes(rune.key);
+            const room = on || spend.left > 0;
+            const name = rune.card?.name ?? rune.id;
+            const which = rune.copies > 1 ? `${name} (${rune.copy} of ${rune.copies})` : name;
+
+            return (
+              <button
+                type="button"
+                key={rune.key}
+                className={`rest-rune${on ? ' is-on' : ''}`}
+                onClick={() => onToggle(rune.key)}
+                disabled={!room}
+                title={
+                  room
+                    ? on
+                      ? `${which} comes back. Tap to leave it spent`
+                      : `Bring ${which} back. It is worth ${rune.cost} Willpower on your slate`
+                    : `${spend.budget} is all this rest brings back. Tap one off to make room for ${which}`
+                }
+              >
+                <span className="rest-rune-name">{which}</span>
+                <CostOrb kind="wp" value={rune.cost} size={17} />
+              </button>
+            );
+          })}
+        </div>
+
+        <span className="rest-runes-budget">
+          {spend.cost} of {spend.budget} {spend.budget === 1 ? 'rune' : 'runes'} brought back
+        </span>
+      </div>
+    </>
+  );
+}
+
+function summarise(action, {
+  chosen,
+  character,
+  talents,
+  brews,
+  reshaped,
+  raised,
+  scribes,
+  consecrated,
+  meditated,
+}) {
+  if (action.kind === 'scribe') {
+    const said = scribeSummary(scribes, action.state);
+    return said
+      ? { done: true, says: said }
+      : {
+          done: false,
+          says: 'Nothing on the desk yet',
+          owing: 'The night is spent at the desk and nothing is written on it yet.',
+        };
+  }
+
   if (action.kind === 'labour') {
     return chosen
       ? { done: true, says: `${chosen.gain ? '+' : '−'}${chosen.amount} Supplies` }
-      : { done: false, says: 'No amount chosen yet' };
+      : { done: false, says: 'No amount chosen yet', owing: 'The labour has no amount on it yet.' };
+  }
+
+  if (action.kind === 'raise') {
+    const offer = action.offers.find((row) => row.kind.id === raised?.kind) ?? null;
+    if (!offer) {
+      return {
+        done: false,
+        says: 'No body chosen yet',
+        owing: 'The night is spent over a corpse and no body has been chosen.',
+      };
+    }
+
+    const plan = raiseDraft(action.state, offer, raised);
+    return plan.ready
+      ? { done: true, says: `${raised.name}, ${offer.kind.label.toLowerCase()} at ${offer.cost} Marrow` }
+      : {
+          done: false,
+          says: `${offer.kind.label}, and something still open`,
+          owing: `The ${offer.kind.label.toLowerCase()} you are raising has a question still open.`,
+        };
+  }
+
+  if (action.kind === 'meditate') {
+    /* Nothing to choose, so nothing to owe: picking the row is the whole action.
+       It still reports what it did, because every other row in this list does and
+       a blank line beside a filled slot reads as a slot that is not filled. */
+    return meditated
+      ? { done: true, says: `${action.state.oath.name}, sat with` }
+      : { done: false, says: 'Not settled', owing: 'The night is spent meditating and nothing was set.' };
+  }
+
+  if (action.kind === 'sanctuary') {
+    const named = String(consecrated?.name ?? '').trim();
+    return named
+      ? { done: true, says: `${named} consecrated` }
+      : {
+          done: false,
+          says: 'The place has no name yet',
+          owing: 'The night is spent consecrating ground and the place has not been named.',
+        };
+  }
+
+  if (action.kind === 'pact') {
+    return reshaped
+      ? { done: true, says: `Reshaped into a ${getItem(reshaped)?.name ?? reshaped}` }
+      : {
+          done: false,
+          says: 'No form chosen yet',
+          owing: 'The night is spent reshaping the weapon and no form has been chosen.',
+        };
+  }
+
+  if (action.kind === 'alchemy') {
+    const said = brewSummary(brews, action.state);
+    return said
+      ? { done: true, says: said }
+      : {
+          done: false,
+          says: 'Nothing in the still yet',
+          owing: 'The night is spent at the still and nothing is in it yet.',
+        };
   }
 
   if (action.kind === 'prepare') {
+    /* A pool the night left short, which is the one thing here that can be half
+       done rather than not started: putting two spells down and taking none back
+       up is a hand two cards short by morning. The chooser's own Done already
+       refuses it, and this is the same refusal at the window that writes. The
+       debt is worded in loadouts.js so all three refusals say it the same way. */
+    const debt = poolOwing(action.state);
+    if (debt) return { done: false, says: poolAction(action.state), owing: debt };
+
     const change = pickChanges(character.talents, talents).find(
       (row) => row.talent.id === action.talent.id
     );
+    /* Changing nothing is a real answer here, and the only place in this list
+       where it is: a night offered to re-choose a hand you are happy with is a
+       night you may sleep through. So "nothing changed yet" owes nothing, and
+       the rest goes ahead. */
     if (!change) return { done: false, says: 'Nothing changed yet' };
 
     const said = [];

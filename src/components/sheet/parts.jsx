@@ -1,8 +1,106 @@
 import { useHoverTip } from './useHoverTip.jsx';
+import { carryState, magicBurdenMax, magicBurdenUsed } from '../../lib/items.js';
+import { formatWeight } from '../../lib/characterModel.js';
+import { useUnit } from '../../context/units.js';
 
-/** Block 1's larger, read-only Physique/Instinct/Mind tile. */
-export function AttrTile({ label, value, color, info }) {
-  const { ref, tipProps, tip } = useHoverTip(info);
+/**
+ * A button that says why it cannot be pressed.
+ *
+ * Jules, 2026-09-03: "When there is an error or something blocks you allow user
+ * to mouth over the greyoud button to get a tooltip that tells them what the
+ * issue is."
+ *
+ * A greyed button is the commonest thing on this sheet. Almost every one of them
+ * already knew its reason — `!plan.affordable`, `room === 0`, `!can.ok` — and
+ * several already carried it in a `title`. **Not one of those reasons has ever
+ * reached a reader**, because a `disabled` button is not a control any more: it is
+ * out of the tab order, the platform is under no obligation to draw its tooltip,
+ * and the browsers that do suppress mouse events on disabled form controls
+ * suppress the hover with them. It is a button that has stopped being able to
+ * explain itself, which is exactly the wrong shape for the one button that has
+ * something to explain.
+ *
+ * So a gated button is not disabled. It is `aria-disabled`:
+ *
+ *   - screen readers say the same thing `disabled` said
+ *   - it is still a control, so the pointer reaches it and the sheet's own hover
+ *     bubble opens with the reason in it (`useHoverTip`, the same bubble every
+ *     stat tile uses)
+ *   - it is still in the tab order, which `disabled` took it out of, so the reason
+ *     is reachable without a mouse at all — the half no tooltip could have fixed
+ *   - the press is swallowed here, by mouse and by keyboard both, so nothing
+ *     downstream has to know the difference
+ *
+ * Measured in this Chromium, 2026-09-03: a real pointer over a `disabled` button
+ * does still deliver `mouseover` and `mouseenter`, so hover alone would have worked
+ * here. That is a browser being generous rather than a rule to build on, and it
+ * was never the whole of what was missing.
+ *
+ * It goes on looking greyed out: `[aria-disabled='true']` carries the same
+ * `opacity` and `not-allowed` cursor the `:disabled` rules do, in index.css beside
+ * them. A hover tint from the button's own rules can still land under that
+ * opacity, and that is wanted rather than tolerated: something has to say the
+ * bubble is there to be opened.
+ *
+ * `why` is the reason, and passing nothing is what makes the button ordinary —
+ * so a caller writes `why={short ? 'You have 1 Willpower and this costs 3.' : null}`
+ * and stops thinking about it. Write a reason that says what is wrong and what
+ * would fix it; "Not allowed" is the old silence with extra steps.
+ */
+export function Gated({ why = null, className = '', onClick, title = null, children, ...rest }) {
+  const shut = Boolean(why);
+  const { ref, tipProps, tip } = useHoverTip(shut ? why : '');
+
+  return (
+    <button
+      type="button"
+      ref={ref}
+      className={`${className}${shut ? ' is-gated' : ''}`}
+      aria-disabled={shut || undefined}
+      /* The native tooltip as well, for the reader who has the pointer still and
+         no JavaScript yet. It costs a word and it is the same word. */
+      title={shut ? why : title}
+      onClick={(e) => {
+        if (shut) {
+          e.preventDefault();
+          return;
+        }
+        onClick?.(e);
+      }}
+      /* Space and Enter are a button's other press, and `aria-disabled` stops
+         neither. Swallowed before the browser turns them into a click. */
+      onKeyDown={(e) => {
+        if (shut && (e.key === 'Enter' || e.key === ' ')) e.preventDefault();
+      }}
+      {...tipProps}
+      {...rest}
+    >
+      {children}
+      {/* The bubble is drawn but not named. Text inside a button is part of its
+          accessible name, so an open bubble would rename the control to "Yes,
+          restThis rest needs 3 more Supplies…" — and it is open at exactly the
+          moment a screen reader is on it, because focus is one of the two things
+          that opens it. Measured, 2026-09-03.
+
+          Hidden here rather than in useHoverTip, whose other callers are tiles
+          rather than controls and have no name to spoil. The reason still
+          reaches assistive tech: `title` carries it, as the description. */}
+      <span aria-hidden="true">{tip}</span>
+    </button>
+  );
+}
+
+/**
+ * Block 1's larger, read-only Physique/Instinct/Mind tile.
+ *
+ * `math` is the sum behind the number, printed under `info` on hover: the 4
+ * everybody starts at, what advancement spent on it and whatever is worked into
+ * what you wear. The levels are one `Advancement` term and not one term each,
+ * because which level bought which point is the Advancement tab's question. See
+ * statMath.js.
+ */
+export function AttrTile({ label, value, color, info, math = null }) {
+  const { ref, tipProps, tip } = useHoverTip(info, math);
 
   return (
     <div className="attr-tile" style={{ borderTopColor: color }} ref={ref} {...tipProps}>
@@ -19,9 +117,15 @@ export function AttrTile({ label, value, color, info }) {
  * One of the three attribute / stat tiles. Hovering or focusing the tile
  * itself (not a separate icon) reveals `info`, when given. Read-only by
  * design: everything shown in one is derived, never typed in.
+ *
+ * Which is exactly why it also takes `math`. Every number in one of these is
+ * bought by something — an attribute, a level, a worn piece, a working, a shape
+ * you are in — and a tile that shows the total without the sources leaves the
+ * reader to reconstruct it out of four other tabs. So the hover carries both:
+ * what the stat is for, and where this character's came from.
  */
-export function StatBox({ label, value, color, suffix = '', info }) {
-  const { ref, tipProps, tip } = useHoverTip(info);
+export function StatBox({ label, value, color, suffix = '', info, math = null }) {
+  const { ref, tipProps, tip } = useHoverTip(info, math);
 
   return (
     <div className="stat-box" style={{ borderTopColor: color }} ref={ref} {...tipProps}>
@@ -31,6 +135,41 @@ export function StatBox({ label, value, color, suffix = '', info }) {
         {suffix}
       </span>
       {tip}
+    </div>
+  );
+}
+
+/**
+ * A point pool: its name, its `current/max`, and the dots that spend it.
+ *
+ * Lifted out of the two blocks that drew the identical four lines by hand — block
+ * 2's own two pools and a creature's — the moment either had something to say on
+ * hover. The label is what carries the tip rather than the whole row, because the
+ * row *is* the dots and a bubble that opens over the thing you are about to click
+ * is a bubble in the way.
+ */
+export function PointPool({ label, current, max, variant, onChange, readOnly = false, math = null }) {
+  const { ref, tipProps, tip } = useHoverTip(null, math);
+  const hoverable = tipProps.tabIndex !== undefined;
+
+  return (
+    <div className="pool-row">
+      <div className="pool-head">
+        <span className={`pool-label${hoverable ? ' has-tip' : ''}`} ref={ref} {...tipProps}>
+          {label}
+          <span className="pool-count">
+            {current}/{max}
+          </span>
+          {tip}
+        </span>
+      </div>
+      <PipRow
+        current={current}
+        max={max}
+        variant={variant}
+        readOnly={readOnly}
+        onChange={onChange}
+      />
     </div>
   );
 }
@@ -78,14 +217,28 @@ export function StepButtons({ onStep, variant, readOnly = false }) {
  * as the resource it belongs to. Pass `poison` (a 0–100 percentage) for Health,
  * the one pool that runs past zero: it refills the emptied bar in poison green,
  * and a full green bar means dead.
+ *
+ * `math` is the *ceiling's* breakdown, not the pool's: what is currently in a bar
+ * is whatever the last hit left there, and only the number it is read against is
+ * a sum with sources. Given one, the bar trades its native `title` for the sheet's
+ * own bubble and prints both there, because two tooltips racing on one hover is
+ * worse than either.
  */
-export function ResourceBar({ label, current, max, color, onClick, title, poison = 0 }) {
+export function ResourceBar({ label, current, max, color, onClick, title, poison = 0, math = null }) {
   const cap = Math.max(0, Number(max) || 0);
   const value = Number(current) || 0;
   const pct = cap > 0 ? Math.min(100, Math.max(0, (value / cap) * 100)) : 0;
+  const { ref, tipProps, tip } = useHoverTip(math ? title : null, math);
 
   return (
-    <button type="button" className="meter" onClick={onClick} title={title}>
+    <button
+      type="button"
+      className="meter"
+      onClick={onClick}
+      title={math ? undefined : title}
+      ref={ref}
+      {...tipProps}
+    >
       <span className="meter-label">{label}</span>
       <span
         className="mana-track"
@@ -102,8 +255,156 @@ export function ResourceBar({ label, current, max, color, onClick, title, poison
           {value} / {cap}
         </span>
       </span>
+      {tip}
     </button>
   );
+}
+
+/**
+ * The Magic Burden meter, printed in two places: block 1 of the Character tab,
+ * under the portrait, and above the armor slots on the Inventory tab, where the
+ * gear that fills it is chosen. One component, so the two can never disagree
+ * about what a loadout weighs.
+ *
+ * Nothing about it is typed in. `info` is the hover explanation and `foot` is
+ * the capacity line under the bar; block 1 has no vertical room for a foot and
+ * takes the tip instead. An overburdened character is told so in words either
+ * way, because that is the one number on this sheet meant to be able to be
+ * wrong, and so the one that must be said out loud.
+ *
+ * `math` is where the worked magic on this character is sitting, which is the one
+ * breakdown on the sheet that answers a question the reader is actually asking
+ * when they look: not "why is my capacity 24" but "what is eating it". So the
+ * *used* half is the line here, and the capacity stays in the words above it.
+ *
+ * A place per term and not a piece per term, so a ring and a blade and three
+ * loops come to `4 Trinkets + 2 Weapons + 3 Belt`. See statMath.js.
+ */
+export function BurdenMeter({ character, info, foot = null, math = null }) {
+  const max = magicBurdenMax(character);
+  const used = magicBurdenUsed(character);
+  const over = used > max;
+  const color = over ? 'var(--danger-red)' : 'var(--haze-glow)';
+  const { ref, tipProps, tip } = useHoverTip(info, math);
+
+  return (
+    <div className="burden-panel" ref={ref} {...tipProps}>
+      <div className="meter-head">
+        <span className="meter-label">Magic Burden</span>
+        <span className="meter-value" style={{ color }}>
+          {used} / {max}
+        </span>
+      </div>
+      <span
+        className="bar-track"
+        style={{ backgroundColor: `color-mix(in srgb, ${color} 18%, var(--bg-black))` }}
+      >
+        <span
+          className="bar-fill"
+          style={{
+            width: `${max > 0 ? Math.min(100, (used / max) * 100) : 0}%`,
+            background: color,
+            boxShadow: `0 0 8px ${color}`,
+          }}
+        />
+      </span>
+      {(over || foot) && (
+        <span className="meter-foot">
+          {over ? `Overburdened by ${used - max}. Shed some worn magic.` : foot}
+        </span>
+      )}
+      {tip}
+    </div>
+  );
+}
+
+/**
+ * What everything weighs, against what this character can shift.
+ *
+ * The Magic Burden meter's twin, and deliberately drawn the same way, because
+ * they are the same shape of question asked about two different things: one
+ * counts worked magic on your person, and this counts kilograms wherever they
+ * are sitting, the pack included.
+ *
+ * It differs in one way and the bar shows it. Burden has a ceiling you must not
+ * cross; this has a ceiling you may, at a price, and then a second line past it
+ * where the price becomes not moving at all. So the track is drawn out to that
+ * second line rather than to the capacity, and the capacity is a mark on it: the
+ * fill running past the mark is the whole readout, and how close it is to the end
+ * of the track is how close the character is to standing still.
+ *
+ * `math` is the sum behind the number for the hover, one term per place rather
+ * than per thing: forty things weigh and each already prints its own weight on
+ * its own row, so what the meter is asked is which of the six places is eating
+ * the capacity. See statMath.js.
+ */
+export function CarryMeter({ character, foot = null, math = null }) {
+  const unit = useUnit();
+  const carry = carryState(character);
+  const { ref, tipProps, tip } = useHoverTip(carryInfo(carry, unit), math);
+
+  const color =
+    carry.state === 'stuck'
+      ? 'var(--danger-red)'
+      : carry.state === 'over'
+        ? 'var(--stat-coin)'
+        : 'var(--stat-supply)';
+
+  /* The track runs to the stopping line, so the mark at the capacity sits where
+     it actually falls: at 1 / 1.3 of the way along, which is a little over three
+     quarters. A full track means they are not going anywhere. */
+  const end = carry.stopAt > 0 ? carry.stopAt : Math.max(1, carry.used);
+  const pct = (value) => `${Math.max(0, Math.min(100, (value / end) * 100))}%`;
+
+  return (
+    <div className="burden-panel carry-panel" ref={ref} {...tipProps}>
+      <div className="meter-head">
+        <span className="meter-label">Carried</span>
+        <span className="meter-value" style={{ color }}>
+          {formatWeight(carry.used, unit)} / {formatWeight(carry.max, unit)}
+        </span>
+      </div>
+
+      <span
+        className="bar-track"
+        style={{ backgroundColor: `color-mix(in srgb, ${color} 18%, var(--bg-black))` }}
+      >
+        <span
+          className="bar-fill"
+          style={{ width: pct(carry.used), background: color, boxShadow: `0 0 8px ${color}` }}
+        />
+        {carry.max > 0 && (
+          <span
+            className="bar-mark"
+            style={{ left: pct(carry.max) }}
+            title={`Your capacity: ${formatWeight(carry.max, unit)}. Past it your Speed is halved.`}
+          />
+        )}
+      </span>
+
+      {(carry.state !== 'clear' || foot) && (
+        <span className={`meter-foot${carry.state !== 'clear' ? ' is-over' : ''}`}>
+          {carry.state === 'clear' ? foot : carryInfo(carry, unit)}
+        </span>
+      )}
+      {tip}
+    </div>
+  );
+}
+
+/** The one sentence the load is in: what it is doing to them, and by how much. */
+function carryInfo(carry, unit) {
+  if (carry.state === 'stuck') {
+    return `${formatWeight(carry.by, unit)} over, which is past 30%. You cannot move at all.`;
+  }
+  if (carry.state === 'over') {
+    const room = Math.round((carry.stopAt - carry.used) * 100) / 100;
+    return `${formatWeight(carry.by, unit)} over. Your Speed is halved, and ${formatWeight(
+      room,
+      unit
+    )} more stops you moving.`;
+  }
+  return 'Everything you own: worn, held, clipped on and packed. What you can shift is bought by your Physique, plus whatever your bag adds.';
 }
 
 /** Marks a character whose health has hit −health_max. */
@@ -186,8 +487,8 @@ const KARMA_INFO =
  * syncDerived has already pulled it back into range, and on a shared one a held
  * 5 of 3 is the row being honest about itself.
  */
-export function KarmaPill({ karma, max, onChange, readOnly = false }) {
-  const { ref, tipProps, tip } = useHoverTip(KARMA_INFO);
+export function KarmaPill({ karma, max, onChange, readOnly = false, math = null }) {
+  const { ref, tipProps, tip } = useHoverTip(KARMA_INFO, math);
   const cap = Math.max(0, Math.floor(Number(max) || 0));
   const held = Math.floor(Number(karma) || 0);
 
@@ -230,12 +531,16 @@ export function KarmaPill({ karma, max, onChange, readOnly = false }) {
  * heading with a 12px button beside it is a 12px button on a phone. The count
  * on the right is what makes a folded group still worth reading — "Standard
  * Actions · 11" says what is in there without opening it.
+ *
+ * `className` is for the one caller whose groups are not a plain column: the
+ * inventory's shelves flow into as many columns as the block is wide, so their
+ * heading has to be told to span them.
  */
-export function GroupHead({ label, note, count, folded, onToggle }) {
+export function GroupHead({ label, note, count, folded, onToggle, className }) {
   return (
     <button
       type="button"
-      className={`bar-group-head${folded ? ' is-folded' : ''}`}
+      className={`bar-group-head${className ? ` ${className}` : ''}${folded ? ' is-folded' : ''}`}
       onClick={onToggle}
       aria-expanded={!folded}
       title={folded ? `Open ${label}` : `Fold ${label} away`}

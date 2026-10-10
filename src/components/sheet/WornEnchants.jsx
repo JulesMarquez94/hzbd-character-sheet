@@ -101,7 +101,7 @@ export default function WornEnchants({
       {tone === 'summary' && (
         <p className="pick-line">
           {full
-            ? 'Changed at a Long Rest, for nothing: the card names no price for what you wear.'
+            ? 'Changed at a Long Rest, for nothing: no Supplies and no Magic Burden for what you wear.'
             : `Choose ${room === 1 ? 'one' : room}. Changed at a Long Rest afterwards, for nothing.`}
         </p>
       )}
@@ -109,7 +109,7 @@ export default function WornEnchants({
       {choosing && !readOnly && (
         <EnchantShelf
           title="On your own person"
-          rule="Chosen when you become an enchanter and changed at a Long Rest. No Supplies: the card names none for what you wear."
+          rule="Chosen when you become an enchanter and changed at a Long Rest. No Supplies and no Magic Burden: the card names neither for what you wear."
           character={character}
           held={state.worn}
           room={state.wornMax}
@@ -139,9 +139,9 @@ function WornSlot({ id, readOnly, onRead, onDrop }) {
         title={`Read the ${enchantment.name} card`}
       >
         <span className="brew-slot-name">{enchantment.name}</span>
-        <span className="brew-slot-meta">
-          {enchantment.burden} Burden · {enchantment.effect}
-        </span>
+        {/* What it does and nothing about what it costs. A slot used to lead with
+            its Magic Burden and a body slot costs none: see the card. */}
+        <span className="brew-slot-meta">{enchantment.effect}</span>
       </button>
 
       {!readOnly && (
@@ -163,8 +163,10 @@ function WornSlot({ id, readOnly, onRead, onDrop }) {
  * The shelf, opened by a slot and filtered to what the rank knows.
  *
  * Same shape the Cauldron's shelf has, and for the same reason: what is being
- * asked is "what goes in *this* slot", and an enchantment that cannot go in one
- * says why on its own button rather than being left off the wall.
+ * asked is "what goes in *this* slot". An enchantment a rank cannot reach is
+ * not an answer to that, so it comes off the wall and is counted in one line
+ * instead. One refused for anything the enchanter can change tonight stays, and
+ * says why on its own button.
  *
  * `priced` is for the half of the Long Rest window that lays on a thing, where
  * every choice costs the crate 70 Supplies a point of burden. A body slot is free,
@@ -187,7 +189,12 @@ export function EnchantShelf({
     [character, held, room]
   );
 
-  const within = options.filter((option) => option.ok).length;
+  /* What the rank reaches, and nothing above it. A row marked "Adept needs a
+     higher rank" is not a choice this shelf can offer, so it is counted below
+     the rule rather than printed dead. */
+  const offered = options.filter((option) => !option.gated);
+  const later = options.length - offered.length;
+  const within = offered.filter((option) => option.ok).length;
 
   return (
     <Modal
@@ -209,8 +216,15 @@ export function EnchantShelf({
         {rule}
       </p>
 
+      {later > 0 && (
+        <p className="pick-line">
+          {later} more {later === 1 ? 'enchantment is' : 'enchantments are'} held back for higher
+          ranks.
+        </p>
+      )}
+
       <div className="card-brief-wall">
-        {options.map((option) => {
+        {offered.map((option) => {
           const { enchantment, ok, reason, held: on } = option;
           /* A price you could not pay is offered dead rather than left to fail at
              the last button, the same law the camp-work chips read by. */
@@ -225,10 +239,15 @@ export function EnchantShelf({
               key={enchantment.id}
               onOpen={() => onRead(enchantment)}
             >
-              <span className="brew-reagent-held">
-                {enchantment.burden} Burden
-                {priced ? ` · ${layingCost(enchantment)} Supplies` : ''}
-              </span>
+              {/* A price, only where there is one to pay. Laying on a thing is
+                  bought by the point of Magic Burden, so both numbers belong on
+                  that shelf. A body slot costs neither, and the rule line above
+                  says so once rather than every card saying it again. */}
+              {priced && (
+                <span className="brew-reagent-held">
+                  {enchantment.burden} Burden · {layingCost(enchantment)} Supplies
+                </span>
+              )}
 
               <button
                 type="button"

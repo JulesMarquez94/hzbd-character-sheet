@@ -1,10 +1,39 @@
-import { ARMOR_SETS, RARITY_COLORS, itemBurden, itemCharges, rarityColor } from '../../lib/items.js';
+import {
+  ARMOR_SETS,
+  RARITY_COLORS,
+  itemBurden,
+  itemCharges,
+  itemCost,
+  itemWeight,
+  rarityColor,
+} from '../../lib/items.js';
+import { getAttribute } from '../../lib/attributes.js';
+import { weaponAttribute } from '../../lib/weapons.js';
+import { formatNumber, formatWeight, weightParts } from '../../lib/characterModel.js';
+import { useUnit } from '../../context/units.js';
 import useCodexArt from '../useCodexArt.js';
 
 /**
  * Shared visual language for items: the slot glyphs, the rarity-tinted icon
- * tile, tag chips, the Defense/Armor/Burden value chips, and rules text with
- * every stat name lit in that stat's own colour.
+ * tile, tag chips, the value chips, the foot the buttons sit on, and rules text
+ * with every stat name lit in that stat's own colour.
+ *
+ * ------------------------------------------------------------------- the row
+ * Every item on the sheet wears the same three zones, top to bottom (Jules,
+ * 2026-08-22), whether it is a helm in a slot, a ring in a list, a bag above the
+ * grid or a line in the codex:
+ *
+ *     [tile]  Name                            TYPE
+ *             tag  tag  tag
+ *     +2 Armor
+ *     What it does, in a sentence.
+ *     4 kg   3,000 c   2 Burden           [i] [down]
+ *
+ * The tile holds the left edge of the top zone by itself. Everything under it
+ * runs the row's full width, which is what gives a block 360 pixels wide a line
+ * of rules text worth reading, and the buttons sit at the end rather than in the
+ * corner. The shape is `ItemStats` + `ItemFoot` here and `.item-row` in
+ * sheet.css; a block writes the zones and never a layout of its own.
  */
 
 /* ------------------------------------------------------------ stat colours */
@@ -168,6 +197,15 @@ const GLYPH_PATHS = {
       <path d="M8.5 3.5a3.5 3.5 0 0 0 7 0" />
     </>
   ),
+  /* The bag: a pack with two straps over the shoulders and a flap on top. Not
+     the belt's pouch, which is the same silhouette a size down. */
+  bag: (
+    <>
+      <path d="M5.5 8.5h13l1 11.5a1.5 1.5 0 0 1-1.5 1.5H6a1.5 1.5 0 0 1-1.5-1.5Z" />
+      <path d="M8.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5" />
+      <path d="M5.8 13.5h12.4" />
+    </>
+  ),
   /* Whatever the codex has never heard of: a page with something written on it. */
   note: (
     <>
@@ -186,13 +224,22 @@ const GLYPH_PATHS = {
  */
 function glyphForItem(item) {
   const tags = item?.tags ?? [];
+  if (tags.includes('Bag')) return 'bag';
   if (tags.includes('Potion')) return 'flask';
   if (tags.includes('Bow')) return 'bow';
+  if (tags.includes('Crossbow')) return 'bow';
   if (tags.includes('Firearm')) return 'firearm';
-  if (tags.includes('Focus')) return 'focus';
+  /* `Focus` held all five caster's implements under one word and went out with
+     the tag pass of 2026-08-24. They share the one glyph the way the Bow and the
+     Crossbow do: a wand, a stave, a tome, a censer and a fiddle are five
+     silhouettes nobody has drawn, and one honest placeholder beats five wrong
+     ones. See the tag note in weapons.js. */
+  if (['Wand', 'Staff', 'Tome', 'Censer', 'Instrument'].some((tag) => tags.includes(tag))) {
+    return 'focus';
+  }
   if (tags.includes('Shielded')) return 'off_hand';
-  if (tags.includes('Melee Weapon')) return 'main_hand';
-  if (tags.includes('Ranged Weapon')) return 'bow';
+  if (tags.includes('Melee')) return 'main_hand';
+  if (tags.includes('Ranged')) return 'bow';
   // A trinket says what kind it is in its tags, and a ring and a cloak are not
   // the same shape. Everything else on the shelf falls back to the band.
   if (tags.includes('Necklace')) return 'necklace';
@@ -233,13 +280,23 @@ export function SlotGlyph({ slot, item, card }) {
 }
 
 /**
+ * The tile on an item row: a little bigger than the 40 every other icon on the
+ * sheet wears (Jules asked for it, 2026-08-22), because on a row it is the only
+ * thing holding the left edge of two lines at once, the name and the tags under
+ * it. The two blocks measured to the pixel keep the smaller one, and say why:
+ * see WeaponBlock.jsx and the belt's own rows.
+ */
+export const ROW_ICON = 48;
+
+/**
  * The item's icon tile: the piece itself where the codex has a picture of it,
  * and its slot glyph where it does not. The rarity's colour rims both, because
  * in a browser list or a filled slot this tile is the only place rarity shows.
  *
- * **The thumbnail, never the full picture.** This tile is 40px in every block
- * on the sheet and 52 in the equip prompt, a browser list draws nine of them at
- * once, and the 128px cut is 2 KB against the item card's 26. Same rule, and
+ * **The thumbnail, never the full picture.** This tile is `ROW_ICON` on an item
+ * row, 40 in the tighter places that only have one line for it (a belt loop, the
+ * loadout block), and 52 in the equip prompt. A browser list draws nine of them
+ * at once, and the 128px cut is 2 KB against the item card's 26. Same rule, and
  * the same reason, as a card brief's plate.
  *
  * A picture the *player* pointed at is theirs and shows at every account tier,
@@ -248,9 +305,14 @@ export function SlotGlyph({ slot, item, card }) {
  */
 export function ItemIcon({ item, size = 40 }) {
   const color = rarityColor(item);
+  /* The square crop rather than the 4:3 one every other art surface takes: this
+     tile is a square, and a wide picture in it loses its sides. The codex's own
+     item pictures are square already, so this only ever changes what an
+     uploaded one is asked for. See src/lib/imageViews.js. */
   const plate = useCodexArt()(
     item?.art_thumb ?? item?.art_url ?? null,
-    item?.artOwn ? 'lore' : 'codex'
+    item?.artOwn ? 'lore' : 'codex',
+    'face'
   );
 
   return (
@@ -276,11 +338,55 @@ export function ItemIcon({ item, size = 40 }) {
 
 /* -------------------------------------------------------------------- chips */
 
-/** The item's tags as chips; the rarity tag carries the rarity's colour. */
+/**
+ * Tags a row carries and never shows.
+ *
+ * Jules's own pass of 2026-08-24: "weapon is redundant in the weapon category so
+ * it can have but hidden". Both of these are true of so much of the shelf that
+ * they tell a reader nothing about the row they are on — `Weapon` on a weapon,
+ * `Common` on the thing every shop stocks. They stay in the data, where the
+ * filter row and every talent set can still reach them, and come off the chips.
+ *
+ * Rarity above Common is not in here: Uncommon, Rare and Epic are news, and they
+ * are the chips that carry a colour. See RARITY_COLORS.
+ */
+const HIDDEN_TAGS = new Set(['Weapon', 'Common']);
+
+/**
+ * The item's tags as chips; the rarity tag carries the rarity's colour.
+ *
+ * **A weapon leads with the attribute it swings on**, in that attribute's own
+ * colour, and it is the one chip on the row that is not a tag. Nothing on a
+ * weapon's row ever said which of the three it rolls: the answer was on the
+ * attack card, which is behind the row, and a player choosing a weapon was
+ * choosing by name. It is derived rather than stored, so a card that changes
+ * attribute takes its weapon's chip with it — see `weaponAttribute` in
+ * weapons.js.
+ *
+ * First rather than last, because on a wall of forty five weapons it is the
+ * question the reader walked up with, and Melee - Two-Handed - Bow is the
+ * answer to a different one.
+ */
 export function ItemTags({ item }) {
+  const swing = getAttribute(weaponAttribute(item));
+
   return (
     <span className="item-tags">
-      {item.tags.map((tag) => {
+      {swing && (
+        <span
+          className="item-tag item-tag-swing"
+          style={{
+            color: swing.color,
+            borderColor: `color-mix(in srgb, ${swing.color} 45%, transparent)`,
+            backgroundColor: `color-mix(in srgb, ${swing.color} 10%, transparent)`,
+          }}
+          title={`Its attacks are rolled on your ${swing.label}, and their damage counts it.`}
+        >
+          {swing.label}
+        </span>
+      )}
+
+      {item.tags.filter((tag) => !HIDDEN_TAGS.has(tag)).map((tag) => {
         const color = RARITY_COLORS[tag] ?? null;
         return (
           <span
@@ -305,52 +411,156 @@ export function ItemTags({ item }) {
 }
 
 /**
- * The numbers a piece of gear carries, each in its stat's colour. Only
- * non-zero values render — these chips are the single place a plain stat
- * bonus is stated, so the rules text never repeats them.
+ * What a piece of gear *does*, in numbers, each in its stat's own colour. Only
+ * non-zero values render — these chips are the single place a plain stat bonus
+ * is stated, so the rules text never repeats them.
+ *
+ * What it *costs* is not here. Weight, coin and Magic Burden are true of every
+ * item rather than of a kind of item, and they live together at the foot of the
+ * row: see ItemCarry.
+ *
+ * A bag says what it *holds* in the same breath, since that is the only reason
+ * anybody is reading its numbers at all.
  */
-export function ItemValues({ item }) {
+export function ItemStats({ item }) {
   const charges = itemCharges(item);
+  const unit = useUnit();
+  const capacity = Math.max(0, Number(item?.capacity) || 0);
 
   const values = [
     { label: 'Defense', value: item.defense, color: 'var(--focus-cyan)', signed: true },
     { label: 'Armor', value: item.armor, color: 'var(--stat-armor)', signed: true },
-    { label: 'Burden', value: itemBurden(item), color: 'var(--haze-glow)', signed: false },
     {
       label: charges === 1 ? 'Use' : 'Uses',
       value: charges,
       color: 'var(--def-healing)',
       signed: false,
     },
-  ].filter((entry) => (Number(entry.value) || 0) !== 0);
+    capacity > 0 && {
+      key: 'holds',
+      value: capacity,
+      /* The one chip that is a whole phrase, because "35 Capacity" is a word
+         nobody says and "holds 35 kg" is the question being asked. */
+      text: `holds ${formatWeight(capacity, unit)}`,
+      color: 'var(--stat-supply)',
+    },
+  ].filter((entry) => entry && (Number(entry.value) || 0) !== 0);
 
   if (values.length === 0) return null;
 
   return (
     <span className="item-values">
-      {values.map(({ label, value, color, signed }) => (
-        <span key={label} className="item-value" style={{ color }}>
-          <span className="item-value-num">{signed && value > 0 ? `+${value}` : value}</span>
-          {label}
+      {values.map(({ key, label, text, value, color, signed }) => (
+        <span key={key ?? label} className="item-value" style={{ color }}>
+          {text ? (
+            text
+          ) : (
+            <>
+              <span className="item-value-num">{signed && value > 0 ? `+${value}` : value}</span>
+              {label}
+            </>
+          )}
         </span>
       ))}
     </span>
   );
 }
 
+/**
+ * What carrying it costs: kilograms, coins and Magic Burden, in that order, on
+ * the left of the row's foot.
+ *
+ * **The three of them belong together** (Jules, 2026-08-22). Burden used to sit
+ * up among the stats, which put the three prices one thing charges you in two
+ * different places and read as though Burden were a bonus. They are also the
+ * other way round from a stat chip: `2.5 kg` is a number with its unit, where
+ * `+2 Armor` is a number with the stat it moves.
+ *
+ * Each wears the colour of the meter it fills, not a colour of its own: the
+ * carry meter's wood for weight, coin gold for the price, and for Burden the
+ * lilac that is purple's type twin — the ground purple the bar is drawn in goes
+ * muddy at this size, which is what --haze-lilac exists for.
+ *
+ * Weight is in whichever unit the reader chose. See units.js for why that comes
+ * out of a context here and off a prop everywhere else.
+ */
+export function ItemCarry({ item }) {
+  const unit = useUnit();
+  const weight = itemWeight(item);
+  const cost = itemCost(item);
+  const burden = itemBurden(item);
+  const load = weightParts(weight, unit);
+
+  if (weight <= 0 && cost <= 0 && burden <= 0) return null;
+
+  return (
+    <span className="item-values item-carry">
+      {weight > 0 && (
+        <span className="item-value" style={{ color: 'var(--stat-supply)' }}>
+          <span className="item-value-num">{load.value}</span>
+          {load.unit}
+        </span>
+      )}
+      {cost > 0 && (
+        <span className="item-value" style={{ color: 'var(--stat-coin)' }}>
+          <span className="item-value-num">{formatNumber(cost)}</span>¢
+        </span>
+      )}
+      {burden > 0 && (
+        <span className="item-value" style={{ color: 'var(--haze-lilac)' }}>
+          <span className="item-value-num">{burden}</span>
+          Burden
+        </span>
+      )}
+    </span>
+  );
+}
+
+/* ---------------------------------------------------------------- the foot */
+
+/**
+ * The foot of an item row: what it costs you on the left, what you can do with
+ * it on the right.
+ *
+ * **Why the buttons came down here** (Jules, 2026-08-22). They used to float in
+ * the row's top corner, which meant every row's first line had to hold a rail of
+ * empty pixels clear of them — sixty pixels on most rows, eighty-eight on a belt
+ * loop — and a name that ran long broke onto two lines to make room for two
+ * buttons it had nothing to do with. On a line of their own they cost nothing
+ * from the name, they line up down a column of rows, and the row reads in the
+ * order somebody actually reads it in: what it is, what it does, what it costs
+ * and what you can do about it.
+ *
+ * The foot is outside the row's own tap target, which is what it always was: a
+ * button cannot hold a button.
+ */
+export function ItemFoot({ item, children }) {
+  return (
+    <div className="item-foot">
+      <ItemCarry item={item} />
+      {children ? <span className="item-acts">{children}</span> : null}
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------- slot corner */
 
 /**
- * The rail of little round buttons in a filled slot's corner, the same on
- * every block: the item's own page, whatever that block adds of its own (the
- * belt puts its codex here), and the one that takes the item off.
+ * The little round buttons every filled slot carries: the item's own page,
+ * whatever that block adds of its own (the belt puts its codex here), and the
+ * one that takes the item off.
+ *
+ * A fragment rather than a rail, because two blocks put these in two places: an
+ * item row hands them to `ItemFoot`, and a belt loop hangs them off the end of
+ * its own charge line. What buttons a slot has is one answer; where they sit is
+ * the block's.
  *
  * Taking something off is never destruction — it goes to the inventory, which
  * is the only place a thing can actually be thrown away.
  */
 export function SlotTools({ item, onInfo, onRemove, removeTitle = 'Send to your inventory', children }) {
   return (
-    <span className="slot-tools">
+    <>
       <button
         type="button"
         className="item-info-btn"
@@ -374,7 +584,7 @@ export function SlotTools({ item, onInfo, onRemove, removeTitle = 'Send to your 
           ↓
         </button>
       )}
-    </span>
+    </>
   );
 }
 
@@ -416,6 +626,56 @@ export function ChargeDots({ charges, used, onUse, readOnly = false }) {
           />
         );
       })}
+    </span>
+  );
+}
+
+/* --------------------------------------------------------------- ammunition */
+
+/**
+ * The two silhouettes a magazine is drawn with. Jules asked for "bullet shaped
+ * indicator that empty as you use" (2026-08-24), and a crossbow holds a bolt
+ * rather than a ball, so the shape is read off the round's own name: a cartridge
+ * for a Shot, a fletched bolt for a Bolt.
+ *
+ * Not the belt's round dots. A charge and a round are both a thing you spend, but
+ * one is a flask and one is loaded: the shape is the whole of what tells a reader
+ * which row is going to click empty on them.
+ */
+const ROUNDS = {
+  Shot: 'M5 0.6c2 1.7 3.4 3.5 3.4 5.5V14a1.3 1.3 0 0 1-1.3 1.3H2.9A1.3 1.3 0 0 1 1.6 14V6.1c0-2 1.4-3.8 3.4-5.5Z',
+  Bolt: 'M5 0.6 7.9 5.6H6.1v9.8H3.9V5.6H2.1Z',
+};
+
+/**
+ * What is left in a loaded weapon: one round per shot it holds, filled while the
+ * shot is still in it and an empty outline once it is gone.
+ *
+ * A readout and never a control, unlike the belt's dots. A round is spent by
+ * firing and put back by Reloading, and both of those are cards that cost Action
+ * Points — so there is nothing here for a tap to mean that the two rows beside it
+ * do not already mean properly.
+ */
+export function AmmoPips({ ammo, charges, used }) {
+  const remaining = Math.max(0, charges - used);
+  const unit = ammo?.unit ?? 'Shot';
+  const path = ROUNDS[unit] ?? ROUNDS.Shot;
+
+  return (
+    <span
+      className="ammo-pips"
+      title={`${remaining} of ${charges} ${unit}${charges === 1 ? '' : 's'} left`}
+    >
+      {Array.from({ length: charges }, (_, index) => (
+        <svg
+          key={index}
+          className={`ammo-pip${index < remaining ? ' loaded' : ''}`}
+          viewBox="0 0 10 16"
+          aria-hidden="true"
+        >
+          <path d={path} />
+        </svg>
+      ))}
     </span>
   );
 }

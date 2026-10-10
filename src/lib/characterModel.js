@@ -4,11 +4,29 @@
  * creation form all agree on what a character is.
  */
 
-import { EMPTY_EQUIPMENT, characterGrants, equipmentEffects, gearEnchantIds } from './items.js';
+import {
+  EMPTY_EQUIPMENT,
+  carryState,
+  characterGrants,
+  encumberedSpeed,
+  equipmentEffects,
+  gearEnchantIds,
+  characterSkillGrantSources,
+} from './items.js';
 import { ephemeralGrants, wornIds } from './enchanting.js';
 import { pointCeilings } from './tricks.js';
 import { martialDefense } from './moves.js';
-import { feralArmor } from './feral.js';
+import { feralArmor, feralShieldShare } from './feral.js';
+import { spellbookWillpower } from './spellbook.js';
+import { sanctuaryBurden } from './oathbound.js';
+import { runeDebt, runeWillpower } from './runes.js';
+import { undeadBurden } from './undead.js';
+import { effectRiders, riderShift, wornTypes } from './riders.js';
+import { lineageGrants, lineageGrantSources } from './lineages.js';
+import { talentGrants, talentGrantSources } from './talents.js';
+
+import { healthRate, sumGrants } from './grants.js';
+import { MAX_LEVEL, XP_TABLE, levelForXp, xpForLevel, xpProgress } from './levels.js';
 
 export const BLANK_CHARACTER = {
   name: 'Unnamed Drifter',
@@ -43,9 +61,9 @@ export const BLANK_CHARACTER = {
   health: 50,
   health_max: 50,
   shield: 0,
-  // Not read by the app — shield's cap is always computed as half of
-  // health_max. syncDerived keeps the column on that number so a raw row
-  // reads sensibly.
+  // Not read by the app — shield's cap is always computed from health_max, at
+  // half of it for everybody and the whole of it for a Feral Cursed. syncDerived
+  // keeps the column on that number so a raw row reads sensibly.
   shield_max: 25,
   ap: 6,
   ap_max: 6,
@@ -88,6 +106,14 @@ export const BLANK_CHARACTER = {
   background_skills: [],
   background_kit: null,
 
+  // Where an unfinished way in stopped, or null: { path: 'guided', step:
+  // 'talent', ts }. The Walkthrough writes the step it is on so the dashboard
+  // can offer the way back to it, and finishing any path clears it. The path
+  // itself still rides in the URL (see creationPaths.js): this is the bookmark,
+  // which is a state of the character and not how you got here. walkthrough.js
+  // owns the shape.
+  creation: null,
+
   talents: [],
   // The creatures a talent set has put on the board, keyed by the set that
   // granted one: { "draconic-bond": { name, scale, portrait_url, health,
@@ -103,12 +129,31 @@ export const BLANK_CHARACTER = {
   // because the card says "until all Shield is gone". feral.js owns the shape,
   // and a sheet with no such set never writes the column.
   feral: {},
+  // The bargains a talent set has struck, keyed by the set that granted one:
+  // { "pactbound": { kind, form, weapon, progress, picks, extra, missions,
+  // log } }. Which pact it is, what shape the weapon wears, the lifetime
+  // progress fed into it and every boon claimed off it. pact.js owns the
+  // shape, and a sheet with no such set never writes the column.
+  pact: {},
+  // The vows a talent set has bound this character to, keyed by the set that
+  // granted one: { "oathbound": { oath, faith, log, sanctuary } }. Which of the
+  // ten Oaths was sworn, where the Faith bar stands, what moved it and what
+  // ground has been consecrated. oathbound.js owns the shape, and a sheet with
+  // no such set never writes the column.
+  oath: {},
   // Everything a level handed out that isn't a talent, keyed by the level that
   // granted it: the +2 / +1 spread at level 1, and an attribute point and a
   // learned skill at every odd level after. levelPicks.js owns the shape.
   level_picks: {},
+  // How much of a limited card has been spent, keyed by the card: { "sprout-wings": 1 }.
+  // A card that says you must rest before using it again carries `uses` and
+  // `recharge` the way a flask on the belt carries `charges` and `recharge`, and
+  // this is where the count of spent ones lives. Filled again by the rest the card
+  // names. uses.js owns the shape, and a sheet holding nothing limited never
+  // writes the column.
+  card_uses: {},
   // Choices a card leaves to the player, keyed by the card that asks for one:
-  // { "chromatic-resistance": "red", "dark-bargain": "mind" }. A card that
+  // { "draconic-scales": "red", "innate-shadow": "gloom-spike" }. A card that
   // names no choice never appears here.
   choices: {},
   lore: {
@@ -131,17 +176,29 @@ export const BLANK_CHARACTER = {
   effects: [],
   // Append-only history of every XP, coin and supply movement. Newest first.
   ledger: [],
-  // Left-to-right order of the six blocks on the Character tab.
+  // Left-to-right order of the six blocks on the Character tab. A null in the
+  // list is a hole the player left on purpose: see normalizeBlockOrder.
   block_order: [1, 2, 3, 4, 5, 6],
+  // And how many columns they are laid out in. Every tab with a grid carries
+  // its own: three is the shape the site was drawn for, one is a phone and nine
+  // is a wall. See normalizeGridColumns.
+  block_columns: 3,
+  // And which of them were taken off the grid and pinned to the side trays:
+  // `{ left: [id, id], right: [id, id] }`, two slots a side. See normalizeTrays.
+  block_trays: {},
   // Left-to-right order of the Abilities tab's blocks, by source id
   // ("lineage", "talent:mycomancer", "gear"). Unlike block_order this has no
   // fixed length: a source arrives when it is taken and leaves when it is
   // handed back. Empty means nobody has arranged them yet.
   ability_order: [],
+  ability_columns: 3,
+  ability_trays: {},
   // Left-to-right order of the Inventory tab's four fixed blocks, by block id
   // ("armor", "weapons", "trinkets", "belt"). Must be listed here: the save path
   // only writes columns named in this object (see pickCharacterFields in api.js).
   inventory_order: [],
+  inventory_columns: 3,
+  inventory_trays: {},
 };
 
 /* -------------------------------------------------------------- block order */
@@ -160,13 +217,28 @@ export const SHEET_BLOCK_IDS = [1, 2, 3, 4, 5, 6];
  * every character's; a talent set that puts a creature on the board adds two
  * more, named `minion:<set>` and `minion:<set>:bar` (see minionBlockIds in
  * minions.js), and one that turns its holder into something adds a single
- * `feral:<set>` (see feralBlockIds in feral.js). Those arrive when the set is
+ * `feral:<set>` (see feralBlockIds in feral.js). A set that keeps an Ossuary
+ * adds one of those too, `ossuary:<set>`, a set that binds its holder to a vow
+ * adds `oath:<set>` (see oathBlockIds in oathbound.js), and then **two more for every body it
+ * raises**, which is the first thing on this tab that grows and shrinks inside a
+ * session rather than only at a rank. Those arrive when the set is
  * taken and leave when it is handed back, so they are matched the way
  * normalizeSourceOrder matches an Abilities tab that grew a block: still
  * present keeps its place, gone is dropped, and new is appended rather than
  * pushed into the middle of an arrangement somebody has already made.
+ *
+ * `skip` is the blocks that are not on this grid at all because they are
+ * pinned to a tray. They are neither kept where they sit nor appended at the
+ * end: the grid does not hold them, so the order must not either.
+ *
+ * ------------------------------------------------------------------- the holes
+ * A `null` in the stored list is a cell the player deliberately left empty.
+ * Blank space is part of an arrangement — a block on its own at the top right,
+ * a gap where a second creature is going to go — so it survives the round trip
+ * exactly as an id does. Trailing holes are trimmed, because a hole after the
+ * last block is a row of nothing at the foot of the tab.
  */
-export function normalizeBlockOrder(value, extra = []) {
+export function normalizeBlockOrder(value, extra = [], skip = []) {
   let list = value;
   if (typeof list === 'string') {
     try {
@@ -177,22 +249,42 @@ export function normalizeBlockOrder(value, extra = []) {
   }
 
   const grown = new Set(extra.map(String));
+  const away = new Set(skip.map(String));
   const order = [];
 
   for (const raw of Array.isArray(list) ? list : []) {
+    if (raw === null || raw === undefined || raw === '') {
+      order.push(null);
+      continue;
+    }
     const id = Number(raw);
-    if (SHEET_BLOCK_IDS.includes(id)) {
+    if (SHEET_BLOCK_IDS.includes(id) && !away.has(String(id))) {
       if (!order.includes(id)) order.push(id);
       continue;
     }
     const named = String(raw);
-    if (grown.has(named) && !order.includes(named)) order.push(named);
+    if (grown.has(named) && !away.has(named) && !order.includes(named)) order.push(named);
   }
 
   for (const id of [...SHEET_BLOCK_IDS, ...grown]) {
-    if (!order.includes(id)) order.push(id);
+    if (!away.has(String(id)) && !order.includes(id)) order.push(id);
   }
-  return order;
+  return trimGaps(order);
+}
+
+/**
+ * An order with the empty cells at the end of it taken off.
+ *
+ * A hole between two blocks is a layout. A hole after the last one is a row of
+ * nothing at the foot of the tab, which nobody chose: it is what is left when a
+ * block is moved off the end, or when a filter takes the last block of a row
+ * away. Exported because a tab that narrows its own list has to trim what the
+ * narrowing exposed.
+ */
+export function trimGaps(order) {
+  let end = order.length;
+  while (end > 0 && order[end - 1] === null) end -= 1;
+  return end === order.length ? order : order.slice(0, end);
 }
 
 /**
@@ -205,8 +297,11 @@ export function normalizeBlockOrder(value, extra = []) {
  * keep the place they were given, ids that have gone are dropped, and anything
  * new is appended in its natural order rather than pushed into the middle of a
  * layout somebody has already arranged.
+ *
+ * `skip` is the ids pinned to a tray, and the holes work exactly as they do
+ * above: a null is blank space somebody chose, and trailing nulls are trimmed.
  */
-export function normalizeSourceOrder(value, ids) {
+export function normalizeSourceOrder(value, ids, skip = []) {
   let list = value;
   if (typeof list === 'string') {
     try {
@@ -216,16 +311,124 @@ export function normalizeSourceOrder(value, ids) {
     }
   }
 
-  const known = new Set(ids);
+  const known = new Set(ids.map(String));
+  const away = new Set(skip.map(String));
   const order = [];
   for (const raw of Array.isArray(list) ? list : []) {
+    if (raw === null || raw === undefined || raw === '') {
+      order.push(null);
+      continue;
+    }
     const id = String(raw);
-    if (known.has(id) && !order.includes(id)) order.push(id);
+    if (known.has(id) && !away.has(id) && !order.includes(id)) order.push(id);
   }
   for (const id of ids) {
-    if (!order.includes(id)) order.push(id);
+    if (!away.has(String(id)) && !order.includes(id)) order.push(id);
   }
-  return order;
+  return trimGaps(order);
+}
+
+/* ---------------------------------------------------------------- the trays */
+
+/**
+ * The two side trays, and how much each one holds.
+ *
+ * A tray is a panel pinned to the edge of the window that does not scroll with
+ * the tab. Two of them, left and right, two blocks apiece, which is the whole
+ * ceiling: a tray is a place for the two or three things you reach for every
+ * turn (your quick bar, the fight, the table's log) and not a second grid. Four
+ * slots is what fits down the side of a laptop at a block's own height without
+ * either of them shrinking.
+ */
+export const TRAY_SIDES = ['left', 'right'];
+export const TRAY_SLOTS = 2;
+
+/**
+ * A stored tray map, held to what actually exists.
+ *
+ * The same repair the orders get: `{ left: [...], right: [...] }`, only ids the
+ * tab really has, never the same block twice, never more than TRAY_SLOTS a
+ * side. Anything unreadable comes back as two empty trays, which is a tab that
+ * has never had one opened.
+ *
+ * A slot is positional, holes and all: `{ left: [null, 'fight:x'] }` is a
+ * bottom-left tray with nothing above it, and it has to stay that way, because
+ * on a phone the top and the bottom of a tray are two different handles.
+ */
+export function normalizeTrays(value, ids) {
+  let held = value;
+  if (typeof held === 'string') {
+    try {
+      held = JSON.parse(held);
+    } catch {
+      held = null;
+    }
+  }
+
+  const known = new Map(ids.map((id) => [String(id), id]));
+  const trays = {};
+  const taken = new Set();
+
+  for (const side of TRAY_SIDES) {
+    const list = Array.isArray(held?.[side]) ? held[side] : [];
+    const kept = [];
+    for (const raw of list.slice(0, TRAY_SLOTS)) {
+      const id = String(raw ?? '');
+      if (!known.has(id) || taken.has(id)) {
+        kept.push(null);
+        continue;
+      }
+      taken.add(id);
+      kept.push(known.get(id));
+    }
+    while (kept.length > 0 && kept[kept.length - 1] === null) kept.pop();
+    trays[side] = kept;
+  }
+  return trays;
+}
+
+/** Every block on either tray, ignoring the empty slots between them. */
+export function trayedIds(trays) {
+  return TRAY_SIDES.flatMap((side) => trays?.[side] ?? []).filter(
+    (id) => id !== null && id !== undefined
+  );
+}
+
+/** Whether a tray has anything on it. Named without a side means either. */
+export function traysHold(trays, side = null) {
+  if (side) return (trays?.[side] ?? []).some((id) => id !== null && id !== undefined);
+  return trayedIds(trays).length > 0;
+}
+
+/* ------------------------------------------------------------ grid columns */
+
+/**
+ * How many columns a tab's grid may take. Three is the shape everything on the
+ * site was drawn for — a block is a hard 360x640 and three of them are the
+ * measure every row above the grid is aligned to — and it stays the default.
+ * One is the phone layout chosen deliberately, and nine is the widest wall the
+ * arranger will draw.
+ */
+export const GRID_COLUMN_MIN = 1;
+export const GRID_COLUMN_MAX = 9;
+export const GRID_COLUMN_DEFAULT = 3;
+
+/**
+ * A stored count is only ever a hint, the way a stored order is: missing on a
+ * character made before the column existed, a string out of an older build, or
+ * a number nobody can lay out. Anything unreadable or below the minimum reads
+ * as "not set" and comes back as the default rather than as one column, since a
+ * zero in the database should not silently rebuild somebody's sheet as a strip.
+ *
+ * What comes back is a *ceiling*, not a promise. The grid takes this many
+ * columns or as many as the window has room for, whichever is fewer, so a
+ * canvas set to nine is nine on a wall and one on a phone. That clamp is
+ * `--sheet-fit` in sheet.css, where the width is known.
+ */
+export function normalizeGridColumns(value) {
+  const count = Math.round(Number(value));
+  if (!Number.isFinite(count) || count < GRID_COLUMN_MIN) return GRID_COLUMN_DEFAULT;
+  return Math.min(count, GRID_COLUMN_MAX);
 }
 
 /**
@@ -266,38 +469,164 @@ export function normalizeSourceOrder(value, ids) {
  * `liveCharacter` passes it, and only for what the sheet *shows*. See
  * enchanting.js.
  *
+ * **And so does a lineage card.** WIND GRACE says a Skybound's Movement Speed is
+ * permanently 1.5 metres longer, and until 2026-08-27 the Speed tile disagreed.
+ * A card carrying `grants` is read here through `lineageGrants`, which is a
+ * fourth source and stacks like one: blood and a ring are not the same source.
+ * Permanent, so `syncDerived` bakes it into the stored column the way it bakes in
+ * a breastplate. See lineages.js.
+ *
+ * `running` is the third kind, and the newest: what is on the *tracker*. A card
+ * whose printed text names a number this sheet holds moves that number for as
+ * long as its row is on the block, whoever cast it. Same contract as `extra` and
+ * for the same reason: only `liveCharacter` passes it, and nothing stored ever
+ * carries it. See riders.js.
+ *
  * It takes the whole character now rather than five named fields, because "what is
  * worked into what you are wearing" needs the equipment map, the trinkets and the
  * forge registry together. Every call site already spread a character in.
  */
-export function deriveStats(character, extra = null) {
+
+/**
+ * Every grant row standing on this character from a card they hold, named.
+ *
+ * The three codexes that carry `grants` — a lineage card, a talent card and a
+ * background skill — in one list, which is what the two readings that need the
+ * *rows* rather than the sum ask for: `healthRate` has to compose rates rather
+ * than add them, and `restHealth` reads something that is not a number at all.
+ * An enchantment is deliberately not in it: nothing worked into a ring changes a
+ * rate or a rest, and `characterGrantSources` is its own reading.
+ *
+ * `statMath.js` builds the same list for its breakdown lines, out of the same
+ * three readers, so a tile can name the card that moved a number.
+ */
+export function grantRows(character) {
+  return [
+    ...lineageGrantSources(character?.lineage, character?.choices),
+    ...talentGrantSources(character?.talents),
+    ...characterSkillGrantSources(character),
+  ];
+}
+
+export function deriveStats(character, extra = null, running = null) {
   const { physique, instinct, mind, level } = character;
   const worn = characterGrants(character).worn;
 
   const add = (key) =>
-    (worn.attributes[key] ?? 0) + Math.floor(Number(extra?.attributes?.[key]) || 0);
+    (worn.attributes[key] ?? 0) +
+    Math.floor(Number(extra?.attributes?.[key]) || 0) +
+    Math.floor(Number(running?.attributes?.[key]) || 0);
 
   const p = (Number(physique) || 0) + add('physique');
   const i = (Number(instinct) || 0) + add('instinct');
   const m = (Number(mind) || 0) + add('mind');
   const lvl = Number(level) || 1;
 
-  /* The flat riders, worn and running, summed once each. `extra` is only ever
-     the ephemeral half; the worn half is already in `worn`. */
-  const flat = (key) => (worn[key] ?? 0) + (Number(extra?.[key]) || 0);
+  /* And what their blood is worth. A lineage card that names a number this sheet
+     holds moves that number, the same way a worn enchantment does: WIND GRACE's
+     "permanently increased by 1.5 meters" is 1.5 metres of Movement Speed rather
+     than a sentence the table has to remember. Read off the ancestry *and* the
+     choices bag, because a Wildkin's riders are the two cards they kept.
 
-  const health_max = Math.floor(10 * lvl + 10 * p) + Math.floor(flat('healthMax'));
+     Attributes are deliberately not in it. Those are the level ledger's, and
+     `reapplyTotals` has already put them in the three columns `add` reads. See
+     lineageGrants in lineages.js. */
+  const blood = lineageGrants(character?.lineage, character?.choices);
+
+  /* And what their *training* is worth, in the identical shape and for the
+     identical reason. A talent card has carried `grants` since the Skill Check
+     action arrived and only checks.js ever read it, so GUARDIAN · JUST IN TIME
+     said "your Movement Speed is increased by 1" and the tile never moved. Read
+     through the rank held, so a rank-3 Guardian keeps what rank 2 bought. See
+     talentGrants in talents.js. */
+  const training = talentGrants(character?.talents);
+
+  /* And what the life before this one taught them. A skill may name a condition
+     and the only one any of them names is a full armor set: the three Armor
+     Masteries are worth their rider while the third piece is worn and nothing the
+     moment it is stowed, the way a Duelist's AGILE follows the weapon in hand.
+     The condition is answered inside the reading, which is why this takes the
+     whole character rather than a list of ids. See items.js. */
+  const learned = sumGrants(characterSkillGrantSources(character));
+
+  /* The flat riders — blood, training, what was learned, what is worn and what is
+     running — summed once each. `extra` is only ever the ephemeral half; the worn
+     half is already in `worn`. Six different sources, so they add rather than
+     taking the largest: the same-source law bites inside each of them and never
+     across them. See the note in grants.js. */
+  const flat = (key) =>
+    (worn[key] ?? 0) +
+    (blood[key] ?? 0) +
+    (training[key] ?? 0) +
+    (learned[key] ?? 0) +
+    (Number(extra?.[key]) || 0) +
+    (Number(running?.[key]) || 0);
+
+  /* Ten Health a level and ten a Physique for almost everybody, and a rate three
+     cards replace rather than add to: UNDEATH RESILIENCE's 15, HEARTHY's 12 and
+     FEY BLOOD's 7. It buys *both* halves, because all three say "per level in
+     Fortitude and Physique", which is worth 45 Health to a level-3 Undead with a
+     Physique of 6 and the largest single number any card on this sheet moves.
+     See healthRate in grants.js. */
+  const perLevel = healthRate(grantRows(character));
+  const health_max = Math.floor(perLevel * lvl + perLevel * p) + Math.floor(flat('healthMax'));
   const reflex = Math.floor(p + i);
   const grit = Math.floor(i + m);
 
+  /* ---- Willpower, in two halves, because one of them is a debt ----
+     Everything that *adds* first: the base, the level, the Mind, whatever is worn
+     or running, an Arcanist's bound book and a Runebearer's RUNIC NETWORK. Read
+     off the effective Physique, so a ring that lends the body strength lends the
+     Willpower that comes with it. See spellbook.js and runes.js.
+
+     Then the three things that take it away. A Runebearer pays a spell's Willpower
+     once, on the night it goes on, and the maximum stays down for as long as the
+     rune does; that is why firing one costs nothing. A Necromancer pays for every
+     body in their Ossuary, for as long as they are holding it together. And an
+     Oathbound at Master pays for the Sanctuary they are holding open, for as long
+     as the ground is theirs.
+     **They are the only three things on this sheet that subtract from a derived
+     maximum**, which is why they are worked out here rather than inline: the sum
+     above them is the room they are floored against, so a maximum can never go
+     below zero, and `statMath` floors against the same number in the same order
+     so the tile's breakdown cannot disagree with the column.
+
+     The runes go first, the bodies get what is left and the ground gets what is
+     left after that. Arbitrary, and it only ever matters to a drifter carrying all
+     three who has run out: the total is the
+     same either way, and floored the same. See runes.js, undead.js and oathbound.js. */
+  const willpowerHeld =
+    2 * lvl +
+    2 * m +
+    10 +
+    flat('willpowerMax') +
+    spellbookWillpower(character?.talents) +
+    runeWillpower(character?.talents, { physique: p, instinct: i, mind: m });
+  const runesOwed = runeDebt(character?.talents, willpowerHeld);
+  const bodiesOwed = undeadBurden(
+    character,
+    { physique: p, instinct: i, mind: m },
+    willpowerHeld - runesOwed
+  );
+  const groundOwed = sanctuaryBurden(character, willpowerHeld - runesOwed - bodiesOwed);
+  const willpowerOwed = runesOwed + bodiesOwed + groundOwed;
+
   const gear = equipmentEffects(character);
   const points = pointCeilings(character?.talents);
+  /* What everything they own weighs, against what they can shift. Read once
+     here: it is the only thing on the sheet that can take a stat away rather
+     than add to one, and Speed is what it takes.
+
+     `p` and not the column, because the column is the level ledger's and a
+     Bodily Vigor worked into a ring is worth ten kilos of capacity that only the
+     bent number knows about. See carryCapacity in items.js. */
+  const carry = carryState(character, p);
 
   /* Armor is worn pieces plus whatever has been laid on the wielder. Resilience
      grants "3 armor" and Armor is a stat, so it is one number: the meter reads it,
      and Heavy Armor's "half of Armor" rider reads the same one rather than a
-     smaller Armor of its own. Flagged in data/README.md as an interaction the
-     designer has not ruled on.
+     smaller Armor of its own. **Ruled by Jules on 2026-09-02**: all Armor counts
+     toward that half, wherever it came from. See docs/rulebook.md 7.2.
 
      And the hide, for a Feral Cursed who is wearing one. FERAL HIDE grants "half
      your Instinct" while the form is running, which is a share of an attribute
@@ -320,19 +649,44 @@ export function deriveStats(character, extra = null) {
      rather than printed on the card as a warning: swap to a two-hander and
      syncDerived takes the point straight back off. See moves.js. */
   avoid += martialDefense(character);
+  /* And every flat point of it from anywhere else — a lineage card, a talent
+     card, a skill, a working, and whatever is on the tracker. `defense` is the
+     field's name in every codex that carries it, because "Defense" is what a
+     reader calls this stat: the stored column says `avoid` and that is the
+     relabel CharacterTab.jsx explains, not a second stat.
+
+     MINERAL SKIN and SCALEY are the two cards riding it, and BARKSKIN is the
+     tracker row that always did — it comes off on the render its row is
+     dropped, and so does a Stonebound's point on the render the card is. */
+  avoid += Math.floor(flat('defense'));
+
+  /* The factor on the Movement Speed, applied to everything the Speed is already
+     made of: GIANT GROWTH doubles the Speed you have, gear and all, rather than
+     doubling the three metres everybody starts from. Then the load is applied,
+     because being twice as big and twice as burdened is still burdened. */
+  const stride = Number(running?.speedFactor) || 1;
 
   return {
     health_max,
-    // A shield's base cap is never independently set — it's always half of
-    // health_max; worn gear (the Supreme Runed set) can raise it by Mind.
-    shield_cap: Math.floor(health_max / 2) + (gear.shieldCapMind ? m : 0),
-    willpower_max: Math.floor(2 * lvl + 2 * m + 10 + flat('willpowerMax')),
+    /* A shield's base cap is never independently set — it is always a share of
+       health_max; worn gear (the Supreme Runed set) can raise it by Mind. The
+       share is a half for everybody and the whole of it for a Feral Cursed, whose
+       BESTIAL SENSE says so, which is the one thing that lets FERAL FORM's "twice
+       as much Shield" actually pay twice. See shieldShareFor below. */
+    shield_cap: shieldCap(health_max, shieldShareFor(character)) + (gear.shieldCapMind ? m : 0),
+    /* Both halves, worked out above. See the note beside them. */
+    willpower_max: Math.floor(willpowerHeld - willpowerOwed),
     avoid: Math.floor(avoid),
     defense: Math.floor(armorTotal),
     initiative: Math.floor(i + lvl),
     // Speed is the one value that stays a precise decimal — everything else
     // here rounds down.
-    speed_m: 3 + i / 2 + flat('speed'),
+    //
+    // And the one value a load can take *off*: over your carry capacity it is
+    // halved, and 30% over it is nothing at all. Applied here rather than left
+    // as a note somebody has to remember, the same way a breastplate's Armor is
+    // applied here. See encumberedSpeed in items.js.
+    speed_m: encumberedSpeed((3 + i / 2 + flat('speed')) * stride, carry),
     /* Six for everybody, and seven for a Master Trickster: THRILLED is the only
        thing in the game that moves either ceiling, and both of these were a
        literal 6 before it existed. tricks.js reads the rank off the set and hands
@@ -344,16 +698,38 @@ export function deriveStats(character, extra = null) {
   };
 }
 
-/** Half of `healthMax`, rounded down — the bare cap on a character's shield. */
-export function shieldCap(healthMax) {
-  return Math.floor((Number(healthMax) || 0) / 2);
+/** The share of maximum Health a Shield pool ceilings at for everybody. */
+export const SHIELD_SHARE = 0.5;
+
+/**
+ * A share of `healthMax`, rounded down — the bare cap on a character's shield.
+ *
+ * Half of it unless a caller says otherwise, which is what it has always been.
+ * The argument exists because BESTIAL SENSE moves the share rather than adding a
+ * bonus: "your maximum Shield is now equal to your Health instead of half".
+ */
+export function shieldCap(healthMax, share = SHIELD_SHARE) {
+  return Math.floor((Number(healthMax) || 0) * (Number(share) || SHIELD_SHARE));
+}
+
+/**
+ * The share this character's Shield ceilings at: the half everybody has, or the
+ * larger one a talent set grants them.
+ *
+ * `Math.max` and not a replacement, so a set that ever asked for *less* than half
+ * could not quietly shrink a pool the rest of the sheet has always sized one way,
+ * and so a set saying nothing costs nothing. feral.js hands back 0 for everybody
+ * who holds no such set.
+ */
+function shieldShareFor(character) {
+  return Math.max(SHIELD_SHARE, feralShieldShare(character));
 }
 
 /** The shield cap with worn gear applied — what the sheet should display. */
 export function shieldCapFor(character) {
   const gear = equipmentEffects(character);
   const bonus = gear.shieldCapMind ? Math.floor(Number(character?.mind) || 0) : 0;
-  return shieldCap(character?.health_max) + bonus;
+  return shieldCap(character?.health_max, shieldShareFor(character)) + bonus;
 }
 
 /**
@@ -383,14 +759,71 @@ export function karmaCap(character) {
  * written. `patch` in CharacterSheet.jsx closes over the stored row, not this one,
  * which is what keeps a write made from a bent screen honest.
  *
+ * A card on the tracker is the second thing that bends without storing, and it
+ * bends for exactly the same reason: GIANT GROWTH doubles a Movement Speed for
+ * ten turns, and a doubled column would still be doubled next week. So it comes
+ * through here too, whether the character cast it or somebody else did.
+ *
  * Hands back the character itself when nothing is running, so a sheet with no
- * enchantments on it does no work and re-renders no more than it used to.
+ * enchantments and an empty tracker does no work and re-renders no more than it
+ * used to.
  */
+/**
+ * What this character takes half of and double of, by damage type.
+ *
+ *   { resist: ['Cold'], vulnerable: ['Fire'] }
+ *
+ * Two sources, added because they are two sources: what the blood grants and
+ * what is running on the tracker. A Wildkin with AMPHIBIAN shrugs off Cold
+ * whatever is on their block, and a STONEFLESH over the top of it halves
+ * Physical for as long as the Shield holds.
+ *
+ * **Deduplicated rather than summed**, which is the rulebook's own rule and the
+ * only arithmetic here: "Neither stacks with itself. Two sources of
+ * vulnerability to Fire still mean double." So this is a pair of lists and the
+ * halving happens once, in `typeFactor` in combatApply.js, wherever a number
+ * actually lands on this body.
+ *
+ * A talent card could carry one and none does yet. The channel is `grants`, the
+ * same word a Defense rides on, so the day one does it is a field on the card
+ * and a line in `talentGrantSources`.
+ */
+export function characterTypes(character) {
+  const resist = [];
+  const vulnerable = [];
+  /* And the third state, which is not a bigger resistance: nothing gets through
+     at all. HIBERNATION is the one card that grants it. See typeFactor. */
+  const immune = [];
+  const add = (into, list) => {
+    for (const type of list ?? []) {
+      const word = String(type ?? '').trim();
+      if (word && !into.some((held) => held.toLowerCase() === word.toLowerCase())) into.push(word);
+    }
+  };
+
+  for (const row of [
+    ...lineageGrantSources(character?.lineage, character?.choices),
+    ...talentGrantSources(character),
+  ]) {
+    add(resist, row.resist);
+    add(vulnerable, row.vulnerable);
+    add(immune, row.immune);
+  }
+
+  const worn = wornTypes(character?.effects, { who: character });
+  add(resist, worn.resist);
+  add(vulnerable, worn.vulnerable);
+  add(immune, worn.immune);
+
+  return { resist, vulnerable, immune };
+}
+
 export function liveCharacter(character) {
   if (!character) return character;
 
   const grants = characterGrants(character);
-  if (!grants.any) return character;
+  const running = effectRiders(character?.effects, { who: character });
+  if (!grants.any && !running) return character;
 
   /* The attribute *columns* are the level ledger's, and nothing here may write
      them: levelPicks.js rebuilds all three out of its own record, so a bonus
@@ -403,33 +836,39 @@ export function liveCharacter(character) {
      two numbers contradicting each other on one screen. */
   const bent = { ...character };
   for (const key of ['physique', 'instinct', 'mind']) {
-    const plus = grants.attributes[key] ?? 0;
+    const plus = (grants.attributes[key] ?? 0) + (running?.attributes[key] ?? 0);
     if (plus) bent[key] = (Number(character[key]) || 0) + plus;
   }
 
   /* Derived off the *stored* columns, with only the ephemeral part passed in:
      deriveStats reads the worn part out of the talents column itself, so handing
-     it the bent attributes as well would count every worn enchantment twice. */
+     it the bent attributes as well would count every worn enchantment twice. The
+     tracker's riders are read off the effects column, which deriveStats can also
+     see, and are handed in for the same reason: one read, one place. */
   const level = levelForXp(character.xp);
-  return { ...bent, ...deriveStats({ ...character, level }, grants.ephemeral) };
+  return { ...bent, ...deriveStats({ ...character, level }, grants.ephemeral, running) };
 }
 
 /**
  * What is on this character that is not on their row, said in words.
  *
- * Only the ephemeral half: a worn enchantment is permanent and the stored
- * columns already carry it, so the only thing worth flagging as *running* is the
- * hour-long kind. Empty when nothing is.
+ * Only the temporary: a worn enchantment is permanent and the stored columns
+ * already carry it, so what is worth flagging as *running* is the hour-long kind
+ * and whatever is on the tracker. Empty when nothing is, which is nearly
+ * everyone.
  *
  * The permanent ids go in so the same-source law can bite here too: an hour of
  * borrowed Primal Sense on somebody already wearing one moves nothing, and a row
  * saying "+1 Instinct" beside a tile that did not move would be the sheet
  * contradicting itself.
+ *
+ * A tracker row is named after its card rather than reduced to a number, because
+ * that is the only name a reader can go and look up: "+1 Defense" says nothing
+ * about where to take it off, and "Barkskin" says everything.
  */
 export function liveShift(character) {
   const standing = [...wornIds(character?.talents), ...gearEnchantIds(character)];
   const grants = ephemeralGrants(character?.effects, standing);
-  if (!grants.any) return [];
 
   const said = [];
   for (const [key, plus] of Object.entries(grants.attributes)) {
@@ -438,12 +877,27 @@ export function liveShift(character) {
   if (grants.healthMax) {
     said.push(`${grants.healthMax > 0 ? '+' : ''}${grants.healthMax} max Health`);
   }
+
+  /* And the cards. Only the ones actually moving a tile: a row lending a die to
+     the next swing is running, and it is not what any of these tiles is showing.
+     See riders.js. */
+  for (const { name, rider } of riderShift(character)) {
+    said.push(`${name} (${rider.line})`);
+  }
+
   return said;
 }
 
 function attributeWord(key) {
   return key.charAt(0).toUpperCase() + key.slice(1);
 }
+
+/* There is no `swingShift` twin accounting for the *attacks*, and there was one
+   for a day: every tracker row that rides a swing already wears its arrow and
+   prints what it does under its own name, so a summary line above the rows was
+   the list repeating itself ("the On your attack block is redundant. The
+   tracker already tells you that", 2026-08-29). What a riding row does to an
+   attack still folds into every card the sheet prints, in attackModifiers. */
 
 /* ------------------------------------------------------------------- health */
 
@@ -554,77 +1008,12 @@ export const MAX_ATTRIBUTE = 12;
 
 /* ---------------------------------------------------------------- experience */
 
-export const MAX_LEVEL = 12;
-
-/**
- * Cumulative XP needed to *reach* each level — `xp` on a character is the
- * lifetime total, never a per-level counter that resets.
- *
- * Every step costs more than the one before it: the climb from 11 to 12 is
- * worth seventeen level-1s, so late levels stay an event rather than a
- * formality.
- */
-export const XP_TABLE = [
-  null, // no level 0
-  0,      // 1
-  1000,   // 2   +1,000
-  2500,   // 3   +1,500
-  4500,   // 4   +2,000
-  7500,   // 5   +3,000
-  11500,  // 6   +4,000
-  17000,  // 7   +5,500
-  24000,  // 8   +7,000
-  33000,  // 9   +9,000
-  44000,  // 10  +11,000
-  58000,  // 11  +14,000
-  75000,  // 12  +17,000
-];
-
-function clampLevel(level) {
-  return Math.min(MAX_LEVEL, Math.max(1, Math.floor(Number(level) || 1)));
-}
-
-/** The level a lifetime XP total buys, capped at the table's last row. */
-export function levelForXp(xp) {
-  const total = Math.max(0, Number(xp) || 0);
-  let level = 1;
-  for (let n = 2; n <= MAX_LEVEL; n += 1) {
-    if (total < XP_TABLE[n]) break;
-    level = n;
-  }
-  return level;
-}
-
-/**
- * Cumulative XP that opens the *next* level. At the cap it returns the level-12
- * threshold, so `xp_max` always holds a real number for the progress bars.
- */
-export function xpForLevel(level) {
-  const n = clampLevel(level);
-  return n >= MAX_LEVEL ? XP_TABLE[MAX_LEVEL] : XP_TABLE[n + 1];
-}
-
-/** Everything the bars and badges need from a lifetime XP total. */
-export function xpProgress(xp) {
-  const total = Math.max(0, Number(xp) || 0);
-  const level = levelForXp(total);
-  const isMax = level >= MAX_LEVEL;
-  const floor = XP_TABLE[level];
-  const ceil = isMax ? XP_TABLE[MAX_LEVEL] : XP_TABLE[level + 1];
-  const span = Math.max(1, ceil - floor);
-
-  return {
-    level,
-    isMax,
-    floor,
-    ceil,
-    total,
-    into: total - floor,
-    span,
-    toNext: isMax ? 0 : Math.max(0, ceil - total),
-    percent: isMax ? 100 : Math.min(100, ((total - floor) / span) * 100),
-  };
-}
+/* The climb moved to its own leaf on 2026-09-11 and is re-exported here, because
+   every reader on the site asks characterModel for it and none of them should have
+   had to change. What moved it: `deriveStats` below now reads what a *skill*
+   grants, which lives behind `heldSkillIds` in levelPicks.js, and levelPicks.js
+   was already reading `MAX_LEVEL` from here. See levels.js. */
+export { MAX_LEVEL, XP_TABLE, levelForXp, xpForLevel, xpProgress };
 
 /* -------------------------------------------------------------------- ledger */
 
@@ -634,6 +1023,23 @@ export const LEDGER_NOTE_MAX = 60;
 /** Oldest entries fall off the end so a long campaign can't bloat the row. */
 export const LEDGER_LIMIT = 200;
 
+/**
+ * And how many of any one kind, which is the cap that actually binds.
+ *
+ * One column holds seven ledgers, and they move at wildly different speeds: a
+ * table books XP once a session and Willpower forty times a fight. Sliced on
+ * the total alone, a single evening of casting would push every XP line a
+ * character ever earned off the end of the array — so the pools would quietly
+ * eat the history. Since 2026-09-03 a Willpower spend writes a row of its own
+ * (see `spendNote` in combatBar.js), which is what made that a real loss rather
+ * than a theoretical one.
+ *
+ * So each kind is pruned against its own count and never against anybody
+ * else's. The total cap stays as a second fence, and with seven kinds it is no
+ * longer the one that trips.
+ */
+export const LEDGER_KIND_LIMIT = 40;
+
 export function readLedger(character, kind) {
   const all = Array.isArray(character?.ledger) ? character.ledger : [];
   return all.filter((entry) => entry && entry.kind === kind);
@@ -641,7 +1047,21 @@ export function readLedger(character, kind) {
 
 export function appendLedger(character, entry) {
   const all = Array.isArray(character?.ledger) ? character.ledger : [];
-  return [entry, ...all].slice(0, LEDGER_LIMIT);
+  const list = [entry, ...all];
+
+  /* Newest first, so a running count per kind drops the *oldest* of whichever
+     ledger is over its own limit and leaves every other one alone. Rows with no
+     kind at all are counted together, which is what an older build's row is. */
+  const seen = new Map();
+  const kept = [];
+  for (const row of list) {
+    const kind = row?.kind ?? '';
+    const count = (seen.get(kind) ?? 0) + 1;
+    seen.set(kind, count);
+    if (count <= LEDGER_KIND_LIMIT) kept.push(row);
+  }
+
+  return kept.slice(0, LEDGER_LIMIT);
 }
 
 export function newLedgerId() {
@@ -662,6 +1082,47 @@ export function metersToFeet(meters) {
 
 export function formatSpeed(meters, unit) {
   return unit === 'imperial' ? `${metersToFeet(meters)}ft` : `${Number(meters) || 0}m`;
+}
+
+/**
+ * 11 -> 24.3 (pounds). Not snapped the way feet are.
+ *
+ * A distance rounds to 5ft steps because a battle map is drawn in them, and
+ * nothing is measured off a grid here: a capacity is a running total that a
+ * single potion can tip over, so the two sides of the switch have to agree about
+ * which side of the line it lands on. One decimal, which is finer than any weight
+ * in the codex and coarse enough to read.
+ */
+export function kgToPounds(kg) {
+  return Math.round((Number(kg) || 0) * 2.20462 * 10) / 10;
+}
+
+/**
+ * A weight split into its number and its unit, for a chip that sets the two in
+ * different type: the number in the display face every other number on a row
+ * wears, the unit in the body face beside it.
+ *
+ * The rounding lives here rather than in both, so `4 kg` on an item row and
+ * `4 kg` in a tooltip can never disagree about the decimal.
+ */
+export function weightParts(kg, unit) {
+  const imperial = unit === 'imperial';
+  return {
+    value: imperial ? kgToPounds(kg) : Math.round((Number(kg) || 0) * 100) / 100,
+    unit: imperial ? 'lb' : 'kg',
+  };
+}
+
+/**
+ * A weight as the sheet writes it, in whichever unit the reader chose.
+ *
+ * Trailing zeroes go, so a bag of exactly 5 kg is `5 kg` and not `5.0 kg`. The
+ * space is deliberate and the one difference from `formatSpeed`: `5.5m` reads,
+ * and `5.5kg` does not.
+ */
+export function formatWeight(kg, unit) {
+  const parts = weightParts(kg, unit);
+  return `${parts.value} ${parts.unit}`;
 }
 
 export function formatNumber(n) {

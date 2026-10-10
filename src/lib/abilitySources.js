@@ -23,15 +23,36 @@
  * only place that knows what counts as a source.
  */
 
-import { getBackground, getBackgroundSkill, normalizeBackgroundSkills } from './backgrounds.js';
+import {
+  getBackground,
+  getBackgroundSkill,
+  normalizeBackgroundSkills,
+  skillCards,
+} from './backgrounds.js';
+import { alchemistState } from './alchemy.js';
+import { cardProse } from './cardText.js';
+import { compareCards, compareTags, sortCardRows } from './cardOrder.js';
 import { brewLimits, brewingOf, knownIngredients } from './brews.js';
 import { INGREDIENT_PARTS } from './ingredients.js';
 import { EQUIPMENT_SLOTS, heldItem, normalizeEquipment, normalizeTrinkets } from './items.js';
-import { getLineage } from './lineages.js';
+import { getLineage, lineageCards } from './lineages.js';
+import { levelForXp } from './characterModel.js';
 import { normalizeLevelPicks } from './levelPicks.js';
-import { loadoutOf, loadoutState } from './loadouts.js';
-import { isMinionCard, minionModifiers, minionState } from './minions.js';
+import { loadoutOf, loadoutState, swapRests } from './loadouts.js';
+import {
+  heldMinionCards,
+  isMinionCard,
+  minionKindRiders,
+  minionKindRows,
+  minionKinds,
+  minionModifiers,
+  minionOf,
+  minionState,
+} from './minions.js';
+import { heldOathCards, oathFamilies, oathRiders } from './oathbound.js';
+import { pactBoonRows, pactState } from './pact.js';
 import { cardsAtRank, getTalent, normalizeTalents, rankInfo } from './talents.js';
+import { commandRiders } from './undead.js';
 import { getCard, itemEnchantments } from './weapons.js';
 
 /* --------------------------------------------------------------- the parts */
@@ -52,16 +73,26 @@ export function answerOn(card, choices) {
   return card.choice.options.find((option) => option.id === choices?.[card.id]) ?? null;
 }
 
-/** Lineage cards carry choices; nothing else in the codex does yet. */
-function withAnswers(cards, choices) {
-  return cards.map((card) => {
-    const picked = answerOn(card, choices);
-    return entry(card, picked ? { choice: picked } : null);
-  });
-}
+/* Lineage cards and skills carry choices; nothing else in the codex does yet.
+   Both lists arrive as `{ card, modifiers }` rows with the source's riders
+   already on them, which is why there is no pass over them here: the rider that
+   makes an answer print, and the one that casts a learned spell off the highest
+   Attribute, are both the granting source's doing rather than this file's. See
+   lineageCards in lineages.js and skillCards in backgrounds.js. */
 
 function section(id, label, cards, note = null) {
-  return { id, label, note, cards };
+  /* **Every section on this tab is ordered here and nowhere else.** One funnel,
+     because a section is the only shape a source hands cards over in, so the law
+     in cardOrder.js reaches the Abilities tab, the Quick Bar and the Always On
+     block through this one line: both of those blocks read a source through
+     `rowsOf` in combatBar.js, which flattens exactly these sections.
+
+     Most sections do not move, and that is the point. A rank's cards all carry
+     one rung and the words under it are unshelved, so the codex order stands,
+     which is the designer's. What moves is every list that mixes rungs or
+     schools: the prepared hand, the Ingredient shelves, and the spells a piece
+     of gear carries. */
+  return { id, label, note, cards: sortCardRows(cards) };
 }
 
 /** "spell" / "spells", the only plural rule this file needs. */
@@ -69,10 +100,33 @@ function plural(noun, count) {
   return count === 1 ? noun : `${noun}s`;
 }
 
+/** A pick list with the second copy of anything dropped, first one kept. */
+function uniqueCards(picks) {
+  const seen = new Set();
+  return (picks ?? []).filter((pick) => {
+    const id = pick.card?.id ?? pick.id;
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
 /** "3, 5 and 7". No Oxford comma, per the house voice. */
 function listOut(words) {
   if (words.length <= 1) return String(words[0] ?? '');
   return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+}
+
+/**
+ * What a library calls the state of holding something, off the spec's own word.
+ *
+ * An Arcanist's spells are written down. A Runebearer's runes are cut into you,
+ * and a block that said the second in the first's voice would read as somebody
+ * else's set. Defaulted rather than required, so every pool written before this
+ * existed keeps the words it had.
+ */
+function kept(spec) {
+  return spec?.kept ?? 'written down';
 }
 
 /**
@@ -83,8 +137,25 @@ function listOut(words) {
  * promise one — the panel on the sheet is what changes it then, and it can do it
  * whenever.
  */
-function swapLine(spec) {
-  const rests = Array.isArray(spec?.swap) ? spec.swap : [];
+function swapLine(spec, rank) {
+  /* A library is filled rather than re-chosen, and its permission is the other
+     one: ARCANE RESEARCH adds a single card a rest where FUNGAL INVOCATION
+     changes any number. Said in the verb, because "changed on a long rest" is the
+     wrong promise for a book you are only ever allowed to add one page to. */
+  const research = Array.isArray(spec?.research) ? spec.research : [];
+  if (research.length > 0) {
+    /* In the pool’s own verb: a spell is researched and a rune is inscribed.
+       Lowercased, because it is mid-sentence here and heads a row in the rest
+       window. */
+    const verb = (spec.verb ?? 'Research').toLowerCase();
+    const done = verb.endsWith('e') ? `${verb}d` : `${verb}ed`;
+    return `one more ${done} on ${listOut(research.map((kind) => `a ${kind} rest`))}`;
+  }
+
+  /* Read at the rank, because one spec's permission moves with it: a Master
+     Spellblade re-chooses on either rest and a Novice one only at the fire. See
+     swapRests in loadouts.js. */
+  const rests = swapRests(spec, rank);
   if (rests.length === 0) return 'changed on the sheet at any time';
   const words = rests.map((kind) => `a ${kind} rest`);
   return `changed on ${listOut(words)}`;
@@ -116,7 +187,9 @@ function lineageSource(character) {
     note: 'Lineage',
     art: lineage.art ?? null,
     sections: [
-      section('traits', 'What your blood carries', withAnswers(lineage.cards, character?.choices)),
+      /* What this character *holds*, which for a Wildkin is the two traits they
+         kept rather than the eight the pool offered. */
+      section('traits', 'What your blood carries', lineageCards(lineage, character?.choices)),
     ],
   };
 }
@@ -131,10 +204,14 @@ function backgroundSource(character) {
     return written('background', 'background', name, 'Background, written in by hand');
   }
 
-  const skills = normalizeBackgroundSkills(background, character?.background_skills)
+  /* The skills, and behind any that taught a spell, the spell. "You can choose a
+     Novice spell from any school" puts two cards on this tab and not one: the
+     skill that made the promise, and the spell that answered it. `skillCards` is
+     where that expansion lives, so this tab and the Advancement block read the
+     same hand. */
+  const held = normalizeBackgroundSkills(background, character?.background_skills)
     .map(getBackgroundSkill)
-    .filter(Boolean)
-    .map((card) => entry(card));
+    .filter(Boolean);
 
   return {
     id: 'background',
@@ -142,7 +219,9 @@ function backgroundSource(character) {
     title: background.name,
     note: 'Background',
     art: background.art ?? null,
-    sections: [section('skills', 'Skills of the trade', skills)],
+    sections: [
+      section('skills', 'Skills of the trade', skillCards(held, character?.choices)),
+    ],
   };
 }
 
@@ -153,6 +232,7 @@ function backgroundSource(character) {
  */
 function learnedSource(character) {
   const picks = normalizeLevelPicks(character?.level_picks);
+  const choices = character?.choices ?? {};
 
   const learned = Object.entries(picks)
     .map(([level, pick]) => ({ level: Number(level), card: getBackgroundSkill(pick.skill) }))
@@ -169,8 +249,10 @@ function learnedSource(character) {
       learned.length === 1 ? 'level' : 'levels'
     } ${listOut(learned.map((row) => row.level))}`,
     art: null,
+    /* A skill learned here can teach a spell too, and the spell belongs under
+       the level that bought it rather than in a block of its own. */
     sections: learned.map((row) =>
-      section(`level-${row.level}`, `Level ${row.level}`, [entry(row.card)])
+      section(`level-${row.level}`, `Level ${row.level}`, skillCards([row.card], choices))
     ),
   };
 }
@@ -213,18 +295,100 @@ function talentSources(character) {
     const creature = creatures.find((row) => row.id === talent.id) ?? null;
     const riders = creature ? minionModifiers(character, creature) : null;
 
+    /* And for a set that hands over a *menu* of bodies, one rider per kind rather
+       than one for the set: a ghoul's claws print the ghoul's Instinct and a
+       wraith's bolt prints the wraith's Mind, and both are the Necromancer's
+       cards in the Necromancer's own block. Keyed by the tag on the card, which
+       is what says which body it belongs to. Empty for every other set. See
+       minionKindRiders in minions.js. */
+    const kinds = minionKindRiders(character, talent);
+
+    /* And the one card in the codex whose Action Point cost is worked out rather
+       than printed: COMMAND THE DEAD, at 1 per 4 Marrow standing. Keyed by card
+       id, and empty for every set that does not keep an Ossuary. The rider lands
+       here because this is where the quick bar reads its cards from as well (see
+       `rowsOf` in combatBar.js), so the chip, the prompt and the dealt card all
+       print one number. See `commandRiders` in undead.js. */
+    const commands = commandRiders(character, talent.id);
+
+    /* And for a set bound to a vow, the rider every one of its cards is read
+       with: the Attribute its holder stands highest in, bent by the Faith bar,
+       plus what the ranks did to the Aura and the damage type the Oath deals.
+       Keyed by card id like the Command above, and empty for every set that
+       swears nothing. See `oathRiders` in oathbound.js. */
+    const vows = oathRiders(character, talent.id);
+
+    /** The rider a card is read with here: its body's, its own, or its reader's. */
+    const riderFor = (card) => {
+      if (commands[card.id]) return commands[card.id];
+      if (vows[card.id]) return vows[card.id];
+      for (const tag of card.tags ?? []) {
+        if (kinds[tag]) return kinds[tag];
+      }
+      return riders && isMinionCard(card) ? riders : null;
+    };
+
+    /* ---- and the bodies, which are not cards ----
+       "You should not see the minion's ability. Instead you should have a preview
+       minion menu at each rank that gives you a pop up that shows the blocks like
+       in the bestiary" (Jules, 2026-09-09).
+
+       A Necromancer at Master holds six cards of their own and *sixteen* belonging
+       to seven bodies, and every one of those sixteen was a brief in this block
+       and a chip on the quick bar filter. None of them is a thing the character
+       can do: a Bone Bow is something a skeleton does, and it is already on the
+       skeleton's own block with the skeleton's own numbers on it.
+
+       So they come off the rank list and the rank keeps a *body* instead — the
+       kinds that rung opened, each one a press that draws the creature as the two
+       blocks it would stand up as. Which is what the bestiary already does with a
+       creature, and the same two blocks. See `bodiesAt` and MinionPreview.
+
+       A set with one body keeps its cards exactly where they were. The split is
+       worth drawing: a Draconic Bond's ally is *the* creature the set is about,
+       its four cards are half of what the set is, and there is nothing to preview
+       because the thing itself is on the Character tab already. A roster is a
+       menu, and a menu of stat blocks is what wanted a door rather than a list. */
+    const roster = minionKinds(minionOf(talent));
+    const previews = roster.length > 0;
+    const bodiesAt = (rank) =>
+      previews
+        ? minionKindRows(character, talent, { rank }).filter(
+            (row) => Math.max(1, Math.floor(Number(row.kind?.rank) || 1)) === rank
+          )
+        : [];
+
     const sections = [];
     for (let rank = 1; rank <= held.rank; rank += 1) {
-      const cards = cardsAtRank(talent, rank);
-      if (cards.length === 0) continue;
-      const title = rankInfo(rank)?.title;
-      sections.push(
-        section(
-          `rank-${rank}`,
-          `Rank ${rank}${title ? ` · ${title}` : ''}`,
-          cards.map((card) => entry(card, riders && isMinionCard(card) ? riders : null))
+      /* A roster's bodies keep their cards off this list: they belong to the
+          creature and not to its keeper. See "and the bodies" above. */
+      /* A vow's ten Auras are ten cards in the codex and one card in a
+         holder's hands, so the nine they did not swear come off here. Every other
+         set is handed back untouched. See `heldOathCards` in oathbound.js.
+
+         And a companion's three strikes come down to the one its kind holds, for
+         the same reason and by the same shape. See `heldMinionCards` in
+         minions.js. */
+      const cards = heldMinionCards(
+        character,
+        talent,
+        heldOathCards(
+          character,
+          talent,
+          cardsAtRank(talent, rank).filter((card) => !previews || !isMinionCard(card))
         )
       );
+      const bodies = bodiesAt(rank);
+      if (cards.length === 0 && bodies.length === 0) continue;
+      const title = rankInfo(rank)?.title;
+      sections.push({
+        ...section(
+          `rank-${rank}`,
+          `Rank ${rank}${title ? ` · ${title}` : ''}`,
+          cards.map((card) => entry(card, riderFor(card)))
+        ),
+        ...(bodies.length > 0 ? { bodies } : {}),
+      });
     }
 
     const info = rankInfo(held.rank);
@@ -244,7 +408,24 @@ function talentSources(character) {
 
     // The cards this set left to the player. loadoutState knows how many the
     // rank knows and which of the stored picks are still legal at it.
-    const loadout = loadoutOf(talent) ? loadoutState(character?.talents, talent) : null;
+    const loadout = loadoutOf(talent)
+      ? loadoutState(character?.talents, talent, {
+          level: levelForXp(character?.xp),
+          /* And the attributes, for the one ceiling that reads one: a
+             Runebearer's slate is half their Physique plus 4 a rank. See
+             capacityAt in loadouts.js. */
+          attributes: character,
+          /* The Abilities tab is the sheet's other editing surface for a pool, so it
+             reads the same numbers the Advancement tab's panel does: a library capped
+             at what it can hold rather than at what tonight allows. See loadoutState. */
+          capped: 'capacity',
+          /* And the two sub-schools a vow opens, for the one pool in the codex
+             whose families are the holder's rather than the spec's. Empty for
+             every other set, which changes nothing about any of them. See
+             `familyGate` in loadouts.js. */
+          families: oathFamilies(character, talent.id),
+        })
+      : null;
     if (loadout) {
       open.push({
         id: `loadout:${talent.id}`,
@@ -254,19 +435,32 @@ function talentSources(character) {
            read "swapped at any rest" for every pool, which was already loose — a
            Mycomancer swaps on a long rest and not a short one — and became plainly
            wrong the moment a set arrived whose card grants no swap at all. */
-        note: `${talent.name} · ${loadout.picks.length} of ${loadout.known} chosen, ${swapLine(
-          loadout.spec
-        )}`,
+        note: `${talent.name} · ${loadout.picks.length} of ${
+          loadout.library ? loadout.capacity : loadout.known
+        } ${loadout.library ? kept(loadout.spec) : 'chosen'}, ${swapLine(loadout.spec, loadout.rank)}`,
         art: talent.art ?? null,
         sections: [
           {
             ...section(
               `loadout-${loadout.spec.id}`,
-              `Prepared ${plural(loadout.spec.noun, loadout.known)}`,
-              loadout.picks
+              /* What the section is called, off the spec where it has a name of its
+                 own. A Mycomancer's hand is prepared and a Runebearer's slate is not:
+                 it is what is cut into them. */
+              loadout.spec.section ?? `Prepared ${plural(loadout.spec.noun, loadout.known)}`,
+              /* One row per **card**, not per pick, because a pool may now hold
+                 the same card twice: a Runebearer with two Fire Seeds has one
+                 spell listed here and two firings, and the count is what the
+                 tracker draws on the chip (see `runeLimit` in runes.js). Two
+                 identical rows would be two of everything downstream, from the
+                 quick bar's key to the wall of briefs. The copies are counted
+                 where they are a decision: the slate's own block and the
+                 chooser's column. */
+              uniqueCards(loadout.picks)
                 .filter((pick) => pick.card)
                 .map((pick) => entry(pick.card, pick.modifiers)),
-              `${loadout.picks.length} of ${loadout.known} chosen`
+              `${loadout.picks.length} of ${loadout.library ? loadout.capacity : loadout.known} ${
+                loadout.library ? kept(loadout.spec) : 'chosen'
+              }`
             ),
             // Everything the block needs to raise the chooser and colour the count.
             loadout: { talent, state: loadout },
@@ -312,6 +506,85 @@ function talentSources(character) {
       });
     }
 
+    /* And what this set brews *into a bottle*. The same shelf the rest window
+       offers, standing open on this tab so an Alchemist can read what a night
+       would cost before there is a night to spend.
+
+       `aside`, like the Ingredients above it and for the same reason: a recipe is
+       not a move. You never use the Healing Draught off this block, you brew one,
+       and the card printed here is what the flask does once somebody drinks it.
+
+       Priced in the section's own rule line rather than card by card, because the
+       Supplies come off a rank and every row on the shelf takes the same cut. */
+    const still = talent.alchemy ? alchemistState(character) : null;
+    if (still) {
+      const recipes = still.shelf
+        .map((item) => ({ item, card: getCard(item.abilities?.[0]) }))
+        .filter((row) => row.card);
+
+      if (recipes.length > 0) {
+        open.push({
+          id: `recipes:${talent.id}`,
+          kind: 'ingredient',
+          title: 'Recipes',
+          note: `${talent.name} · ${recipes.length} on the shelf, ${listOut(still.tiers)}`,
+          art: talent.art ?? null,
+          aside: true,
+          sections: [
+            section(
+              'recipes',
+              plural(still.spec.noun, recipes.length),
+              recipes.map((row) => entry(row.card)),
+              `${still.perRest} a long rest, ${
+                still.discount > 0
+                  ? `at their printed price less ${still.discount} Supplies`
+                  : 'at their printed price in Supplies'
+              }${still.batch > 1 ? `, and ${still.batch} flasks off every working` : ''}`
+            ),
+          ],
+        });
+      }
+    }
+
+    /* And what the pact has handed over so far. Its own block beside the set,
+       like a loadout, because the boons are the standing hand a pact-bound
+       wielder actually reaches for. Every row is dealt with the pact's riders:
+       the best attribute in place of the printed one, and the Empower and
+       advantage the held rank grants. Enchant boons are not rows here — the
+       working rides the weapon, and the weapon's own cards are where it shows.
+
+       The section carries `pact` the way a loadout's carries `loadout`: the
+       block reads it to raise the adjusting window, which is what keeps a
+       permanent choice changeable when the table needs it changed. */
+    const pact = talent.pact ? pactState(character).find((row) => row.id === talent.id) : null;
+    if (pact) {
+      const rows = pactBoonRows(pact);
+      /* Counted off the claims, not the rows: an enchantment boon rides the
+         weapon rather than sitting here as a card, and it is still granted. */
+      const granted =
+        pact.grants.filter((one) => one.pick).length +
+        pact.boons.filter((one) => one.state === 'claimed').length +
+        pact.extra.length;
+      open.push({
+        id: `pact:${talent.id}`,
+        kind: 'pact',
+        title: pact.kind ? pact.kind.label : 'The Pact',
+        note: `${talent.name} · ${granted} ${plural('boon', granted)} granted`,
+        art: talent.art ?? null,
+        sections: [
+          {
+            ...section(
+              'boons',
+              'Boons of the pact',
+              rows,
+              pact.sealed ? 'Cast with your highest Attribute' : 'The bargain is not sealed yet'
+            ),
+            pact: { talent, state: pact },
+          },
+        ],
+      });
+    }
+
     return [set, ...open];
   });
 }
@@ -351,7 +624,12 @@ function gearSource(character) {
        spreads that entry, so `spell` here is the id. */
     const carried = itemEnchantments(item)
       .map(({ enchantment, spell }) => ({ enchantment, card: getCard(spell) }))
-      .filter((row) => row.card);
+      .filter((row) => row.card)
+      /* Ordered here rather than left to `section`, because the note under the
+         heading names the workings in the order it was handed them: a note
+         reading Adept then Novice over cards reading Novice then Adept is two
+         lists disagreeing about one slot. */
+      .sort((a, b) => compareCards(a.card, b.card));
     if (carried.length === 0) return null;
 
     // Dealt without the item's modifiers on purpose: an infusion changes what
@@ -486,6 +764,11 @@ const KIND_ORDER = [
      never is. Without the entry it fell through to the fallback below and the
      overview read "Martial-moves". */
   { id: 'martial-move', label: 'Martial Move', plural: 'Martial Moves' },
+  /* And a weave, for the same reason: chosen out of a pool and swapped at a rest,
+     which is what a spell is and what a talent never is. Beside the move rather
+     than beside the spell, because the two of them are the things that ride a
+     swing and a reader counting what they can put on one wants them together. */
+  { id: 'weave', label: 'Weave', plural: 'Weaves' },
   { id: 'brew', label: 'Brew', plural: 'Brews' },
   { id: 'ability', label: 'Ability', plural: 'Abilities' },
 ];
@@ -508,12 +791,28 @@ export function heldCardTags(sources) {
   for (const { card } of allSourceCards(sources)) {
     for (const tag of card.tags ?? []) seen.add(tag);
   }
-  return [...seen].sort().map((tag) => ({ id: tag, label: tag, kind: 'card' }));
+  /* The line above said the row reads in the banner's order and a bare `.sort()`
+     did not do it: alphabetical put Adept Spell first and scattered the schools
+     through the families. `compareTags` is that promise kept. */
+  return [...seen].sort(compareTags).map((tag) => ({ id: tag, label: tag, kind: 'card' }));
 }
 
-/** Everything about a card the search box may look inside. */
+/**
+ * Everything about a card the search box may look inside.
+ *
+ * The two prose fields come through `cardProse`, because a marker sits inside
+ * the phrase a reader would type: the card says "within **9 meters (30 feet)**"
+ * and a search for "within 9 meters" would find nothing.
+ */
 export function cardHaystack(card) {
-  return [card.name, card.summary, card.body, card.sub_name, card.sub_body, card.type_line]
+  return [
+    card.name,
+    card.summary,
+    cardProse(card.body),
+    card.sub_name,
+    cardProse(card.sub_body),
+    card.type_line,
+  ]
     .concat(card.tags ?? [])
     .concat(card.damage ?? [])
     .filter(Boolean)

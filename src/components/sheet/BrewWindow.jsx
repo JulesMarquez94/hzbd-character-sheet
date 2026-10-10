@@ -2,9 +2,10 @@ import { useState } from 'react';
 import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import UsePrompt from './UsePrompt.jsx';
+import { Gated } from './parts.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useCardStack } from '../../context/card-stack.js';
-import { spendUse } from '../../lib/combatBar.js';
+import { usePlayCard } from './usePlayCard.js';
 import {
   addIngredient,
   blankBrew,
@@ -70,6 +71,7 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
   const [picking, setPicking] = useState(null);
 
   const stack = useCardStack();
+  const play = usePlayCard({ character, patch });
 
   if (!limits) return null;
 
@@ -90,8 +92,13 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
 
   /** The one write a confirmed Brew makes: the points, and nothing else. */
   function confirm(mode, amount, options) {
-    const body = spendUse(paying, character, mode, amount, options);
-    if (Object.keys(body).length > 0) patch(body);
+    /* What went into it is the brewer's business; that a Brew was made is the
+       table's. See campaignLog.js.
+
+       `roll: false` because this pays for a potion that does not exist yet. The
+       card being charged against describes what the potion will do when it is
+       drunk, and rolling that at the cauldron would roll it a day early. */
+    play(paying, mode, amount, options, { roll: false });
     setPaying(null);
     setDraft(blankBrew());
     onClose();
@@ -345,12 +352,20 @@ function SlotRow({ group, draft, limits, readOnly, onAdd, onDrop, onRead }) {
  *
  * It used to stand open under the configuration, all eighteen Ingredients of it,
  * which is the longest thing in the window and the part a player reads least
- * often. Behind the `+` it answers the question actually being asked — what goes
- * in *this* slot — and the Ingredients that cannot go in it say why on their own
- * button rather than being listed at all.
+ * often. Behind the `+` it answers the question actually being asked: what goes
+ * in *this* slot.
+ *
+ * And only what a rank can reach. An Ingredient two ranks off is not an offer
+ * this Cauldron can make, so it comes off the shelf and is counted in a line
+ * instead, the way every other pool on the sheet counts what it held back. What
+ * stays is everything refused for a reason the brewer can undo tonight: a dose
+ * already in, or an Essence slot that is full. Those say why on their own
+ * button, because giving one back makes them an offer again.
  */
 function Shelf({ group, character, onClose, onAdd, onRead }) {
-  const within = group.options.filter((option) => option.ok).length;
+  const offered = group.options.filter((option) => !option.gated);
+  const later = group.options.length - offered.length;
+  const within = offered.filter((option) => option.ok).length;
 
   return (
     <Modal
@@ -372,8 +387,17 @@ function Shelf({ group, character, onClose, onAdd, onRead }) {
         {group.rule}.
       </p>
 
+      {/* Where the rest of the shelf went. A rank opens tiers, so this number
+          falls as the Cauldron Keeper ranks up and is gone at Master. */}
+      {later > 0 && (
+        <p className="pick-line">
+          {later} more {later === 1 ? group.label : group.plural}{' '}
+          {later === 1 ? 'is' : 'are'} held back for higher ranks.
+        </p>
+      )}
+
       <div className="card-brief-wall">
-        {group.options.map((option) => (
+        {offered.map((option) => (
           <IngredientRow
             key={option.ingredient.id}
             option={option}
@@ -412,15 +436,13 @@ function IngredientRow({ option, character, onAdd, onOpen }) {
         </span>
       )}
 
-      <button
-        type="button"
+      <Gated
         className={`btn btn-sm card-brief-btn ${ok ? 'btn-take' : 'btn-minimal'}`}
-        disabled={!ok}
-        title={ok ? undefined : reason}
+        why={ok ? null : reason}
         onClick={onAdd}
       >
         {ok ? 'Add' : reason}
-      </button>
+      </Gated>
     </CardBrief>
   );
 }

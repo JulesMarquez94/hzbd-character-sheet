@@ -105,8 +105,8 @@ export const BASIC_ACTIONS = withArt([
     stat: 'mind',
     summary: 'Read a room or read an enemy, and learn something worth knowing.',
     body:
-      'While in combat, you attempt to ascertain the weakness or the strength of an enemy, or to find a weak point or a hazard in the place you are fighting in.\n\n' +
-      'Make a {mind} {roll:mind} or {instinct} {roll:instinct} roll against an enemy entity’s Grit, or against an environment difficulty rating your Game Master sets.\n\n' +
+      'While in combat, you attempt to ascertain the weakness or the strength of **an enemy**, or to find a weak point or a hazard in the place you are fighting in.\n\n' +
+      'Make a {mind} {roll:mind} or {instinct} {roll:instinct} Roll against **an enemy entity**’s Grit, or against an environment difficulty rating your Game Master sets.\n\n' +
       /* The sheet writes "critical information" here. Critical is a defined
          term meaning a natural 20, and it is lit wherever it appears, so that
          wording would offer the crit rule as the explanation of a word being
@@ -114,6 +114,38 @@ export const BASIC_ACTIONS = withArt([
       'On a success you learn something worth knowing: what could help you in this fight, or the strengths and the weaknesses of the foe.',
     sub_name: null,
     sub_body: null,
+  },
+  {
+    /* Not on the sheet either, and asked for outright: "Add a new basic action
+       which is to do a skill check that let you select an attribute and then add
+       any skill that could be relevant (like arcane marshal ect). Skill check
+       are modular action cost and can cost nothing." Jules, 2026-09-02.
+
+       Every other card in the codex names its own attribute. This one cannot:
+       the whole of a skill check is that the table decides what it is being
+       attempted with, so the attribute is a question asked at the moment of use
+       and `picks: 'check'` is what raises it. The card's printed `stat` is only
+       where the picker opens.
+
+       `ap: 0` with `variable: true`, which is the pair that says "modular, and
+       nothing is a real answer": the dial opens on what the card printed, and it
+       printed nothing. See the note on `variable` above, and `ap: 0` on RAGING
+       BLOW in talents.js for the same argument about saying the nothing out
+       loud. */
+    id: 'skill-check',
+    name: 'Skill Check',
+    kind: 'ability',
+    tags: ['Basic Action'],
+    ap: 0,
+    wp: null,
+    variable: true,
+    picks: 'check',
+    stat: 'mind',
+    summary: 'Attempt something the world might refuse you, with whatever you know.',
+    body:
+      'You attempt something that is not an attack and is not certain: a wall to climb, a lock to pick, a guard to talk past.\n\n' + // text-style-ok: a list after a colon
+      'Choose the attribute it is made with and roll a {stat} Skill Check {roll} against a difficulty your Game Master sets.\n\n' +
+      'What it costs in Action Points is the Game Master’s to set, and most attempts cost nothing. Any card you hold that applies is brought with it and pays its own price.',
   },
   {
     id: 'interact',
@@ -138,10 +170,19 @@ export const BASIC_ACTIONS = withArt([
     wp: null,
     stat: 'instinct',
     summary: 'Break line of sight and stay unfound until someone goes looking.',
+    /* The last line is Jules's, 2026-09-03: "it should set an effect that is
+       removed at the end of the turn, if the player [does] any action during
+       this turn. Otherwise it stay[s] until manual[ly] removed."
+
+       Written on the card rather than wired behind it, because it is a rule a
+       player has to know before they spend two Action Points on it. "until you
+       act" is the phrase the sheet reads the clock off — see `readDuration` in
+       combatTurn.js — so the sentence and the row it lays cannot come apart. */
     body:
-      'If no enemy has line of sight on you, you may attempt to hide with an {instinct} roll {roll:instinct} against the Grit of every enemy.\n\n' +
-      'Every enemy whose Grit you beat loses sight of you.\n\n' +
-      'On their turn they use {{Investigate}} to attempt to find you.',
+      'If no enemy has line of sight on you, you may attempt to hide with an {instinct} Roll {roll:instinct} against the Grit of **every enemy**.\n\n' +
+      '**Every enemy** whose Grit you beat loses sight of you.\n\n' +
+      'On their turn they use {{Investigate}} to attempt to find you.\n\n' +
+      'You stay out of sight until you act. At the end of any turn in which you did anything at all, you are found.',
   },
   {
     id: 'grapple',
@@ -153,8 +194,8 @@ export const BASIC_ACTIONS = withArt([
     stat: 'physique',
     summary: 'Take hold of something within reach and stop it leaving.',
     body:
-      'You attempt to restrain an entity within your reach.\n\n' +
-      'Make a {physique} roll {roll:physique} against the target’s Reflex.\n\n' +
+      'You attempt to restrain **an entity** within your reach.\n\n' +
+      'Make a {physique} Roll {roll:physique} against the target’s Reflex.\n\n' +
       'On a success, the target is grappled.',
   },
   {
@@ -167,9 +208,15 @@ export const BASIC_ACTIONS = withArt([
     stat: 'physique',
     summary: 'Put something on the floor, or put it somewhere else.',
     body:
-      'You use force to push an entity you can touch away from you.\n\n' +
-      'Make a {physique} attack roll {roll:physique} against the target.\n\n' +
-      'On a hit, you push the target back 1.5 meters (3 feet) or knock it prone.',
+      'You use force to push **an entity** you can touch away from you.\n\n' +
+      'Make a {physique} Attack Roll {roll:physique} against the target.\n\n' +
+      /* The sheet writes "(3 feet)" here. Every other conversion in the codex
+         reads 1.5 meters as 5 feet, and so does the app's own unit switch,
+         which snaps to 5ft steps because a battle map is drawn in them. Jules
+         confirmed the conversion on 2026-09-02 (1.5 m = 5 ft = 1 space) and
+         called this one a slip, so it is corrected here with the sheet's other
+         typos rather than carried. See docs/rulebook.md. */
+      'On a hit, you push the target back **1.5 meters (5 feet)** or knock it prone.',
   },
   {
     id: 'anticipate',
@@ -199,8 +246,8 @@ export const BASIC_ACTIONS = withArt([
     stat: 'mind',
     summary: 'Stop a dying ally dying. They stay down, but they stay.',
     body:
-      'You attempt to stabilize a dying entity within your reach.\n\n' +
-      'Make a {mind} roll {roll:mind} against the target’s negative Health divided by 5.\n\n' +
+      'You attempt to stabilize **a dying entity** within your reach.\n\n' +
+      'Make a {mind} Roll {roll:mind} against the target’s negative Health divided by 5.\n\n' +
       'On a success they are no longer dying and sit at 0 Health. They remain unconscious until healed.',
   },
   {

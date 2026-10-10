@@ -1,0 +1,115 @@
+/*
+ * The legal pages.
+ *
+ * These are the only pages on the site meant to be *read* rather than played
+ * with, so they get a single narrow column and nothing else. No panels, no
+ * frames, no copper. A terms page that looks like the rest of the interface
+ * invites skimming; one that looks like a document gets read.
+ */
+
+.legal-page {
+  min-height: 100vh;
+  background: var(--bg-black);
+  color: var(--text-silver);
+}
+
+.legal-sheet {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 3.5rem 1.25rem 4rem;
+}
+
+.legal-head {
+  border-bottom: 1px solid rgba(120, 139, 149, 0.18);
+  padding-bottom: 1.25rem;
+  margin-bottom: 2.25rem;
+}
+
+.legal-updated {
+  margin: 0.5rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* The placeholder warning. Loud on purpose: it is the last thing standing
+   between a deploy and a live checkout that links to an unfinished contract. */
+.legal-draft {
+  margin: 0 0 2.25rem;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--level-amber);
+  border-left-width: 4px;
+  border-radius: 4px;
+  background: rgba(255, 179, 0, 0.08);
+  color: var(--text-silver);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.legal-draft code {
+  font-size: 0.85em;
+  color: var(--level-amber);
+}
+
+.legal-section {
+  margin-bottom: 2.25rem;
+}
+
+.legal-section h2 {
+  margin: 0 0 0.85rem;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--copper);
+}
+
+/* 68 characters or so to the line, and generous leading. Long-form prose in the
+   interface's own tight line height is punishing to read at this length. */
+.legal-section p {
+  margin: 0 0 1rem;
+  line-height: 1.75;
+  font-size: 0.95rem;
+  color: rgba(234, 242, 248, 0.86);
+}
+
+.legal-section p b {
+  color: var(--text-bright);
+  font-weight: 600;
+}
+
+.legal-foot {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(120, 139, 149, 0.18);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.8;
+}
+
+.legal-foot a {
+  color: var(--copper);
+}
+
+.legal-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.legal-nav a {
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.legal-nav a:hover,
+.legal-nav a:focus-visible {
+  color: var(--copper-bright);
+  border-bottom-color: var(--copper-bright);
+}
+
+@media (max-width: 640px) {
+  .legal-sheet {
+    padding: 2.5rem 1rem 3rem;
+  }
+}

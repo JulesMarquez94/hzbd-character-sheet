@@ -51,7 +51,7 @@ doing on its own.
 | Talent Set · Draconic Bond · Overview | **2026-08-20, written here** | `src/lib/talents.js`, exported back to `data/` |
 | Draconic Bond art, from the `Draconic Bond/` folder | **2026-08-20, 9 cards + 1 plate** | `public/cards/`, `public/talents/` |
 | Talent Set · Trickster · Ability | **2026-08-20, 7 cards** | `src/lib/talents.js` (`TALENTS`) |
-| Talent Set · Trickster · Developpement Notes | **2026-08-20, the pending rider and the steal table** | `src/lib/tricks.js`, `AmbushWindow.jsx`, `StealWindow.jsx` |
+| Talent Set · Trickster · Developpement Notes | **2026-08-20, the pending rider and the steal table** | `src/lib/tricks.js`, `combatBar.js`, `StealWindow.jsx` |
 | Talent Set · Trickster · Overview | **2026-08-20, written here** | `src/lib/talents.js`, exported back to `data/` |
 | Trickster art, from the `Trickster/` folder | **2026-08-20, 7 cards + 1 plate** | `public/cards/`, `public/talents/` |
 | Talent Set · Enchanter · Ability, amended | **2026-08-20, 4 cards** (3 on 08-19) | `src/lib/talents.js`, exported to `data/templates/` |
@@ -66,17 +66,102 @@ doing on its own.
 | Spells · Elemental, from the `Elemental/` folder | **2026-08-20, 29 spells off card renders** | `src/lib/spells.js` (`SPELLS`) |
 | Elemental art, cut out of those renders | **2026-08-20, 29 plates** | `public/cards/` + `src/lib/cardArt.js` |
 | The Nightmare set and the Ring of Shrouding, handed over in chat | **2026-08-20, 1 spell + 2 workings + 2 trinkets** | see [the named trinkets](#the-named-trinkets-2026-08-20) |
+| General Rules · Skills | **2026-08-21, 32 skills** | `src/lib/backgrounds.js` (`SKILLS`) |
+| Skill art, from `Skills/` and `Background/Skills/` | **2026-08-21, 30 of the 32** | `public/cards/` + `src/lib/cardArt.js` |
+| Background art, from `Background/` | **2026-08-21, 10 plates** | `public/backgrounds/` |
+| The ten backgrounds and the purse formula | **2026-08-21, named in chat** | `src/lib/backgrounds.js` (`BACKGROUNDS`) |
+| Two attribute points at every odd level | **2026-08-21, ruled in chat** | `src/lib/levelPicks.js` (`raised`) |
+| Talent Set · Berserker · Overview and Ability | **2026-08-23, 1 set + 9 cards** | `src/lib/talents.js` (`TALENTS`) |
+| Talent Set · Berserker · Developpement Notes | **2026-08-23, 20 rows of adaptation** | [the Berserker](#the-berserker-2026-08-23) |
+| Berserker art, from the `Berserker/` folder | **2026-08-23, 9 cards + 1 plate** | `public/cards/`, `public/talents/` |
+| The talent wall, shelved by attribute | **2026-08-23, asked for in chat** | `src/lib/talents.js` (`TALENT_CATEGORIES`) |
+| Talent Set · Colossus · Overview and Ability | **2026-08-23, 1 set + 7 cards** | `src/lib/talents.js` (`TALENTS`) |
+| Talent Set · Colossus · Developpement Notes | **2026-08-23, a whole weapon category** | `src/lib/weapons.js`, 4 weapons + 8 cards |
+| Colossus art, from the `Colossus/` folder | **2026-08-23, 7 cards + 1 plate** | `public/cards/`, `public/talents/` |
+| The ten missing weapon types, off `Source Temp/` | **2026-08-24, 10 weapons + 20 cards** | `src/lib/weapons.js`, `itemParts.jsx` |
+| The weapon table, handed over in chat | **2026-08-24, the whole wall rebuilt: 39 weapons + 78 cards** | `src/lib/weapons.js`, `items.js`, `statMath.js`, `moves.js`, `talents.js` |
+| The wall read back, nine rulings in one message | **2026-08-24, the card face, the magazine and the tags** | [the card face](#the-card-face-the-magazine-and-the-tag-pass-2026-08-24) |
+| Talent Set · Arcanist · Ability | **2026-08-24, 4 cards** | `src/lib/talents.js` (`TALENTS`), `src/lib/loadouts.js`, `src/lib/spellbook.js` |
+| Talent Set · Arcanist · Overview | **2026-08-24, written here off the designer’s superseded Overview tab** | `src/lib/talents.js` (`tagline`, `blurb`) |
+| Arcanist art, from the `Arcanist/` folder | **2026-08-24, 4 cards + 1 plate** | `public/cards/`, `public/talents/` |
+| Spells · Ethereal · Light | **2026-08-25, 13 spells** | `src/lib/spells.js` (`SPELLS`) |
+| Ethereal art, from the `Ethereal/` folder | **2026-08-25, 13 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| Spells · Ethereal · Shadow | **2026-08-25, 12 spells** | `src/lib/spells.js` (`SPELLS`), `keywords.js` |
+| Shadow art, from the `Shadow/` folder | **2026-08-25, 12 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| Spells · Ethereal · Time | **2026-08-25, 12 spells** | `src/lib/spells.js` (`SPELLS`), `keywords.js` |
+| Time art, from the `Time/` folder | **2026-08-25, 12 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| Spells · Ethereal · Spacial | **2026-08-25, 12 spells** | `src/lib/spells.js` (`SPELLS`) |
+| Spacial art, from the `Space/` folder | **2026-08-25, 12 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| Spells · Primal · Death | **2026-08-26, 11 spells** | `src/lib/spells.js` (`SPELLS`), `keywords.js` |
+| Death art, from the `Death/` folder | **2026-08-26, 12 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| GORE SPIKE, the blank twelfth row, handed over in chat | **2026-08-26, 1 spell** | `src/lib/spells.js` (`SPELLS`) |
+| Spells · Primal · Flora, the Master rung | **2026-08-26, 4 spells** (8 on 08-19) | `src/lib/spells.js` (`SPELLS`) |
+| Flora art, from the `Flora/` folder | **2026-08-26, 4 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| Spells · Primal · Wild, the Master rung | **2026-08-26, 4 spells** (8 on 08-19) | `src/lib/spells.js` (`SPELLS`) |
+| Wild art, from the `Wild/` folder | **2026-08-26, 4 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| Spells · Primal · Life, the Adept and Master rungs | **2026-08-26, 8 spells** (4 on 08-19) | `src/lib/spells.js` (`SPELLS`) |
+| Life art, from the `Life/` folder | **2026-08-26, 8 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| Spells · Elemental · Earth | **2026-08-26, 8 spells** (1 on 08-20) | `src/lib/spells.js` (`SPELLS`) |
+| Earth art, from the `Earth/` folder | **2026-08-26, 9 plates** (SHAPE EARTH redrawn) | `public/cards/` + `src/lib/cardArt.js` |
+| Fire art, from the `Fire/` folder | **2026-08-26, 9 plates**, all redraws | `public/cards/` + `src/lib/cardArt.js` |
+| A content hash on every art URL | **2026-08-27, 295 rows** | `src/lib/cardArt.js`, `src/lib/itemArt.js` |
+| Items · Potions, replacing the whole shelf | **2026-08-27, 24 potions** (9 removed) | `src/lib/utility.js`, `riders.js`, `scripts/check-potions.mjs` |
+| Potion art, from the `Potions/` folder | **2026-08-27, 24 plates and 24 tiles** | `public/cards/`, `public/items/` |
+| Magma art, from the `Magma/` folder | **2026-08-27, 3 plates**, all redraws | `public/cards/` + `src/lib/cardArt.js` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
-own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
-else: the codex also carries one Arcane spell, Containment Sphere, which no
-sheet covers yet. `elemental-spells.csv` holds the 29 Elemental spells — a tab
-with no sheet behind it, generated straight out of `spells.js`, and its Image
-column names the render each row came from, which is what the art importer
-places the files by. `draconic-bond-overview.csv`, `trickster-overview.csv`,
-`duelist-overview.csv`, `martial-moves.csv` and `enchanter-ability.csv` are the
-tabs that were written here rather than exported, so they are tracked: a clone
-would otherwise lose the only copy.
+own column order. `primal-spells.csv` holds the 52 Primal spells and nothing
+else, which is the whole of what the codex has under that school: the one Arcane
+spell it used to carry beside them, Containment Sphere, moved to Ethereal ·
+Spacial on 2026-08-25 when a sheet finally covered it, and the twelve Death rows
+joined them on 2026-08-26. Those twelve and the Flora and Wild Masters are the
+only rows in the file with an `Image` column filled in, because they are the only
+ones whose art arrived as a folder rather than as a postimg link.
+
+**Most other files in `templates/` are still pre-readability-pass.** That pass
+(2026-08-26) rewrote card text across the codex and did not re-export the tabs,
+so `ethereal-spells.csv` still says "in Shield" where the card now says "Shield",
+and every second half in it still names its own card. `primal-spells.csv` was
+re-exported when Death landed, `elemental-spells.csv` when Earth did and
+`potions.csv` when the potion shelf was replaced, so those three
+are current; the rest are a regenerate away and nobody has asked for it.
+`potions.csv` replaced `alchemist-potions.csv` on 2026-08-27: the shelf is no
+longer only the Alchemist's, since it now runs to a Legendary rung nothing brews.
+`elemental-spells.csv` holds the 37 Elemental spells — a tab with no sheet behind it,
+generated straight out of `spells.js`, and its Image column names the picture each row
+came from, which is what the art importer places the files by. Nineteen of them name a
+whole card render in `data/Elemental/`; the other eighteen name a plate in
+`data/Fire/` or `data/Earth/`, because the 2026-08-26 drop redrew them.
+
+`draconic-bond-overview.csv`, `trickster-overview.csv`,
+`duelist-overview.csv`, `martial-moves.csv`, `enchanter-ability.csv` and the two
+`berserker-*.csv` are the tabs that were written here rather than exported, so
+they are tracked: a clone would otherwise lose the only copy. The two
+`colossus-*.csv` are the workbook's own tabs with the `Image` column filled in,
+tracked for the same reason the Berserker's pair are and read the same way.
+
+`ethereal-spells.csv` is the third generated one and holds the whole school, 37
+rows straight out of `spells.js` in the drop's own column order, with an `id`
+column the drops have not got and an `Image` column naming the picture each row
+came from. All three drops left Image empty, so the art importer places the files
+by filename and five of the thirty-seven need an alias; putting those names in the
+drops' own Image column retires all five. One file per school folder, the way
+`elemental-spells.csv` covers every Elemental family. See
+[the Ethereal school](#the-ethereal-school-2026-08-25),
+[the Shadow family](#the-shadow-family-2026-08-25) and
+[the Time family](#the-time-family-2026-08-25).
+
+It is also the first generated template to carry the `**bold**` markers of the
+2026-08-25 card pass, because it was regenerated after it. Most of the others were
+not, so they are a backup of a codex that has since moved: `elemental-spells.csv`
+is the one worth fixing, and it is not fixed here.
+
+The Berserker's pair are the whole workbook rather than a missing tab: it was
+transcribed here out of a PDF, so `berserker-ability.csv` and
+`berserker-overview.csv` are the copy of record, `Image` names the file in
+`data/Berserker/` each row was drawn from, and the `id` column is what the next
+pull should read ids off instead of the names. See
+[the Berserker](#the-berserker-2026-08-23).
 
 `martial-moves.csv` is the one with no sheet behind it at all — six rows off the
 card plates and eight written here — so it carries two extra columns beside the
@@ -88,6 +173,18 @@ column beside the live one, so the Catalyst balance pass below reads as a diff
 rather than a claim, and `enchantments.csv` carries what each one costs to lay and
 what its sentence was turned into mechanically. Diff a fresh download against those to see exactly what
 changed before asking for a pull.
+
+**`weapon-icons.csv` and `weapon-cards.csv` run the other way.** Every other
+template is a record of a sheet that arrived; these two are a **work list going
+out**, added 2026-08-24 with the rebuilt weapon wall. Between them they name all
+123 pictures the wall still needs, 45 weapon icons and 78 ability cards, each with
+the id its files will be called, the sizes it is cut to and the plates it is drawn
+on. The `Name` and `Image` columns are the importers' own, so a filled-in copy
+dropped into `data/` is the input rather than a thing to transcribe. Keep the two
+apart when you drop them: one CSV holding both, with filenames on the icon rows
+and links on the card rows, makes `pull-card-art.mjs` report every icon row as a
+card name it has never heard of. `data/weapon-art.xlsx` is the same two tables
+plus a tab on how to deliver them.
 
 **`enchantments.csv` is the sheet's 23 rows and not the codex's 25.** PREPARED and
 UNIQUE IMBUEMENT came from chat rather than from the tab, so putting them in the
@@ -469,13 +566,14 @@ its work with it:
 
 | Card | Stored as | Permanence |
 | ---- | --------- | ---------- |
-| WIELDER OF WONDER | `worn: ['primal-sense']` | permanent, as many as your rank |
+| WIELDER OF WONDER | `worn: ['primal-sense']` | permanent, as many as your rank, no burden |
 | ENCHANTING | `laid: { longbow: ['fire-infusion'] }` | permanent, 70 Supplies a point of burden |
 | EPHEMERAL ENCHANTMENT | an `effects` row carrying `ench` | one hour |
 
 **The split between those is the whole design.** `worn` and `laid` are gear:
 `deriveStats` reads them and `syncDerived` bakes them into the stored columns
-exactly the way a worn breastplate is baked in, and they cost Magic Burden.
+exactly the way a worn breastplate is baked in. Only `laid` costs Magic Burden,
+and the *thing* carries it: a body slot is free, by its own card.
 Ephemeral is an hour long and **bends what the sheet shows and never what the
 sheet stores**, because a bonus written into `instinct` is one nothing can ever
 take back off: `levelPicks.js` rebuilds all three attributes from its own record,
@@ -529,7 +627,8 @@ one is still costs what it always cost:
 
 - **On your own person.** As many slots as the rank allows, filled or waiting.
   **No Supplies**, because WIELDER OF WONDER names none for changing what you wear
-  and reads the way a Mycomancer's spell swap reads.
+  and reads the way a Mycomancer's spell swap reads, and **no Magic Burden** either
+  (2026-08-21, see below).
 - **On what you carry.** Anything worn, in hand, on the belt or in the pack. Priced
   at **70 Supplies a point of Magic Burden**, out of the same crate and through the
   same ledger as the rest itself, and a price the crate cannot cover is offered
@@ -684,12 +783,12 @@ spare dagger in their pack, so `wieldModifiers` in `items.js` is what decides �
 that file is the one that knows what equipment is, and weapons.js is handed the
 answer.
 
-**And it weighs once.** A worn enchantment costs Magic Burden as *worn*, never once
-per weapon held, so the meter reads 8 for a character wearing one and carrying a
-laid one, not 12 for the same character holding two weapons. The meter was also
-leaving the body slots out entirely and now counts them: WIELDER OF WONDER never
-says its enchantments are free of burden, where EPHEMERAL ENCHANTMENT says exactly
-that of its own.
+**And it weighs nothing.** A worn enchantment never weighed once per weapon held,
+so the meter never read 12 for a character holding two blades. What it did do was
+count the body slots at all, on the reading that WIELDER OF WONDER never said its
+enchantments were free of burden where EPHEMERAL ENCHANTMENT said exactly that of
+its own. **Overturned 2026-08-21: a body slot costs no Magic Burden.** See
+[the ruling](#a-body-slot-costs-no-magic-burden-2026-08-21).
 
 **5. Two damage types read as "Decay or Fire".** A blade with Decay worked into it,
 in the hands of someone wearing Fire, is a blade that deals **Decay or Fire**: both
@@ -1009,8 +1108,11 @@ clearable. It is also where the one other mechanical payload on this sheet lives
 will forget you paid for.
 
 ```
-{ trick: { id: 'ambush', elevate: 2 } }   the next Weapon Attack is Elevated twice
-{ trick: { id: 'poison', flat: 1 } }      and deals another 1 x Instinct
+{ trick: { id: 'ambush', elevate: 2, advantage: 1 } }   the next Weapon Attack
+                                                       is made with Advantage
+                                                       and Elevated twice
+{ trick: { id: 'poison', flat: 1 } }                    and deals another
+                                                       1 x Instinct
 ```
 
 From then on the attack prints its raised damage **everywhere the sheet prints
@@ -1023,37 +1125,58 @@ the answer. `flat` is a *multiplier* on Instinct rather than a number, because
 Poison says "equal to your Instinct Attribute" and means the Instinct you have
 when you swing.
 
+`advantage` is the card's **first** line, and it is stored beside the Elevate for
+the same reason: the row is the receipt for what the Willpower bought. It reaches
+the roll through `attackModifiers` in `moves.js` — the one function every printed
+attack goes through — so the green arrow is on the chip, on block 3's row, on the
+dealt card and on the tracker row itself, exactly where a Duelist's DEXTEROUS
+arrow already is. Two ambushes bought for one swing are two payments of Elevate
+and **one** arrow: "unless they say otherwise effects don't stack from the same
+source", deduped in `trickRider` where the sum happens. A Duelist's one-handed
+arrow and an ambush are two different sources and do stack, and the badge names
+both.
+
 **Lost on use** is `spendTricks`, called from `spendUse` in `combatBar.js` — the
 one place every use on the sheet is paid for, so a rider comes off whether the
 swing was tapped on the quick bar or on block 3. It comes off hit or miss:
 AMBUSH's Willpower buys the *attempt*, Advantage applies to the roll, and the
 roll has happened.
 
-**What counts as a swing** is read off the tags, never guessed. The glossary is
-narrow — a Weapon Attack is "either of the two attacks the weapon in your hands
-teaches you" — so both `Weapon Attack` and `Special Weapon Attack` carry a rider
-and the four things tagged `Weapon Move` do not. Shield Block is one of those, and
-a rider that raised a shield block would be lending damage to a defence.
+**What counts as a swing** is read off the tags, never guessed, and it is not the
+same answer for every rider. The glossary is broad — a Weapon Attack is "either of
+the two attacks the weapon in your hands teaches you" — and the four things tagged
+`Weapon Move` are neither of them. Shield Block is one of those, and a rider that
+raised a shield block would be lending damage to a defence.
 
-### AMBUSH prices itself, so it asks
+**AMBUSH is narrower than the glossary**, which is a ruling rather than a reading:
+it rides the plain `Weapon Attack` a weapon teaches, and a `Special Weapon Attack`
+neither prints it nor spends it. A stolen Poison keeps the broad reading and rides
+either. `trickRides` in `tricks.js` is the one place those two part company. See
+[where a rider lands](#where-a-rider-lands-2026-08-21).
+
+### AMBUSH prices itself off the weapon
 
 "The cost of this ability is equal to the weapon number of base damage dice
 before enchant or boost" — so the card's printed cost is the sheet's own `x`, and
-the number is not knowable until the attack is chosen. **The two attacks a weapon
-teaches do not always roll the same dice.** A Longbow shoots for 2d6 and takes
-aim for 3d6, so an ambush costs 2 one way and 3 the other and is Elevated to
-match.
+the number belongs to the weapon rather than to the card. Daggers strike for 1d6,
+a Longbow shoots for 2d6 and a Staff blasts for 3d6, so the same card costs 1, 2
+or 3 depending on what is in your hands, and Elevates to match.
 
-So AMBUSH is marked `pays: 'window'`, the same as EPHEMERAL ENCHANTMENT, and
-`AmbushWindow.jsx` lists the attacks in hand with the Willpower each would cost
-and prints the chosen one *as it would land* before a point is spent. "Before
-enchant or boost" is honoured by reading the card's own printed expression: an
-Empowering enchantment adds dice at print time and has no business raising the
-price of an ambush.
+`ambushUse` in `combatBar.js` reads it off the weapon in the main hand and hands
+the chip an ordinary number, so an ambush is paid for at the chip like everything
+else on the bar. "Before enchant or boost" is honoured by reading the card's own
+printed expression: an Empowering enchantment adds dice at print time and has no
+business raising the price of an ambush.
 
-A weapon whose card rolls no damage dice cannot be ambushed with and is left out
-of the list. That is the four `Reload` cards, which are tagged `Special Weapon
-Attack` and deal nothing.
+A weapon whose plain attack rolls no damage dice cannot be ambushed with, and the
+chip says so rather than taking the Willpower: **No blade**, wearing the reason,
+which is the shape a Martial Move with no room and an empty flask both wear.
+
+**This is where the window went.** `AmbushWindow.jsx` used to list both attacks
+with a price on each, print the chosen one *as it would land* and take the payment
+itself, because until an attack was chosen the price was not knowable. Only one
+attack can be ambushed now, so there is nothing to choose and nothing to confirm.
+See [where a rider lands](#where-a-rider-lands-2026-08-21).
 
 ### STEAL opens the table
 
@@ -1148,7 +1271,9 @@ Two smaller things, decided rather than asked:
 - **Poison's "next Weapon Attacks" is read as one swing.** The row is written
   plural where the sentence is singular ("your *next* Weapon Attacks"), and a
   rider with no end condition never comes off. Treated as the next attack, the
-  same as AMBUSH, so both are lost together on the same swing.
+  same as AMBUSH. Not narrowed with it, though: the ruling below is about AMBUSH
+  and says nothing about a stolen poison, so a poison is still spent by either of
+  the two attacks.
 
 ### The picture folder
 
@@ -1292,7 +1417,10 @@ of rider and not the other, so there is one fold and every call site uses it.
 
 **Lost on use** is `spendMoves`, called from the same `spendUse` the Trickster's
 riders come off in, so a Duelist who ambushed and then laid a Wound loses both to
-one swing. It fires when the attack is **paid for**, not when it lands. The note
+one swing — as long as the swing was the plain attack, which is the one thing the
+two rider systems no longer agree about. See
+[where a rider lands](#where-a-rider-lands-2026-08-21). It fires when the attack
+is **paid for**, not when it lands. The note
 says "remove on the attack land"; nothing here asks about the outcome, so nothing
 here can be wrong about it, and it is the same reading `spendTricks` already
 takes — what a move buys is the attempt. **Worth a ruling** if the other thing was
@@ -1615,6 +1743,17 @@ No Action Points and no Willpower, the way Thief's Picks costs neither — a ski
 check is not a turn. What counts as "related to nature" is the table's, which is
 how every other domain on the sheet works, and the card names the same ground the
 Naturalist background skill names so the two do not drift.
+
+And the rest is what fills it. `recharge` began as a label and nothing else: the
+card said the tome was spent until a Long Rest, and the dot stayed dark until
+somebody remembered to tap it back on. Taking the rest now hands back every belt
+use whose refill that rest is, and prints a line for each beside the pools. A
+long rest fills a short-rest item because it does everything a short rest does,
+and a short rest leaves a long-rest item cold: the same list that decides which
+effects a rest ends. `beltRest` in `src/lib/items.js` is the whole of it, and
+`rechargeRest` beside it is what reads the printed prose back to one of the two
+boundaries. Anything it cannot read back to, such as a refill on the turn of a
+season, is nobody's business but the table's and is left alone.
 
 ### `data/OF/` — the folder both importers walk
 
@@ -2021,8 +2160,9 @@ stale-while-revalidate. Not `immutable`, deliberately: the filename does not
 change when the picture does, so an immutable copy would never be replaced for
 anyone who had already seen the old one.
 
-Two cards have no picture, both correctly: **Climb**, which is not on the sheet,
-and **Containment Sphere**, which no sheet covers yet.
+One card has no picture, correctly: **Climb**, which is not on the sheet.
+Containment Sphere was the other until the Spacial drop on 2026-08-25 brought a
+render with it.
 
 **Who sees them is a separate question.** Card art is a paid capability, so a
 `free` account gets the empty plate and `premium` upward get the picture. The
@@ -2173,6 +2313,37 @@ So: `{stat}` unless the attribute is genuinely fixed. The Blood Tithe riders are
 the exception in the current codex, and they are written `{physique}` on
 purpose, because what a tithe costs is paid by the body whatever you cast with.
 
+### And "your highest Attribute"
+
+Ten cards do not name an attribute at all, they name a rule. Six lineage traits
+and three skills hand over a spell "cast with your highest Attribute", and DRAGON
+BREATH rolls off it itself.
+
+That rule is written `highest` and it goes exactly where an attribute key would:
+
+| Where | Written | What it means |
+| ----- | ------- | ------------- |
+| on a card | `stat: HIGHEST` | this card rolls off its holder's best attribute |
+| on a choice that teaches a card | `cast: HIGHEST` | the card it hands over does |
+| on a loadout | `cast: 'instinct'` | the older, ordinary form: a named attribute |
+
+It is not a fourth attribute and nothing on a sheet holds a value for it.
+`castStat` in `src/lib/cardText.js` settles it against whoever is holding the
+card, at the moment the card is printed, so the sheet's own `{stat}` and
+`[[2d6 + 2*stat]]` do the rest: DRAGON BREATH reads *Physique roll (+8)* and
+`2d6 + 16` for a Physique 8, and *Mind (+9)* and `2d6 + 18` for a Mind 9. A
+spell an Innate card hands over prints the same way instead of the Mind the codex
+printed it for.
+
+**A tie goes to the printed order**, Physique then Instinct then Mind. Two
+attributes at 6 roll the same 6 whichever is named, so the tie decides a word and
+not a number, and 6/6/4 spreads are common. Say the word if the player should get
+to choose which one is named.
+
+The cards that grant a spell keep saying "your highest Attribute" in prose rather
+than naming today's winner, because what they state is the rule and the rule
+outlives the spread: the *spell* is where the live numbers belong.
+
 ## Still wanted: a statuses tab
 
 The glossary now holds every term the new cards use, so `touch`, `rooted`,
@@ -2187,7 +2358,7 @@ them imply, not something transcribed from a rules sheet. They are marked
 | `rooted` | Entangling Roots, Thorn Rampart |
 | `prone` | Shove |
 | `grappled` | Grapple |
-| `stunned` | Containment Sphere |
+| `stunned` | Ice Block, Magma Chains, Chrono Lock, Execute |
 | `incapacitated` | Bird View |
 | `unconscious` | Pack Bond, Stabilize |
 | `elevates` | Verdant Field |
@@ -2440,13 +2611,18 @@ attack roll and a die on your teeth, and you lose your items, your spells and
 every ability that is not this set's.
 
 **FERAL RAGE** is the one nobody expects. It fires on losing Health or spending
-Willpower, and it lets a Feral Cursed **choose to fail** the roll — with nothing
-anywhere on the card letting them choose to pass it. At Rank 1 the beast can only
-be refused, never called. And refusing it makes it *harder* to reach next time:
-"on a failure the difficulty increase by 1 for your enxt roll", resetting to 8
-only when a transformation happens. So restraint is rewarded with a quieter beast
-and a worse chance of having it when it is wanted. That hole is what CALL THE
-BEAST was written to fill, and it is the single most interesting thing on the tab.
+Willpower, and the roll it asks for is a **control** roll: you throw it to hold
+the beast in, and a *failure* is the transformation. That is Jules's ruling of
+2026-09-03 and it is what makes the rest of the card read — see "The roll you are
+trying to make" below for the fortnight it spent the other way round.
+
+It lets a Feral Cursed **choose to fail**, with nothing anywhere on the card
+letting them choose to pass, so the beast can always be let out and never
+reliably held in. And holding it in makes it *harder* to hold next time: the
+difficulty climbs a step on every success and resets to 8 only when a
+transformation happens. So restraint buys a louder beast rather than a quieter
+one, the pressure comes off only by giving in, and that is the single most
+interesting thing on the tab.
 
 **BEAST WITHIN** is a Martial Move pool with a mouth. Same count and same ladder
 the Duelist's DEXTEROUS prints, off a different set's card, so it hangs on the
@@ -2567,14 +2743,16 @@ a hand differently.
 through the ledger; this block's claim on it is only the sentence about what
 emptying it does, so it has no click.
 
-### The difficulty button says the opposite of the note
+### The difficulty button said the opposite of the note
 
 The note asks for a button that increments the difficulty **"as you succed your
-roll"**. FERAL RAGE says the increase is on a **failure**. The card wins, and the
-button is labelled in the card's own terms — *"Held it in, +1"* — because that is
-what a failed roll means here: you did not transform. If the note is right and the
-roll is a *resistance* roll, the label is one string and the reading flips.
-**Worth a ruling.**
+roll"**. FERAL RAGE, as transcribed, says the increase is on a **failure**. This
+section shipped saying the card wins and the reading flips if the note is right.
+
+**Ruled on 2026-09-03: the note is right.** The roll is a resistance roll, the
+failure is the transformation, and the card's sentence moved instead. The button
+never had to: *"Held it in, +1"* was already the note's label and is now the
+card's too. See "The roll you are trying to make" below.
 
 The roll itself is never asked for. Same law every other die on this sheet keeps:
 the sheet is told that Health moved and never what moved it, so a sheet that asked
@@ -2673,16 +2851,13 @@ sentences are about.
 
 ### Five things for the designer
 
-1. **"Gain twice as much Shield" runs straight into the Shield cap.** Shield caps
-   at half your maximum Health, and half your *current* Health doubled is exactly
-   that cap when you are at full Health. So a full-Health transformation pays 60
-   and receives 60 rather than 120: break even, plus the advantage and the die.
-   The cap is enforced because `syncDerived` clamps the column on the next render
-   regardless, so ignoring it would have been silently clipped instead of honestly
-   reported — the block and the chip both say *"45 Health for 60 Shield"* and name
-   what the ceiling took. If the curse is meant to ignore the cap, that is one key
-   on the `feral` spec and one line in `deriveStats`. **This is the biggest open
-   question in the set.**
+1. ~~**"Gain twice as much Shield" runs straight into the Shield cap.**~~
+   **Answered on 2026-08-21. See "The ceiling comes off" below.** Shield capped at
+   half your maximum Health, and half your *current* Health doubled is exactly
+   that cap when you are at full Health, so a full-Health transformation paid 60
+   and received 60 rather than 120: break even, plus the advantage and the die.
+   BESTIAL SENSE now raises the ceiling to the whole of maximum Health, so the
+   doubling pays.
 2. **A weapon slot that "permanently beomce tooth and claw" is not built**, and it
    contradicts BEAST WITHIN's own previous clause: a slot that always holds the
    weapon is a pair of hands that is never empty. What *is* built is the tag, so
@@ -2763,3 +2938,14813 @@ and nothing more (`.belt-working`). The trinket block prints the effect text too
 because a trinket has no numbers of its own and that line is its whole worth — a
 loop already carries a name, its tags, its cost orbs and its charge dots, so the
 effect stays on the ⓘ card. Same trade an enchanted weapon makes with its blurb.
+
+## The ceiling comes off, 2026-08-21
+
+> "Bestial sense passive should also have an effect that read 'Your maximum shiled
+> is now equal to your healht isnteado half'. Update it and make it work so the
+> feral curse shied is correct."
+
+This answers the biggest open question the set shipped with, and it answers it on
+the card the designer named rather than as a hidden exception for one talent set.
+
+### What the question was
+
+FERAL FORM buys Shield with blood: "you lose half your current Health and gain
+twice as much Shield." Twice half of what you are holding is all of what you are
+holding, and the Shield pool ceilinged at **half** maximum Health. So a Feral
+Cursed at full Health paid 50 and received 50 rather than 100: break even, and the
+one transformation the set is built around was the one that paid worst.
+
+### What the card now says
+
+| | |
+| --- | --- |
+| Transcribed | "You have advantage on Skill Checks related to using your 5 senses." |
+| Added | "Your maximum Shield is now equal to your Health instead of half of it." |
+
+The second sentence is **not on the tab**. It is the only addition in the set and
+the first one in the codex: every other card is a transcription, and the eight
+Rank 2 and Rank 3 cards that are not transcriptions are whole cards wearing
+`house: true`. A card that is half transcribed and half amended is neither, so it
+carries no flag and is recorded here instead.
+
+### What it does to the arithmetic
+
+At 100 maximum Health, at full Health, entering the form:
+
+| | before | now |
+| --- | --- | --- |
+| Health paid | 50 | 50 |
+| Shield owed | 100 | 100 |
+| Ceiling | 50 | **100** |
+| Shield received | 50 | **100** |
+| What the ceiling ate | 50 | **nothing** |
+
+The ceiling still bites for a Feral Cursed who transforms with Shield already on
+them, and the block and the chip still say what it took. That case is honest
+arithmetic rather than a rule fighting itself: you cannot be handed a hundred into
+a pool holding eighty.
+
+### Where it lives
+
+One key and one line, which is what the open question said it would be.
+
+| | |
+| --- | --- |
+| `feral.shieldShare` in `talents.js` | `[null, 1, 1, 1]`. The share of maximum Health the pool ceilings at, indexed by rank the way `armor` and `willing` are |
+| `feralShieldShare` in `feral.js` | the highest share any set grants, or 0. Reads `feralState` and **not** `running`: this is a Novice passive, not something the hide does |
+| `shieldShareFor` in `characterModel.js` | `Math.max(0.5, ...)`, so "instead of half" replaces the half rather than stacking on it, and a set that says nothing costs nothing |
+
+Three consequences worth knowing:
+
+1. **The ceiling is up before the first transformation and stays up after the
+   last.** The card never mentions the form, so neither does the code. A Feral
+   Cursed out of their hide still holds a Shield pool the size of their Health,
+   and anything else that grants Shield can fill it.
+2. **Every reader moved at once**, because they all already went through
+   `shieldCapFor`: the Character tab's bar, the Shield ledger's ceiling, the
+   Feral Form block's clock, the Trickster's STEAL and the bell's Runed Hood.
+   `syncDerived` keeps the `shield_max` column on the new number too.
+3. **The Supreme Runed set still adds Mind on top**, because that is a worn bonus
+   and this is the base share. A Feral Cursed in the full set caps at maximum
+   Health plus Mind.
+
+## A body slot costs no Magic Burden, 2026-08-21
+
+> "The enchanter "Wielder of Wonder" enchantment on his body should not cost Magic
+> Burden. Fix it please and make sure the card text match if needed."
+
+A ruling on the reading recorded above, and it goes the other way. WIELDER OF
+WONDER names no price at all, and the sheet had been filling that silence the
+ordinary way: an enchantment weighs, so a worn one weighs. It does not. The card's
+own first sentence is the reason, and it was there the whole time: the enchanter
+body **withstands** the power of enchantments onto itself. What the body holds is
+withstood rather than carried.
+
+That makes two of the set's three cards free of burden rather than one. Only
+ENCHANTING, the card that lays on a *thing*, costs anything, and the thing is what
+carries it.
+
+### What the card now says
+
+| | |
+| --- | --- |
+| Transcribed | "The enchanter body is able to withstand the power of enchantments onto itself. Enchantments apply to your person. Choose one when becoming an enchanter, you can change it during a Long Rest. The amount of such enchantments you can have is equal to your rank in enchanter." |
+| Added | "These do not count toward your Magic Burden." |
+
+Worded out of EPHEMERAL ENCHANTMENT's own line for the same rule, so the set says
+its one free thing one way rather than two. Exported back out to
+`data/templates/enchanter-ability.csv` beside LAYERED ENCHANTMENT's two sentences,
+so the workbook can hold the same words.
+
+### What it does to the meter
+
+A Rank 2 Enchanter wearing Primal Sense and Vitality, carrying a Fire Infusion
+blade:
+
+| | before | now |
+| --- | --- | --- |
+| Primal Sense, worn | 4 | **0** |
+| Vitality, worn | 4 | **0** |
+| Fire Infusion, on the blade | 4 | 4 |
+| The meter | 12 / 22 | **4 / 22** |
+
+Nothing else about a worn enchantment moved. It still grants what it grants, it is
+still permanent, `syncDerived` still bakes it into the stored columns, and it still
+reaches the weapon in their hands.
+
+### Where it lives
+
+| | |
+| --- | --- |
+| `magicBurdenUsed` in `items.js` | the one line that added the body slots, now gone. Only what is *carried* weighs: worn, held, on a trinket or clipped to the belt |
+| `enchanting.js` | no total in the file carries a burden any more. `noGrants`, `grantsFrom` and `allGrants` all lost the field, and `wornGrants` went with it: the meter was its only caller |
+| `combatBar.js` | the recap's Wielder of Wonder rows spent their provenance on the burden each one cost. There is nothing left there to say, so they print their name and what they do |
+| `WornEnchants.jsx` | a filled slot led with its burden and does not now. The shelf prints a price only where there is one, and its rule line says "No Supplies and no Magic Burden" once instead |
+
+Two things that did **not** move, both because burden is what a *thing* weighs:
+
+1. **A working laid on an item still weighs**, at its full value, on the item.
+   `itemBurden` was always the counter for that and is untouched.
+2. **The same working on two rings still costs twice.** The same-source law says
+   an effect does not stack with itself, and it never governed burden: two rings
+   grant one point of Instinct and weigh 8. `grantsFrom` deduplicates and
+   `itemBurden` does not, which is exactly the split that was always there.
+
+## Where a rider lands, 2026-08-21
+
+> "Ambush onyl a apply on "Weapon Attack", not speical attack. there is no need
+> for a confirmation button. In the case o martial move when you get rank free. It
+> just just apply ot boht and hte first one of the tow action used remove the
+> effect"
+
+Three rulings on the two rider systems, and the second two fall out of the first.
+
+### An ambush rides one attack
+
+A weapon teaches two cards and the glossary calls both of them a Weapon Attack.
+AMBUSH does not.
+
+| the card | prints the ambush | spends it |
+| --- | --- | --- |
+| `Daggers - Strike` · `Weapon Attack` | yes | yes |
+| `Daggers - Triple Strike` · `Special Weapon Attack` | no | **no** |
+| `Shield Block` · `Weapon Move` | no | no |
+
+That middle row is the half that matters. A Trickster who pays for an ambush and
+then makes a Triple Strike has made an attack and **still has the ambush**: a rider
+that was not on a swing cannot be taken off by one. So `spendTricks` is now told
+which card was paid for, and `trickRides` is the single place that decides. Both
+halves of a rider's life read that one function, so what a card prints and what a
+swing spends can never disagree.
+
+`isPlainAttack` is the narrow test and `isWeaponAttack` is the broad one, both in
+`tricks.js`, both off the tags and neither out of the prose.
+
+### So there is nothing left to confirm
+
+`AmbushWindow.jsx` is gone, and the ruling above is what removed the reason for
+it. The price of an ambush is the attack's own base damage dice, and with two
+attacks to choose between the sheet could not know the number until the player
+picked one. With one attack it is knowable the moment a weapon is in hand.
+
+So an ambush is paid for at the chip like every other card. `ambushUse` in
+`combatBar.js` reads the main hand, puts the Willpower in the orb, says what the
+payment will do — *Rides Daggers - Strike: Advantage on the roll, and the damage
+Elevated once* — and lays the rider as the use's own `extra`, so one write spends
+the Willpower and writes the tracker row together. The action-or-reaction question
+is asked once, by the same `UsePrompt` everything else on the sheet is paid
+through, and Cancel still costs nothing.
+
+The card keeps `opens: 'ambush'` as the marker `ambushUse` reads, the way CALL THE
+BEAST carries `opens: 'feral'`, and has dropped `pays: 'window'`. The attack as it
+would land is one tap away on the In Hand chip, before the ambush and after it.
+
+### A Martial Move rides both
+
+"it just apply to both and the first one of the two action used remove the
+effect". A move rides both of the attacks a weapon teaches, prints on both, and
+comes off on whichever of the two is made first. That was already what the sheet
+did; what is new is that it is written down where it can be read — on the tracker
+row itself (*Rides your next weapon attack, special or not*) and in `spendMoves`,
+which deliberately takes no card where `spendTricks` takes one.
+
+| the rider | rides | spent by |
+| --- | --- | --- |
+| AMBUSH | the plain attack | the plain attack |
+| a stolen Poison | either attack | either attack |
+| a Martial Move | either attack | either attack, and the first one takes it |
+
+**One clause is read rather than known.** "when you get rank free" is taken as the
+Rank 3 case, where SHARP and BESTIAL FRENZY put two moves on one swing: both ride,
+and the first attack takes both, with nothing split across the two attacks and
+nothing held back for the second. That is the only place two moves can be waiting
+at once, so it is the only place the sentence has anything to add. Either way the
+behaviour asked for is the same one, so nothing hangs on the reading.
+
+## The lineages, remade 2026-08-21
+
+Two new tabs, `General Rules - Lineage` and `General Rules - Lineage Cards`, plus
+`data/Lineage/` and `data/Lineage/Lineage Cards/` with a picture for every row of
+both. They replace the V4 "Hazebound - Character Sheet V4 - LINEAGE" sheet the
+old codex was transcribed from, and `lineages.js` was rewritten against them.
+
+### Eighteen ancestries became thirteen
+
+**The six beastkin lines are gone.** Featherborn, Furborn, Gillborn, Muckborn,
+Scaleborn and Slickborn have no row on the new tab. One ancestry replaces all
+six: **Wildkin**, which offers the pool those six used to divide between them and
+asks the player to keep two of it. 18 − 6 + 1 = 13, which is exactly what the
+picture folder holds.
+
+Twenty-two card rows against V4's twenty-seven, and almost none of the names
+survived: DRACONIC HIDE is now DRACONIC SCALES, STONESKIN is MINERAL SKIN,
+POISONOUS is VENOMOUS, HARDENED FRAME is STRONG, UNDYING is UNDEATH RESILIENCE,
+FEED is CANNIBALISM. **No V4 id survives**, so a character saved on the old codex
+keeps its lineage *name* and loses nothing else: the name is what the `lineage`
+column stores, and `getLineage` missing it prints "written in by hand" rather
+than clearing it. A character on one of the six removed lines reads that way now,
+and picking again is the fix.
+
+The numbers moved with the names. Health per level is written against 10 rather
+than V4's 5, which is what `deriveStats` already computes; Movement Speed is in
+meters rather than points; and the V4 casting-attribute question is gone, because
+every spell a lineage grants is now cast with "your highest Attribute". Wisdom
+and Fortitude are off the sheet as options with it.
+
+"Your highest Attribute" is wired, as of 2026-08-22: an Innate trait hands its
+spell over with `cast: HIGHEST` on it and DRAGON BREATH carries `stat: HIGHEST`,
+so both print the attribute their holder actually stands highest in rather than
+the words. See "And your highest Attribute" above.
+
+### Wildkin asks for cards, not for a value
+
+Every other ancestry hands its cards over as printed, and the only question any
+of them asks is *what a card says*: which damage type your scales resist. Wildkin
+asks **which cards you have**, and that is a new shape.
+
+| | |
+| --- | --- |
+| the pool | Amphibian, Scaley, Venomous, Cold Blooded, Sharp Sense, Hearthy, Wild Swiftness, Sticky |
+| keep | 2 |
+| stored in | `choices['wildkin-traits']`, a list of card ids |
+
+**No new column.** The `choices` bag is already "what this lineage left to you",
+every other reader of it looks up `choices[card.id]`, and a pool's id is not a
+card's, so a list under one more key needs no migration. Dropping the lineage
+drops the picks with it.
+
+All eight are in the registry whether or not anybody kept them, or a Wildkin's
+two would be the only cards on the sheet no `{{link}}` could resolve and no pile
+could deal. What a character *holds* comes from `lineageCards`, which is
+`lineage.cards` for twelve of the thirteen and the kept two for Wildkin, and
+every surface that prints "what your blood carries" goes through it.
+
+Keeping a third drops the one kept longest rather than refusing the click: a pool
+of eight you have to clear before you can change your mind is worse than one that
+rolls.
+
+### How the transcription was proved
+
+Every card body was resolved back through its markers and compared to the
+designer's cell with case and punctuation flattened, alongside its AP, its WP and
+all thirteen blurbs. **64 of 82 comparisons match.** All thirteen blurbs and
+every AP and WP match exactly. The eighteen that differ are all reads, and the
+full list of them is in the header of `lineages.js`: single-word spelling
+("eahc", "aiblity", "cielings", "fice sense"), singulars that wanted plurals
+("short rest no longer restore"), house units ("1.5 meter" to 1.5 meters), and
+DRAGON BREATH's person, which is written off a monster's stat block and says "in
+front of itself" about a player.
+
+INNATE X is one modular row and six cards. Its cell carries "(mdoular card were X
+is replace with the type of school in the anme)", which is a note to the builder
+rather than rules text, so it is dropped and built: the lineage tab names a school
+for each of six ancestries and each gets its own card. All six were checked
+against the one row.
+
+Its "a Novice X Spell" is the one promise on the tab a card cannot keep by
+itself, so the card asks which spell. The school's Novice shelf is the answer,
+offered in the window that hands the lineage over, and the spell chosen there
+joins the hand as a card of its own: a Scorchbound holds Living Furnace, Innate
+Fire and the Fire spell they took. The sentence still round-trips to the cell,
+because unanswered the `{choice}` prints the four words it replaced.
+
+### Four things for the designer
+
+1. **LIVING FURNACE does not say what you regain.** "You regain 10 + 5 for each
+   Willpower spent" names no pool. Health is the only one the numbers fit, and
+   that is still not what the cell says, so the card prints the sentence as
+   written. Its Willpower column reads `x`, which no card shape holds, so the
+   ceiling is printed in the body instead.
+2. **SPROUT WINGS is one card given to two ancestries and names one of them.**
+   Celestial and Infernal both take it and it reads "Celestial wings". V4 had
+   two cards here, CELESTIAL WINGS and INFERNAL WINGS; the new tab has one row
+   and one picture. Left as printed.
+3. **Three cards still say "Fortitude".** FEY BLOOD, UNDEATH RESILIENCE and
+   HEARTHY all read "per level in Fortitude and Physique", and V5 has no
+   Fortitude. `deriveStats` computes Health as 10 per character level plus 10 per
+   Physique, so the app already reads the first half as level.
+4. **Innate Light and Innate Shadow name schools that do not exist.** Fire, Wind,
+   Water and Earth are all Elemental families with Novice spells already written.
+   Light and Shadow are neither a school nor a family anywhere in `spells.js`, so
+   those two cards promised a spell nobody could look up, which left a Celestial
+   and an Infernal unable to finish level 1. Each school now holds one stand-in,
+   UNWRITTEN LIGHT and UNWRITTEN SHADOW, printed with a body that says it is
+   standing in. The Innate cards read their options off the school's Novice
+   shelf, so writing the real spells is all it takes to retire the stand-ins.
+
+Two tags contradict their own costs and were read against the cost: SPROUT WINGS
+is tagged `Basic Action` on a tab of lineage cards while carrying 2 AP and 2 WP,
+and LIVING FURNACE is tagged `Passive` while carrying a cost. Both are treated as
+the Abilities they are priced as.
+
+### What is printed and not yet wired
+
+Only the three attribute grants are declared and added: STRONG raises Physique,
+INSTINCTUAL Instinct, INTELLIGENT Mind, the same three V4 had. **MINERAL SKIN and
+SCALEY's "+1 Defense", INNER TIDE's "+4 Willpower", WIND GRACE and WILD
+SWIFTNESS's "+1.5 meters", and the four cards that change Health per level are
+printed on the card and not read by the sheet.** That is exactly where V4 left
+them, so nothing regressed, but the list is longer now and INNER TIDE's +4 is the
+largest number on it.
+
+> **Amended 2026-08-28.** WIND GRACE is off this list. A lineage card can carry a
+> `grants` rider now, and that one does. The other six are unchanged and are one
+> line each. See [Wind Grace moves the tile](#wind-grace-moves-the-tile-2026-08-28).
+
+### Two ids came free
+
+**`resilience` and `create-water` are no longer held by a lineage trait.** Both
+V4 traits are gone, so the collisions recorded above under [the
+Enchanter](#one-id-had-to-change) and [the Elemental
+school](#one-id-had-to-change-again) no longer exist. The renames stay as they
+are: `resilience-enchantment` and `create-water-spell` are what saved characters
+point at now, and an id is not worth churning twice.
+
+The Draconic scale table is unchanged, so the disagreement recorded under [the
+Draconic Bond](#three-things-for-the-designer) stands as it was. It is
+DRACONIC SCALES that holds the lineage's half of it now, not CHROMATIC
+RESISTANCE.
+
+### One id had to change, a third time
+
+**DRAGON BREATH is `dragon-breath-lineage`.** The Draconic Bond already prints a
+DRAGON BREATH, and the lineage card is the same effect rewritten: the ally breathes
+2d4 and its Mind in front of *itself*, you breathe 2d6 and your highest Attribute.
+Two cards, one name. The older keeps the id, the same way RESILIENCE and CREATE
+WATER were settled, and lineage cards fold in *after* talent cards so the clash
+would have taken the ally’s card out of `getCard` silently.
+
+That "in front of itself" is also where the lineage row came from: it is the ally’s
+sentence with the ally taken out and nothing put back. The person read in
+`lineages.js` is that, corrected.
+
+### The art is placed
+
+All thirty-five pictures are cut and committed: **27 card plates** into
+`public/cards/` and **13 ancestry plates** into `public/lineages/`, the second lot
+square 640px JPEG beside the talent sets’. Twenty-two files became twenty-seven
+cards, because INNATE X is one drawing for six of them.
+
+**67 files, 2.08 MB**, cut from 77.4 MB of originals that stay in `data/` and stay
+out of the clone. That is the same trade the rest of `public/cards/` made, and the
+reason for it is in `pull-card-art.mjs`: a build cannot reach out for a picture, so
+what ships has to be in the repo.
+
+Two things had to change for it to work at all.
+
+**`lineages.js` now wears its art.** The blocker recorded in `pull-card-art.mjs` was
+real: the module handed the same card out twice, on `lineage.cards` and again
+flattened into the registry, and `withArt` spreads, so dressing the flattened copy
+would have given the picture to `getCard` and left the sheet’s own card bare. The
+fix is to dress *first*, once, on one deduplicated list, and rebuild both the
+registry and the thirteen ancestries from those objects. A card two ancestries
+share is still one object, and a pool’s eight are dressed with the rest.
+
+**The lineage folder resolves against lineages alone.** `data/Lineage/` is the only
+folder besides a spell school that nests, and it needs its own name maps rather
+than the codex-wide one, because `Dragon Breath.png` exists in both
+`data/Draconic Bond/` and `data/Lineage/Lineage Cards/` and one flat map cannot
+hold both. Scoped per folder there is no question which is which.
+
+Four filenames are aliased, and all four are reads the codex already made:
+`Canibalism`, `Venemous`, `Undeath Resillience` and `Draconic Scale`. Renaming a
+file retires its alias. `Wild Swiftness,.jpg` needs none, because flattening drops
+the comma on its own.
+
+**`backgrounds.js` is now the only module still unwrapped**, and a background skill
+is still the one card a picture cannot be placed on. It is the same one-line fix.
+
+*Done on 2026-08-21, when the Skills tab arrived with its own pictures. See [the
+skills](#the-skills-are-the-designers-now-2026-08-21).*
+
+## The skills are the designer's now, 2026-08-21
+
+`data/General Rules - Skills.csv` landed with **32 rows**, and it replaces the
+eighteen skills `backgrounds.js` had been carrying since 2026-08-19. Those
+eighteen were a first pass written before the tab existed, off the three skills
+Jules had handed over by hand. They are gone, ids and all: nothing in the codex
+points at `negotiator`, `field-medic`, `quartermaster` or the fifteen others.
+
+**A saved character keeps the shape and loses the skills.** The
+`background_skills` column holds ids, and `normalizeBackgroundSkills` drops any
+id the pool no longer offers, so an existing sheet reads as a background with
+none of its picks made. That is the honest answer: the skills it named do not
+exist, and the block asks for them again rather than inventing a mapping.
+
+### What the round trip proves
+
+Every body was compared to its Main Effect cell with case and punctuation
+flattened. **All 32 rows are accounted for**, and the reads are listed in full in
+the header of `backgrounds.js`: spelling (nineteen of them), grammar (nine),
+capitalised defined terms, one distance written the codex's way, and nine Oxford
+commas dropped per `docs/text-style.md`.
+
+Six things the tab leaves open, all recorded over the codex rather than guessed
+at here:
+
+1. **Arcane Marshal and Cartographer carry the same cell**, word for word. It is
+   plainly Cartographer's text. Both are printed as written.
+2. **Unseen Spellwork asks for "a Cunning skill check"**, and Cunning is a skill
+   on the same tab rather than one of the three attributes.
+3. **Three armor masteries change a stat the sheet does not yet add.** All three
+   are level 5, so nothing is missing from a level-1 sheet.
+4. **Tailor asks for two items that do not exist**, a Disguise Kit and Bandages
+   as a consumable. `bandage-roll` in `utility.js` is close to the second.
+5. **Spell Eater's row ends in a stray cell** holding the Wildkin pool off the
+   lineage tab. Dropped.
+6. **Empath and Seafarer have no picture**, and there is one unnamed file in the
+   drop (`Gemini_Generated_Image_w78nd7w78nd7w78n.jpg`) that may be either.
+   Renaming it after the skill it was drawn for places it.
+
+### Three rows ask a question
+
+Innate Spell Novice, Adept and Master each promise a spell of that rank "from any
+school" and name none. That is INNATE X's own shape off the lineage tab, so it is
+built the same way: the rank's whole shelf is the card's `choice`, read off
+`spells.js`, `learns: true` says the answer is a card rather than a word, and the
+spell named joins the hand behind the skill that taught it.
+
+Thirty Novice, eighteen Adept and eight Master, so all three can be answered. The
+question is asked **in the window that hands the skill over**, in both places a
+skill can come from: the background block's pool, and the level chooser. Taking
+one that asks nothing closes the chooser; taking one that asks keeps it open,
+because the shelf underneath is the rest of the same decision.
+
+An unanswered one badges the Advancement tab exactly as an unanswered lineage
+card does, through `levelQuestions`.
+
+### Five skills a background cannot teach
+
+The Requirement column gates three armor masteries and Innate Spell Adept at
+level 5, and Innate Spell Master at level 10. A background is the life you led
+before level 1, so it may not offer one, and `skillOptionsAt` measures the
+**slot's** level rather than where the character stands: the level-3 slot refuses
+Innate Spell Adept with "Needs level 5", and the level-11 slot is the first that
+can take Master. A pool holding a gated skill says so at load in dev.
+
+### Mastermind and Spell Eater grow
+
+Both say "You can use this feature once, regaining it after a long rest. The
+number of uses increases to 2 at level 6." So `uses` in `uses.js` may now be a
+function of level as well as a number, and `cardLimit`, `normalizeUses`,
+`cardUse` and `usesRest` ask how many a card holds *of a character*. Every caller
+already had one in hand, so nothing had to be threaded anywhere. A plain number
+never looks at the level.
+
+### `Long Rest` is the tab's word for a labour
+
+The Tags column says `Long Rest` where this repo said `Labour`. `restLabours`
+reads both, so Apothecary, Scavenger and Tailor are offered in the rest window
+without either name having to win.
+
+### And the module wears its art
+
+`backgrounds.js` was [the last module still unwrapped](#the-art-is-placed). It is
+dressed now, the same way `lineages.js` is: once, at module scope, on one list,
+with `BACKGROUNDS` rebuilt to point at those objects. So a skill offered by four
+backgrounds is still one object with one picture, and `getCard` hands back the
+dressed card.
+
+`data/Background/` nests like `data/Lineage/` does, and `data/Skills/` is claimed
+beside it. Both resolve against the same two maps, backgrounds and skills, and
+never against the codex at large: a name is one or the other and never both, so
+which folder a file sits in decides nothing. That is what lets the two stray
+background plates in the skills folder land correctly instead of being reported.
+
+Two small rules came with it. A file whose name ends in `copy` is Windows making
+a duplicate and is skipped in silence, which is what `Heavy Armor Mastery -
+Copy.jpg` is. And when two files claim one card, the "two files claim it" line is
+held back if they match on both size and mtime, because `data/Skills/` and
+`data/Background/Skills/` are a folder and a copy of it, which is one picture in
+two places rather than a redraw.
+
+Six filenames are aliased, and every one is a read the codex already made:
+`Haggle`, `Helper`, `Inquistor`, `Cultist` (Occultist's, the only file with no row
+and the only row with no file), the three `Inate Spell` rows, and `Mercanery.jpg`
+for the Mercenary plate. Renaming a file retires its alias.
+
+## The ten backgrounds, 2026-08-21
+
+Jules named them and set the arithmetic: **Criminal, Erudit, Military, Outlander,
+Craftsman, Entertainer, Merchant, Aristocrat, Investigator and Mercenary**. The
+eight drafted on 2026-08-19 are gone.
+
+### One formula is the whole balance
+
+```
+Coins = (4 - skills) * 2000        Supplies = 70, for everybody
+```
+
+A background teaches **one, two or three** skills, so it shows up with 6000,
+4000 or 2000 Coins. A poor life taught you more and left you less, and that is
+the only axis the ten are arranged along. `startingCoins` is the one place it is
+written down and every purse is filled in from it, so a coin count can never
+drift from the picks beside it.
+
+| Background | Skills | Coins | Weapons | Pockets | Pool |
+| ---------- | -----: | ----: | ------: | ------: | ---: |
+| Criminal | 3 | 2000 | 1 | 2 belt, 1 pack | 6 |
+| Erudit | 3 | 2000 | 1 | 1 belt, 2 pack | 7 |
+| Outlander | 3 | 2000 | 1 | 2 belt, 1 pack | 6 |
+| Entertainer | 3 | 2000 | 1 | 1 belt, 2 pack | 6 |
+| Military | 2 | 4000 | 2 | 1 belt, 1 pack | 6 |
+| Mercenary | 2 | 4000 | 2 | 2 belt, 1 pack | 6 |
+| Craftsman | 2 | 4000 | 1 | 1 belt, 2 pack | 6 |
+| Investigator | 2 | 4000 | 1 | 1 belt, 2 pack | 7 |
+| Merchant | 1 | 6000 | 1 | 1 belt, 2 pack | 6 |
+| Aristocrat | 1 | 6000 | 1 | 1 belt, 2 pack | 6 |
+
+Everyone still gets one full set of Common armor. Coins and Supplies being
+settled by the formula leaves the pool, the weapon count and the pockets as the
+only things telling the ten apart, which is where the character of each one now
+lives: the Military and the Mercenary are the two that arm both hands, the
+Merchant walks in with a Terra Cotta Disk because a merchant owns a cart, and the
+Criminal and the Investigator both carry Thief's Picks for opposite reasons.
+
+**The purse moved by roughly ten times.** The old drafts ran 100 to 600 Coins.
+Nothing else on the sheet was rebalanced against that: what armor and weapons
+cost is `items.js`'s, and it has not been touched.
+
+Every pool offers six or seven and lets you keep one to three, so two characters
+out of the same trade need not look alike, and **all 27 skills learnable at level
+1 are offered by somebody**. The five gated ones are offered by nobody, on
+purpose.
+
+## An odd level raises two attributes, 2026-08-21
+
+Level 1's +2 / +1 spread is untouched. Every **odd level after it** now hands out
+two points, +1 apiece, on two different attributes, where it used to hand out one.
+
+The record changes with it. `attribute: "mind"` becomes `raised: ["mind",
+"physique"]`, a list rather than a pair of named slots, because both points are
+the same size and their order means nothing.
+
+**A sheet written by the older build reads as one taken and one open.** The
+single point is read back as a list of one, which is what it now is: half a pick,
+badged unfinished until the second is placed. Nothing is dropped and no second
+point is invented. `check-stat-math.mjs` keeps level 9 of its ladder written the
+old way on purpose, so the round trip proves both readings add up.
+
+The chooser needed nothing new. Level 1 already ran two slots that may never land
+on the same attribute, and tapping the one the other slot holds trades places
+rather than refusing, so an odd level is now that same dialog with both slots
+worth +1.
+
+## Every card read for what it does, 2026-08-22
+
+A pass over all 279 cards in the codex, asking two questions of each: **does its
+own text say it lasts**, and **if it lasts, does it move a number this sheet
+holds**. The first question is what the tracker's picker filters on and it was
+getting nine cards wrong. The second had never been asked of anything but an
+Ephemeral Enchantment.
+
+### Nine cards were being read wrong
+
+`effectDuration` in combatTurn.js reads a duration off the printed text, because
+no card carries a duration field. It matched patterns in a fixed order and the
+first hit won, which is fine until a card states two durations. Now it collects
+every match with its position and answers with the best, under two rules:
+
+- **The main text first.** The optional half is read only where the main text
+  said nothing, because that half is nearly always a way of spending more rather
+  than a second clock. SENSE LIFE runs for 10 turns and its Overcast marks
+  something until a Long Rest, and it is a 10-turn spell.
+- **Precise before vague, then earliest.** A clause naming a rest or a count of
+  turns beats one that only says the thing lasts. Between two equally precise
+  answers, the first stated is the card's own and the later belongs to a rider.
+
+| Card | Was read as | Now | Why |
+| --- | --- | --- | --- |
+| THORN RAMPART | 1 turn | 10 turns | the wall stands "for 10 turns (1 minute)" in its first line, and the rooting four lines down is "until the end of its turn" |
+| BLIND | until it ends | 1 turn | "Blinded until its Turn End", which is the codex's own way of writing one turn |
+| AMBER SHARD | until it ends | 1 turn | "Stunned until their next Turn End" |
+| DRACONIC MARK | until it ends | 1 turn | "until your next Turn End" |
+| BARKSKIN | does not last | until it ends | "This effect is lost when all Shield is depleted" is a duration with no duration word in it |
+| THIEF'S PICKS | 1 minute | does not last | "given 1 minute, a free hand" is how long picking a lock takes |
+| TAILOR | 1 minute | does not last | "spend at least 1 minute looking at its garments" |
+| LIGHTNING STRIKE | 12 hours | does not last | "if you used Lightning Strike in the last 12 hours" is a memory, not a thing running on anybody |
+| UNWRITTEN LIGHT / SHADOW | until it ends | does not last | "this card holds the slot until it is" is the placeholder talking about itself |
+
+So a clock now needs something to be running **for** it, and a bare "until"
+needs a lasting verb in front of it. The three that were dropped are still
+reachable through the picker's own escape hatch.
+
+### Six cards now move the sheet
+
+`src/lib/riders.js` is the new table. A card in it is a card whose printed text
+names a number this sheet already holds, and tracking it moves that number for as
+long as the row is up:
+
+| Card | What it prints | What the sheet does |
+| --- | --- | --- |
+| GIANT GROWTH | "doubling its Movement Speed and granting it Empowered" | Speed x2, damage Empowered by 1 |
+| BARKSKIN | "+1 Defense" | Defense +1 |
+| KINDLE WEAPON | "Empowered by 1 and the damage type becomes Fire" | the swing deals Fire, Empowered by 1 |
+| WISP OF MIST | "Movement Speed increased by 50%" | Speed x1.5 |
+| FOUR-LEAF CLOVER, lucky | "Advantage on their next Skill Check or Attack Roll" | an arrow up on the attack |
+| FOUR-LEAF CLOVER, unlucky | "Disadvantage on their next ..." | an arrow down, the first in the codex |
+
+**A rider is keyed on the card and never on the caster.** That is the whole point
+of it: when somebody else casts GIANT GROWTH on you, nothing is spent on your
+sheet and no source of yours has ever heard of the spell. So the picker can now
+search the **whole codex** rather than only what you hold, and a card taken off
+that shelf lands with its rider like any other.
+
+Nothing is stored. It bends through `liveCharacter` exactly the way an Ephemeral
+Enchantment does, and for the same reason: a doubled Speed written into a column
+would still be doubled next week. `check-riders.mjs` walks every rider from a
+stored row to the number on the tile and back off again, and `check-stat-math.mjs`
+gained two sheets so the tooltip under a doubled Speed still adds up to it.
+
+### Cards that plainly last and are still notes
+
+Left out on purpose, each because the sheet cannot apply the rule without
+inventing something the card does not say:
+
+- **AIR CONTROL** has two modes chosen at cast, and Light "increases all
+  entities' Movement Speed by 3". The tracker has nowhere to record which mode
+  was chosen, so neither mode is wired.
+- **WILD STRIDER** says the Movement Speed "cannot be reduced by any effect".
+  The only thing on this sheet that reduces one is being overloaded, and whether
+  the spell beats a full pack is the table's call.
+- **VERDANT FIELD** elevates Flora spells for anyone standing in it.
+- **PACK BOND** is conditional on who is adjacent to whom, clause by clause.
+- **DRACONIC SCALE** grants resistance to a chosen damage type. The sheet holds
+  no resistances anywhere yet, on a card or otherwise.
+- **SHARPEN SENSE** and **SKILLSEED NUT** bend skill checks, which the sheet does
+  not roll.
+
+### Four things for the designer
+
+All four are the source sheets' own words, transcribed faithfully. None is a
+transcription bug and none was changed.
+
+1. **Arcane Marshal and Cartographer carry the same effect, word for word**, in
+   General Rules · Skills: both are "read or draw a map, or retrace a route you
+   have walked once before, or find a location". Arcane Marshal presumably wanted
+   something arcane.
+2. **THRILLED's second clause looks unfinished.** "Your Action Points and Reaction
+   Points maximum are increased to 7 and you start with Action Points each turn."
+   A number is missing after "with", and the sheet applies the ceiling only.
+3. **ICE ARMOR names no duration.** It grants Shield and fires a spike whenever
+   Shield is lost, which reads like it runs while the Shield holds, the way
+   BARKSKIN says outright. The card does not say so, so nothing was assumed.
+4. **AIR CONTROL's Light mode names no duration** where Dense says "for 10 turns
+   (1 minute)". Same question, and the reason the spell carries no rider.
+
+The three Ingredients in the rider table also name no duration, because an
+Ingredient is part of a Brew rather than a spell of its own and no Brew has a
+clock. They are offered at "while it lasts" and the dial is right there.
+
+## The canvas, 2026-08-23
+
+"I want to change feature to work with a grid. How it work: I open a
+visualization of the block with their name at a small scale. The you can
+dertermine your canvas Nomber of column default is 3 up to 9. Then you can move
+with drag and drop the blocks to place ethe how you want. This menu need to work
+as a 1 block view."
+
+The arranger was a list of rows, which is what replaced dragging a block where
+it sits. A list can say "sixth" and it cannot say "bottom left", so it is now
+the grid itself, drawn small: one tile per block at the block's own 360x640
+shape, with the name of the block on it. See `BlockArrange.jsx`, which is shared
+by the Character, Abilities and Inventory tabs.
+
+### Three readings that changed what got built
+
+- **One count per tab, not one per sheet.** Six character blocks and three
+  ability blocks rarely want the same canvas, so `block_columns`,
+  `ability_columns` and `inventory_columns` sit beside the three orders that
+  were already there. Every one defaults to 3.
+- **No holes.** Blocks flow in reading order, so a stored order is still the
+  flat array it always was and nothing that reads one has to learn about gaps.
+  Dropping a block on another **trades** the two rather than inserting, because
+  "put the Loadout top right" should move two blocks and not shuffle everything
+  between them. Every arrangement is still reachable, since any order is some
+  sequence of swaps. Dropping past the last block sends it to the end.
+- **The dialog takes the page measure**, the same 1180 the codex browser and the
+  effect tracker take, because a nine-column canvas has nowhere to go at 560.
+  The body inside it is held to the width of the canvas rather than the width of
+  the dialog, so three columns read as a page rather than as a small picture
+  stranded in a wide one.
+
+The three counts are new columns. **Re-run `supabase/schema.sql`** or they are
+dropped from every write with a console warning, and the arranger will forget
+the canvas on the next load.
+
+### The count is a ceiling, not a promise
+
+A block is a hard 360x640 on every device, so nine of them are 3384px of grid.
+The chosen count is therefore the most the tab may take and `--sheet-fit` in
+sheet.css is how many the window has room for, one more every 376px. The smaller
+of the two is what gets drawn, which is the old three-two-one behaviour written
+as arithmetic: a canvas set to nine is nine on a wall and one on a phone, and
+nothing has to be rearranged to move between them.
+
+`--sheet-measure` moved up from `.sheet-canvas` to `.sheet` for the same reason.
+The canvas grows past 1290px once there are more than three columns, and so does
+the bar of tabs above it, which cannot read a variable declared below itself.
+
+### A finger never drags
+
+Dragging is a mouse gesture here. A touch drag has to take the gesture away from
+the browser with `touch-action: none`, and the canvas is the thing you scroll
+when the arrangement is taller than the dialog, which one column of six blocks
+on a phone is. So a tap picks a block up and a second tap puts it down on the
+block it trades with. That is the same path the keyboard takes with Enter, and
+the arrow keys move the focused block a slot at a time. "This menu need to work
+as a 1 block view" is what all of it is for: the whole dialog fits a 375px phone
+with the canvas at 46vh and nothing scrolling, and a tile keeps a floor of 100px
+so a name is always readable, or 56px on a phone, where the name comes off the
+tile and the number stays.
+
+## The Berserker, 2026-08-23
+
+The eighth talent set, and the first that arrived as a **character sheet** rather
+than as a workbook: `Hazebound - Character Sheet V4 - BERSERKER.pdf`, three pages
+with the cards printed as pictures. It was transcribed into
+`Talent Set - Berserker.xlsx` first, in the three tabs every other set arrives
+in, and that workbook is what was pulled. Both halves of it are tracked in
+`templates/` because the workbook was written here and a clone would otherwise
+hold no copy of it.
+
+**Nine cards over three ranks**, and the signature needed no adapting at all: the
+rage is a 10 turn clock and every Rampage Skill pays for itself in turns off that
+clock. That makes it the counterpart to the Feral Curse. Same idea, a different
+clock, and this one is spent on purpose rather than run down.
+
+| Rank | Cards |
+| ---- | ----- |
+| 1 · Novice | GOING BERSERK, BERSERKER'S RAGE, RAGING BLOW |
+| 2 · Adept | MASTER OF PAIN, IGNORE PAIN |
+| 3 · Master | UNSTOPPABLE, RAGE THROUGH, AVATAR OF CARNAGE, RECKLESS VIOLENCE |
+
+### What the V4 sheet needed on the way in
+
+The workbook's `Developpement Notes` tab is twenty rows of this, one per read,
+and it is the tab that does not survive a clone. What it says, in short:
+
+- **Rank scaffolding, gone.** Every rank in the track opened by naming itself and
+  the card it hands over: "At Rank 2, you learn the Rampage skill Ignore Pain."
+  No card in the codex announces its own rank. The rank is the Tags column and
+  holding the rank is what hands the card over, so the line only restated that
+  IGNORE PAIN is tagged `Adept Talent`. What survives of each old rank entry is
+  the clause after "Additionally". Every "At Rank N" still in the codex is about
+  which tier of a *pool* you may learn from, which is a different sentence.
+- **Four ranks became three.** The old Rank 4 held UNSTOPPABLE and AVATAR OF
+  CARNAGE. A set is a three rank track and the cap is not a soft one, so both are
+  Master cards and neither name was lost.
+- **RAGE THROUGH had no rank at all.** The sheet's Rank 3 line names Ignore Pain,
+  which Rank 2 had already granted, so the sheet never says where this card sits.
+  Rank 3 is the slot with the broken line, so that is where it went. That leaves
+  the track at 3 Novice, 2 Adept and 4 Master. **Moving it down to Adept would
+  even that to 3, 3 and 3, and is the other defensible reading.**
+- **"Damage dice increase by one category" is Elevated by 1.** Elevate is the
+  glossary's word for precisely this: the same number of dice, one size larger and
+  nothing past a d12. Empowered is the other word and means an extra die. The
+  wrong one changes every number the card prints.
+- **"Critical strike" is a Critical Hit**, which is the term in Status & Terms.
+  The clause that earns it, exceeding Defense by 4 or more, is untouched.
+- **Saving throws, both ways round.** Nothing makes a saving throw any more: a
+  card either swings at Defense or is contested against Reflex or Grit, and either
+  way the roll is the attacker's. So "enemies make saving throws against your
+  Special Attacks with disadvantage" became advantage on the roll *you* make
+  (MASTER OF PAIN), and "you automatically succeed on your next saving throw"
+  became "the next roll contested against your Reflex or Grit automatically
+  fails" (RAGE THROUGH).
+- **"Melee Weapon Special Attack" is a Special Weapon Attack**, the tag every
+  weapon's second card carries. It is already melee or ranged by the weapon
+  holding it.
+- **"Spend Health" is Sacrifice Health.** Sacrifice is the glossary term for a
+  cost that ignores reduction, mitigation and prevention. Plain spending would be
+  stopped by Shield and by damage reduction, this set's own IGNORE PAIN included,
+  which would let a Berserker buy Action Points for free.
+- **Target and Duration had their own band on the sheet** and there is no column
+  for either. Every card here is Self, and the only duration that is not
+  Instantaneous is the rage, so its 10 turns is written into the sentence
+  `effectDuration` reads a duration from.
+- **A fourth tag, `Rampage`.** The sheet's type line said "Berserker Skill -
+  Rampage". The Rampage cards are a family inside the set, gated behind the rage
+  and paid for out of its clock, and nothing else in the codex carries a fourth
+  tag. **The one new thing on the tab and the one worth arguing with.**
+- **Three cards print no fist and are `0 AP`, not blank.** A blank AP on that tab
+  is what a passive has, so a card that genuinely costs no Action Points has to
+  say the nothing out loud.
+
+### Four open questions
+
+Every one of these is kept exactly as the sheet wrote it. None is a guess and
+none is wired to anything.
+
+1. **"Once per round"** on RECKLESS VIOLENCE, and **"once per combat"** on AVATAR
+   OF CARNAGE. A use limit is a count plus the boundary that refills it, and the
+   only boundaries `uses.js` can refill on are the short rest and the long one. A
+   round is neither and neither is a fight. Both lines stand as rules the table
+   enforces until there is somewhere to write them down.
+2. **"Additional Physique equal to your Berserker Rank."** Every rider in
+   `riders.js` bends a stat by a flat number. This one scales off the rank of the
+   set holding it, which would be the first of its kind, so no rider is declared
+   and the tile does not move.
+3. **The compulsion.** "You must attack the nearest target, even if it is an
+   ally" stays prose: the sheet does not know where anybody is standing, so it
+   cannot tell you the nearest target is your friend. This is the cost that makes
+   the set interesting and it belongs at the table.
+4. **Six Action Points for `5 x level` Health.** The ceiling *is* 6, so this hands
+   back a whole turn once a fight, and a weapon attack costs 4 of them. At level
+   10 the price is 50 Health. The workbook was written with "twice your level" and
+   the tab that arrived says 5 x level, which is the sheet's to set. Worth a look
+   before it ships, because the ratio only improves as levels climb.
+
+A fifth thing turned up in the pull rather than on the notes tab, and it follows
+from the sheet's own tag. **AVATAR OF CARNAGE is tagged `Passive` and prints no
+cost**, so it lands in the quick bar's "Traits · Always on" recap and never as a
+playable move, which means the Health it sacrifices and the 6 Action Points it
+hands back are spent by hand. Every other card on the set that *does* something
+is tagged `Ability`, including the three that cost 0 AP. If it is meant to be
+pressed, it is an `Ability` with 0 AP like RAGING BLOW.
+
+### How the transcription was proved
+
+The same round trip the Trickster and the Mycomancer got: every card's `id`,
+`Name`, `Tags`, `AP`, `WP` and `Main Effect` rebuilt out of the codex fields into
+the sheet's own written form and compared to the cell, quote- and
+whitespace-normalised, plus the Overview tab's four fields and every `{{card
+link}}` resolved against the codex. **63 of 63 comparisons match.**
+
+Three markers were inserted and nothing else was touched: `4d6 + 4 x your
+Physique` is `[[4d6 + 4*stat]]`, `5 x level` is `[[5*level]]`, and the `Physique`
+the rage hands over is `{physique}` so it lights the way an attribute's name does
+everywhere else. Four cards say "your Berserker's Rage" and MASTER OF PAIN says
+"Raging Blow", so those are `{{links}}` to the cards they name.
+
+`[[4d6 + 4*stat]]` and not `{physique}` inside the brackets, because that is the
+holder's own attribute: the literal form is reserved for a *target's*, and this
+set has no source that could override the cast anyway.
+
+### The picture folder
+
+Ten files in `data/Berserker/`, 2400x1792 art plates apiece, cut out of the PDF
+rather than drawn from a link, so the Image column was empty on every row and
+`npm run art:cards` placed them from the folder. Nine card plates into
+`public/cards/` and `Berserker Overview.jpg` into `public/talents/berserker.jpg`.
+
+**Five needed an alias in `pull-card-art.mjs`.** Four are spellings the sheet does
+not use, `Going Bersek.jpg`, `Instappable.jpg`, `Avatarr of Carnage.jpg` and
+`Berserker Rage.jpg` for BERSERKER'S RAGE. That last one had to be in the table
+rather than left to be noticed: the folder pass claims any leftover file whose
+name starts with the *set's* name as the set's overview plate, so without the
+alias the rage's picture would quietly have overwritten the Berserker's plate.
+
+The fifth is not a misspelling. **`Master of Rage.jpg` is another name for MASTER
+OF PAIN**, which is what the Ability tab prints and what the V4 sheet's own rank
+list calls it, so the codex follows the sheet and the file is placed by alias. The
+picture is the newer artifact, though, so if the card was renamed while it was
+being drawn, this is the line to change. The `id` column said `master-of-rage` and
+the codex uses `master-of-pain`, since an id nobody has saved yet is free to fix
+and this was the last moment it would be.
+
+Pasting the `id` and `Image` columns out of `templates/berserker-ability.csv` back
+into the sheet retires all five entries and the id question with them.
+
+### The shelves, and two sets re-shelved
+
+Asked for in the same message: the chooser wall is cut into **Physique, Instinct,
+Mind and Other**, because with nine sets on it the first question anybody has is
+"my 6 is in Physique, so what does a 6 in Physique buy me". The cut lives in
+`TALENT_CATEGORIES` in `talents.js` and is a set's `stat` and nothing else;
+`TalentWall` in `TalentBlock.jsx` draws it, and it drops back to one plain wall
+when a filter narrows it to a single shelf, the same way `PoolWall` does with a
+pool of cards. The three attribute shelves read their heading note off
+`attributes.js`, so what an attribute buys is written in one place.
+
+Two rulings came with it, both Jules's:
+
+- **Guardian is Physique**, and every card on it still rolls Instinct. A Guardian
+  is built on the body that holds the shield up, so Physique is what somebody
+  choosing the set is choosing it for. The Instinct contest SHIELD EXPERTISE gives
+  advantage on is untouched: a set's `stat` is its shelf, a card's `stat` is its
+  roll, and these are the only two that disagree.
+- **Draconic Bond is Level**, which is what the fourth shelf is for. Its Mind was
+  read off the rolls the ally makes, but what the set actually buys is a second
+  stat block, and every number in it grows on level: 5 Health a level, a point of
+  Mind every odd one and a point of Physique or Instinct every even one. A bonded
+  who never raises Mind again still gets all of it.
+
+`Level` is a fourth entry in `TALENT_TAGS` wearing `kind: 'attribute'` even though
+it is not one. That is deliberate and it is what makes the filter behave: chips
+inside a kind widen the result and chips across kinds narrow it, so a kind of its
+own would make "Mind or Level" match nothing. It is the same pseudo-attribute
+`cardText.js` already prints for a `{level}` token.
+
+## The Colossus, 2026-08-23
+
+The ninth talent set, and it arrived the same day the Berserker did and in the
+same three tabs: `Talent Set - Colossus.xlsx`, with `Overview`, `Ability` and
+`Developpement Notes` all filled in. Nothing had to be written here to complete
+it, which makes it the first set since the Cauldron Keeper to land whole.
+
+**Seven cards over three ranks**, and it is the Duelist's opposite number in so
+many words: "Where a Duelist buys options with a free hand, a Colossus buys
+weight." So it is built out of the same two specs, a `loadout` that hands over
+Martial Moves and a `martial` block that says what the move system lets the set
+do, and everything new in it is in the second one.
+
+| Rank | Cards |
+| ---- | ----- |
+| 1 · Novice | MARTIAL TRAINING, GIANT SLAYER |
+| 2 · Adept | COLOSSAL FORCE, PRACTICED MOVES |
+| 3 · Master | PERFECT TECHNIQUE, MARTIAL SWIFTNESS, COLOSSAL GRIP |
+
+**Two of the seven are house-written and the tab says so.** The `Source` column
+arrived with the Berserker and said `sheet` on all nine of its rows; this is the
+first set where it does not. COLOSSAL FORCE and COLOSSAL GRIP say `house` and
+both are marked in `talents.js` where they sit, the same way `martial.js` marks
+its eight house-written moves. If a sheet ever arrives for them, that column is
+the list of what to overwrite.
+
+### What the workbook needed on the way in
+
+Very little, and that is worth saying: the Ability tab is seven clean sentences
+and six of them were transcribed with nothing touched at all.
+
+- **Spellings, on two cards.** GIANT SLAYER's "Colosal Weapon" reads Colossal,
+  which is what the weapons carrying the tag are called. COLOSSAL GRIP arrived
+  as "You can now equped Pair Two-handed  colosall weapon, and your Colosall
+  weapon attack cost 1 lest Aciton Points" and reads "You can now equip Paired
+  Colossal Weapons, and your Colossal Weapon Attacks cost 1 less Action Point."
+  Six corrections and a missing full stop, and nothing about what the card does
+  was touched.
+- **"Paired Two-Handed Colossal Weapon" is "Paired Colossal Weapons"**, which is
+  the name of the item in `weapons.js`, so the card and the thing it lets you
+  pick up say the same words. The item still carries the `Two-Handed` tag, so
+  nothing the sentence claimed was dropped.
+- **Elevated and Empowered were both already right**, which no other sheet has
+  managed first time. COLOSSAL FORCE Elevates (the same dice one size up) and
+  PERFECT TECHNIQUE Empowers (another die). Getting those two the wrong way round
+  changes every number a card prints, and this tab did not.
+- **Nothing needed a marker.** No card here prints a die pool, an attribute or a
+  level, so the seven bodies carry no `[[math]]`, no `{attribute}` and no
+  `{{link}}` at all. The Berserker needed three markers on nine cards; this needs
+  none on seven.
+
+### The weapon category the notes tab asked for
+
+The `Developpement Notes` tab is one row and it is a build order, so it was
+built. Its own words:
+
+> Make a new category of weapon that is called colosal weapon that uses physique,
+> they cost 5 actoin point to use normal. There is a bow, two-hand, Polearm. The
+> bow as peircing shot that can hit multiple enemy in a line as long as it keep
+> beating the reflex of poel as special attack, two-hand special attack is cleave
+> and polearm is a hit that also push. Polearm as more range. Then also make athe
+> colosal paired two-hand which as a 6 Action point attack were you attack with
+> both weapon at the same time. The special move is wirwind were you hit everyone
+> around you.
+
+It was not optional. GIANT SLAYER and COLOSSAL GRIP both name a Colossal Weapon,
+so without the category two of the seven cards would point at a kind of weapon
+nothing in the codex is. **Four weapons and eight cards**, in `weapons.js`:
+
+| Weapon | Weight | Attack | Special Attack |
+| ------ | ------ | ------ | -------------- |
+| Colossal Two-Handed Weapon | 8 kg | Strike, 5 AP, 3 m | Cleave, 5 AP + 1 WP, everything in a 4.5 m arc |
+| Colossal Polearm | 7 kg | Thrust, 5 AP, 4.5 m | Drive, 5 AP + 1 WP, and a 3 m push |
+| Colossal Bow | 6 kg | Shoot, 5 AP, 30 m | Piercing Shot, 5 AP + 1 WP, down a line |
+| Paired Colossal Weapons | 16 kg | Double Strike, 6 AP, two rolls | Whirlwind, 6 AP + 1 WP, everything within 3 m |
+
+The category, the attribute, the four weapons, both Action Point costs and all
+four special attacks are the tab's. **The dice, the reaches, the push distance
+and the weights are house-written**, and this is the list to overwrite when a
+sheet arrives for them:
+
+- **Every Colossal attack deals `3d6 + 2*stat`**, off the scale the rest of
+  `weapons.js` keeps: 2 Action Points buys `1d6 + stat`, 3 buys `2d6 + stat` and
+  4 buys `2d6 + 2*stat`, so 5 buys one more die. Nothing steps the multiplier.
+- **`stat: 'physique'` on all eight.** That one is the tab's: "uses physique".
+- **The polearm's reach is the whole of what it buys.** 4.5 m on the plain attack
+  where the other two melee weapons reach 3, and the same dice, so choosing it
+  over the two-hander is a step of distance traded against an arc.
+- **The Piercing Shot is one roll, not two.** The first entity is a Weapon Attack
+  against Defense, and that same number is then held against each Reflex behind
+  it, stopping at the first one it does not beat. "As long as it keep beating the
+  reflex" is literal that way, and a shot that runs out of force stops where it
+  stopped instead of being rerolled into a second chance.
+- **`Colossal` is a second tag, not a category of its own.** Three of the four are
+  still held in two hands, so they carry `Two-Handed` as well and everything a set
+  hangs on that tag reaches them. That is the reading the whole set is built on:
+  its own MARTIAL TRAINING lets moves be used "with Two-Handed Weapons" and
+  COLOSSAL GRIP calls the paired one a Two-Handed Colossal Weapon in the same
+  breath. The bow is not a melee weapon and the Greatbow beside it carries no
+  `Two-Handed` either, so it stays `Bow`. **What that costs the bow is real and
+  worth checking**: a Colossal Bow gets GIANT SLAYER's advantage and neither
+  COLOSSAL FORCE's Elevate nor PERFECT TECHNIQUE's dice.
+- **The weights are the cost the Action Points do not charge.** A starting Physique
+  of 4 carries 20 kg, so a Colossal weapon is a quarter of everything you can lift
+  and the paired pair is most of it. The carry ceiling is one a character is
+  allowed to cross, which is what makes this a price rather than a wall.
+
+### What reaches the sheet, and what does not
+
+Five of the seven cards move a number the sheet works out. Two do not, and both
+are Action Point discounts.
+
+`weaponRiders` in `moves.js` grew a **`grants` list** for this set, because it is
+the first whose cards hang on two different weapon tags at once. Each entry names
+the tag it wants and falls back to the set's own `weapon` when it does not, which
+is what keeps the Duelist's two entries reading exactly as they always did. Four
+things an entry can carry: `advantage`, `defense`, `elevate` and `perMove`.
+
+| Card | Reaches the sheet as |
+| ---- | -------------------- |
+| MARTIAL TRAINING | the `loadout`: 3, 4 and 5 moves by rank, tiers by rank, changed on a long rest |
+| GIANT SLAYER | `advantage` on the `Colossal` tag |
+| COLOSSAL FORCE | `elevate` on the `Two-Handed` tag |
+| PRACTICED MOVES | `martial.onReaction` at Rank 2, and nothing else (see below) |
+| PERFECT TECHNIQUE | `martial.perAttack` 2, and `perMove` on the `Two-Handed` tag |
+| MARTIAL SWIFTNESS | nothing (see below) |
+| COLOSSAL GRIP | nothing, but the weapons it names are real |
+
+`perMove` is the only genuinely new shape: a die **per Martial Move riding the
+swing** rather than a die for having laid any, so a Master Colossus who laid two
+gets two and one who laid none gets nothing.
+
+### Open questions
+
+Four, and none of them is a guess. Every one stands as the sheet wrote it.
+
+1. **Three Action Point discounts, none of them wired.** MARTIAL SWIFTNESS ("your
+   Martial Moves no longer cost Action Points"), PRACTICED MOVES ("that Martial
+   Move costs no Action Points") and COLOSSAL GRIP ("cost 1 less Action Point").
+   The chip on the quick bar can be told to charge less, but the use prompt deals
+   the card beside the button and the card prints what the codex says it costs, so
+   the two would disagree at the exact moment somebody is deciding whether to pay.
+   **A card printing 1 beside a button charging 0 is worse than a rule the table
+   reads once.** This is the same call the Berserker's RECKLESS VIOLENCE got, and
+   it is now three cards on one set rather than one on another, which is the
+   argument for building somewhere to print a discounted cost.
+   PRACTICED MOVES has a second reason on top: a move is laid *before* the swing,
+   so the sheet does not yet know whether the attack it rides will be a reaction.
+2. **"You can use them with Two-Handed Weapons" is read as a permission.** The
+   overview calls Martial Moves "the trained manoeuvres nobody with two hands on a
+   haft has the time for", so this is the set that buys the time rather than a set
+   that is restricted to it. Read the other way it would be the only weapon gate on
+   a move in the codex. Nothing enforces it either way, because `canLayMove` has
+   never asked what is in your hand: a move is laid before the swing and the weapon
+   can still be swapped after.
+3. **PERFECT TECHNIQUE's second move is not gated on the weapon.** The card says
+   "two Martial Moves on the same Two-Handed Weapon Attack", and `perAttack` is
+   read when a move is *laid*, which is before the swing exists. Refusing it would
+   mean refusing it against a weapon that may not be the one it ends up riding, so
+   the count is ungated the same way the Duelist's SHARP is. The die each move adds
+   *is* gated, because that is read on the attack itself.
+4. **COLOSSAL GRIP's first half is a gate on an item, and the sheet has none.**
+   Nothing stops anybody equipping Paired Colossal Weapons, the same way nothing
+   stops a wizard putting on full plate. What makes it a Master card in practice is
+   the 16 kg.
+
+### How the transcription was proved
+
+The same round trip the Berserker got. Every card's `id`, `Name`, `Tags`, `AP`,
+`WP`, `Main Effect` and `Source` rebuilt out of the codex fields into the sheet's
+own written form and compared to the cell, quote- and whitespace-normalised, plus
+the Overview tab's four fields. The two corrections above were declared to the
+script and applied to the *sheet* side before comparing, so an undeclared
+difference is a finding rather than a diff nobody sees.
+**46 of 46 comparisons match.**
+
+### The picture folder
+
+Eight files in `data/Colossus/`, four at 2400x1792 and four at 1200x896, cut the
+same way the Berserker's were, so the Image column was empty on every row and
+`npm run art:cards` placed them from the folder. Seven card plates into
+`public/cards/` and `Colossal Overview.jpg` into `public/talents/colossus.jpg`.
+
+**Three needed an alias in `pull-card-art.mjs`.** `Matrtial Training.jpg` and
+`Paracticed Move.jpg` are plain misspellings, one letter too many apiece and a
+plural too few on the second. The third is the overview plate: the folder rule
+claims a set's plate by the set's own name, and `Colossal Overview.jpg` is the
+adjective rather than the name, which two letters is enough to defeat. It is in
+`PLATE_ALIASES` beside the Draconic Bond's.
+
+Pasting the `id` and `Image` columns out of `templates/colossus-ability.csv` back
+into the sheet retires all three.
+
+## The ten missing weapon types, 2026-08-24
+
+Off the conversion pass over `data/Source Temp/`, which is a folder of everything
+ever made for the system across its iterations. That pass produced 20 workbooks
+under `data/Conversion/` and nothing else; this is the first of them to reach
+`src/`, and it is the weapons only.
+
+**Ten weapons and twenty ability cards.** Six were named in the old weapon lists
+and never built: Polearm, Spear, Great Shield, Crossbow, Hand Crossbow and the
+Tome of Incantations, which the old category tab called Incant. Three are the
+Thrown class, which was the only old weapon class with no descendant here at all:
+Javelins, Throwing Hatchets and the Sling. And Paired One-Handed Weapons mirrors
+Paired Colossal Weapons, which had been built without its ordinary-sized twin.
+
+The wall goes from 26 weapons to 36, and `CARDS` from 303 to 323.
+
+### Two new tag values, and only two
+
+`Crossbow` and `Thrown`. Everything else reuses a tag the wall already knows:
+`Reach` for the Polearm and the Spear, `Focus` for the Tome, `Paired` for the two
+new pairs, `Shielded` for the Great Shield.
+
+That restraint is deliberate, because a tag here is not decoration. `weaponRiders`
+in `moves.js` does a plain membership check against a talent set's `weapon` tag, so
+every new tag value is a new thing for a set to fail to cover.
+
+### Three tags left off on purpose
+
+This is the part worth knowing, because each one would have quietly handed an
+existing set a weapon nobody wrote it for.
+
+**Spear carries no `One-Handed`.** The Whip does not carry it either, though a whip
+is swung in one hand, so on this wall a reach weapon carries `Reach` and stops
+there. Tagging the Spear `One-Handed` would have given a Duelist a weapon that
+reaches 3 meters and can be thrown, on top of everything DEXTEROUS already grants.
+
+**Great Shield carries no `Two-Handed`**, matching `Shield & One-Handed`, which
+carries `Shielded` alone. Otherwise it would be the only weapon in the codex
+satisfying two sets' `weapon` tags at once, and a Colossus holding a shield is not
+a thing anybody has ruled on.
+
+**Tome of Incantations carries no `Two-Handed`**, matching the Staff, for the same
+reason: COLOSSAL FORCE would have started Elevating a spellbook.
+
+Polearm *does* carry `Two-Handed`, because Colossal Polearm already does and the
+ordinary one should read the same. It is the one new weapon an existing set
+reaches, and it is the Colossus reaching a polearm, which is right.
+
+### Every number came off the other 35 cards
+
+Read back off them rather than invented:
+
+| Class | Damage | AP | stat |
+| ----- | ------ | -- | ---- |
+| light | `1d6 + stat` | 1 to 2 | instinct |
+| standard | `2d6 + stat` | 1 to 3 | instinct |
+| heavy two-handed | `2d6 + 2*stat` | 3 to 4 | physique |
+| concentrated | `3d6 + stat` | 2 to 4 | mind or instinct |
+| colossal | `3d6 + 2*stat` | 5 to 6 | physique |
+
+A Special Weapon Attack costs 1 Willpower and 0 to 1 Action Points over the plain
+one. A Reload costs no Willpower and its Action Points scale with the shots it
+restores: the pistol restores 3 for 3, the rifle 2 for 4, the canon 1 for 3. The
+Crossbow restores 1 for 3 and the Hand Crossbow 2 for 4, which are the canon's
+rate and the rifle's.
+
+### Three of them were wrong, and the arithmetic is why
+
+Each new weapon was checked cycle by cycle against its nearest built neighbour at
+attribute 10. Three came out strictly better than something already shipped.
+
+**Hand Crossbow** shot for 1 Action Point and reloaded for 2, so a full cycle was
+4 points for 34 damage where a Flintlock Pistol spends 6 for 40.5. Better per
+point, better per shot, longer reach on the bigger die. It is on the rifle's rate
+now: 2 a shot, 4 to reload.
+
+**Paired One-Handed Flurry** cost 5 Action Points and a Willpower for two hits
+totalling 34, which is exactly what a One-Handed Weapon does with a Strike and a
+Swift Strike for 5 points and no Willpower. Now 4, so the Willpower buys a point.
+
+**Great Shield Wall** cost 1 point and a Willpower, the same as the ordinary
+`shield-block`, for `3d6 + 2*stat` against that card's `2d6 + stat` plus cover for
+an ally behind. Now 2.
+
+### Two trades left in, deliberately
+
+**Javelins throw for 3 Action Points** where the Greatbow pays 4 for the same
+`2d6 + 2*stat`. The javelin buys that point with range, 18 meters against 30, and
+with the weapon being on the floor afterward. If it should cost 4, it is one number.
+
+**Great Shield is a straight upgrade on `Shield & One-Handed`** on both cards. Its
+price is 12 kg against 6, and carry weight is 10 kg a point of Physique, so the
+6 kg is a real cost on the sheet rather than on the card. That is the flat-cost
+rule of 2026-08-22 doing its job: weight is the only field that separates two
+weapons, so weight is where a difference has to go.
+
+### No pictures, and that is not a gap
+
+`art_url` is `null` on all ten and on all twenty cards, which is the state every
+other weapon on this wall is already in: not one weapon or weapon ability has
+art today. Nothing was added to `itemArt.js` or `cardArt.js`, and nothing needs
+to be until there are pictures. The Image Prompts tab of
+`data/Conversion/Weapons.xlsx` holds a prompt for each of the ten.
+
+### Two glyph cases
+
+`glyphForItem` in `itemParts.jsx` picks an icon off the family tag, and its own
+comment says a bow should never show up as a sword. `Crossbow` now returns the bow
+and `Thrown` returns the hand, rather than both falling through to the generic
+`Ranged Weapon` bow, which would have drawn a longbow for a sling.
+
+### How it was proved
+
+`lint:text`, `lint:math`, `lint:halves`, `lint:riders`, `eslint` and `vite build`
+all clean. `lint:text` caught one serial comma in the Crossbow blurb, which is
+what it is for.
+
+Then every one of the twenty bodies was run through `resolveValue` against a
+Physique 8, Instinct 10, Mind 6 character at level 5: **20 of 20 resolve, no
+`NaN`, and no leftover marker outside `{stat}`, `{roll}` and `{damage}`.** Ids are
+unique across all 323 cards and every `abilities` reference resolves through
+`getCard`.
+
+## The weapon table, and the wall rebuilt on it, 2026-08-24
+
+Handed over in chat as a screenshot of `Table3`: ten families across the columns
+and five costs down the rows, thirty-one cells. Jules: "Ok, I want to redo the
+weapon. In the table given you all existing type of weapon."
+
+So this is not a pull that added weapons, it is the one that **replaced the
+wall**. Everything on it before came off, and what is here now is the table plus
+the twelve variations the magic families ask for.
+
+The wall goes from 36 weapons to 39 cells (45 items, counting Claws & Teeth and
+the five named enchanted ones), and 78 weapon cards.
+
+### The cost column is the whole balance
+
+The one thing the table settles that nothing settled before: **a weapon's cost is
+its Action Point cost, and the cost is the only thing that sets the damage.**
+
+| Cost | Damage |
+| ---- | ------ |
+| 2 | `1d6 + stat` |
+| 3 | `2d6 + stat` |
+| 4 | `2d6 + 2*stat` |
+| 5 | `3d6 + 2*stat` |
+| 6 | `3d6 + 3*stat` |
+
+Word for word: "Using base cost / 2 Cost weapon do 1d6 + Stat / 3 Cost weapon do
+2d6 + Stat / 4 Cost weapon do 2d6 + 2xStat / 5 Cost Weapon do 3d6 + 2xStat / 6
+Cost weapon do 3d6 + 3xstat".
+
+Three families read the ladder sideways, and all three rules are Jules's:
+
+- **`X + Shield`** deals what the bare weapon deals and costs one point more.
+  "They base attack is the same as the normal +1. So finesse + Shield base attack
+  do that same as finesse in damage but cost 1 more."
+- **`Paired X`** deals the rung below with its dice as d4, rolled twice, at one
+  point more, and every roll it makes is at disadvantage. "Their attack use twice
+  d4 instead of d6 and they do one attack roll to hit damage twice. So Finesse
+  paired if it lands is 2x 1d4 + Stat."
+- **Crossbows and the Ballista** deal their own rung for one point less and have
+  to reload. "The cost of the weapon attack is by default 1 less, but it requires
+  to reload to shoot again."
+
+`scripts/check-weapons.mjs` is the round trip on all of it. The table is written
+out there once, cell by cell, and every card is measured against it: cost, dice,
+attribute, what the second card costs, and whether a melee weapon that is not a
+reach weapon reaches 1 Meter. `npm run lint:weapons`, and `--list` prints the
+whole grid back.
+
+### The attribute of every cell is the designer's
+
+The colours on the screenshot could not be read reliably, so the map was asked for
+in words and given in three lists on 2026-08-24. It is transcribed in `TABLE` in
+`check-weapons.mjs` and it is the authority:
+
+**Instinct (15).** Finesse Weapon, Short Bow, Flintlock Pistol, Fist Weapon, Bow,
+Flintlock Rifle, Whip, Light Crossbow, Paired Finesse, Enchanted Instrument,
+Finesse + Shield, Portable Canon, Polearm, Crossbow, Heavy Crossbow.
+
+**Physique (12).** Melee Light, Melee Heavy, Long Bow, Paired Light Weapon, Melee
+Light + Shield, Melee Great, Great Bow, Great Polearm, Paired Heavy Weapon, Melee
+Heavy + Shield, Ballista, Paired Great Weapon.
+
+**Mind (4).** Wand, Tome of Incantations, Staff, Censer.
+
+Four of those are worth noticing because a guess would have got them wrong:
+**Melee Light is Physique** while Finesse is Instinct, which is the difference
+between those two columns. **Polearm is Instinct and Great Polearm is Physique**,
+the one family that changes attribute up its own column. **Heavy Crossbow is
+Instinct and the Ballista is Physique**, the same thing in the crossbow column.
+And the **Enchanted Instrument is Instinct**, so it is the one Focus on the wall
+that is not a Mind weapon.
+
+### Twelve weapons left the codex
+
+Jules, asked directly: drop all twelve. They have no cell on the table.
+
+Bo Staff, Trident, Daggers, One-Handed Weapon, Two-Handed Weapon, Shield &
+One-Handed, Dual Pistols, Spear, Great Shield, Javelins, Throwing Hatchets and
+the Sling. Eight of those were built the day before this, off `Source Temp/`, and
+they lasted a day.
+
+**The Thrown class is gone with them**, and it is the only weapon class on the old
+wall with no descendant here at all. The `Thrown` tag went with it, and so did the
+glyph branch in `itemParts.jsx` that served it.
+
+Two things did not go:
+
+- **Claws & Teeth** stays. It is not a weapon anybody buys, it is what a Feral
+  Cursed has instead of one (`FERAL_WEAPON` in `feral.js`). Its reach came down to
+  1 Meter with everything else.
+- **The five named enchanted weapons** stay and were repointed. Cold-Infused
+  Sword, Patien and Grave-Lantern Blade teach Melee Light's two cards where they
+  taught One-Handed's; the Imbued Flintlock Pistol is unchanged; and the **Deep
+  Sea Trident is a Polearm** now, which is the closest thing on the wall to a
+  three-pronged fishing spear held at the far end. Its reach came down from 4.5
+  Meter to 3 with the family.
+
+### Great is Colossal, confirmed
+
+Melee Great, Great Bow, Great Polearm and Paired Great Weapon cost 5, 5, 5 and 6
+Action Points on Physique. That is exactly what the four Colossal weapons built
+for the Colossus set the day before cost, so they were put to Jules as the same
+tier renamed, and they are: "Yes, Great is Colossal."
+
+All four carry `Colossal` as a second tag, so GIANT SLAYER and COLOSSAL GRIP still
+see them and neither card had to move. `check-weapons.mjs` asserts both halves:
+every Great weapon carries `Colossal`, and nothing else does.
+
+**Superseded the same day.** The tag pass later on 2026-08-24 renamed `Colossal` to
+`Great` and reworded both cards. See
+[the card face](#the-card-face-the-magazine-and-the-tag-pass-2026-08-24).
+
+### The two sets moved onto families
+
+Jules, mid-build: "Update duelist to be : Finesse & Light Melee and Colossus to be
+Heavy & Great Melee by the way."
+
+That is the change the old wall could not have taken. `One-Handed` and `Two-Handed`
+were doing two jobs at once, describing how a weapon is held *and* standing in for
+what kind of weapon it is, and a set hung on the second meaning. Now the family is
+its own tag and the hands are just the hands.
+
+| | was | is |
+| --- | --- | --- |
+| Duelist | `'One-Handed'` | `['Finesse', 'Light Melee']` |
+| Colossus | `'Two-Handed'` | `['Heavy Melee', 'Great Melee']` |
+| GIANT SLAYER | `'Colossal'` | unchanged |
+| Feral Curse | `'Natural'` | unchanged |
+
+**A `martial` spec may name more than one tag now**, and any one of them is a
+match. That is one line in `tagged` in `moves.js`; `weaponRiders` never had to
+know. Seven card bodies were reworded to say what they now do, on Jules's
+instruction rather than as a transcription: DEXTEROUS, AGILE and FOLLOW UP on the
+Duelist, MARTIAL TRAINING, COLOSSAL FORCE, PERFECT TECHNIQUE and COLOSSAL GRIP on
+the Colossus.
+
+**Every weapon carries exactly one of `One-Handed` and `Two-Handed`** now, which is
+Jules's own rule read literally: "Some of this as marker as one-hand, like finesse
+melee light, pistol, whip, wand, ect, the other are two-hands." The named five are
+One-Handed; the Light Crossbow and the three Censers were read into the "ect"
+because both are held in one hand; everything else is Two-Handed, the shielded and
+paired ones included. Nothing hangs on those two tags any more, so a wrong reading
+here costs nothing but the word on the card.
+
+### A shield is worth something only while you are holding it
+
+"The shield give 3 Armor and 1 Defense, that is their special is a passive."
+
+So the three shielded weapons carry `armor: 3` and `defense: 1` on the item, the
+way a breastplate does, and their second card is SHIELD - GUARD, one passive
+shared by all three because the numbers are the same three times over.
+
+The catch is that the sheet has **two weapon slots and only one of them is a
+hand**. `wornItems` walks both, so a shield stowed in the secondary slot would
+have been worth 3 Armor from your back, and two shielded weapons carried at once
+would have been worth 6. That is the whole point of Swap Weapons costing Action
+Points, so it was closed rather than left:
+
+- `heldItems` in `items.js` is `wornItems` without the secondary weapon, and
+  `equipmentEffects` reads it for `defenseFlat` and `armorTotal` alone.
+- `placesOf` in `statMath.js` takes a `stowed` flag and the Armor and Defense
+  lines pass `false`, so the tooltip says the same thing the tile does.
+- Weight and Magic Burden still walk both hands, because weight is what a thing
+  costs to carry and you are carrying it either way.
+
+There is a fixture for it in `check-stat-math.mjs`, "a shield in hand and a second
+one stowed": Armor 3, Defense +1, and 14 kg of weapons.
+
+`shield-guard` is also **the one card in the codex that names no attribute**. Three
+weapons share it and they do not agree on one (Finesse + Shield is Instinct, the
+other two Physique), and nothing on it rolls. `check-weapons.mjs` allows that only
+for a card tagged `Passive`.
+
+### What was house-written, and where
+
+Everything below is invented off the designer's own scale and is what to overwrite
+when a sheet arrives for it.
+
+**Every ranged distance.** Jules: "For all the range weapon I let you review the
+range of them to be logical." Melee is 1 Meter unless the weapon is a reach weapon,
+which is their rule; the Whip keeps 4.5 Meter and both Polearms have 3, which is
+their number too. The rest:
+
+| | | | |
+| --- | --- | --- | --- |
+| Short Bow 18m | Bow 25m | Long Bow 45m | Great Bow 60m |
+| Flintlock Pistol 15m | Flintlock Rifle 30m | Portable Canon 25m | |
+| Light Crossbow 25m | Crossbow 30m | Heavy Crossbow 45m | Ballista 60m |
+| Wands 18m | Tomes 12m | Staves 18m | Censers 3m |
+| Enchanted Instrument 15m | | | |
+
+The Censer's 3 Meter is the shortest range on the wall and shorter than most melee
+weapons swing, which is the reading of "They have real short range".
+
+**The Reload Bolt costs 1 Action Point**, on all four crossbows. That is the point
+the discount came off, so a shot plus its reload costs exactly what the cost table
+asks and a crossbow is never cheaper than a bow over two turns. What it buys is
+*when*: the shot is cheap now and the winding is paid on a turn with a point spare.
+
+**What an unpriced special costs.** Jules priced four outright: FLURRY at 5 Action
+Points and 2 Willpower, AIMED SHOT at the plain attack's cost plus 1 and 1
+Willpower, the Polearm's DRIVE at the plain attack's own cost and 1 Willpower, and
+the Instrument's DISCORD the same. Everything else was read off those: a special
+that multiplies what one swing puts out costs a point more than the plain attack,
+one that spends itself on an area or a rider costs the same, and both cost 1
+Willpower. A Reload rolls nothing and costs none.
+
+**The Staff's area is 3 Meter**, off "small area". It is half the Tome's ring and
+the smallest area anything in the codex throws.
+
+**Seven special moves are named here.** Jules named FLURRY, AIMED SHOT, VOLLEY and
+WHIRLWIND. The rest are house names for moves they described but did not name:
+DRIVE (the Polearm's push), CHORUS (the Tome's ring), BURST (the Staff's area),
+FUMIGATE (the Censer's smoke), DISCORD (the Instrument's rider), BOLT, RECITE,
+WAFT and BLAST for the plain attacks of the four magic families.
+
+**Every weight**, on the same scale as the wall this replaced.
+
+**SWIFT STRIKE and CLEAVE were carried over rather than invented.** Jules named a
+second card for every family except the three Melee ones, so Melee Light keeps the
+One-Handed Weapon's Swift Strike and Melee Heavy and Melee Great keep the
+two-hander's Cleave. Cleave's arc came down to 1 Meter with the reach.
+
+**"Balista" is spelled Ballista**, the way "Colosal" was read as Colossal on the
+way in. "Portable Canon" was left as it is, because it is already that in the
+codex and its id is `portable-canon`.
+
+### Six things for the designer
+
+**0. `Great Melee` is column 2's cell and not the whole Great tier.** "Heavy &
+Great Melee" was read literally, onto the two cells actually called Melee Heavy
+and Melee Great (and their Paired versions). So a Colossus holding a **Great
+Polearm** or a **Great Bow** gets GIANT SLAYER's advantage, because both carry
+`Colossal`, but not COLOSSAL FORCE's Elevate or PERFECT TECHNIQUE's per-move die.
+For the Great Bow that is unchanged from the old wall; for the Great Polearm it is
+a narrowing, because the old Colossal Polearm carried `Two-Handed` and got the
+Elevate. Say the word and `Great Melee` goes on all four Great weapons.
+
+Where the two sets currently land, at rank 3:
+
+| in hand | Duelist | Colossus |
+| --- | --- | --- |
+| Finesse Weapon, Melee Light, Paired Finesse | advantage + 1 Defense | nothing |
+| Melee Heavy, Paired Heavy | nothing | Elevate + per-move die |
+| Melee Great, Paired Great | nothing | advantage + Elevate + per-move die |
+| Great Bow, Great Polearm | nothing | advantage only |
+| Finesse + Shield, Melee Light + Shield | nothing | nothing |
+
+**1. The Guardian set names an ability that no longer exists.** This is the real
+one. INTERCEPT says "you can use your Shield & One-handed Block ability without
+paying its action point cost", and SHIELD EXPERTISE's last sentence pays out
+"after successfully blocking damage with a shield". The shield's second card is a
+passive now, so there is no Block to use and nothing to trigger off. Both cards
+were left exactly as written, with the problem flagged in `talents.js`, because
+what a Guardian gets instead is a ruling and not a transcription. Two obvious
+shapes: give the shielded weapons a third card, or rewrite those two clauses
+around the passive.
+
+**2. The three Melee weapons still have no special of the designer's.** Swift
+Strike and Cleave are the old wall's. Worth a look, because they are the only
+second cards on the wall nobody chose.
+
+**3. Melee Heavy and Melee Great reach 1 Meter.** That follows the rule as
+written ("For all melee weapon by default attack range is 1m", and only the Whip
+and the Polearms were named as exceptions), but a greatsword reaching no further
+than a dagger is worth confirming. The old wall gave a two-hander 3 Meter.
+
+**4. Paired weapons may be strictly worse than the weapon under them.** Paired
+Finesse costs 3 for `2x (1d4 + Instinct)` at disadvantage; Melee Light costs 3 for
+`2d6 + Physique` with no penalty. Two hits beat one against Armor and the average
+is close, but the disadvantage is on every roll the weapon ever makes, both cards,
+forever. That is the designer's rule as written and it may be exactly the intent.
+
+**5. The Wand's VOLLEY may be the best special on the wall.** Three projectiles at
+3 Action Points and 1 Willpower, split however you like, where FLURRY pays 5 and 2
+for three hits on one target. The prices come from two different rules of Jules's
+own, so neither is invented, but they meet here.
+
+### How it was proved
+
+`lint:text`, `lint:math`, `lint:halves`, `lint:riders`, `lint:weapons`, `eslint`
+and `vite build` all clean.
+
+`check-weapons.mjs` is the new one and it is the transcription proof: **39 of 39
+cells match the table** on cost, damage, attribute and the price of the second
+card, with the shield, paired and crossbow rules applied. It also checks that
+every weapon carries one hand tag and one category, that melee without `Reach`
+reaches 1 Meter, that the four Great weapons and only those carry `Colossal`, that
+every tag a set hangs on is on at least one weapon, and that no weapon card is
+taught by nothing.
+
+`check-stat-math.mjs` went from 11 fixtures to 12 with the stowed-shield sheet.
+Its two old fixtures that held `one-handed` and `two-handed` now hold `melee-light`
+and `melee-heavy`, which weigh the same, so the load lines did not move.
+
+Then every one of the 78 bodies was run through `resolveValue` against a Physique
+8, Instinct 10, Mind 6 character at level 5: **all 71 live values resolve, no
+`NaN`, and no leftover marker outside `{stat}`, `{roll}` and `{damage}`.** Ids are
+unique across the whole of `CARDS`, which is 339 cards now, and every `abilities`
+reference resolves through `getCard`.
+
+### No pictures
+
+Nothing on this wall has art, which is the state the wall it replaced was in. The
+old weapon ids that had none still have none, and the ones that are gone took
+nothing with them: `cardArt.js` never carried a weapon card.
+
+## The card face, the magazine and the tag pass, 2026-08-24
+
+The wall rebuilt earlier the same day, read back and corrected. Nine instructions
+in one message, and they land in four places: what a card is headed with, what a
+firearm costs and holds, what four cards are priced at, and what a weapon's tags
+say.
+
+### The weapon name moved off the title and into the banner
+
+> "In the weapon card, the weapon name should be in the banner not the title. So
+> Short bow shoot should just be called Shoot. And in the banner above read
+> Ranged - Weapon Attack - Shortbow."
+
+So a dealt card reads:
+
+| | was | is |
+| --- | --- | --- |
+| title | Short Bow - Shoot | **Shoot** |
+| banner | RANGED - WEAPON ATTACK | **RANGED - WEAPON ATTACK - SHORT BOW** |
+
+**The card's `name` did not change**, and that is the whole of how this was built.
+A name is the card's identity rather than its heading: it is what every
+`{{link}}` resolves against, what `pull-card-art.mjs` matches a filename to, what
+`data/templates/weapon-cards.csv` lists for the artist, and what a saved row
+naming a card names. Renaming 78 of them to "Shoot", "Strike" and "Reload" would
+also have collided in `CARD_BY_NAME`, where seven cards called Shoot leave one
+card called Shoot.
+
+What changed is a new field, `weapon`, on all 78 cards, holding the weapon as the
+card names it. `cardTitle` takes it off the front of the name and `cardBanner`
+puts it on the end of the tags, both in `cardText.js`. Four surfaces print the
+title now: the dealt card, the brief, the Inventory tab's ability box and the
+loadout row. `shortName` in `combatBar.js` used to cut the same string on its
+dash and now reads the field, so the chip and the card can never disagree.
+
+`check-weapons.mjs` asserts that every weapon card carries a `weapon` and that it
+is the name's own prefix, which is the only way the two stay in step: the field is
+a copy of half the name, and a copy is a thing that drifts.
+
+A brief has no banner, so it carries the weapon as one more chip beside the tags.
+
+### Focus is gone, and the implements are tags
+
+> "Focus tag make no sense need to be removed. [...] Then Wand, Staffs ect are a
+> tag."
+
+`Focus` held the three Wands, the three Staves, the three Tomes, the three Censers
+and the Enchanted Instrument under one word, and **no talent set ever reached for
+it**: the only thing in the app that read it was the glyph picker. Each implement
+is its own family tag now, on the rule the rest of the axis already followed.
+
+| was | is |
+| --- | --- |
+| `Focus` on 13 weapons | `Wand`, `Staff`, `Tome`, `Censer`, `Instrument` |
+
+All five still share the one glyph, because a wand, a stave, a tome, a censer and
+a fiddle are five silhouettes nobody has drawn and one honest placeholder beats
+five wrong ones.
+
+### The tag axes, rewritten
+
+> "Weapon is redundant in the weapon category so it can have but hidden. Ranged
+> weapon should just be ranged, melee just melee. So Great bow can be
+> Great - Ranged - Two-handed - Bow."
+
+Five axes, and the first two are carried and never drawn:
+
+| axis | values | shown |
+| --- | --- | --- |
+| rarity | Common, Uncommon, Rare, Epic | all but `Common` |
+| kind | `Weapon`, on every weapon | no |
+| size | `Great`, on the four whose names say Great | yes |
+| category | `Melee`, `Ranged` | yes |
+| hands | `One-Handed`, `Two-Handed` | yes |
+| family | Finesse, Light Melee, Heavy Melee, Great Melee, Fist, Bow, Crossbow, Firearm, Polearm, Whip, Reach, Wand, Staff, Tome, Censer, Instrument, Paired, Shielded, Natural | yes |
+
+`Common` is hidden on the same reasoning `Weapon` is, and it was not asked for:
+the example tag line has no rarity in it, and Common is the default on every
+weapon but five. Uncommon, Rare and Epic still show, and still carry their colour.
+Both live in `HIDDEN_TAGS` in `itemParts.jsx`, so nothing was taken out of the
+data and the filter row still reaches all of it. Great Bow now reads exactly as
+asked: **Great · Ranged · Two-Handed · Bow**.
+
+`Whip` is a new family tag, for the same reason a Wand is one, and because the
+Duelist now reaches for it by name.
+
+### Colossal is Great, and two cards say so
+
+The tag renamed, on Jules's answer to where "Great" comes from: the Colossus
+reaches its own weapons through `Heavy Melee` and `Great Melee`, so the second tag
+on the four biggest is free to be the word the wall itself uses.
+
+| | was | is |
+| --- | --- | --- |
+| the tag | `Colossal` on 4 weapons | `Great` on the same 4 |
+| GIANT SLAYER reads | `Colossal` | `Great` |
+| GIANT SLAYER prints | "a Colossal Weapon" | **"a Great Weapon"** |
+| COLOSSAL GRIP prints | "your Colossal Weapon Attacks" | **"your Great Weapon Attacks"** |
+
+**The two card bodies changed, which is a step past a retag and worth knowing
+about.** The designer's own Ability tab spells the category "Colosal Weapon" on
+both cards. A card that names a category no weapon carries is a rule a player
+cannot check against the thing in their hands, so the printed word followed the
+tag. The card *names* are untouched: COLOSSAL FORCE and COLOSSAL GRIP are names,
+not categories. Ballista is deliberately **not** Great, so the tag still means
+exactly the four it meant as `Colossal`.
+
+### The Duelist reaches four families now
+
+> "Duelist is Finesse, Whip, Fist and polearm. Update text in cards as well."
+
+| | was | is |
+| --- | --- | --- |
+| Duelist | `['Finesse', 'Light Melee']` | `['Finesse', 'Whip', 'Fist', 'Polearm']` |
+| Colossus | `['Heavy Melee', 'Great Melee']` | unchanged |
+
+Wider in three places and narrower in one: the Whip, the Fist Weapon, the Polearm
+and the Great Polearm come in, and Melee Light goes out with its three enchanted
+cousins (Cold-Infused Sword, Patien, Grave-Lantern Blade). Six lines of card text
+follow it, on DEXTEROUS, AGILE and FOLLOW UP, summaries included.
+
+**Two of the four are Two-Handed**, which retires the reading that this set was
+ever about the free hand. The overview still says "A Duelist fights with one hand
+and keeps the other free" — that is prose the designer holds a copy of in
+`Talent Set - Duelist - Overview.csv`, so it was left alone rather than quietly
+rewritten. It now disagrees with the cards, and that is one for Jules.
+
+Great Polearm carries `Polearm`, so a Duelist reaches a siege halberd. Nobody has
+ruled on that either way and the tag the designer named is the tag that answers.
+
+### A firearm fires for 1 Action Point
+
+> "All shoot ablity should cost 1 for firams."
+
+| | was | is | deals |
+| --- | --- | --- | --- |
+| Flintlock Pistol · Shoot | 2 AP | **1 AP** | 1d6 + Instinct |
+| Flintlock Rifle · Shoot | 3 AP | **1 AP** | 2d6 + Instinct |
+| Portable Canon · Shoot | 4 AP | **1 AP** | 2d6 + 2 × Instinct |
+
+This takes the three firearms off the cost column, which was until now the only
+thing on the wall that set damage. They keep the damage their rung buys and pay
+for it somewhere else: the magazine. A Portable Canon puts out what 4 Action
+Points buys for 1, once, and then somebody spends 3 loading it. `check-weapons.mjs`
+carries it as a fourth sideways rule beside shield, paired and crossbow.
+
+The three Reloads are unchanged at 3, 4 and 3.
+
+### The magazine, drawn as rounds
+
+> "Fire arms need to have added a bullet ocunt tarchar. So on the action next to
+> shoot you you seel bullet shaped indicator that empty as you use. And the preive
+> w to use should let you know as well. Same for crossbow but with 1 bolt."
+
+Seven weapons hold ammunition and every one of them already had a Reload card and
+a shot count printed in prose that nothing read:
+
+| weapon | holds | Reload |
+| --- | --- | --- |
+| Flintlock Pistol | 3 Shots | 3 AP |
+| Flintlock Rifle | 2 Shots | 4 AP |
+| Portable Canon | 1 Shot | 3 AP |
+| Light Crossbow, Crossbow, Heavy Crossbow, Ballista | 1 Bolt | 1 AP |
+
+**It needed no new column.** `card_uses` already counts what a limited card has
+spent, keyed by card id, and a magazine is that same count filled by a different
+thing. So the attack carries `ammo: { max, unit, reload }` and the Reload carries
+`reloads`, both riders on the card the way `uses` and `recharge` are, and
+`magazineUse` in `uses.js` reads either end of the pair. One function, because a
+chip and a row that disagree about whether a gun is loaded is the failure this
+was built to avoid.
+
+What a player sees:
+
+- **rounds, not dots.** A belt charge is a dot because a flask holds a measure of
+  something. A magazine holds countable objects, so the pip is the object: a
+  cartridge for a Shot, a fletched bolt for a Bolt, filled copper while it is in
+  there and an empty outline once it is gone. `AmmoPips` in `itemParts.jsx`.
+- **on the loadout row, beside the attack**, which is where it was asked for. And
+  on the Reload row too, because the row that fills a magazine is the row a reader
+  looks at to find out whether it needs filling.
+- **on the quick-bar chip**, in place of the "×2" a charged item gets.
+- **on the use prompt**, at full size with the count spelled out. A round is the
+  one cost a printed card cannot show, and the prompt is the last thing before the
+  trigger.
+- **refused when it is empty**, greyed with "Empty" and the reason in the tooltip,
+  the way a spent flask is. A Reload with nothing to fill is refused as "Loaded".
+
+The card bodies were rewritten to match. They used to explain the mechanism
+("Every use of the Flintlock Pistol - Shoot ability consumes one shot") because
+nothing implemented it; now the sheet counts, so the attack says a shot is spent
+and the Reload says what it puts back.
+
+**A long rest fills a magazine too, and that is a house ruling.** Nothing else on
+the sheet is refillable only by spending Action Points, and a character who walked
+out of a fight with an empty pistol and then slept should not have to mime a
+Reload before the next one. The printed card still says what it says. One for
+Jules if it should be Reload and nothing else.
+
+### Four cards the designer priced by hand
+
+> "Wand Volley should cost 5 action points and 2 willpower. Tome of incations
+> Special attack should cost 4 action points and 2 WP."
+
+| | was | is |
+| --- | --- | --- |
+| Volley, all three Wands | 3 AP · 1 WP | **5 AP · 2 WP** |
+| Chorus, all three Tomes | 3 AP · 1 WP | **4 AP · 2 WP** |
+
+Both break the rule the other specials follow, which is that a special costs the
+plain attack's price or one more and 1 Willpower. Volley is now priced exactly as
+Flurry is, and both of them sell the same thing: more than one hit off one roll.
+`check-weapons.mjs` carries them by name beside Flurry rather than letting the
+generic rule wave them through.
+
+### Discord is contested, not aimed
+
+> "Instrument discord is against hte grit of an enetity not an attack roll."
+
+| | was | is |
+| --- | --- | --- |
+| Enchanted Instrument · Discord | Instinct Ranged Attack, vs Defense | **Instinct Roll, vs Grit** |
+
+A wrong note is not thrown at anybody, it is endured. Its cost is unchanged, and
+it is the codex's second roll shape rather than a third: the Tomes and the Censers
+already contest Grit, and the file header's "exactly two shapes" note holds.
+
+### The three staves have names
+
+> "Name the staff something more in lore rather than just roce blunt and and
+> sharp. Arcane sounding things."
+
+| was | is | deals |
+| --- | --- | --- |
+| Sharp Staff | **Rivenstave** | Sharp |
+| Force Staff | **Sunderstave** | Force |
+| Blunt Staff | **Loadstave** | Blunt |
+
+Jules picked the set. Each one still says what it does — riven air, a sundering
+shove, a load coming down — without naming the damage type twice.
+
+**The ids stay `sharp-staff`, `force-staff` and `blunt-staff`**, and the six card
+ids with them. An id is what a saved sheet points at and what the art work list
+already names its files for, so renaming one would orphan an equipped weapon and a
+picture at once. The name is what a reader sees, the id is what the sheet
+remembers, and only the first of those was asked to change.
+
+### How it was proved
+
+`check-weapons.mjs` gained four walks and kept the five it had:
+
+- the **firearm** rule, as a fourth way of reading the cost grid
+- **Volley** and **Chorus**, priced by name
+- the **tag axes**: one rarity, one of Melee and Ranged, one of the two hands, the
+  hidden `Weapon` on every weapon, no `Focus` anywhere, and `Great` on exactly the
+  four whose names say Great
+- the **title**: every weapon card carries a `weapon`, and it is the prefix of its
+  own name
+- the **magazines**: `ammo` and `reloads` point at each other, every count matches
+  the designer's sheet, every round has a unit, and no card tells a reader to
+  Reload without a rider that counts
+
+All 39 cells match the table across 45 weapons and 78 cards, `npm run lint` and
+`npm run lint:text` are clean, and the magazine was walked end to end: three shots
+out of a pistol, refused empty, filled by its Reload, and half-filled by a long
+rest.
+
+Both art work lists were regenerated off the codex, so the 45 icon rows and 78
+card rows carry the new names, tags, costs and bodies. `Image`, `Group` and `Note`
+are the sheet's own columns and were carried across by id.
+
+### Two things for Jules
+
+1. **The Duelist overview still says "one hand".** Two of its four weapon
+   families are Two-Handed now. The overview prose is the one thing here the
+   designer holds their own copy of, so it was not touched.
+2. **A long rest reloads.** The house ruling above. Say the word and it comes out,
+   and a magazine is filled only by the card that says it fills it.
+
+## The Arcanist, 2026-08-24
+
+The eleventh talent set, and the first caster whose spells are not a *hand*.
+
+It arrived as one tab, `Talent Set - Arcanist - Ability.csv`, with four cards and
+five pictures in `data/Arcanist/`. The Overview was written here, which the
+designer asked for in those words and asked to be about the fantasy rather than
+the rules. Its raw material is theirs: see "where the overview came from" below.
+
+| Rank | Cards |
+| ---- | ----- |
+| 1 · Novice | SPELLBOOK, ARCANE RESEARCH |
+| 2 · Adept | OVERLOAD |
+| 3 · Master | PERFECT CASTING |
+
+### The superseded six-card draft
+
+`data/Conversion/Talent Set - Arcanist.xlsx` (2026-08-23) is a seven-tab
+conversion off `Hazebound System - Arcanist.pdf`, and it proposes a **different
+set**: SPELLBOOK, TRANSCRIBING, IMPROVED FORMULAS, ARCANE SPECIALIST, ANALYTIC
+SIGHT and ARCHMAGI, with a tome capped at Mind + level and a spell taking 24
+hours of copying in two-hour pieces.
+
+**None of it is built.** Three things settle it, and they all point the same way:
+
+- the four-card CSV is a day newer,
+- the five pictures in `data/Arcanist/` are drawn for *those* four cards and the
+  set plate, and the xlsx's own `Image Prompts` tab names six different files
+  (`Transcribing.jpg`, `Improved Formulas.jpg` and the rest) that do not exist,
+- the xlsx's own `Special Feature` tab called the half-transcribed spell "a
+  progress bar the site has nowhere for", and the new sheet deletes it. Research
+  is one long rest action that finishes in that rest, which the site already has
+  a slot for.
+
+The proposal is kept rather than thrown away, because its `Overview` tab is the
+best writing anybody has done about this set and it is where the blurb comes
+from. The rest of it is a record of a road not taken.
+
+### Where the overview came from
+
+The designer's own `Overview` tab, with the withdrawn mechanics taken out. What
+survived is the fantasy, almost word for word: "An Arcanist does not know spells,
+they own them", the tome "bound to their being" that "comes when called even
+after it has been burned", nothing arriving "by revelation", a spell "found in
+somebody else's book or taught by somebody who has it", and the book that "has to
+be held and read aloud, which costs a hand and a voice".
+
+What came out was every sentence describing a rule that no longer exists: "24
+hours of transcription, taken two hours at a time", "as many as their Mind and
+their level allow", "a school is chosen and then cast from for free until the
+Willpower runs out", and the Rank 5 second school. The tagline is the `Summary`
+column untouched.
+
+### What the Ability tab needed on the way in
+
+The round trip, per card, against the designer's own cells:
+
+| Card | Words kept | Tags | AP · WP |
+| ---- | ---------- | ---- | ------- |
+| SPELLBOOK | 94% | same | same |
+| ARCANE RESEARCH | 89% | same | same |
+| OVERLOAD | 100% | same | same |
+| PERFECT CASTING | 71% | **changed**, see below | same |
+
+Every difference, and there are only six:
+
+- **"As an Arcanist you record"** loses its first three words on SPELLBOOK, the
+  way MARTIAL TRAINING is not headed "As a Colossus". The card is in the set and
+  the tag says so.
+- **A comma splice becomes an "and"**, and `dismiss` gets the `it` it was missing:
+  "you record all your spells in a bound tome, you can summon and dismiss at
+  will" reads "...bound tome, and you can summon and dismiss it at will".
+- **"Additional Willpower" and "Advantage" are lowercased.** The codex capitalises
+  a term off the Status & Terms sheet, and Empowered is one. An adjective is not,
+  and every other card writes "made with advantage" in prose. OVERLOAD is
+  otherwise the cell verbatim, all sixteen words of it.
+- **"you can take the Arcane Research action" reads "you can use your long rest
+  action"** on ARCANE RESEARCH. That is FUNGAL INVOCATION's idiom word for word.
+  The site's rest buys exactly one action, and a card should say which one it is
+  spending rather than naming itself.
+- **"multiplied by 10 + your level" is written out as the arithmetic.** See the
+  ruling below.
+- **"cannot bring the spell below 1" reads "to a minimum of 1"** on PERFECT
+  CASTING, which is the designer's own phrasing for the identical rule on the
+  superseded sheet's IMPROVED FORMULAS. The original is a subjectless fragment.
+
+No card in the codex that is not on the sheet. Nothing invented.
+
+### The spellbook is a library, not a hand
+
+This is the real build, and it is the first pool in the codex that does not
+behave like the Mycomancer's.
+
+Every other choosing set prepares. A Mycomancer knows four Primal spells at Rank
+2, has four, cannot have five, and swaps any number of them at a long rest. An
+Arcanist **keeps a library**: spells go in one at a time, they stay in, the
+ceiling is a formula off rank *and level*, and a spell entering a full book pushes
+one out.
+
+So a loadout spec grew four fields, all of them generic and all of them a sentence
+of ARCANE RESEARCH:
+
+| Field | The sentence |
+| ----- | ------------ |
+| `start: 5` | "You start with 5 Novice Spells of your choice" |
+| `capacity: { perRank: 10, perLevel: 1 }` | "a number of spells equal to your Rank in Arcanist multiplied by 10 + your level" |
+| `research: ['long']` | "Whenever you take a Long Rest ... research a single spell" |
+| no `school` | "from any school" |
+
+The distinction the code turns on is **capacity against allowance**. A hand has
+one number and they are the same. A library has two: what it could hold one day
+(`capacity`), and what it may hold tonight (`allowance`).
+
+The allowance is *what is written in the book*, floored at the free five and
+ceilinged at the capacity, plus whatever the window in front of the player grants.
+A long rest's research grants 1. That is what lets exactly one spell in, and it is
+what makes the tap after it replace instead of add, which is the card's "you will
+have to replace a spell" with no line of its own.
+
+**No stored counter, deliberately.** A `researched: 6` column on the talent entry
+would be a second source of truth for something the picks already say, and the two
+would drift the first time somebody edited a book by hand.
+
+Proved end to end: a fresh Rank 1 shows 5 of 11; the five are chosen off the
+sheet; a sixth chosen off the sheet **replaces** rather than adds; the long rest
+offers `Research a spell · 5 of 11 written down. Tonight adds one more.`; taking
+it leaves six. A full book at 11 reads `Full at 11. Tonight's spell replaces one
+already written.` and researching one names the spell it displaced.
+
+### A schoolless pool broke a gate nobody had to think about before
+
+`spells.js` says, in as many words, that a Unique Spell stays out of every pool
+without a line being added to either gate, "because no set's school is Elemental
+or Nightmare".
+
+**The Arcanist is the first spec to name no school at all**, so that gate stopped
+firing. Without a fix, a Rank 1 Arcanist could research `nightmare-wall` and
+`deep-sea-accretion`, which exist on one item each and are nobody's to prepare,
+plus `unwritten-light` and `unwritten-shadow`, which are stand-ins for two schools
+nobody has written yet.
+
+Two gates in `loadoutOptions` now, and both were free for every existing set:
+
+- a card carrying `placeholder` is refused as a school: the school is not written,
+  so there is nothing here to learn,
+- the tier gate lost its `tier &&` guard, so a card off the Novice/Adept/Master
+  ladder is refused rather than waved through. Every Martial Move and every real
+  spell carries a rung; only the four above do not.
+
+The pool comes out at **28 spells at Rank 1, 54 at Rank 3**, and the Mycomancer's
+is still exactly the 24 it was.
+
+### Four rulings, all flagged in the code where they sit
+
+1. **The capacity formula reads two ways.** "your Rank in Arcanist multiplied by
+   10 + your level" is either `(rank × 10) + level` or `rank × (10 + level)`. They
+   agree only at Rank 1. Built as `(rank × 10) + level`, which is what precedence
+   gives: 11 at Rank 1 level 1, 24 at Rank 2 level 4, 38 at Rank 3 level 8. The
+   other reading gives 28 and 54. **Say the word and it is one number in
+   `talents.js`.**
+2. **ARCANE RESEARCH names no tier.** It is the only card granting a pool that
+   does not print the "at Rank 2 you can learn Adept" ladder, so read literally a
+   Rank 1 Arcanist researches a Master spell on the first night. Built with the
+   ladder every other casting set has, which is also what the superseded sheet's
+   TRANSCRIBING spelled out.
+3. **PERFECT CASTING is tagged `Long Rest` on the sheet.** That is ARCANE
+   RESEARCH's tag two rows above it and cannot be this card's, because nothing on
+   it is done at a rest. Built as `Passive`, which is what OVERLOAD beside it
+   carries and what IMPROVED FORMULAS carried for the same sentence.
+4. **`spellcasting` was added to the Tags column.** The superseded sheet says
+   "Support, Control, Mind" and all three are kept. A caster missing off the
+   casting shelf of the chooser wall would be a hole in the filter.
+
+### Two things left printed rather than wired
+
+- **PERFECT CASTING's discount** was the fifth card on this line and is now
+  **wired**. See "The cut, printed where it is charged" below. The other four stay
+  in prose.
+- **SPELLBOOK's free hand and voice.** A voice is not on the sheet at all. A free
+  hand is, and it is still prose: the sheet has nowhere to refuse a *spell* for
+  what is in your hands, and inventing one would refuse the Mycomancer's spells
+  too. The table plays it.
+
+### What the Willpower touched
+
+SPELLBOOK grants 4 Willpower a rank, and it is the only source of Willpower on
+the sheet that is neither worn nor running. It lands in `spellbook.js` and is
+summed into both places a Willpower maximum is worked out: `deriveStats`, which
+writes the column, and `statMath`, which promises the tile's breakdown adds up to
+it. A rider reaching one and not the other is exactly what
+`scripts/check-stat-math.mjs` exists to catch, so a thirteenth fixture was added
+for it. A Master Arcanist at level 10 reads `10 base + 20 your level + 12 Mind +
+12 Arcanist = 54`.
+
+### The proof
+
+`npm run lint`, `lint:text`, `lint:math`, `lint:riders`, `lint:halves` and
+`lint:weapons` are all clean. The four pictures and the set plate were placed by
+`npm run art:cards` with no alias needed, because the designer's filenames match
+the card names exactly.
+
+### One thing for Jules
+
+**The capacity is generous and that may be the point.** At Rank 3 and level 10 the
+book holds 40 spells, and the whole codex is 58 with 54 of them reachable. The
+superseded sheet's own `Open Questions` tab raised this about the older Mind +
+level formula: "a late Arcanist owns most of a school. That may be the point, or
+the formula may want to be flatter." It is still open, and it is one number.
+
+## The Arcanist's spellbook and the cut it earns, 2026-08-24
+
+Two bugs reported the same afternoon the set landed, both against the Arcanist,
+and both in the machinery the set had just introduced.
+
+> "Bug ranking up arcanist does not let you choose new spells. or change
+> yourspells
+>
+> The cost of spell shoud visible be reduced when yo utry to cast arcanist spell
+> at master, same fro all acarnist effect"
+
+### The rank-up bug: a panel capped at the wrong one of the two numbers
+
+A library has two numbers, and the day before this the whole codebase agreed that
+every chooser answered to the smaller one. `allowanceAt` is what a book may hold
+*tonight*: what is written in it, floored at the free five, plus whatever the
+window in front of the player is granting. On the sheet nothing is granting, so
+the allowance was **exactly what was already held**.
+
+Which meant the panel could never add a card, at any rank, ever. And because
+`toggleLoadoutPick` replaces the oldest pick once the allowance is met, a tap in
+that panel did not fail: it silently deleted a spell and wrote the new one in its
+place, so the count never moved. Ranking up made it worse, because ranking up
+opens the chooser: the rank widened the book by ten, the window came up on its
+own, and every tap in it looked like it had done nothing.
+
+Both halves of the report are the same line of code.
+
+**The fix is that the sheet's panel answers to the capacity and a rest answers to
+the allowance.** `loadoutState` takes `capped`, and the two panels that edit a
+pool (the set's block on the Advancement tab, and its block on the Abilities tab)
+pass `capped: 'capacity'`.
+
+This is a ruling and not only a fix, so it is worth saying what it rests on. The
+sheet's own panels are the **editing surface**: they can already change a
+Mycomancer's prepared hand on a day that is not a rest, and `swapsAtRest` says so
+in as many words. The rules live in the window that plays them, which is the rest.
+A library capped at its ceiling on the sheet is exactly parallel: the panel may
+fill the book, the rest is what grants one night's work, and a player who missed
+six nights of research is no longer locked out of them forever. **Say the word and
+it is one string in two call sites.**
+
+Three things fell out of it:
+
+- **`owed` is a third number**, because `remaining` stopped meaning what the
+  button needed. A hand owes its whole count. A library owes the five that arrive
+  with the set and *nothing after them*: room is not a debt, so a spellbook
+  holding its five with thirty places left reads as finished, and its button says
+  "open your spellbook" rather than "write in 30 more spells". `complete` is
+  measured off `owed` now, which is what stopped the count beside the label
+  reading unsettled for the rest of the character's life.
+- **A tap that displaces something says whose place it takes.** "Replace the
+  oldest" is a sensible rule and an invisible one. `displacedBy` reads the end
+  `toggleLoadoutPick` cuts from, and the wall's button reads `Learn it · Bramble
+  Whip goes`.
+- **The rest window was granting one spell per spell.** Found while proving the
+  above and fixed with it. `restSwaps` measured the allowance off the *draft*, and
+  the draft gains a card every time you tap one, so the allowance rose with it:
+  four taps, four spells, on a card that says "research a single spell". It is
+  measured off the record the night started from now, which `restActions` hands in
+  beside the draft. One tap adds, every tap after it replaces.
+
+Proved: a Rank 2 Arcanist holding five reads `5 of 24 written down` with room for
+19; a long rest offers exactly one and the second tap in it names what it would
+displace; a full book at 11 still gets its replacement.
+
+### The cut, printed where it is charged
+
+PERFECT CASTING was the fifth card in the codex to cut another card's Action Point
+cost, and the standing ruling on all five was that the arithmetic stays in prose.
+That ruling was never about the arithmetic. It was that `UsePrompt` deals the
+codex card beside the pay button, so a button charging 2 next to a card printing 3
+reads as a bug at the exact moment somebody is deciding whether to pay. Being the
+fifth is what bought the place to print it.
+
+The cut rides the card the way Empowering and advantage already do, and for the
+same reason: it is the *holder's*, not the card's. The same spell in somebody
+else's book prints its own cost.
+
+| Where | What it does |
+| ----- | ------------ |
+| `talents.js` | `discount: { from, ap: [null, 0, 0, 1], floor: 1 }` beside `boost`, indexed by rank |
+| `loadoutModifiers` | lays `apCut`, `apFloor` and `apCutFrom` on every card the pool hands out |
+| `cardCost` in `cardText.js` | the one place a printed cost and a rider that cuts it meet |
+| `CostOrb` | takes `was`, and draws the old number slashed beside the orb |
+| `combatBar` | `move.ap` is the cut number, so the chip, the prompt and the pools all charge it |
+
+The floor is the card's own word, "to a minimum of 1", so a spell printing 1 keeps
+1 and a card printing nothing is left alone: a passive has no cost for a discount
+to come off, and 1 subtracted from 0 and floored at 1 would invent a price for a
+card that has none.
+
+It shows in four places, all of which used to print the card's own number: the
+card face, the brief, the row on the Character tab and the button that charges it.
+The button also says it in words, `Perfect Casting · 3 Action Points cut to 2`,
+because that is the one line explaining why the orbs disagree with the card beside
+them. The quick-bar chip is 16 pixels of orb and has no room to slash anything, so
+it prints the cut number and says the rest on hover.
+
+**The slash is diagonal and drawn rather than decorated.** `line-through` runs a
+rule across the middle of a glyph, which is exactly where a 3, a 5 and an 8 keep
+their own crossbar: at the 12px a brief draws it at, a struck 3 stops reading as a
+3. Tried horizontal first, at two thicknesses, and it read as a currency symbol
+both times.
+
+"same for all arcanist effect" was already true of the other two. OVERLOAD's
+Empowered die and its advantage arrow have ridden the prepared card since the set
+landed, and they show on the card, the brief and the prompt.
+
+### The other four stay in prose, and it is not the same call twice
+
+RECKLESS VIOLENCE, MARTIAL SWIFTNESS, PRACTICED MOVES and COLOSSAL GRIP cut the
+cost of cards their sets hand out **no rider on**. A Berserker's attacks arrive
+off the weapon in their hands, not out of a `loadout` spec, so there is nothing of
+the set's riding them to carry an `apCut`. The place to print a discount now
+exists and is proven; what those four still need is a different rider, on the
+holder rather than on the pool. **Worth doing, and it is its own change.**
+
+> **Amended 2026-08-28.** One holder-level cut exists now: QUICK DRAW takes an
+> Action Point off SWAP WEAPONS, read off the skills a character holds rather
+> than off a pool. It does not close these four out, because a swap is one card
+> at one button and these four cut every attack a weapon makes. It is the shape
+> though. See [Three bugs off the
+> sheet](#three-bugs-off-the-sheet-2026-08-28).
+
+## The roster, 2026-08-24
+
+The whole plan is in the codex now. Thirty-four sets on the chooser wall, eleven
+of them written and twenty-three standing in as placeholders.
+
+It arrived as a screenshot of the roster sheet: four columns, `Physique`,
+`Instinct`, `Mind` and `Other`, nine rows deep on the first three and six on the
+last. Eleven of the names were already built. The other twenty-three had nothing
+but a name, and now they have a name, an id and a shelf.
+
+| Column | On the sheet | Written | Placeholders |
+| ------ | ------------ | ------- | ------------ |
+| Physique | 9 | Guardian, Berserker, Colossus | Brawler, Runebearer, Hemoturgy, Totemic, Painseeker, Dragon Aspect |
+| Instinct | 9 | Mycomancer, Duelist, Trickster, Cauldron Keeper, Feral Curse | Virtuoso, Flowing Fist, Sharpshooter, Wilder |
+| Mind | 9 | Arcanist, Enchanter | Alchemist, Necromancer, Spellquill, Spellblade, Thaumaturge, Tactician, Elemental Aspect |
+| Other | 6 | none | Beastbond, Oathbound, Pactbound, Quartermaster, Weaver, Weapon Master |
+
+The Draconic Bond is the thirty-fourth. It is built, it is on the Other shelf and
+it is not on the roster at all: see the ruling below.
+
+### What a placeholder is, and what it refuses to be
+
+`stub: true` on a set in `talents.js`, and three fields with anything in them:
+
+- **the id**, which is what a saved sheet, a picture folder and a card link will
+  point at once the set exists. Settled now so it never has to move.
+- **the name**, as the roster spells it, with its typos corrected and nothing
+  else touched.
+- **the shelf**, which is the column it was filed under and the one design fact
+  the roster actually carries.
+
+Everything else is absent on purpose. No cards, no loadout, no minion, no
+enchanting spec, no tagline of its own and no blurb of its own. The tagline and
+blurb are one shared pair of strings that say the set is not written yet, so all
+twenty-three say the same thing in the same words and none of them says anything
+about what the set does.
+
+**A placeholder that guessed would be the codex inventing the game.** Nobody
+knows what a Painseeker does. There is no sheet for it, and the `transcribe, do
+not invent` rule is exactly as binding on a set with no cards as on a set with
+four.
+
+### They draw on the wall, and they cannot be taken
+
+Ruled by the designer, asked as a choice between locked-and-visible and
+hidden-until-written: **visible**. So a shelf reads as the whole column rather
+than as the part of it that happens to be finished, and the Physique shelf says
+nine sets because the roster says nine.
+
+`optionsAt` refuses every stub before it works out a rank, with `rank: null` and
+the reason `Not written yet.` That is the same shape a finished Master set hands
+back, so `TalentTile` prints it where a price would go with no new branch and no
+new class. One line moved to keep them on the wall: the filter that drops
+unbuyable options now keeps a stub.
+
+That filter's other two cases are about *this character* and both come back the
+moment something changes: a set they have finished, a rank they have not reached.
+A placeholder will not come back for anybody, and standing it on the wall is the
+entire point.
+
+`chooseAt` refuses one too. The tile is locked and its take button disabled, so
+this is the model holding the line the UI already holds: a level spent on a set
+with no cards would buy nothing and there would be no way to tell from the sheet.
+
+`TalentSummary` gained the only branch a stub needed. A filled slot with nothing
+to print already said "Written in by hand. This build's codex has no cards for
+it", which is true of a name somebody typed into the column and false of a
+placeholder. A stub can only get onto a sheet by hand-editing the `talents`
+column, and when it does the block now says which of the two happened.
+
+### Two names the designer settled
+
+- **`Hamoturgy` is Hemoturgy.** Asked against Haemoturgy and Haemothurgy, and the
+  short US form won, which is the codex's spelling everywhere else: Defense,
+  Armor, Color.
+- **`Brawlere` is Brawler.** No question about that one.
+
+### Every other correction, and the one that is not a correction
+
+Read off the screenshot and applied without asking, because each one is a typo
+with exactly one reading:
+
+| On the sheet | In the codex |
+| ------------ | ------------ |
+| `Trcikster` | Trickster (already built) |
+| `Bersker` | Berserker (already built) |
+| `Echanter` | Enchanter (already built) |
+| `Aclhemist` | Alchemist |
+| `Tachticain` | Tactician |
+| `SharpShooter` | Sharpshooter |
+| `SpellBlade` | Spellblade |
+
+`Elemental Aspe` is the odd one out and is **not** a typo: it is the column
+cutting the cell off. Read as Elemental Aspect, which is what the Dragon Aspect
+on the Physique shelf pairs it with.
+
+`Cauldron` in row 4 of Instinct is the built set's short name. The set stays
+**Cauldron Keeper**, which is the name on its own Ability tab.
+
+Beastbond, Oathbound and Pactbound are one word each on the sheet and stay one
+word each.
+
+### The Draconic Bond is not on the roster, and stays anyway
+
+The roster has **Dragon Aspect** on Physique and **Beastbond** on Other. It has
+no Draconic Bond, which is a built set with nine cards, a minion spec, a picture
+folder and eight plates.
+
+Three readings were possible and the designer took the third: **leave it, add
+both**. So there are three dragon-shaped or bond-shaped entries in the codex now,
+one real and two empty, and which of them the Draconic Bond turns out to be is a
+question its own sheet will answer.
+
+The reasoning behind the ruling is worth keeping, because it is the argument the
+sheet will have to settle. Beastbond, Oathbound and Pactbound are a family of
+three on the Other shelf and the Draconic Bond fits it exactly. Dragon Aspect and
+Elemental Aspect are a family of two across Physique and Mind, and an Aspect
+reads like becoming the thing where a Bond reads like standing beside it. Either
+family could claim it. Renaming a transcribed set on a guess is the one move that
+cannot be undone cheaply, since the id is what saved sheets point at.
+
+### One thing for Jules
+
+**The Other column has no attribute, so its placeholders carry no tags at all.**
+The other three carry exactly one, the attribute their column names, and no role:
+a role is a reading of what the cards do and there are no cards. That means the
+six Other placeholders match no chip in the filter row and only turn up in an
+unfiltered wall or by name in the search box. It is the honest answer and it may
+not be the one you want. `level` was deliberately not borrowed from the Draconic
+Bond, because that tag is a claim about how its ally scales and nothing is known
+about how a Weaver does.
+
+### The proof
+
+`npm run lint`, `lint:text`, `lint:math`, `lint:riders`, `lint:halves` and
+`lint:weapons` are all clean. The codex was walked directly as well: 34 sets, no
+duplicate id and no duplicate name, every placeholder holding no cards, no art
+and no spec of any kind, every one of the twenty-three landing on the shelf its
+column names, none of them offered as takeable at any of the seven advancement
+levels, and `chooseAt(weaver)` at level 1 returning an empty list where
+`chooseAt(guardian)` returns a Rank 1 Guardian. The filter row came out with the
+same nine tags it had before.
+
+## The Alchemist, 2026-08-24
+
+The twelfth set, and the first one converted out of the pile rather than off a
+workbook. Jules asked for three things in one line:
+
+> "used the convert alchemist to create the alchemist talent set and also
+> implement all the potions. Potion to craft the cost need to be converted into
+> supplies for the long rest action"
+
+So: the set, the seven potions, and the craft cost paid in Supplies as the long
+rest action. All three are built.
+
+### The conversion pass had ruled the other way, and this reverses it
+
+`data/Conversion/00 - Conversion Overview.xlsx` read the pile on 2026-08-23 and
+filed the Alchemist under **Duplicate**: "On the site as Cauldron Keeper. Its
+potions convert as items instead, not as a set." `General Items.xlsx` says the
+same thing in its own Legend tab: "the Alchemist is the Cauldron Keeper on the
+site already, and the Cauldron Keeper brews at the table rather than carrying
+flasks."
+
+That reading is now overturned by the designer, and the roster is what makes it
+easy: **the Cauldron Keeper is on the Instinct shelf and the Alchemist is on
+Mind**, in the designer's own four-column roster. They are two sets, and they
+were always meant to be. The line each one holds is clean:
+
+| | Cauldron Keeper | Alchemist |
+| --- | --- | --- |
+| When | mid-fight, at the moment of use | the night before, at the fire |
+| What it makes | a Brew, which "takes effect immediately" and is stored nowhere | a flask, which goes in the pack and is carried |
+| What it costs | Action Points and Willpower | Supplies out of the crate |
+| Who can use it | the Keeper, that instant | anybody who is handed the bottle |
+
+### Three sources, and none of them an Ability tab
+
+There is no `Talent Set - Alchemist.xlsx` anywhere, because the conversion pass
+never wrote one. What exists is:
+
+| Source | What it holds |
+| --- | --- |
+| `Hazebound/Tables/Alchemist - Potions.xlsx` | 8 Novice potions: a name, a Willpower cost, an Improvised Brewing dice combination and full effect text apiece |
+| `Hazebound/Ressources/Skillsets/Alchemist/*.jpg` | 3 card renders: Rank 1, Alchemical Ingredients and Improvised Brewing. Every word of those three cards is read off the pictures |
+| `data/Conversion/General Items.xlsx` | the 2026-08-23 pass, which converted the potion table as consumables and left two rows amber |
+
+That is a **Rank 1 only** set. There is no Rank 2, 3, 4 or 5 card for the
+Alchemist in the pile, and the potions table is titled Novice. So three cards are
+transcribed and two are house-written, which is the Sharpshooter's arrangement at
+a slightly larger scale, and both house cards are marked `house` in
+`data/templates/alchemist-ability.csv`.
+
+| Rank | Card | Where it came from |
+| ---- | ---- | ------------------ |
+| 1 · Novice | ALCHEMY | `Alchemist - Rank 1 - Skill.jpg` |
+| 1 · Novice | ALCHEMICAL INGREDIENTS | `Alchemist - Alchemical Ingredients - Action.jpg` |
+| 1 · Novice | IMPROVISED BREWING | `Alchemist - Improvised Brewing - Action.jpg` |
+| 2 · Adept | REFINED REAGENTS | house |
+| 3 · Master | TWIN DISTILLATION | house |
+
+The Overview is house-written too, the same way the Enchanter's and the
+Sharpshooter's were: no source in the pile carries one. It is exported to
+`data/templates/alchemist-overview.csv` in the workbook's own column order.
+
+### The price, and where the number actually came from
+
+This is the ask, and it took two sources agreeing to answer it.
+
+The old system priced a brew in **two** currencies, and the cards keep them
+apart. ALCHEMICAL INGREDIENTS prices the *components* in coin: "when a recipe
+asks for 1000 coins' worth of Fire ingredients, this could be 100 spicy peppers
+or a dragon flower". ALCHEMY prices the *working* in Willpower: "you need to have
+the required components and willpower available". Jules asked for the first of
+those to become Supplies.
+
+**The problem is that the source prints no component price per potion.** The 1000
+coins is an illustration inside a card, not a column. The only per-potion number
+the table has is its Willpower column, and that column is the designer's own
+ordering of the seven:
+
+| Potion | Old Willpower |
+| --- | --- |
+| Healing Draught, Love Potion | 2 |
+| Flame Burst Flask, Strength, Agility, Intellect, Wits | 3 |
+| Growth Elixir | 4 |
+
+So the **shape** of the price is his and only the scale is this pass's:
+
+    Supplies = 10 x the Willpower the old table printed
+
+And the scale is not free either. The APOTHECARY background skill, on the site
+since the Skills tab landed, already crafts a healing potion at a long rest "by
+expending 20 Supplies" — and the Healing Draught's own 2 Willpower times ten is
+exactly 20. Two sources written years apart agree on the cheapest row in the
+table, which is what fixed the rate rather than a number that looked about right.
+
+| Recipe | Supplies | Coin |
+| --- | --- | --- |
+| Healing Draught | 20 | 100 |
+| Love Potion | 20 | 100 |
+| Flame Burst Flask | 30 | 150 |
+| Potion of Physique | 30 | 150 |
+| Potion of Instinct | 30 | 150 |
+| Potion of Mind | 30 | 150 |
+| Growth Elixir | 40 | 200 |
+
+Coin is 5 a Supply, which is the same anchor read the other way: the site's own
+Healing Potion is 100 coins on the belt shelf and Apothecary crafts one for 20.
+The numbers are written out per item in `utility.js`, the way an enchantment's
+`supplies` is written out per enchantment, so a row the designer reprices stays
+repriced and nothing recomputes it.
+
+### The Willpower is not charged, and that is a ruling
+
+Which leaves the old table's Willpower with nothing to do. It is **printed
+nowhere and charged nowhere**, for a reason that is specific to this site:
+brewing here only happens inside a long rest, and a long rest ends by filling
+Willpower to its maximum. A Willpower price paid in the middle of one is a price
+nobody ever pays. ALCHEMY's own words say the same thing from the other side: you
+brew "while still benefiting from a long rest".
+
+The seven potions therefore cost **2 Action Points and no Willpower** to use. The
+site's own Healing Potion costs 2 and 2, and that is the Ability List's printed
+card rather than an Alchemist recipe, so it is untouched.
+
+### Brewing is the long rest action, and it is the fifth kind
+
+`restActions` in rest.js had four kinds and now has five: `labour`, `enchant`,
+`worn`, `prepare` and `alchemy`. The row appears for an Alchemist on a long rest
+and never on a short one, because ALCHEMY names the long one.
+
+It is the only long rest action **whose output is a thing**. A labour moves the
+crate, a working lays a rider on something you already own, a prepared hand
+rewrites a column, and this one fills the pack. So `restPlan` takes a fifth
+argument, `brews` — a list of recipe ids, one per brew — prices it into the same
+plan and the same ledger as everything else, and appends the flasks to `pack` in
+the same patch. Backing out of the rest leaves the components in the crate and
+the flasks unmade, which is the whole point of that file.
+
+The window walks the way every other action does: **the slot → the still → back
+to the rest**. `BrewRest.jsx` is two halves, and the top one is the point: what
+is going in tonight, with the count and the running Supplies, above the shelf of
+recipes. A shelf on its own would be a wall you tap and hope, and the number a
+player is actually deciding against is how much of the crate is left. Every
+recipe is offered dead if it would overdraw the crate once the rest itself is
+paid for, which is the law `labourAffordable` and `layingAffordable` already
+read by.
+
+The flasks land in the **pack** and not on the belt. A loop is a place you have
+chosen to put something, and choosing is what the Inventory tab is for.
+
+### What the ranks buy
+
+`alchemy` on the set is the sixth shape of spec in the codex, beside `loadout`,
+`brewing`, `enchanting`, `minion` and `feral`.
+
+| | Rank 1 | Rank 2 | Rank 3 |
+| --- | --- | --- | --- |
+| Brews a night | 2 | 3 | 3 |
+| Off each price | nothing | 10 Supplies, never below 10 | the same |
+| Flasks a brew | 1 | 1 | 2 |
+| Shelf | Novice | Novice, Adept | Novice, Adept, Master |
+
+REFINED REAGENTS moves the two numbers ALCHEMY already prints, which is the test
+a house card has to pass: nothing new for the sheet to hold. TWIN DISTILLATION
+does not raise the count a third time, because that would have been the Adept
+card twice — it doubles what comes out instead. Six flasks a night at three
+prices.
+
+### A rank can open a shelf the codex has not filled
+
+The tier ladder is read off "you have learned to brew all Novice Potions", the
+same ladder every tiered set in the codex prints. **The codex holds no Adept and
+no Master potion**, because the only potions table in the pile is the Novice one.
+So Ranks 2 and 3 open shelves with nothing on them.
+
+That is left as it is rather than quietly deleted, and the presentation page is
+made to say so: `AlchemyRankNote` prints "No Adept potion is written yet, so this
+rank opens a shelf the codex has not filled" instead of a silent `+0`. The day an
+Adept potion is written it appears on both, and no card has to change.
+
+### IMPROVISED BREWING is printed and not wired
+
+The one card in the set with no button behind it, and the reason is two things
+the sheet does not hold.
+
+It says a potion brewed this way "will expire at the end of the day". **This site
+has no day.** It has rests. And an item in the pack is a bare id with no instance
+of its own for a state to live on: `forged.js` is the only thing on the sheet
+that gives an item an identity, and its own first rule is that "nothing
+mechanical is stored".
+
+Wiring it without both of those would hand over **free potions that never spoil**,
+and the spoiling is the entire reason they are free. So the card carries its own
+rule and the table plays it, the same way SPELLBOOK's free hand and voice are
+played. Every recipe still carries its dice on the shelf, so the combination the
+card sends you looking for is there to read: "any · any" for a Healing Draught,
+"Wind · Wind · Wind" for a Growth Elixir.
+
+### Every other reading, in order
+
+1. **"Rank 1 - Novice Alchemist" is ALCHEMY.** A card never names its own rank
+   here: the Tags column carries it. The name is the card's own first word.
+2. **"during a long rest, you can craft two potions"** becomes "whenever you take
+   a long rest you can use your long rest action to brew two of them". A rest
+   buys one action, and a card that spends it should say which one it is
+   spending. FUNGAL INVOCATION's idiom, and ARCANE RESEARCH's.
+3. **"You learn the Alchemical Ingredients and Improvised Brewing abilities"** is
+   dropped. Both are Novice Alchemist cards on the same rank, so the sentence
+   hands over what the set has already handed over.
+4. **"feathers are associated with winds" becomes Wind**, which is the name of
+   that Elemental family everywhere in the codex. It puts all four of IMPROVISED
+   BREWING's dice on words the site already uses: Earth, Water, Fire and Wind are
+   all real spell families today.
+5. **"half your power" is written out.** Old Power was the attribute plus the
+   level, this site has no such number, and the conversion key says every "your
+   power" becomes a die count and an attribute multiple. So it is "your Mind plus
+   your level, halved and rounded down".
+6. **The Intellect Potion and the Wits Potion are one card.** The site has three
+   attributes where the old system had four, and the conversion key sends both to
+   Mind. POTION OF MIND takes either row's die, so its combination reads "any ·
+   Fire or Wind" — the one place on the shelf where an element slot is a choice.
+7. **"the crafter's Spellpower" becomes the drinker's Mind.** This was the
+   conversion pass's amber row: "HEALING DRAUGHT and LOVE POTION scale off
+   whoever brewed them, not whoever drinks them. The site stores no such number
+   on an item instance." It still does not, and the site's own Healing Potion
+   already scales on whoever drinks it (`2d6 + 5 x level`), so both follow it.
+8. **"1000 coins' worth of Fire ingredients" becomes 20 Supplies of Fire.** A
+   recipe on this site asks in Supplies. The hundred spicy peppers and the dragon
+   flower are his.
+9. **Four potions move numbers, so four carry riders.** POTION OF PHYSIQUE,
+   POTION OF INSTINCT, POTION OF MIND and GROWTH ELIXIR are in `EFFECT_RIDERS`,
+   keyed on the card rather than on the drinker for the reason that table exists:
+   a potion is very often somebody else's, handed to you at the fire, with
+   nothing on your sheet for a rider to hang off. The Love Potion is not a rider
+   (nothing about being trusted is a number), the Healing Draught is a pool moved
+   once, and the Flame Burst Flask's lingering flames are a place on the table.
+10. **The Alchemist keeps a Recipes block on the Abilities tab**, `aside` the way
+    the Cauldron Keeper's Ingredients block is, so the shelf can be read outside
+    a rest. A recipe is not a move: you never use a Healing Draught off that
+    block, you brew one.
+
+### Six things for Jules
+
+1. **GROWTH ELIXIR takes a level-1 drinker to minus one Instinct.** The card says
+   "your Instinct is reduced by 5" and a fresh sheet starts at 4, so the sheet
+   honestly prints Instinct -1, Defense 1 and Initiative 0. Nothing floors it,
+   because the card names no floor. Say the word and it gets one.
+2. **Should the Healing Potion be on the Alchemist's shelf?** It is not, today.
+   It is the Ability List's flask rather than a row on the potions table, and
+   APOTHECARY already crafts it at exactly the 20 Supplies this pass's rate
+   gives. Putting it on the shelf would make the HEALING DRAUGHT beside it
+   pointless, since 2d6 + 5 x level beats 1d6 + Mind at every level for the same
+   price. Two clean answers: leave it off, or put it on and reprice the draught.
+3. **Is the Willpower really gone?** See above. The alternative that works is
+   charging it against the Willpower you *wake with*, so a night of brewing costs
+   you the morning's pool. That is a real cost and it contradicts "while still
+   benefiting from a long rest", which is why it was not taken.
+4. **Adept and Master potions.** Two empty rungs are waiting. Anything with a
+   tier of `Adept` or `Master` and a `brew` spec lands on them with no code.
+5. **Improvised brewing.** If it is worth wiring, the cheapest honest version is
+   an expiry keyed to the next long rest rather than to a day, which needs the
+   pack to hold something more than an id.
+6. **The two house cards.** REFINED REAGENTS and TWIN DISTILLATION are the whole
+   of Ranks 2 and 3 and neither has a source. If the real ones exist somewhere,
+   they replace these outright.
+
+### No pictures
+
+`data/Alchemist/` does not exist yet. Five cards and a set plate are wanted:
+Alchemy, Alchemical Ingredients, Improvised Brewing, Refined Reagents, Twin
+Distillation and an Alchemist Overview. Seven potion items want one each too, and
+`General Items.xlsx` already carries a written prompt for six of them on its
+Image Prompts tab. Drop them into `data/Alchemist/` and `data/Potions/` and run
+`npm run art`; until then every plate draws empty, which is what a card with no
+picture has always done.
+
+### The proof
+
+`npm run lint`, `lint:text`, `lint:math`, `lint:riders`, `lint:halves`,
+`lint:weapons` and `npm run build` are all clean. The codex was walked directly
+as well: 34 sets still, no duplicate card id and no new duplicate card name, the
+Alchemist offered at Rank 1 on level 1 and ranking to 2 at level 4 and 3 at level
+8, seven recipes on the shelf at every rank, `restActions` offering the still on a
+long rest and nothing at all on a short one, a two-potion night pricing 50
+Supplies out of a 200 crate and landing both flasks in the pack beside what was
+already there, and all four potion riders reaching the sheet and coming back off.
+
+## The Ethereal school, 2026-08-25
+
+Asked for in as many words: "add the Ethereal Light spell, I have added the image
+in the etheral folder. Correct the text and make sure it is inline with the
+system wording."
+
+Two sources, both already on disk. `data/Spells - Ethereal - Light.csv` holds
+thirteen rows in the drop's usual eight columns, and `data/Ethereal/` holds
+thirteen 2400x1792 pictures, one per row. Ethereal is a main school level with
+Primal and Elemental, and Light is its first family: same three-tag banner, same
+tiers, same shelves.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | BARRIER, BOLSTER, LIGHT, LIGHTFORGED WEAPON |
+| Adept | ORBITING ARSENAL, WINGS OF RADIANCE, SIGIL OF TRUTH, HARD LIGHT |
+| Master | CELESTIAL EDICT, LIGHTSTRIDER GATEWAY, GUARDIAN ANGEL, BEND LIGHT |
+| Legendary | THEON PERFECT REPLICANTS |
+
+### What this retires
+
+**UNWRITTEN LIGHT is deleted.** Flag 4 in `lineages.js` was that a Celestial's
+INNATE LIGHT promised a Novice Light Spell the codex had not got, so the ancestry
+could never be settled and a stand-in card held the slot open. Four real Novice
+Light spells arrive here, and the Innate cards read their options off the Novice
+shelf of the school they name, so INNATE LIGHT now offers Barrier, Bolster, Light
+and Lightforged Weapon with nothing else changed. The note over the stand-in
+always said to delete it on this day, and it was.
+
+UNWRITTEN SHADOW stays. Shadow is still neither a school nor a family anywhere in
+`spells.js`, so an Infernal still holds a card standing in for one, and flag 4 is
+rewritten to be about that one card rather than two.
+
+### Legendary is a fourth rung, and it needs no gate
+
+THEON PERFECT REPLICANTS is tagged `Legendary Spell · Ethereal · Light` and is the
+first card in the codex to carry a tier that is not Novice, Adept or Master.
+Nothing had to learn the word. `tierOf` in `loadouts.js` reads exactly those three
+and returns nothing for anything else, so the card falls off the ladder and
+`loadoutOptions` refuses it by name — "Legendary is not a rung any set reaches" —
+and `spellsAt` in `EnchantWindow.jsx` matches the same three words, so no
+Imbuement can bind it either. This is the shape Unique already has, arrived at
+from the other direction: Unique is deliberately off the ladder, Legendary is
+above the top of it.
+
+Checked rather than assumed: at Rank 3 the Arcanist's spellbook offers twelve of
+the thirteen and refuses that one with that sentence.
+
+### The Arcanist's spellbook grew by twelve
+
+The Arcanist is the one spec that names no school, so it draws from the whole
+codex by tier, and a new school widens it. Its Rank 3 pool is now 24 Primal, 29
+Elemental, 12 Ethereal and 1 Arcane. That is the same thing the Elemental pull did
+on 2026-08-20 and not a new exposure. No other set is touched: every set that
+names a school refuses all thirteen with "Ethereal school, not Primal" or its
+equivalent.
+
+### BARRIER had to change its id
+
+**The spell is `barrier-spell`, not `barrier`.** A Novice enchantment already holds
+that id and already prints that name (2d6 in Shield at combat start), and `SPELLS`
+is spread into `CARDS` *before* `ENCHANTMENTS`, so the spell on the plain id would
+not have collided so much as swallowed it: `getCard('barrier')` would have stopped
+answering with the enchantment and a tracker row written for it would have opened
+the spell instead. Same call RESILIENCE and CREATE WATER made, for the same
+reason: an id is what a saved character points at, so the older record keeps it.
+
+The printed names still collide and a table will see two cards called Barrier.
+Worth renaming one at the source.
+
+### The art importer learned two things
+
+1. **A school folder can hold art plates instead of card renders.** `data/Elemental/`
+   set the default: a family per subfolder and every file a whole 1055x1496 card,
+   so `cardPlate` cuts the painting out of it. The Ethereal drop is thirteen
+   2400x1792 plates at the top of the folder with no border and no banner, which
+   is what the lineage and background drops are. Cutting one would have taken the
+   top 45% of a painting that is already only the painting. `PLATE_SCHOOLS` is the
+   exception and turns off the crop and nothing else: the folder is still claimed
+   by name and still walked into any family folder a later drop brings.
+2. **A school folder's files resolve against the spell codex.** This is the
+   BARRIER collision at the other end, and it is the failure the DRAGON BREATH
+   note in that file already predicted: `cardIds` is one flat printed-name map and
+   the last registry spread into it wins, so `Barrier.jpg` landed on the
+   *enchantment* — a picture of a warded dwarf on a card about maximum Health, and
+   the spell left with no art at all. A school folder holds spells, so it now
+   answers to a spells-only map, consulted after the sheet's own Image column and
+   before the codex-wide one so nothing that already resolved resolves
+   differently. The link pass reads the row's own Tags column for the same reason,
+   which is what stopped it reporting a missing picture for a row whose picture
+   had just been placed.
+
+Three files needed an alias, because the drop's Image column is empty and there is
+nowhere else for them to be named: `Celestail Edict.jpg` is two letters out of
+CELESTIAL EDICT, and `Lightstrider Gate.jpg` and `Theon Perfect replicant.jpg` are
+each a word short of the name the sheet prints. The other ten match. None of the
+three could have landed on something else the way BERSERKER'S RAGE could, since
+Ethereal is not a talent set and there is no plate branch to claim a leftover
+file; unaliased they would simply have been reported.
+
+### The rolls
+
+**Three rolls were brought onto the two legal targets** — a Mind Attack against
+Defense, or a Mind Roll against Grit or Reflex, rolled by the caster, which is the
+rule the Elemental pull established. LIGHT's burst named no defense at all, SIGIL
+OF TRUTH named Grit in the possessive-less "against all entities Grit", and
+CELESTIAL EDICT named Reflex the same way. The two that named one keep it. LIGHT's
+went to Grit, because that is what BLIND already rolls against to blind somebody,
+so the codex had the answer and it did not have to be invented.
+
+**BEND LIGHT is the one target-rolled contest kept**, the exception MAGMA CHAINS'
+breakout already is. The roll is made by the entity the spell is *on* when it
+acts, which may be an ally on the far side of the map, so it is neither the
+caster's roll nor the caster's attribute: it carries `{instinct}` as a name and no
+`{roll}`, because the number belongs to whoever makes it and the card has no way
+to know who that is. CONTAINMENT SPHERE's breakout prints no attribute for the
+same reason.
+
+That card's roll also needed a reading. "it must make an Instinct roll agasitn the
+target Grit" is read as the target of the *action*, not of the spell: the entity
+is the spell's target, so against its own Grit is a contest with itself. Acting on
+somebody and rolling against their Grit to stay unseen is the sentence that
+reading gives back, and it needs no number the sheet does not carry.
+
+### The halves
+
+**BEND LIGHT's is a Multicast, not the Overcast the sheet labels it.** Its prose is
+word for word BOLSTER's and WINGS OF RADIANCE's, both of which the same sheet
+labels MULTICAST, and what it buys is another target, which is what Multicast
+means in this codex. The label is the only thing that changed.
+
+**SIGIL OF TRUTH's opens later.** The sheet's copy begins "When casting Sigil of
+Truth", which `overcast.js` reads as a rider on the cast and prices on top of it,
+and then spends on consuming a branding that cannot exist until an entity has
+lied. So it opens "While a branding lasts", which charges the same 2 Action Points
+and 2 Willpower as its own spend the way every other later half is. "If you do You
+can consume" is the same paste the opening is.
+
+All seven halves parse: three Multicasts on top and repeatable, four Overcasts as
+their own spend, and `npm run lint:halves` prices all 45 in the codex off their own
+prose.
+
+### Every other reading, in order
+
+Each of these is a cell that could not be printed as it stood.
+
+- **Six ranges had the metres and lost the feet**: "6 meter (feet)", "9 Meter
+  (feet)", "15 Meter (feeet)". The metre leads every cell in this codex and the
+  conversion is the codex's own (6/20, 9/30, 15/50), which is the call WALL OF
+  FLAMES documents.
+- **LIGHT is cast "within range" and names none.** Its own illumination is a
+  15-meter radius, so that is the range it is read at. This is the one reading in
+  the pull that adds a number the row does not carry anywhere, and the only one
+  worth a second opinion.
+- **LIGHTFORGED WEAPON teleports "to a point within range"** and that range is the
+  row's own 15 meters, written out.
+- "at the start of each of your turns" is **Turn Start**, the defined term.
+- **LIGHTFORGED WEAPON's attack is a Melee Attack on both halves.** The weapon
+  teleports beside its target and swings at what is adjacent to it, which is what
+  "within reach" means in `keywords.js`; the sheet's second half says only "attack"
+  and takes the first's word for which.
+- **ORBITING ARSENAL's weapons "float around"** and the card never says what they
+  orbit. Read as around you, which is what the title says.
+- **GUARDIAN ANGEL says what it looks like twice**: "take the appearance you whish,
+  taking the form of a medium-sized entity of your choice". The second is the
+  specific one, so it is the one that survives.
+- "gain the benefits of Bolster" is a `{{link}}` to the card, which is the Novice
+  spell three rows above it.
+- **THEON PERFECT REPLICANTS' second sentence is two sentences run together**:
+  "This Action will target all Entities you can see you can choose if you want it
+  to have it target only hostile or allied entities."
+- Spelling, throughout: "an halo", "the rob explode", "Lightfroged", "additoanl",
+  "rol lagaisnt", "elegible", "lauch", "en entity", "cna", "enity", "abiltiy",
+  "houe", "feeet", "unconcious", "3turns", "agaisnt", "adjacvent", "tht",
+  "minnutes", "whish", "ocmpletly", "invisble", "entty", "agasitn", "your
+  perform".
+
+### Two names left as the sheet has them
+
+**"Lightmade Weapon" is kept as its own term.** ORBITING ARSENAL conjures six of
+them and calls them that twice; the stray "the Lightforged" in the middle of its
+Overcast is a paste from the row above and is dropped. They are not LIGHTFORGED
+WEAPON's weapon — that one teleports and swings itself every turn, these are
+thrown one at a time — so collapsing the two names would have made a Novice card's
+routine run six times off an Adept one. Worth settling at the source, and this is
+the reading that changes nothing if it is wrong.
+
+**THEON PERFECT REPLICANTS reads like a possessive with no apostrophe.** Left as
+the sheet prints it, the same way SPROUT WINGS' Celestial wording is.
+
+### The banner order, and one stray row
+
+The sheet writes the three tags two ways: four rows read "Ethereal, Novice Spell,
+Light" and the other nine lead with the tier. The banner is tier, school, family
+everywhere in this codex and `schoolOf` reads position rather than words, so all
+thirteen are normalised to that and nothing else moves.
+
+The drop also carries a fourteenth row at the bottom, VAMPIRIC TOUCH, tagged
+`Novice Spell, Primal, Blood` with a postimg link. That is the Primal spell pulled
+on 2026-08-19 and already in the codex with its art; it is ignored here. It is the
+only reason the tab counts as one that carries links at all, which is what made the
+link pass talkative until it learned to read the Tags column.
+
+### Nothing here is wired
+
+No effect in this drop moves a number on the sheet. Four of the thirteen are ones
+a tracker row would want to carry — BOLSTER's advantage, WINGS OF RADIANCE's
+flight, BEND LIGHT's two advantage and GUARDIAN ANGEL's damage sink — and none has
+a rider in `riders.js`. They print, they can be dealt, and the table does the
+arithmetic, which is where every effect in this codex starts.
+
+### Four things for Jules
+
+1. **LIGHT's range.** The row says "within range" and names none. Read as the
+   spell's own 15 meters. Confirm or give it a number.
+2. **Lightmade against Lightforged.** One term or two? Kept as two, above.
+3. **THEON PERFECT REPLICANTS.** Is "Theon" a possessive missing its apostrophe,
+   and is Legendary a rung a talent set is meant to reach one day? Nothing reaches
+   it today and nothing needed to change for that to be true.
+4. **Two cards called Barrier.** The enchantment and the spell. The ids are
+   separate and safe; the printed names are not, and only the sheet can settle it.
+
+### The proof
+
+`npm run lint`, `lint:text`, `lint:math`, `lint:riders`, `lint:halves` and
+`npm run build` are all clean, and `npm run art:cards` reports only the four
+problems it reported before this drop. The codex was walked directly as well: 367
+cards with no duplicate id, all thirteen bodies and seven second halves resolved
+with no unspent token, all thirteen carrying art and a thumbnail, UNWRITTEN LIGHT
+gone and UNWRITTEN SHADOW still there, INNATE LIGHT offering the four real Novice
+spells, `{{Bolster}}` resolving, THEON PERFECT REPLICANTS refused by the tier gate
+with the sentence quoted above, and `templates/ethereal-spells.csv` read back
+column by column against `spells.js` with all thirteen rows matching.
+
+## The bold, and the card that stopped scrolling, 2026-08-25
+
+Asked for in as many words: "In spells and ability, I want you to put in bold in
+card in general notions of distance, targeting and duration. So 3 turn, 1 hour,
+etc do a pass over everything. Also I dont want scrolling in cards. If text get
+smaller name and sub name like overcast etc can be shrinked a bit."
+
+Two changes, and neither of them writes a word of new rules text. Every card body
+in the codex came back byte for byte with the markers taken off again, which is
+the one thing worth proving about a pass this wide.
+
+### What is bold, and what is not
+
+Emphasis had been removed from the codex outright once before, because a card
+with thirty emphasised phrases has nothing emphasised at all. It is back with a
+job and only that job: **how far, at whom, and for how long** — the three things
+a player scans a card for before playing it. The rule is written at the top of
+`src/lib/keywords.js`, beside the three kinds of colour, because that is where
+anybody writing a new card will look for it.
+
+| | bold | plain |
+| - | - | - |
+| range | "within **9 meters (30 feet)**", "a **6-meter (20-foot)** radius" | "regardless of the distance" |
+| targeting | the target a card *declares* — "**an entity**", "**all entities**", "**up to two entities**", "**a dying entity**" | a back-reference — "the target", "the entity", "that specific entity" |
+| duration | "for **10 turns (1 minute)**", "**until your next Long Rest**", "**until its Turn End**" | a condition — "until it is destroyed", "until you Shoot", "until all Shield is gone" |
+
+Three rulings inside that, each of which decides dozens of phrases:
+
+1. **The declaration, never the back-reference.** "an entity" is bold on 89
+   cards and "the target" is plain on 66, because the first says whom you may
+   pick and the second points at somebody already picked. Bolding both would
+   have made the mark mean "this sentence mentions a creature", which is not
+   information.
+2. **Nothing already lit is lit twice.** MOVE prints "[[speed]] meters" and the
+   live value is louder than any weight could be, so it stays plain. A keyword
+   *inside* a bolded phrase keeps its own colour — "**all entities**" is a scope
+   wearing a defined word, and the two marks are different on purpose.
+3. **A measured span, not a condition.** "for 10 turns" and "until your next
+   Long Rest" answer the same question; "until it is destroyed" is a thing that
+   might happen. Only the first two are bold.
+
+Four bolds already in the codex predate the rule. `**Claws & Teeth**` on the two
+Feral Curse cards stays: it is deliberate and its reason is written beside it —
+the weapon has no card of its own for a `{{link}}` to reach. `**Grit**`,
+`**Movement Speed**` and `**Defense**` on the two potions came off, because all
+three are keywords and were already coloured and underlined before the bold was
+added on top.
+
+### Every parser reads the words, so every parser strips the markers first
+
+A marker in the middle of a phrase is invisible to a reader and fatal to a
+regex. `combatTurn.js` and `rest.js` already knew this and each stripped by hand;
+`overcast.js` did not, and GIANT GROWTH's Multicast stopped repeating the moment
+"for each additional entity" became "for **each additional entity**". The search
+box had the same hole the other way round: a card printing "within **9 meters (30
+feet)**" could not be found by typing "within 9 meters".
+
+So `cardProse` in `cardText.js` is the one place that takes them off, and all four
+call it: `effectDuration`, `secondHalf`, `labourOptions` and `cardHaystack`, plus
+`scripts/check-weapons.mjs`, which reads "within 1 Meter" off a Strike to hold the
+melee reach rule. `cardGist` uses it too, so a brief still reads as plain prose.
+
+The renderer learned one thing as well: a bold run now reads to the next `**`
+rather than to the next `*`, so a live value is allowed inside one.
+
+### A card does not scroll any more
+
+`.ac-body` was `overflow-y: auto` — the last resort for a card too dense even at
+the smallest readable type. It is `overflow: hidden` now, which means the fit has
+to actually land rather than nearly land, and the single `box / natural` pass it
+did could not: that ratio is only the right answer while everything in the box
+scales together, and the heading does not. `useFitText` searches instead — seven
+halvings between the floor and full size, keeping the largest that fits.
+
+The heading gives up a little of its own room now, which is what "name and sub
+name can be shrinked a bit" bought. It rides `--ac-name-fit`, which is `--ac-fit`
+at half the rate and floored at 0.72, so a dense card sets its name a shade
+smaller instead of making the rules text absorb all of the shrinking alone. It
+used to be one size on every card, deliberately, so that no two cards disagreed
+about how big a card name is; that was the right trade while the last lines could
+scroll, and they cannot now.
+
+### One number for the designer
+
+ARM SWEEP (`actions.js`) pushes the target back "1.5 meters (3 feet)". Everywhere
+else in the codex 1.5 meters reads as 5 feet, including LIGHT ARMOR MASTERY on the
+same conversion. Left exactly as the sheet has it and flagged here rather than
+corrected, because either half of it could be the one that is right.
+
+### The proof
+
+`npm run lint`, `lint:text`, `lint:math`, `lint:riders`, `lint:halves`,
+`lint:weapons` and `npm run build` are all clean. Beyond those, three round trips
+were run directly against the codex:
+
+- **The prose.** All 367 cards dumped before and after, markers stripped from
+  both: not one character of card text differs. The pass adds `**` and nothing
+  else.
+- **What the sheet reads out of the prose.** `effectDuration`, `secondHalf`,
+  `labourOptions` and `cardGist` compared card by card across all 367. Every
+  answer is identical; the only field that moved is `cardHaystack`, which is the
+  intended fix.
+- **The fit.** All 367 cards dealt at once in a browser and measured, twice: bare,
+  and again with a footer and a row of buttons on every one of them, which is the
+  worst case the sheet can hand a card. Nothing scrolls, nothing reaches the type
+  floor, and the tightest card in the codex (BEND LIGHT, with a Multicast half)
+  sets at 0.72 of full size bare and 0.60 loaded. 308 of the 367 need no shrinking
+  at all.
+## The Shadow family, 2026-08-25
+
+Asked for in as many words: "shadow spell have been added to the data folder with
+image, correct text make sur wording is consitent and in the system prefered
+lingo."
+
+Two sources, both already on disk. `data/Spells - Ethereal - Shadow.csv` holds
+twelve rows in the drop's usual eight columns, and `data/Shadow/` holds twelve
+pictures, one per row. Shadow is the Ethereal school's second family, arriving the
+same day as its first: same three-tag banner, same tiers, same shelves. The sheet
+writes all twelve in tier, school, family order already, so unlike the Light drop
+nothing had to be normalised.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | SCOURGE, CLOUD MIND, GLOOM SPIKE, DARK BARGAIN |
+| Adept | SHADOW HEX, EFFIGY, COGNITIVE DISTORTION, SHADOW BIND |
+| Master | JULES' ABSOLUTE EDICT, HAUNTING SHADOWS, UMBRAL FORM, GLOOM ECHO |
+
+Four to a rung and no Legendary. THEON PERFECT REPLICANTS is still the only card
+in the codex on that fourth rung, and still nothing reaches it.
+
+### What this retires
+
+**UNWRITTEN SHADOW is deleted, and flag 4 in `lineages.js` is closed.** An
+Infernal's INNATE SHADOW promised a Novice Shadow Spell the codex had not got, so
+the ancestry could never be settled and a stand-in card held the slot open. Four
+real Novice Shadow spells arrive here, and the Innate cards read their options off
+the Novice shelf of the school they name, so INNATE SHADOW now offers Scourge,
+Cloud Mind, Gloom Spike and Dark Bargain with nothing else changed.
+
+That was the second of the two stand-ins, Light having gone the same morning. So
+the flag is not rewritten this time, it is retired: **there is no lineage card
+left whose question the codex cannot answer.** All six Innate cards offer real
+spells, and no card in the codex carries `placeholder` any more.
+
+The gate that read that flag is kept. `loadoutOptions` still refuses a
+`placeholder` card as a school, and it now fires on nothing, because the next
+school the lineage tab names before a sheet arrives is exactly the situation it
+was built for. Both notes say so, in `spells.js` and beside the gate.
+
+### The codex learned one word
+
+**CONSTRAINED is a keyword now.** SHADOW BIND glosses it at its own foot, and the
+rule at the top of `keywords.js` is that a defined term is never glossed in prose
+as well: "If a term needs explaining and is not in this file, the fix is to add it
+here, not to gloss it in the card body." So the designer's sentence moved into
+`keywords.js` word for word and the parenthetical came off the card. Not marked
+`provisional`, because it is transcribed rather than inferred. That is exactly the
+trade ICE BLOCK made for Stunned on 2026-08-20.
+
+This one was overdue. The Trickster's AMBUSH has named the Constrained status
+since 2026-08-23, beside Stunned and Grappled, with nothing at all behind the
+word. It is lit and answers for itself now, on both cards.
+
+### Shadow is written against Light, and it settled a reading
+
+Three pairs are exact, and worth knowing because the codex reads a missing number
+off the twin.
+
+- **SCOURGE is BOLSTER inverted**, cost for cost: 3 Action Points and 4 Willpower,
+  a crown for a halo, disadvantage on every action for advantage on every action,
+  and a Multicast at the same 1 and 3.
+- **JULES' ABSOLUTE EDICT is CELESTIAL EDICT's opposite number**, compelling one
+  kind of action where the other forbids one.
+- **GLOOM ECHO doubles your next Action where THEON PERFECT REPLICANTS widens it.**
+
+### The rolls
+
+Every contest in the drop is the caster's own, so all six are a Mind Roll against
+Grit or Reflex or a Mind Ranged Attack, which is the rule the Elemental pull
+established. Nothing here needed BEND LIGHT's target-rolled exception.
+
+**CLOUD MIND asks for a saving throw, and this system does not have one.** "if
+they succeed the saving throw" is the only borrowed term in the drop, and it is
+the caster who rolls here, so the sentence is read from the other end: the target
+learns its mind was altered when the spell ends or when the roll fails. Same
+event, named the way the codex names it. This is the clearest case of the "system
+preferred lingo" the request asked for.
+
+### The halves
+
+Seven, and for once every label on the sheet is the right one: two Multicasts,
+three Overcasts and two Upkeeps. `npm run lint:halves` prices all 52 in the codex
+off their own prose.
+
+**Two of them open later than the sheet has them.** EFFIGY's Overcast reads "You
+can spend 2 Action Points and 2 Willpower" and says nothing about when, and its
+doll cannot be scryed through before it exists. SHADOW BIND's Upkeep is the same
+shape. Both now open on the state they need, the way SIGIL OF TRUTH's does, so the
+parse in `overcast.js` charges them as their own spend rather than as a rider on
+the cast. DARK BARGAIN's genuinely is a rider on the cast and keeps "When
+casting". HAUNTING SHADOWS already opened "While Haunting Shadows is active" and
+needed nothing.
+
+**UMBRAL FORM's Upkeep says "may" and not "must".** Every other Upkeep in the
+codex is a toll on a spell that would otherwise run on. This one lasts until your
+next Turn Start on its own, so the payment buys another turn rather than
+preventing an ending, and writing "must" would have described a spell that does
+not exist. The house sentence follows it unchanged, because not paying does end
+it.
+
+### Every other reading, in order
+
+Each of these is a cell that could not be printed as it stood.
+
+- **Four ranges had the metres and lost the feet**: "6 Meter (feet)", "9 meter
+  (feet)", "12 Meter (feet)". The metre leads every cell in this codex and the
+  conversion is the codex's own three metres to ten feet, which is the call WALL
+  OF FLAMES documents. HAUNTING SHADOWS' 12 meters is the first 40 feet in the
+  codex.
+- **JULES' ABSOLUTE EDICT is cast "within range" and names none**, the same hole
+  LIGHT had in the morning. Read at CELESTIAL EDICT's 9 meters: same tier, same
+  school, same "an entity that can hear you", and it is the card this one mirrors.
+  The codex had the answer rather than having to invent one, which is what made
+  this reading safe where LIGHT's needed a second opinion.
+- **DARK BARGAIN names no range at all**, not even a broken one. Left at "an
+  entity you can see", which is a limit of its own. The one card in the drop that
+  ends without a distance.
+- **DARK BARGAIN's Health is the target's own.** "they scarficiceHealth equal to
+  your 3 x their level" carries a "your" pasted in from the column beside it. It
+  is 3 times the *target's* level, and the target may be anybody at the table, so
+  it is written in plain words with no live value at all. That is the trade WINGS
+  OF RADIANCE makes with "its Movement Speed", for the same reason: the sheet
+  cannot compute a number that belongs to somebody else.
+- "At the start of its turn" and "At each Start Turn" are **Turn Start**, and
+  "before the end of its next turn" is its **next Turn End**. The defined terms.
+- **SHADOW BIND's "10 turns" is written out as 10 turns (1 minute)**, the form
+  ENTANGLING ROOTS uses. The codex prints the minute beside the count.
+- **SCOURGE names its own effect twice**, "a Crown of shadow" and then "The Crown
+  of Shadows". The second survives, which is the call GUARDIAN ANGEL's double
+  description documents.
+- **JULES' ABSOLUTE EDICT says the command must be possible twice**, once as "If
+  the command is impossible, the spell fails" and once as the feasibility sentence
+  with the non-flying example. Same call, and the survivor carries the consequence
+  the general one stated.
+- **EFFIGY mirrors "health"** and means the stat, so it is Health and lit.
+- **GLOOM SPIKE ends any effect the target was paying Upkeep for.** The row reads
+  "any effect that required upkeep by the entity", and Upkeep is a defined term in
+  this codex, so the sentence names it. That makes this Novice spell the only card
+  in the codex that strips an Upkeep off somebody.
+- Spelling and grammar, throughout: "scarficice", "conditions.The", "can ear you",
+  "agaisth", "emeerge", "aciton", "umbral from", "your have", "can slips",
+  "traverser", "enitites", "thier", "thir", "teh", "paranoi", "stoping", "form
+  taking", "disvetnage", "addtional", "Start Turn", "with 9 Meter".
+
+### One card name moved
+
+**COGNITE DISTORTION is read as COGNITIVE DISTORTION.** "Cognite" is not a word in
+any of the sheet's languages, cognitive distortion is the real term for what the
+card does, and the picture drawn for it is called `Cognitive Distortion.jpg`.
+Three things agreeing against one typo. It is the only card name in the drop that
+moved, and it is worth confirming at the source, because a name is what a table
+calls a card.
+
+The two names that looked like they would need help did not.
+`Jules Absolute Edict.jpg` lands on JULES' ABSOLUTE EDICT because `flatten` drops
+the apostrophe, and the card keeps the apostrophe the sheet prints.
+
+### The art importer learned that a folder can be a family
+
+`data/Shadow/` sits at the top of `data/`, beside `Ethereal/` rather than inside
+it, and Shadow is a **family** and not a school: the sheet is `Spells - Ethereal -
+Shadow.csv` and the banner on all twelve cards reads Ethereal second and Shadow
+third. Adding "shadow" to `SCHOOL_FOLDERS` would have put a word in that set the
+codex does not use that way, so there is a `FAMILY_FOLDERS` set holding it and a
+`SPELL_FOLDERS` union that every predicate now reads. What the two sets are really
+for is the same thing, and it now has a name: a folder whose files are spell art.
+
+`PLATE_SCHOOLS` became `PLATE_FOLDERS` for the same reason and holds both, since
+these twelve are plates rather than card renders and must not be cut. Nothing else
+about the folder's handling changed.
+
+Moving the folder to `data/Ethereal/Shadow/` would retire the `FAMILY_FOLDERS`
+entry outright, because a family under its school is the shape
+`data/Elemental/Fire/` already has and a school folder is walked into whatever
+subfolders it brings. It is left where the drop put it, and the note beside the set
+says so.
+
+One file needed an alias: `Hauting shadows.jpg` is an n short of HAUNTING SHADOWS.
+The other eleven land without help.
+
+### Nothing here is wired
+
+No effect in this drop moves a number on the sheet, which is where the Light drop
+landed too. Six are effects a tracker row would want to carry, and the two worth
+naming are HAUNTING SHADOWS, which stops a rest and stops Health coming back, and
+GLOOM SPIKE, which ends an Upkeep. Neither has a rider in `riders.js`. They print,
+they can be dealt, and the table does the arithmetic, which is where every effect
+in this codex starts.
+
+### The Arcanist's spellbook grew by twelve
+
+The Arcanist is still the one spec that names no school, so it draws from the whole
+codex by tier and a new family widens it. Its Rank 3 pool is now 24 Primal, 29
+Elemental, 24 Ethereal and 1 Arcane, up from 12 Ethereal this morning. Every other
+set that names a school refuses all twelve: the Mycomancer does so with "Ethereal
+school, not Primal", and no other set on the wall has a spell pool at all.
+
+### Five things for Jules
+
+1. **COGNITE DISTORTION.** Read as COGNITIVE DISTORTION, off the picture's own
+   filename. The only card name in the drop that changed.
+2. **JULES' ABSOLUTE EDICT's range.** The row says "within range" and names none.
+   Read at CELESTIAL EDICT's 9 meters, the card it mirrors. Confirm or give it a
+   number.
+3. **DARK BARGAIN has no range at all.** Left at "an entity you can see". Is that
+   deliberate, or did a distance go missing?
+4. **DARK BARGAIN's Overcast.** The base half gives advantage and the Overcast
+   says Empowered and Elevated. Read as additive, so an overcast bargain gives all
+   three, because the cost it names is "an additional". If it was meant to replace
+   the advantage, say so and the word "also" comes out.
+5. **Two cards called Barrier, still.** Not this drop's doing, and still only the
+   sheet can settle it.
+
+### The proof
+
+`npm run lint`, `lint:text`, `lint:math`, `lint:riders`, `lint:halves` and
+`lint:weapons` are all clean, `npm run build` is clean, and `npm run art:cards`
+reports only the four problems it reported before this drop. The codex was walked
+directly as well: 378 cards with no duplicate id, all twelve bodies and seven
+halves resolving with no unspent token, all twelve carrying art and a thumbnail on
+disk, UNWRITTEN SHADOW gone and no `placeholder` card left anywhere, all six INNATE
+cards offering real spells, CONSTRAINED lit on both SHADOW BIND and AMBUSH, the
+Arcanist offering all twelve at Rank 3 and the Mycomancer refusing all twelve.
+
+`templates/ethereal-spells.csv` was regenerated at 25 rows and read back: every row
+parses into the same card it came from, and the thirteen Light rows differ from the
+file they replace by nothing but the `**` markers of the 2026-08-25 card pass, which
+that file predated.
+
+## The Time family, 2026-08-25
+
+Asked for in as many words: "I have added the tiem spell add them to the systme
+image are in time folder correct textand adapt to syustem wording."
+
+Two sources, both already on disk. `data/Spells - Ethereal - Time.csv` holds
+twelve rows in the drop's usual eight columns, and `data/Time/` holds twelve
+pictures, one per row. Time is the Ethereal school's third family and the third to
+arrive on the same day: same three-tag banner, same tiers, same shelves. The sheet
+writes all twelve in tier, school, family order already, so like the Shadow drop
+and unlike the Light one, nothing had to be normalised.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | SLOW, FORESIGHT, TEMPORAL EROSION, REVERSE |
+| Adept | TEMPORAL MEND, CHRONO LOCK, DELAY, UNDO |
+| Master | CHRONO ANOMALY, TEMPORAL COLLAPSE, SELF HELP, TIME SKIP |
+
+Four to a rung and no Legendary. THEON PERFECT REPLICANTS is still the only card
+in the codex on that fourth rung, and still nothing reaches it.
+
+The CSV also carries a stray VAMPIRIC TOUCH row after eleven empty ones, pasted in
+from the Primal sheet. It is already in the codex with its art placed, so the
+importer skipped it and nothing was read off it. Worth deleting at the source.
+
+### What this retires: nothing, for the first time
+
+Light and Shadow each closed something. Each was a school the lineage tab had
+named before any sheet filled it, so a Celestial's INNATE LIGHT and an Infernal's
+INNATE SHADOW promised a Novice spell that could not be looked up, and a stand-in
+card held the slot. Time was never promised by anything. No ancestry names the
+family, no talent set names it, and nothing was waiting.
+
+So this drop only adds. The Ethereal school went from two shelves to three, and
+every gate it passes through was already built for it.
+
+### What the codex learned: INTERRUPTED
+
+UNDO's Main Effect cell ends with a note to the developer rather than card text:
+
+> lets add the interrupted key word whcih means the next action in question does
+> not happen but the cost is still spent
+
+That is a definition, so it went to `keywords.js` in the designer's own sense and
+the note came off the card, which is exactly the trade SHADOW BIND made for
+Constrained the same afternoon. A defined term is never glossed in prose as well,
+and the writing rule at the top of `keywords.js` says so.
+
+Interrupted is not Stunned, and the difference is the bill. A stunned entity takes
+no Actions at all. An interrupted one loses the Action it was taking and has
+already paid for it, which is what makes UNDO worth 4 Action Points and 6
+Willpower rather than being a worse Chrono Lock.
+
+The word was already in the codex once, in CONCUSS's summary, where it means the
+ordinary English thing. A summary is printed as plain text and never through
+`CardText`, so it is not lit and needed no rewording. Nothing else in any card
+body uses the word, which was checked rather than assumed.
+
+### The readings
+
+Every one of these is a cell that could not be printed as it stood. They are all
+written down in the Time section of `spells.js` as well, beside the cards.
+
+- **Six ranges had the metres and lost the feet.** "9 meter (feet)", "6 Meter
+  (feet)", "9 meter()" and "3 (feet) Meter" are the four shapes it took. The metre
+  leads every cell in this codex and the conversion is the codex's own three metres
+  to ten feet, the call WALL OF FLAMES documents. This family settles its own
+  broken cells rather than being read against another: REVERSE and TEMPORAL
+  COLLAPSE print "9 meter (30 feet)" intact on the same sheet.
+- **DELAY calls itself Chrono Lock, twice.** "Until the Chrono lock ends" in the
+  body and "When Chrono Lock ends" in the Overcast are both pastes from the row
+  directly above it, which really is CHRONO LOCK. This card is DELAY in its Name
+  column, on its picture and in everything it describes, so both now name it. The
+  same call ORBITING ARSENAL's stray "the Lightforged" documents.
+- **TEMPORAL MEND's weight limit says "100 kg (imperial value here)"**, a note to
+  whoever was going to convert it. 220 lbs, in the form TELEKINESIS already prints.
+- **CHRONO ANOMALY's Overcast repositions it "within range" and names none**, the
+  same hole LIGHT had. Read at the row's own 6 meters.
+- **FORESIGHT covers "the next Attribute you make"**, which is an Attribute Roll
+  with the noun dropped. The average is left in plain words with no live value on
+  it, because the roll it covers may be any attribute rather than the one the spell
+  was cast with, so a number printed here would be the wrong number.
+- **CHRONO LOCK gives its duration twice**, "for a turn" and then "until the end of
+  its next turn". The precise one survives, which is the call GUARDIAN ANGEL's
+  double description documents.
+- "At each of the entity Start Turn" and "on their next Turn Start" are **Turn
+  Start**. "until the end of its next turn" and "its next End Turn" are its **next
+  Turn End**. The defined terms.
+- **REVERSE said "undoing wounds" and lit a term it did not mean.** Wound is a
+  defined thing in this system, and the sheet was using the word in its ordinary
+  sense, so the card reads "running its injuries backwards" instead. Reworded
+  rather than exempted, which is the trade GORE ARMOR and VAMPIRIC TOUCH made and
+  what the writing rule at the top of `keywords.js` asks for. Caught by reading
+  every Time card back through the keyword matcher, not by eye.
+- Spelling and grammar, throughout and without further comment: "tunrs", "you can
+  within", "ot its", "moer than", "bunrt", "with 6 Meter", "with in", "their
+  Grits", "tis grits", "Addtional", "loose", "repostion", "ntunred", "had happen",
+  "teh cost", "is undo", "Start Turn", "End Turn", "all effect", "Upkeep are",
+  "Damage and Healing effect".
+
+TIME SKIP is the one card that arrived almost clean and needed only its serial
+comma restructured, which `lint:text` caught.
+
+### One number here is not the designer's
+
+**TEMPORAL EROSION arrived with an empty AP column and an empty WP column.** That
+is not a blank meaning free, the way LIGHT's empty Willpower cell is: this spell
+deals damage every turn for five turns, and no spell in the codex has ever had an
+empty AP column at all.
+
+It is priced at **3 Action Points and 3 Willpower**, which is where its two Novice
+neighbours sit (SLOW at 3 and 2, FORESIGHT at 2 and 4) and what SHADOW HEX charges
+a rung up for the same creeping-damage shape. It sits in one place, on the card,
+and changing it is changing two numbers.
+
+This is the first thing to check, and the note beside the card says so in bold.
+
+### Exhaustion is a word the codex does not have
+
+TIME SKIP charges "1 level of Exhaustion for each additional cast" before a Long
+Rest. Nothing in `keywords.js` defines Exhaustion, no other card in the codex
+spends it, and no bar, pip or pool on the Character tab holds it.
+
+It prints as the plain words the sheet wrote, unlit, and the table runs it. This is
+not the INTERRUPTED case: UNDO's cell handed over a definition to add, and this one
+names a system that does not exist yet. Writing one off a single card's mention
+would be inventing rules rather than transcribing them.
+
+The second thing to check.
+
+### The halves
+
+Five, all labelled correctly: two Multicasts and three Overcasts. `lint:halves`
+reads all five off their own prose and the codex now stands at 57 second halves.
+
+| Card | Half | Opens | Costs |
+| ---- | ---- | ----- | ----- |
+| SLOW | Multicast | rides the cast | 1 Action Point and 1 Willpower |
+| FORESIGHT | Overcast | its own spend | 6 Willpower |
+| REVERSE | Multicast | rides the cast | 1 Action Point and 3 Willpower |
+| DELAY | Overcast | its own spend | 3 Willpower |
+| CHRONO ANOMALY | Overcast | its own spend | 2 Action Points |
+
+**Two of the three Overcasts open later than a cast**, and both had to be written
+that way rather than left in the sheet's words. FORESIGHT's is bought when a roll
+it covered fails, and DELAY's when the delay runs out. Neither is a rider on the
+cast, so the parse in `overcast.js` charges each as its own spend, the way SIGIL OF
+TRUTH's does. CHRONO ANOMALY's already opened "While Chrono Anomaly is active" and
+needed nothing.
+
+### The art importer needed one word and one alias
+
+`data/Time/` is the second folder to arrive as a family at the top of `data/`
+rather than under its school, so it went into the `FAMILY_FOLDERS` set beside
+`shadow` and into `PLATE_FOLDERS` beside `shadow` and `ethereal`, since these
+twelve are plates rather than card renders and must not be cut. Two entries make
+that a pattern rather than one drop's exception, and the note beside the set says
+what retires both: moving the folders to `data/Ethereal/Shadow/` and
+`data/Ethereal/Time/`, since a school folder is walked into whatever subfolders it
+brings.
+
+The drop is also the first to arrive at two sizes, 2400x1792 for FORESIGHT and SLOW
+and 1200x896 for the other ten. Neither is cut and the resize takes whatever it is
+handed down to 720, so the ten small ones cost 0.66 to 1.02 MB in and 35 to 82 KB
+out.
+
+One file needed an alias: `Temporall Collapse.jpg` has an l too many for the
+sheet's TEMPORAL COLLAPSE, and the sheet is the authority on what a card is called.
+The other eleven land without help, `TIme Skip.jpg` included, because `flatten`
+lowercases before it compares and the capital I costs nothing.
+
+That is the third drop running whose Image column is empty and whose files are
+therefore placed by filename. Five of the thirty-seven Ethereal rows now need an
+alias, and filling in the drops' own Image column retires all five at once.
+
+### Nothing here is wired
+
+No effect in this drop moves a number on the sheet, which is where both earlier
+Ethereal drops landed too. Four are effects a tracker row would want to carry, and
+the two worth naming are SLOW, which takes 2 Action Points off a turn that has not
+started yet, and CHRONO ANOMALY, which hands 2 back to everybody standing in it.
+Neither has a rider in `riders.js`.
+
+SELF HELP and TIME SKIP are a different shape again: they move a *turn* rather than
+a number, and `combatBar.js` has nothing that can hold a turn open or hand one
+back. Prose for both, and the table runs them.
+
+They print, they can be dealt, and the table does the arithmetic, which is where
+every effect in this codex starts.
+
+### The Arcanist's spellbook grew by twelve again
+
+The Arcanist is still the one spec that names no school, so it draws from the whole
+codex by tier and a new family widens it. Its Rank 3 pool is now 24 Primal, 29
+Elemental, 36 Ethereal and 1 Arcane, up from 24 Ethereal after the Shadow drop.
+Rank 1 offers the four Novice, Rank 2 adds the four Adept, and Rank 3 opens all
+twelve.
+
+Every other set that names a school refuses all twelve. The Mycomancer does so with
+"Ethereal school, not Primal", and no other set on the wall has a spell pool at
+all. Imbuements pick all twelve up on their own, because `spellsAt` matches the
+tier word and Novice, Adept and Master are three of the words it matches.
+
+### Two things for Jules
+
+1. **TEMPORAL EROSION's cost is a guess.** The sheet left both columns empty on a
+   spell that deals damage for five turns. Priced at 3 and 3 off its Novice
+   neighbours and SHADOW HEX. Give it a number.
+2. **Exhaustion is not a term this system has.** TIME SKIP is the only card that
+   charges it. Either it wants a `keywords.js` entry and something on the Character
+   tab to hold it, or the sentence wants rewriting in terms the codex already has.
+
+Two smaller ones, both already decided and both cheap to reverse: DELAY is named
+DELAY on both halves rather than Chrono Lock, and TEMPORAL COLLAPSE keeps the
+sheet's spelling over the picture's.
+
+### The proof
+
+`npm run lint`, `lint:text`, `lint:math`, `lint:riders`, `lint:halves` and
+`lint:weapons` are all clean, `npm run build` is clean, and `npm run art:cards`
+reports only the four problems it reported before this drop.
+
+The codex was walked directly as well: 390 cards with no duplicate id, all twelve
+Time bodies and five halves resolving with no unspent token, all twelve carrying a
+plate and a thumbnail on disk, INTERRUPTED lit on UNDO and on no other card body,
+CONCUSS still unlit because its use of the word is in a summary, the Arcanist
+offering 4 at Rank 1, 8 at Rank 2 and all 12 at Rank 3, and the Mycomancer refusing
+all twelve as the wrong school.
+
+All twelve were then printed the way a reader sees them, live values resolved
+against a sample caster and every keyword marked. That is what caught REVERSE
+lighting Wound, and it is worth doing on the next drop too: a term used in its
+ordinary sense reads perfectly well until the matcher colours it. TIME SKIP is the
+longest of the twelve at 565 characters, sixth of all 390 cards and well inside the
+667 the box already holds, so none of these needed the card to shrink further than
+it already does.
+
+`templates/ethereal-spells.csv` is 37 rows now, 13 Light and 12 Shadow and 12 Time,
+and every Time row was read back: each parses into the card it came from field for
+field, and every Image cell names a file that is really in `data/Time/`.
+
+## The Spacial family, and colour on every tag, 2026-08-25
+
+Asked for in as many words: "I ahve added the Spacial spells you have hte image in
+the space folder. I also want you to do a pass color on tags for the spells, each
+school and sub schoo lshould have a color here they can be close to each other. Try
+to establsih one htat make sense for each . Also clean the tags so damage type does
+not show in the list or overcast and multicast ect but can still be serach (like
+invisible tags)."
+
+Three things, and the first is another spell drop.
+
+Two sources, both already on disk. `data/Spells - Ethreal - Spacial.csv` holds
+twelve rows in the drop's usual eight columns, and `data/Space/` holds twelve
+pictures at 1200x896, one per row. Spacial is the Ethereal school's fourth family
+and the fourth to arrive on the same day: same three-tag banner, same tiers, same
+shelves. The sheet writes all twelve in tier, school, family order already, so
+nothing had to be normalised.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | DIMENSIONAL POCKET, COMPRESSION BLAST, DIMENSIONAL REACH, WARP TIDE |
+| Adept | SPATIAL FOLD, PORTAL TRICK, ENERGY BEAM, CONTAINMENT SPHERE |
+| Master | TRANSPOSITION BEACON, SPATIAL TRANSPOSITION, BANISHMENT VAULT, EVENT HORIZON |
+
+Four to a rung and no Legendary. THEON PERFECT REPLICANTS is still the only card in
+the codex on that fourth rung, and still nothing reaches it.
+
+### The family is Spacial, with a c
+
+All twelve Tags cells say Spacial and so does the sheet's filename. Two of the
+cards are named with a t (SPATIAL FOLD, SPATIAL TRANSPOSITION), a third says
+"spatial pocket" in its body, and the picture folder is called Space. The Tags
+column is what a banner prints and what a filter chips, so the tag is the sheet's
+Spacial and the card names are the sheet's Spatial. Neither was corrected against
+the other, and it is worth a glance at the source since a family name is what a
+whole shelf is called.
+
+### What this retires: the Arcane school
+
+CONTAINMENT SPHERE was the codex's only Arcane spell. It had no sheet behind it and
+no picture on disk, and the two exceptions this file has been carrying since the
+Primal pull, "one Arcane spell no sheet covers yet" and "two cards have no
+picture", were both about that one card.
+
+This sheet has it at the same tier, the same 4 Action Points and 4 Willpower, and
+the same three paragraphs, with a render beside it. So it is the same card finally
+filed. It moved rather than being written twice: the id `containment-sphere` is
+unchanged, so a spellbook already holding it still resolves and simply reads
+Ethereal · Spacial from here on.
+
+Two things about it did change, and both are the sheet's:
+
+- the trapped entity is **Constrained** where the old card said stunned, which is
+  the keyword SHADOW BIND defined that afternoon and the better word for a thing
+  sealed inside a sphere
+- the Overcast costs **3 Willpower** where it used to cost 2
+
+Arcane is empty now, which is exactly where Nature has always been: a word on the
+shelf in `cardOrder.js` with nothing standing on it. Both keep their places, so the
+day a sheet arrives it lands where the designer already put the word.
+
+### The rolls
+
+Seven contests, all the caster's own and all against Reflex: COMPRESSION BLAST,
+WARP TIDE, PORTAL TRICK, ENERGY BEAM, SPATIAL TRANSPOSITION, BANISHMENT VAULT and
+EVENT HORIZON. No family in the codex has leaned this hard on one defense.
+
+CONTAINMENT SPHERE's breakout is the eighth roll and is the trapped entity's, so it
+prints `{stat}` as a name and no `{roll}`: the number belongs to whoever is in the
+sphere and the card has no way to know who that is. BEND LIGHT is the only other
+card that does this, and it is unchanged from the old Arcane version.
+
+### The halves
+
+Six, and five are labelled the way the codex uses the words. Three Overcasts that
+buy more (COMPRESSION BLAST widens, ENERGY BEAM bends, CONTAINMENT SPHERE hampers
+the breakout), one that closes a spell early (SPATIAL FOLD), one that spends the
+beacon you left (TRANSPOSITION BEACON) and one genuine Multicast (BANISHMENT
+VAULT).
+
+**DIMENSIONAL POCKET's is called a Multicast and moves an item rather than catching
+a target.** Multicast means spending more to reach more, and one more item in the
+pocket is the nearest thing this card has to another target. The sheet's word
+stands. Worth a glance: an Overcast is what the same half would be called if the
+thing it reached were not countable.
+
+Four of the six open later than a cast. SPATIAL FOLD, TRANSPOSITION BEACON and
+DIMENSIONAL POCKET all begin "While X is active", and CONTAINMENT SPHERE's opens on
+the breakout, so `overcast.js` charges all four as their own spend rather than as a
+rider on the cast. COMPRESSION BLAST's, ENERGY BEAM's and BANISHMENT VAULT's keep
+"When casting" and are riders.
+
+### Two numbers here are not the designer's
+
+1. **ENERGY BEAM arrived with no Action Point and no Willpower cost**, the same hole
+   TEMPORAL EROSION had on the Time sheet the evening before. It is priced at 4 and
+   5, which is what SAVAGE SLAM and WALL OF FLAMES both charge for the same shape:
+   an Adept spell catching everything in an area for `4d6 + 4*stat`. It sits at the
+   top of its rung in the family, above SPATIAL FOLD and PORTAL TRICK at 3 and 4
+   and level with CONTAINMENT SPHERE's 4, which is where the family's one damage
+   card belongs. Give it a number.
+2. **COMPRESSION BLAST deals damage and names no type.** Its two siblings both say
+   Force and this one says nothing, so it prints untyped rather than being given a
+   type it does not carry: a damage type is what a resistance answers, and DRACONIC
+   SCALE grants one without the other. Force is the obvious answer and it is one
+   word at the source.
+
+### Every other reading, in order
+
+- **Nine ranges had the metres and lost the feet**: "3 Meter()", "9 Meter ()",
+  "with 18 meter ()", "with in 9 Meters ()", "1.5m ()", "20 meter ()". The metre
+  leads every cell in this codex and the conversion is the codex's own three metres
+  to ten feet, which is the call WALL OF FLAMES documents.
+- **EVENT HORIZON's 20 meters is the first range in the codex off its own ladder.**
+  Every other distance is a multiple of 3 metres or the two halves 1.5 and 4.5, and
+  20 is neither, so it converts to 65 feet rather than to one of the round numbers
+  the rest of the codex prints. The number is the designer's and it stands. 18
+  meters (60 feet) is what it would be on the ladder, and SPATIAL TRANSPOSITION on
+  the same rung is already there.
+- **SPATIAL FOLD's Overcast calls the spell Dimensional Pocket**, a paste from the
+  row two above it, and its second sentence closes "the Spatial Fold". The card is
+  SPATIAL FOLD in its Name column, on its picture and in everything it describes,
+  so both halves name it. The same call DELAY documents.
+- **ENERGY BEAM's Overcast calls the spell Arcane Ray** and bends "the ray". Same
+  paste and same call: the Name column, the picture and the body all say Energy
+  Beam, so the half says Energy Beam and bends the beam.
+- **DIMENSIONAL POCKET's weight limit says "20 Kg (imperial value)"**, a note to
+  whoever was going to convert it, exactly as TEMPORAL MEND's did. 44 lbs, in the
+  form TELEKINESIS prints.
+- **DIMENSIONAL REACH is cast with "special magic".** Left as the sheet wrote it.
+  It is a real word in a real sentence, so the COGNITE reading does not apply, but
+  every other card in the family says space or spatial and this one is called
+  DIMENSIONAL REACH. One letter at the source either way.
+- **PORTAL TRICK intercepts "the next attack and entity you can see"**, which is an
+  attack *of* an entity with one letter turned. Nothing else in the sentence
+  parses: a portal that intercepts an entity is what CONTAINMENT SPHERE does.
+- "Until the end of your next turn" is your **next Turn End**, and "At each of your
+  Turn end" is **at your Turn End**. The defined terms.
+- Spelling and grammar, throughout and without further comment: "abiltieis", "YOu",
+  "agasn", "tey", "entitles", "this two points", "are connect", "is redirect",
+  "entiteis", "Transpostion", "that last for", "orginaly", "intendend", "all action
+  apply", "htier", "teh", "They banished", "item fall out into the ground".
+
+### The art importer learned one word
+
+`data/Space/` is the third family folder dropped at the top of `data/` rather than
+under its school, after `data/Shadow/` and `data/Time/`, so `space` joined
+`FAMILY_FOLDERS` and `PLATE_FOLDERS` in `pull-card-art.mjs`. The first says the
+folder is spell art; the second says its files are paintings rather than whole card
+renders and must not be cropped.
+
+It is the one entry there that is not named for the family it holds: the folder is
+Space and the family is Spacial. Nothing in that script compares a folder's name to
+a tag, so the mismatch costs nothing. The name is only how the folder is claimed,
+and the cards inside it are matched to the codex by their own filenames.
+
+**No alias was needed, which is a first for these drops.** All twelve filenames
+match the names the sheet prints once `flatten` has lowercased them and dropped the
+punctuation, `Containment SPhere.png` included.
+
+### Nothing here is wired
+
+Which is where all three earlier Ethereal drops landed. Five are effects a tracker
+row would want to carry, and the two worth naming are DIMENSIONAL POCKET, which
+holds two items off the Inventory tab until a Long Rest, and BANISHMENT VAULT,
+which takes an entity off the board for two turns. Neither has a rider in
+`riders.js`.
+
+The pocket in particular is a new shape: it is the first card in the codex that
+changes what a character is carrying without the item leaving the sheet, so a bag
+that knew about it would have to hold an item that is neither worn, on the belt nor
+in the inventory. They print, they can be dealt, and the table does the arithmetic,
+which is where every effect in this codex starts.
+
+### The Arcanist's spellbook grew by eleven
+
+Eleven and not twelve, because CONTAINMENT SPHERE was already in it under another
+school. The Arcanist is still the one spec that names no school, so it draws from
+the whole codex by tier: its Rank 3 pool is now 24 Primal, 29 Elemental and 48
+Ethereal, up from 24 Primal, 29 Elemental, 36 Ethereal and 1 Arcane. Rank 1 offers
+44 cards and Rank 2 offers 77.
+
+Every other set that names a school refuses all twelve. The Mycomancer does so with
+"Ethereal school, not Primal", and no other set on the wall has a spell pool at
+all. Imbuements pick all twelve up on their own, because `spellsAt` matches the
+tier word and Novice, Adept and Master are three of the words it matches.
+
+## Colour on every school and every family, 2026-08-25
+
+The second and third parts of the same ask, and both are about the chip row rather
+than about any card's text.
+
+### One law, and six leans
+
+**The school owns a hue and a family is a shade of it.** So the school is what you
+see first and the family what you see second, which is the order the banner itself
+reads in. Every family sits inside about thirty degrees of its school's hue and
+separates from its siblings on lightness and saturation instead.
+
+| School | Hue | Families |
+| --- | --- | --- |
+| Primal | green | Flora leaf, Wild moss, Life spring, **Blood** |
+| Nature | teal-green | none yet |
+| Arcane | magenta | Energy, lighter |
+| Elemental | ember amber | **Fire**, Magma, Earth, **Lightning**, Wind, **Water** |
+| Ethereal | sky | **Light** palest, Time cyan, Spacial indigo, **Shadow** deepest |
+| Nightmare | crimson-magenta | none yet |
+
+The bold six are the leans, and they are written into the law rather than around
+it: **where the codex already knows what colour a family is, that colour is what
+its shade leans to.** Fire, Water, Lightning and Blood each answer to a damage or
+stat token that has been in `index.css` since the beginning; Light and Shadow are
+their own names, and being the palest and the deepest thing on the Ethereal shelf
+is the whole of that pair. Blood is the one that leaves its school's band outright,
+because a green Blood chip would read as poison.
+
+None of the six is a second copy of the token it answers to. A chip is 0.56rem
+uppercase on a dark ground and needs more light than a body-text colour does, so
+each is its own value and says at the token which one it answers to.
+
+Nature and Arcane have no spell in the codex and are coloured anyway, so the day a
+sheet arrives it lands somewhere rather than falling to grey.
+
+### Where it lives
+
+`src/lib/tagColors.js`, a leaf that imports nothing, for the reason `cardOrder.js`
+is one: it is reached from the card brief and from the filter row, so anything it
+pulled in would be pulled into both. Every value in it is a `var(--...)`, so
+`index.css` stays the one place a colour is written down and `tagColors.js` stays
+the one place a *word* is matched to one.
+
+Two callers, and they agree on purpose. A brief's chips take the colour, so a wall
+of spells reads school by school; the filter row's chips take the same one, so
+"Ethereal" in the box and Ethereal on a brief are visibly the same thing. The
+ground and the border are mixed off `currentColor` in the stylesheet rather than
+written in the module, so one property lights a whole chip and the CSS keeps
+deciding how strongly.
+
+**The rung is not coloured.** `Novice Spell` and its siblings keep the card's own
+accent, the violet the printed card is capped with, because what a card *is* is a
+different question from what school it belongs to and the brief already answers it.
+Nothing that is not a school or a family is coloured either: a martial move's
+`Martial Move`, a talent's `Passive`, an item's `Uncommon` are all still grey, and
+`tagColor` gives back null for every one of them so a caller can leave the chip
+alone rather than having to know which words are in the table.
+
+### The damage type and the second half are not chips any more
+
+A brief was carrying the tier, the school, the family, often the weapon, then the
+damage type and then the name of the second half. Six chips under a name that then
+had nowhere to sit. Both of the last two went.
+
+Neither is lost. The damage type is written into the sentence that deals it, in its
+own colour, on the card itself, and the second half has its own heading there. And
+both are still **searchable**, which is the other half of what was asked: the box
+above a wall reads `cardHaystack`, which has carried the damage types and the
+half's name the whole time whether or not anything printed them. Typing "force" or
+"overcast" narrows a wall to the cards that have them.
+
+One thing had to change for that to be true everywhere. The spell chooser was
+searching `card.name` and `card.body` only, so a damage type and a half's name were
+the two things about a card it could not find. It reads `cardHaystack` now, which
+the Abilities tab has always read. Nothing was added to the chip *suggestions*: an
+invisible tag that appeared in the list of tags would not be invisible.
+
+### The proof
+
+`npm run lint`, `lint:text`, `lint:math`, `lint:riders`, `lint:halves`,
+`lint:order` and `lint:weapons` are all clean, `npm run build` is clean, and
+`npm run art:cards` reports only the four problems it reported before this drop.
+
+The codex was walked directly as well: 401 cards with no duplicate id, all twelve
+Spacial bodies and six halves resolving with no unspent token, all twelve carrying
+a plate and a thumbnail on disk, CONSTRAINED lit on CONTAINMENT SPHERE, every
+keyword each of the twelve lights read out and checked, the Arcanist offering 44 at
+Rank 1, 77 at Rank 2 and 101 at Rank 3, and the Mycomancer refusing all twelve as
+the wrong school. BANISHMENT VAULT is the longest of the twelve at 547 characters,
+eighth of all the spells and well inside the 667 the box already holds, so none of
+these needed the card to shrink further than it already does.
+
+The chips were then read out of a running browser rather than reasoned about: every
+school and family chip resolves to its own colour with none left grey, a Spacial
+brief carries three chips and not five, and no `card-brief-dmg` element exists
+anywhere on a page of twenty-seven briefs. The search was walked the same way:
+"force" finds 7 cards including ENERGY BEAM, "overcast" finds 33, "blood tithe"
+finds 4 and "spacial" finds all 12.
+
+`templates/ethereal-spells.csv` is 49 rows now, 13 Light and 12 Shadow and 12 Time
+and 12 Spacial, and every Spacial row was read back: each parses into the card it
+came from field for field, and every Image cell names a file that is really in
+`data/Space/`.
+
+## The readability pass, 2026-08-26
+
+Jules asked for a pass on all the card text: "It need to be redable", a
+researched maximum before text stops being readable, blank space organized, the
+system wording made easier and more concise, and a reference document so it
+stays that way. The reference is `docs/card-text.md` and its checker is
+`npm run lint:cards`; this entry is the record of what moved.
+
+### The research
+
+All 409 cards were measured against the real renderer in a browser: each one's
+`--ac-fit` taken by the same binary search `useFitText` runs. The cost model
+came out as **load = prose characters + 30 per paragraph break + 100 for an
+optional second half**; a card at 480 or less prints at full size (14.7px) and
+past 600 it falls under 0.9 fit (13.2px), which is where reading at arm's
+length stops being comfortable. Before the pass 93 cards were shrunk and 21 sat
+below 0.8 fit, the worst at 0.69 (BEND LIGHT). After it, nothing in the codex
+is below 0.9 and 349 of 409 print at full size.
+
+Part of the room came from the card's own chrome rather than from the text:
+paragraph gap 0.7rem to 0.55rem, line-height 1.5 to 1.45, title margins and
+body padding trimmed, the second-half heading pulled closer. About one full
+line of text at full size, on every card, without the type getting smaller.
+
+### The wording
+
+One spelling per mechanic now, the codex-wide sweeps first: lowercase
+measurements ("18 meters (60 feet)", the weapon wall said "18 Meter"), damage
+dealt plain ("deal X {damage} damage", where the codex had both "as" and "in"),
+"restore X Health" and "gain X Shield", "Long Rest" and "Short Rest" as the
+proper nouns they are, "Attack Roll" capitalised and advantage, disadvantage
+and skill check in lowercase, states as adjectives in lowercase (rooted,
+stunned, constrained), "entity" where "a creature", "a target entity" and "a
+single target" had drifted in, and "Roll" capitalised where it is the game's
+noun.
+
+Every optional second half is one paragraph now, price and resolution together,
+and never names its own card: "When casting this spell", where twenty-odd cards
+each said their own name. Multicast resolves as "For each time you do, target
+**an additional eligible entity**." An Upkeep reads "At your Turn Start, pay 2
+Willpower to keep <X>. Miss the Upkeep and the spell ends." All of it stays
+inside the shapes `secondHalf`, `halfPrice` and `effectDuration` parse, and
+`lint:halves` still prices all 63 halves off their own prose.
+
+About sixty of the densest cards were also trimmed by hand: restatements cut
+(GALVANIZE declared its target twice), filler dropped ("devastating",
+"completely", "the following ways"), declaration and roll merged where they are
+one beat. Mechanics, numbers and names untouched throughout, and where a
+sentence was broken it was mended rather than shortened: WIELDER OF WONDER's
+comma splice, THRILLED's missing 7, AMBUSH's developer note turned into a
+sentence, VIGILANT's "saving throw" turned into the house's own Roll.
+
+### The proof
+
+`lint`, `lint:text`, `lint:cards`, `lint:halves`, `lint:riders`, `lint:math`,
+`lint:order` and `lint:weapons` are all clean (`check-weapons` itself learned
+the lowercase meter), `npm run build` is clean, and the whole codex was
+re-measured in the browser after the last edit: 0 cards under 0.9 fit, worst
+card 0.902, 349 of 409 at full size.
+
+## The Death family, 2026-08-26
+
+Asked for in as many words: "I have added death spells and deaht iamge in death
+folder for the death school of magic. Add it, make sure the text is correct and
+alligne with your guilde lins and style for the system."
+
+Two sources, both already on disk. `data/Spells - Primal - Death.csv` holds eleven
+rows in the drop's usual eight columns, and `data/Death/` holds the pictures at
+2400x1792, one per row. The CSV is on disk **twice**, once at the top of `data/` and
+once inside `data/Death/`, and the two are byte for byte identical, so nothing had to
+choose between them.
+
+A twelfth card, GORE SPIKE, came later the same day: the sheet had left a blank row
+for it, and it was handed over in chat with its picture dropped into the same folder.
+So the family is twelve, and the folder is twelve, and only eleven of them came off
+the CSV.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | ROTTING TOUCH, SICKNESS, MIMIC DEATH, DREDGE CORPSE |
+| Adept | PESTILENT CLOUD, CORPSE STRIDE, CORRUPT LIFE, GORE BLAST |
+| Master | UNALIVE, ENBRITTLE, DEATH WAIL, GORE SPIKE |
+
+### Death is a family and Primal is the school
+
+The ask calls it a school and the sheet does not. All eleven Tags cells read
+"Novice Spell, Primal, Death", and the sheet's own filename says the same thing in
+the same order the four Ethereal drops did: the school, then the family. So Death
+goes on the shelf in `cardOrder.js` beside Flora, Wild, Life and Blood rather than
+beside Primal, Elemental and Ethereal, and a card's banner reads NOVICE SPELL ·
+PRIMAL · DEATH.
+
+The Tags column is what a banner prints and what a filter chips, so it is what the
+codex follows. Worth a glance, because it decides which specs can ever prepare
+these: a family under Primal is the Mycomancer's, where a school of its own would
+have been nobody's.
+
+### Primal has Master spells for the first time
+
+The most consequential thing in the drop, and it is a side effect rather than a
+card. Primal was 24 spells in four families and **not one of them was Master**:
+sixteen Novice and eight Adept. **Death's four were the school's first.** Flora's
+four followed later the same day (DEVOURING BLOSSOM, SEEDLING SPIRITS, IMPALING
+GROVE, BLIGHT POLLEN), so Primal stands at 40 spells now, at 20 Novice, 12 Adept and
+8 Master. The four that opened the rung were these.
+
+That moves a pool nobody touched. The Mycomancer draws Primal by tier, and its Rank
+3 offered the same 24 cards its Rank 2 did, because the extra rung it opened had
+nothing standing on it. Death took Rank 3 to 36 and Flora took it to 40, where Rank
+2 is still 32, so for the first time reaching the top of that set is worth
+something.
+
+| Mycomancer pool | Before | After Death | With Flora |
+| --------------- | ------ | ----------- | ---------- |
+| Rank 1 (Novice) | 16 | 20 | 20 |
+| Rank 2 (+ Adept) | 24 | 32 | 32 |
+| Rank 3 (+ Master) | 24 | 36 | 40 |
+
+The Arcanist, which names no school and draws the whole codex by tier, goes from 44,
+77 and 101 to **48, 85 and 113** on this drop, and to 48, 85 and 117 once Flora's
+Masters landed.
+
+### The twelfth row, and what went in it
+
+Four Novice, four Adept and four Master, which is what every Ethereal family landed.
+**It did not arrive that way.** The sheet's twelfth row was not absent, it was
+*blank*: a row carrying "Master Spell, Primal, Death" in its Tags cell and nothing in
+any other column, so a fourth Master had been laid out and never written.
+
+GORE SPIKE is that row. It was designed in chat against the gap the other eleven left
+and handed back as a finished cell, so it is the one card in the family that did not
+come off the CSV.
+
+> A corpse you can see within **15 meters (50 feet)** erupts into a spike of gore.
+>
+> Make a {stat} Ranged Attack {roll} against **an entity** within **6 meters
+> (20 feet)** of it. On a hit, you deal [[6d6 + 6*stat]] {damage} damage.
+
+4 Action Points, 10 Willpower, Decay. It is GORE BLAST's sentence structure line for
+line with the Roll against Reflex swapped for an Attack Roll and the area swapped for
+one target, so the corpse engine now has its area payoff at Adept and its focused one
+at Master.
+
+The 6-meter tether is what makes it interesting. You need a corpse within 6 meters of
+what you want dead, and DREDGE CORPSE is the only card that puts one there, at 2
+Action Points and 1 Willpower with no range of its own beyond what you can see.
+Overcast that dredge and the corpse comes up bloated, which leaves any ability using
+it Empowered and Elevated, so the spike lands as 7d6 elevated to 7d8 with no extra
+words on this card. DREDGE CORPSE goes from the cheapest card in the family to the
+thing three others want.
+
+### Three glosses became keywords
+
+The drop explains three effects at the foot of the cards that inflict them, and a
+gloss on a card is exactly what `keywords.js` exists to absorb. All three moved, all
+three sentences are the designer's own, and the glossary is 76 terms where it was
+73.
+
+- **diseased**, off SICKNESS: -1 to all attributes until a Long Rest. The only state
+  in the codex that moves every attribute at once.
+- **vulnerable**, off ENBRITTLE, which spells it out in a parenthesis the designer
+  marked "(note ...)". BURN has been *defined in terms of* this word since
+  2026-08-20 and the word itself was never lit. It is now, on three cards: ENBRITTLE,
+  BURN's own explanation and the Nightmare Curse in `enchantments.js`.
+- **Corpse Carrion**, off GORE BLAST. The term carries what it does and the card
+  keeps how long, the way BLIND prints a duration over the blinded keyword. That
+  split is not cosmetic: `effectDuration` in `combatTurn.js` reads a count off the
+  card's own prose, so the 5 turns had to stay printed or the tracker would have
+  nothing to count. Its damage is the caster's attribute and is written out in words,
+  which no other entry in that file has had to do, since a glossary entry is one
+  static sentence with no card under it to resolve a live value against.
+
+### The rolls and the halves
+
+Six contests and they are not all one shape. Three are the caster's Roll against a
+named defense (CORRUPT LIFE and ENBRITTLE against Grit, GORE BLAST against the
+Reflex of an area) and three are attacks against Defense (ROTTING TOUCH in melee,
+SICKNESS and GORE SPIKE at range). MIMIC DEATH's inspection is a seventh Roll and is
+the examiner's rather than the caster's, so it prints no dice arrow.
+
+GORE SPIKE is the family's only Master attack, and it closes a hole the other three
+left: UNALIVE deals its damage without rolling for it, ENBRITTLE rolls against Grit
+and DEATH WAIL rolls nothing, so the top rung had no Attack Roll on it at all.
+
+Five second halves, all the designer's word: four Overcasts and CORRUPT LIFE's
+Multicast. Two of the five open later than a cast (SICKNESS's on an entity already
+diseased, PESTILENT CLOUD's on a cloud already up), so `overcast.js` charges them as
+their own spend rather than as a rider on the cast. Three of the five said "pay"
+where the codex says "spend", which is the word the price is read off.
+
+### The readings
+
+Every one of these is a cell that could not be printed as it stood.
+
+- **Ten ranges had the metres and lost the feet**: "6 meter ()", "9 Meter ()",
+  "12 meter ()", "18 meter ()", "15 meter ()", "6meter ()", "3 Meter ()". The
+  conversion is the codex's own three metres to ten feet. UNALIVE's "9 meter
+  (30 feet)" is the only range on the sheet that arrived whole.
+- **DREDGE CORPSE names no range at all**: "at a point you can see on the ground".
+  Every other card in the family gives a distance. Left as line of sight rather than
+  given a number the sheet does not carry, and it is the first thing to check.
+- **SICKNESS is an attack and not a Roll.** Its cell says "You make a Mind roll
+  attack. On a hit", and it names no defense to roll against, where the family's
+  three Rolls all name one and all resolve "on a success". An attack is rolled
+  against Defense by definition, so reading it that way invents nothing; reading it
+  as a Roll would have meant choosing a defense for it. Printed as a Ranged Attack,
+  because the target is 6 metres off and the codex's attack sentence names which
+  kind.
+- **MIMIC DEATH's inspection Roll prints Mind and not the caster's attribute.** The
+  examiner's Mind is Mind whoever cast the spell, and a Mycomancer casting this off
+  Instinct must not make the examiner roll Instinct. CONTAINMENT SPHERE prints the
+  caster's attribute for the trapped entity's breakout, which is the same question
+  answered the other way, and it is worth settling once for both.
+- **CORPSE STRIDE's Overcast deals damage and names no type**, the hole COMPRESSION
+  BLAST had on the Spacial sheet. Every other damaging card in this family says Decay
+  and this one says nothing, so it prints untyped rather than being given a type it
+  does not carry: a damage type is what a resistance answers. Decay is the obvious
+  answer. Its "2d66" is 2d6.
+- **DREDGE CORPSE's Overcast names two defined terms and no amount**: "empowering and
+  elevating abilities using a the corpse". Empowered is one more die and Elevated is
+  one step of die size, both of which the glossary already says, but the cell gives no
+  count for either, so the card prints the two words bare. How many of each is a
+  ruling, and it is the second thing to check.
+- **DEATH WAIL's cell ends on a comma**: "gain shield equal to your maximum,".
+  Maximum Health is the only reading that resolves, and it is what the card prints.
+- **GORE BLAST hits for one die plus the attribute**, the smallest damage on any
+  Adept spell in the codex that catches an area. That looks like the point rather
+  than a slip: what the card is really for is the Corpse Carrion behind it.
+- **UNALIVE costs 12 Willpower and GORE SPIKE costs 10**, where nothing else in
+  Primal had ever charged more than THORN RAMPART's 6. Both stand as written.
+  Neither is the codex's highest, which is the 30 that THEON PERFECT REPLICANTS and
+  TERRA COTTA DISK both ask, and 12 ties LIGHTSTRIDER GATEWAY and GUARDIAN ANGEL.
+  The pair is worth reading side by side: GORE SPIKE lands 6d6 and six times the
+  attribute for 4 and 10 and always keeps it, where UNALIVE lands 8d6 and eight times
+  for 5 and 12 and is negated outright unless the hit kills.
+- **GORE SPIKE's cell writes the damage token as `{decay}`** and it prints as
+  `{damage}` over a Decay, which is the form every other card in the codex takes. The
+  difference is not cosmetic: `{damage}` prints whatever type the card is carrying,
+  so a Decay Infusion or a Draconic Scale can move it, where a type written into the
+  token could never be moved by anything.
+- Spelling and grammar, throughout and without further comment: "O n a hit", "your
+  del", "nad", "withn", "coprse", "concious", "YOu", "a corpse emerge", "turn stat",
+  "that last for", "agiasnt", "entitles", "wtih", "CorpsCarriosn", "nleash a beam co
+  carkcling magic etempty", "weakend to constitution", "Wilppower", "diseases by
+  Sickenss", "entites", "along rest".
+
+### Nothing here is wired, and SICKNESS is why
+
+**SICKNESS came closer than anything in the last four drops and is still written up
+in `riders.js` rather than wired.** Diseased is -1 to all three attributes, which is
+exactly the shape `growth-elixir` already takes, so the arithmetic is not what
+stopped it.
+
+A rider is keyed on the card and not on the caster, which works everywhere else
+because only the entity a spell landed on has any reason to hold the row. SICKNESS
+breaks that: its Overcast only exists "while an entity is diseased by this spell", so
+the caster has to keep the row too, and a rider here would quietly take a point off
+all three of *their* attributes for holding a reminder. A wrong number is worse than
+a missing one. What unlocks it is the tracker learning which side of a card a row is
+on.
+
+Five of the twelve are offered on the tracker (MIMIC DEATH, PESTILENT CLOUD, CORRUPT
+LIFE, GORE BLAST and DEATH WAIL) and five of the seven left out are instants with
+nothing to run, GORE SPIKE among them. SICKNESS and ENBRITTLE are the two that plainly last and are still
+not offered, both because what they leave on a target has no clock printed on the
+card: SICKNESS's duration is the diseased keyword's, and ENBRITTLE's runs until the
+next time the target takes damage, which is a condition and not a duration. SNAKE
+SPIRIT has had the same hole since the opening drop, with poisoned.
+
+DEATH WAIL is the other one worth naming. It hands out Shield equal to a full Health
+bar and then forbids healing until a Long Rest, and the second half of that is a rule
+the sheet has no channel for, so wiring the first half alone would be a promise half
+kept.
+
+### The colour, and the shelf
+
+Death is the fifth Primal family and the seventh lean under the colour law: it
+answers to `--dmg-decay`, which is what every damaging card in it deals. Decay's own
+green is within five degrees of the school hue, so the lean is taken on hue and the
+separation on saturation. `--family-death` is the one grey green on a shelf of four
+bright ones, which is what rot looks like beside things that grow.
+
+### The art needed no aliases
+
+Twelve plates at 2400x1792, the same shape the Ethereal drop arrived in: no white
+border, no banner, the painting and nothing else. So `data/Death/` joins both
+`FAMILY_FOLDERS` and `PLATE_FOLDERS` in `scripts/pull-card-art.mjs`, and the crop a
+school folder's files get is turned off for it.
+
+Every one of the twelve filenames matched the name its card prints, so the drop adds
+nothing to `ALIASES`. That is the second drop in a row to manage it: the Ethereal,
+Shadow and Time folders needed five entries between them and `data/Space/` needed
+none. 12 encoded, 0 fetched, around 43 KB of WebP apiece.
+
+GORE SPIKE was drawn to a prompt written against GORE BLAST, its sibling, so the two
+share a palette: desaturated grey green and olive, with arterial red and toxic green
+as the only saturated colours. That is also what `--family-death` answers to, so the
+plate and the chip agree.
+
+### The proof
+
+- `npm run lint:cards`: every Death card is inside the 600 ceiling and spelled one
+  way. Three of the twelve sit over the 480 target and under the ceiling (PESTILENT
+  CLOUD 541, CORRUPT LIFE 520, SICKNESS 484), which puts them in the lower half of a
+  band the codex already has 85 cards in. GORE SPIKE is not among them.
+- **The run was red for a while, and not on a Death card.** IMPALING GROVE, one of
+  Flora's four new Masters, was still mid-transcription at 632 and 32 past the
+  ceiling. It was left alone here on the grounds that trimming somebody's card in
+  flight is not this file's business, and it came down to 579 in that other session.
+  See "the fit that cost a paragraph" below.
+- **The renderer was asked directly, and it is kinder than the estimate.** All twelve
+  were rendered through the real `AbilityCard` and their `--ac-fit` read off the
+  node: **eleven print at full size** and PESTILENT CLOUD alone shrinks, to 0.969,
+  which is well above the 0.9 floor the budget was set at. Nothing in the family is
+  fine print. The static load is an approximation and the browser is the authority,
+  which is what `docs/card-text.md` says of it.
+- `npm run lint:order`: 4 schools and 15 families are shelved, and 180 cards sort up
+  the ladder (176 of them before Flora's four Masters landed). Death is the fifteenth family and the first added to a school other
+  than Ethereal since the Elemental pull.
+- `npm run lint:halves`: all 70 priced off their own prose, up from 63. GORE SPIKE
+  carries none, so the family stays at four Overcasts and one Multicast.
+- `npm run lint:text`: clean across 136 files.
+- `npm run lint:riders`, `lint:math`, `lint:weapons`: unchanged and clean.
+- `data/templates/primal-spells.csv` re-exported at 40 rows, which carries Flora's
+  four new Masters along with the twelve Death rows. The exporter was
+  proved first by regenerating `ethereal-spells.csv` and diffing: every difference
+  was a readability-pass spelling that file has not caught up with, and nothing else.
+
+## The Flora Masters, 2026-08-26
+
+Asked for in as many words: "added flora file and folder iwth image, Add the Maste
+flora spell just the mast flora spell. The image are i nth flora folder. Make sur
+they are inline with system wording and format."
+
+Two sources, both in the same new folder. `data/Flora/Spells - Primal - Flora.csv`
+holds twelve rows in the drop's usual eight columns, and `data/Flora/` holds four
+pictures at 2400x1792. Only the four Master rows were asked for and only the four
+Master rows have a picture, so the two sources agree on the scope.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | BRAMBLE WHIP, BARKSKIN, ENTANGLING ROOTS, SLEEPING SPORES *(already in the codex)* |
+| Adept | PARASITIC SPORE, VERDANT FIELD, THORN RAMPART, NATURALIZE *(already in the codex)* |
+| Master | DEVOURING BLOSSOM, SEEDLING SPIRITS, IMPALING GROVE, BLIGHT POLLEN |
+
+### The eight rows above them are the opening drop, unchanged
+
+Flora is the codex's oldest family. Its Novice four and Adept four came in on
+2026-08-19 with the very first sheet, and this file holds all eight of them again
+with four new rows underneath. They were read against what is printed and **not one
+of them has moved**: the readability pass of earlier the same day rewrote several of
+these cards, and the sheet still carries the pre-pass wording ("2d6 + 2 x Mind", "in
+Sharp damage", capitalised states). Where the sheet and the card differ on wording
+alone, the card is the later artifact and it stands.
+
+So this drop is four cards and not twelve, which is what the ask said.
+
+### The second Primal family to reach Master
+
+Primal had no Master spell at all until this morning. Death's four were the school's
+first and Flora's four are the second set, so the top rung goes from four to eight
+and two of the five Primal families have one. Wild, Life and Blood are still Novice
+and Adept only.
+
+| Pool | Before today | After Death | With Flora |
+| ---- | ------------ | ----------- | ---------- |
+| Mycomancer Rank 1 (Novice) | 16 | 20 | 20 |
+| Mycomancer Rank 2 (+ Adept) | 24 | 32 | 32 |
+| Mycomancer Rank 3 (+ Master) | 24 | 36 | **40** |
+| Arcanist Rank 3 (the whole codex) | 101 | 113 | **117** |
+
+The Mycomancer is the set this lands on: it draws Primal by tier, so all four of
+these are cards its Rank 3 opens over its Rank 2, and Rank 3 was worth nothing at
+all before today.
+
+### The first sheet written in the codex's own notation
+
+Every earlier drop arrived in the designer's longhand and had to be translated:
+"2d6 + 2 x Mind" became `[[2d6 + 2*stat]]`, a bare "Mind Roll" grew its dice arrow, a
+range that said "12 meter ()" had its feet put back. This one arrives with
+`[[10*stat]]`, `{roll}`, `{damage}` and "15 meters (50 feet)" already in the cells,
+and BLIGHT POLLEN writes `{stat}` where its three siblings still name Mind.
+
+That is worth recording because it changes what a pull costs. The Death sheet the
+same morning needed ten ranges repaired before a card could print at all; this one
+needed four readings and three typos, and the rest is a copy.
+
+### The readings
+
+- **IMPALING GROVE writes the damage token and never names a type.** The cell says
+  "you deal [[4d6 + 4*stat]] {damage} damage", and `{damage}` prints the type the
+  card declares, which this card declares nowhere. It prints untyped, the call
+  COMPRESSION BLAST and CORPSE STRIDE both took: a damage type is what a resistance
+  answers, so it is not one to hand out. Sharp is the obvious answer and it is what
+  the family's other two physical cards deal, BRAMBLE WHIP's vine and THORN RAMPART's
+  briars. **Third card in a row with this hole**, and worth settling for all three at
+  once.
+- **SEEDLING SPIRITS counts its spirits off Mind and the card prints the caster's own
+  attribute**, which is the same turn all eight cards above it take: the sheet has
+  always said "Make a Mind Roll" and the codex has always printed `{stat}`. There is
+  no live token for a half, so a half is written as the attribute's *name*, the way
+  GLACIAL ACCRETION writes "half your {mind}". That card keeps Mind because its cap
+  and its throw measure the same Ice Spikes; here the count and the healing are
+  separate quantities, so the whole card stays on one attribute and a Mycomancer
+  calls up spirits by Instinct.
+- **BLIGHT POLLEN's Blood Tithe is the first in the codex not paid in Physique.**
+  "Health equal to your 3xlevel" reads as three times the caster's level and prints
+  `[[3*level]]`. Every other tithe costs `{physique}`, on the stated grounds that a
+  body pays it, and `level` is a pseudo-attribute nothing is cast off. `secondHalf`
+  in `overcast.js` prices it the same either way, so nothing broke; whether a tithe
+  is allowed to leave Physique is the designer's call.
+- Spelling and grammar, without further comment: "BLight Pollen", "1 Action Points",
+  "The spirit cannot be target otherwise". DEVOURING BLOSSOM's "for 10 turns" gained
+  the "(1 minute)" its three siblings and the row under it all print.
+
+### What it confirms
+
+DEVOURING BLOSSOM's flower is a conjured thing with a Health bar, and it arrived on
+the ladder HARD LIGHT already set: `[[10*stat]]` Health and `[[2*stat]]` Defense, the
+same two expressions in the same order, off a sheet that has never seen that card.
+
+It is **not a minion**. Nothing here hands over a body with a sheet of its own, which
+is what `minions.js` is for; it is an object on the table, which is all SHAPE EARTH's
+wall and HARD LIGHT's bridge are either.
+
+### The fit that cost a paragraph
+
+IMPALING GROVE would not fit. Transcribed as it stood it loaded 632, which is 32 past
+the ceiling `lint:cards` fails the build at, and the real renderer put it at **0.895**
+— just under the 0.9 floor and into fine print.
+
+Its Overcast is what makes it heavy. A repeatable half is 161 characters before it
+says anything of its own, because the price has to be spelled the way `secondHalf`
+reads it and the resolution the way all twenty repeatable halves in the codex write
+it. Nothing in the half could come off, and the body is a declaration, a Roll and two
+states.
+
+So four variants were rendered through the real `AbilityCard` and their `--ac-fit`
+read off the node:
+
+| Variant | Fit |
+| ------- | --- |
+| Declaration alone, then Roll and result | 0.895 |
+| Declaration and Roll, then result | 0.898 |
+| One paragraph, keeping "erupt from the ground" | 0.926 |
+| One paragraph, without it | **0.930** |
+
+The paragraph break is worth about 0.03 of type size and the four words are worth
+0.004. That settles it against the usual two-paragraph shape: **the break was what
+made the card unreadable, not the words in it**, and `docs/card-text.md` is explicit
+that a break has to buy clarity worth most of a line. So the body is one paragraph,
+declaration and Roll and result together, which is the shape PARASITIC SPORE already
+has two rungs down in the same family. "from the ground" came off with it and is the
+only thing that did, because the one-paragraph version still loads 595 with it and
+the checker fails at 600.
+
+### Nothing is wired, and BLIGHT POLLEN is why
+
+**All four are offered on the tracker**: three print a count of turns and IMPALING
+GROVE's rooted runs to a Turn End, so `effectDuration` has a clock for each. Death
+offered five of its twelve.
+
+**BLIGHT POLLEN moves two numbers and neither is wired**, and it is written up beside
+sickness in `riders.js` rather than left silent:
+
+- Its diseased is SICKNESS's problem a second time. Diseased is -1 to all three
+  attributes, exactly `growth-elixir`'s shape, so the arithmetic is not what stops it.
+  A rider is keyed on the card and not on the caster, and here the caster is the one
+  who paid Health for the tithe, so a row taking a point off all three attributes has
+  every reason to be sitting on the wrong sheet. A wrong number is worse than a
+  missing one.
+- "Cannot restore Health for 5 turns" is a different kind of gap: not a number to bend
+  but a heal to refuse, and the sheet has no channel that refuses one. That is the
+  wall DEATH WAIL's second sentence hit this morning.
+
+### The shelf, the colour and the art
+
+**This is the first spell drop that added no word to anything.** Flora has been on
+the Primal shelf in `cardOrder.js` and had `--family-flora` in `index.css` since those
+files existed, so `lint:order` still reports 4 schools and 15 families and the tag
+colours were not touched. Four cards landed inside a family that was already fully
+furnished, which is what a family's second rung should cost.
+
+Four plates at 2400x1792, the same shape the Ethereal and Death drops arrived in: no
+white border, no banner, the painting and nothing else. So `data/Flora/` joins both
+`FAMILY_FOLDERS` and `PLATE_FOLDERS` in `scripts/pull-card-art.mjs` and the crop is
+turned off for it. It is the fifth folder there claimed as a family rather than a
+school, and the first that names a family the codex has held from the beginning.
+
+Every filename matched the name its card prints, including "Blight pollen.jpg"
+against BLIGHT POLLEN, since a name is flattened before it is compared. So the drop
+adds nothing to `ALIASES`: 4 encoded, 0 fetched, 35 to 56 KB of WebP apiece.
+
+### The proof
+
+- **The renderer was asked directly, card by card.** `--ac-fit` read off the real
+  `AbilityCard` node: **DEVOURING BLOSSOM, SEEDLING SPIRITS and BLIGHT POLLEN print
+  at full size**, IMPALING GROVE at 0.930. Nothing is fine print, and 0.930 sits
+  between SENSE LIFE's 0.902, which is the codex's floor, and RAIN OF FIRE's 0.945.
+  The harness was proved first by re-reading three cards whose fit is already on the
+  record and matching them.
+- `npm run lint:cards`: 425 cards inside the 600 ceiling and spelled one way. Three
+  of the four are over the 480 target and under it (IMPALING GROVE 579, DEVOURING
+  BLOSSOM 539, SEEDLING SPIRITS 491), in a band the codex has 91 cards in.
+- `npm run lint:halves`: all 70 priced off their own prose, up from 68. The two new
+  ones are IMPALING GROVE's Overcast and BLIGHT POLLEN's Blood Tithe, and the tithe is
+  the first the parser has priced off a level.
+- `npm run lint:order`: 4 schools and 15 families shelved, 180 cards sorting up the
+  ladder, unchanged in shape.
+- `npm run lint:text`: clean across 136 files. `lint`, `lint:riders`, `lint:math` and
+  `lint:weapons` clean and unchanged.
+- `data/templates/primal-spells.csv` at 40 rows with Flora's four exported into it,
+  their `Image` column carrying the filename each picture arrived under.
+
+## The Wild Masters, 2026-08-26
+
+Asked for in as many words: "I have added hte missing WIld spell in the data folder
+and the missing image in the Wild folder. Make sure you only add the 4 missing wild
+maste spell and not change anything lese make sure the newspell are in line with
+wording and system rule and presentation".
+
+Two sources, and unlike the Flora drop they are not in the same place.
+`data/Spells - Primal - Wild.csv` sits at the top of `data/` with twelve rows in the
+usual eight columns, and `data/Wild/` holds four pictures at 2400x1792. Only the four
+Master rows were asked for, only the four Master rows have a picture, and the eight
+above them carry a `postimg.cc` link the way the opening drop did. All three signals
+agree on the scope.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | WILD STRIDER, SNAKE!, SHARPEN SENSES, PRIMAL ROAR *(already in the codex)* |
+| Adept | WILD SWEEP, SAVAGE SLAM, PACK BOND, BIRD VIEW *(already in the codex)* |
+| Master | STAMPED, QUARRY, CRITTER FORM, MOLT |
+
+### The eight rows above them are the opening drop, unchanged
+
+Wild's Novice four and Adept four came in on 2026-08-19 with the first sheet, and
+this file holds all eight of them again with four new rows underneath. They were read
+against what is printed and **not one of them has moved**. The sheet still carries
+the pre-readability-pass wording those cards were rewritten out of earlier the same
+day: "2d6 + 2 x Mind" where the card says `[[2d6 + 2*stat]]`, "in Decay damage" where
+it says "{damage} damage", "an Advantage on all Skill Checks" where it says
+"advantage on all skill checks", and PACK BOND's four paragraphs where the card has
+three. Where the sheet and the card differ on wording alone the card is the later
+artifact and it stands.
+
+So this drop is four cards and not twelve, which is what the ask said. It is the
+Flora drop's shape exactly, twelve hours later.
+
+### The third Primal family to reach Master
+
+Primal had no Master spell at all until this morning. Death's four were the school's
+first, Flora's four the second set and these are the third, so the top rung goes from
+eight to twelve and **three of the five Primal families have one**. Life and Blood
+are still Novice and Adept only.
+
+| | Novice | Adept | Master | Total |
+| - | - | - | - | - |
+| Primal before Death | 16 | 8 | 0 | 24 |
+| after Death | 20 | 12 | 4 | 36 |
+| after Flora | 20 | 12 | 8 | 40 |
+| **after Wild** | **20** | **12** | **12** | **44** |
+
+The Mycomancer draws Primal by tier, so its Rank 3 goes from 40 to 44 against a Rank
+2 still standing at 32. The Arcanist, which names no school, goes from 48, 85 and 117
+to 48, 85 and 121.
+
+### The second sheet in the codex's own notation
+
+The Flora sheet was the first to arrive already written in the codex's markers, and
+this one is the second. It only needed them once: STAMPED's cell carries
+`[[6d6 + 6*stat]]`, `{roll}` and `{damage}`, and the other three name no number at
+all. Metres arrive with their feet beside them on every row. So the transcription is
+a copy, and marker insertion plus emphasis was the whole of the work.
+
+### The readings
+
+- **The name STAMPED is the one thing here worth a second look, and it is Jules'
+  call.** The cell says it, the picture file says `Stamped.jpg`, and the card's own
+  first line says "a herd of beast spirits charges", which is a stampede. It is
+  transcribed as the sheet spells it, because a card name is the designer's word and
+  nothing but his own prose suggests the other one. Renaming it later is one edit in
+  `spells.js` plus an `ALIASES` entry in `pull-card-art.mjs`, since the plate would
+  no longer match.
+- **STAMPED writes the damage token and names no type**, so it prints untyped. That
+  is the call COMPRESSION BLAST, CORPSE STRIDE and IMPALING GROVE all took, and it is
+  now **the fourth card in a row with the hole**, which is worth settling for all
+  four at once. Force is the obvious answer here: it is what SAVAGE SLAM's beast
+  deals two rungs down in this same family, and a herd running you over is the same
+  kind of blow.
+- **QUARRY empowers and elevates with no count for either**, so the card prints
+  Empowered and Elevated bare. DREDGE CORPSE's Overcast is written the same way and
+  reads the same, and the two are worth settling together.
+- **QUARRY's sense has no clock of its own.** "You sense it at any distance and
+  through total cover" hangs off the marked duration in the paragraph above it, which
+  is the reading that makes the card one effect rather than two, and it is the Long
+  Rest the tracker reads for the whole card.
+- **CRITTER FORM's Multicast is GIANT GROWTH's shape to the word**: 3 Willpower for
+  each additional entity you can touch, with no Action Point on top. It is the
+  codex's only second half priced in Willpower alone, and `secondHalf` already reads
+  "for each additional" as the repeat, so nothing in `overcast.js` had to change.
+- The four names arrived in sentence case where the sheet's own eight rows above them
+  are capitals. Nothing else needed a hand.
+
+### Nothing is wired, and QUARRY is why
+
+Two of the four are offered on the tracker: QUARRY's mark runs to a Long Rest and
+CRITTER FORM's shape for an hour, so `effectDuration` has a clock for both. STAMPED's
+prone carries its own end inside the keyword — a move action ends it — and MOLT
+resolves the instant it is cast, so neither wants a row.
+
+**QUARRY is the closest thing to a wired rider this family has and it is not wired
+either.** Empowered and Elevated are numbers the sheet knows how to bend, but both
+are printed without a count and both apply only to damage against one named entity,
+which is a condition the tracker cannot see: a rider raises a number on a sheet,
+never a number against a target. Written up beside sickness in the
+considered-and-left-out list in `riders.js`.
+
+### The shelf, the colour and the art
+
+**The second spell drop in a row that added no word to anything.** Wild has been on
+the Primal shelf in `cardOrder.js` and had `--family-wild` in `index.css` since those
+files existed, so `lint:order` still reports 4 schools and 15 families and the tag
+colours were not touched.
+
+Four plates at 2400x1792, the same shape the Ethereal, Death and Flora drops arrived
+in: no white border, no banner, the painting and nothing else. So `data/Wild/` joins
+both `FAMILY_FOLDERS` and `PLATE_FOLDERS` in `scripts/pull-card-art.mjs` and the crop
+is turned off for it. It is the sixth folder there claimed as a family rather than a
+school, and the first whose sheet is *not* inside it — which nothing in that script
+reads, so it cost nothing.
+
+Every filename matched the name its card prints, so the drop adds nothing to
+`ALIASES`: 4 encoded from a folder, 0 fetched, 35 to 52 KB of WebP apiece.
+
+### The proof
+
+- **The renderer was asked directly, card by card.** `--ac-fit` read off the real
+  `AbilityCard` node: **STAMPED, QUARRY and MOLT print at full size**, CRITTER FORM
+  at 0.949. Nothing is fine print, and 0.949 sits just above RAIN OF FIRE's 0.945.
+- **The harness was proved wrong first, then fixed.** Rebuilt as `fit.html` plus
+  `src/fit-harness.jsx` and deleted after, it read SENSE LIFE at 0.930 against the
+  0.902 on the record — because the page did not load the three Google faces
+  `index.html` does and was measuring the sans-serif fallback. With the faces linked
+  *and nothing rendered until `document.fonts.ready`* (`useFitText` measures once in
+  a layout effect, so a face that lands after the mount is a face the fit never saw),
+  all three control cards came back exactly on the record: SENSE LIFE 0.902, RAIN OF
+  FIRE 0.945, PESTILENT CLOUD 0.969. **Worth knowing for the next drop: without the
+  fonts every number reads about 0.03 to 0.04 high, which is the difference between
+  fine print and fine.**
+- `npm run lint:cards`: 429 cards inside the 600 ceiling and spelled one way. One of
+  the four is over the 480 target, CRITTER FORM at 573, in the band IMPALING GROVE
+  (579) already sits in.
+- `npm run lint:halves`: all 71 priced off their own prose, up from 70. The new one is
+  CRITTER FORM's Multicast, read as 0 Action Points and 3 Willpower, repeatable.
+- `npm run lint:order`: 4 schools and 15 families shelved, 184 cards sorting up the
+  ladder, unchanged in shape.
+- `npm run lint:text` clean across 136 files. `lint`, `lint:riders`, `lint:math` and
+  `lint:weapons` clean and unchanged. `npm run build` clean.
+- Every keyword the four cards name lights on the rendered card: prone, marked, Long
+  Rest, total cover, Empowered, Elevated, constrained.
+- `data/templates/primal-spells.csv` at 44 rows with Wild's four inserted after BIRD
+  VIEW where the codex has them, their `Image` column carrying the filename each
+  picture arrived under. Twelve inserted lines and no other byte touched.
+
+## The Life Adepts and Masters, 2026-08-26
+
+Asked for in as many words: "added life file and folder iwth image, Add the Master
+and adept life spell just thoose spell. The image are i nth life folder. Make sur
+they are inline with system wording and format. rename Agony to exposed nevers".
+
+Two sources, in the shape the Wild drop set. `data/Spells - Primal - Life.csv` sits
+at the top of `data/` with twelve rows in the usual eight columns, and `data/Life/`
+holds eight pictures at 2400x1792. The Adept and Master rows were asked for, those
+same eight rows are the ones with a picture, and the four above them carry a
+`postimg.cc` link the way the opening drop did. All three signals agree on the scope.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | FORCE INEBRIATION, SENSE LIFE, RENEW, GIANT GROWTH *(already in the codex)* |
+| Adept | HEAL, PURGE, EXPOSED NERVES, VIGOR |
+| Master | HIBERNATION, RESURRECTION, LIFE LINK, SEVER LIFE |
+
+This is the third drop of the day in that shape and **the first to bring a whole
+Adept rung with it**. Flora and Wild each added four cards to a family that already
+had eight; Life had four and now has twelve.
+
+### The four rows above them are the opening drop, unchanged
+
+Life's Novice four came in on 2026-08-19 with the first sheet, and this file holds
+all four of them again with eight new rows underneath. They were read against what is
+printed and **not one of them has moved**. The sheet still carries the
+pre-readability-pass wording those cards were rewritten out of earlier the same day:
+"1d6 + Mind" where RENEW says `[[1d6 + stat]]`, "the target becomes Poisoned" where
+FORCE INEBRIATION says "poisoned", "While Sense Life is active" where the card says
+"While this spell is active". Where the sheet and the card differ on wording alone the
+card is the later artifact and it stands.
+
+### The fourth Primal family to reach Master, and the last one left
+
+Primal had no Master spell at all this morning. Death's four were the school's first,
+Flora's four the second set, Wild's four the third, and these eight are the fourth
+family and the largest single drop of the four.
+
+| | Novice | Adept | Master | Total |
+| - | - | - | - | - |
+| Primal before Death | 16 | 8 | 0 | 24 |
+| after Death | 20 | 12 | 4 | 36 |
+| after Flora | 20 | 12 | 8 | 40 |
+| after Wild | 20 | 12 | 12 | 44 |
+| **after Life** | **20** | **16** | **16** | **52** |
+
+**Four of the five Primal families now stand at a full twelve**, four cards a rung.
+Blood is the only one left and it is still the four Novice cards it opened with:
+BLEEDING TRAIL, BLOOD SPEAR, GORE ARMOR, VAMPIRIC TOUCH.
+
+The Mycomancer draws Primal by tier, so its Rank 3 goes from 44 to 52 and **its Rank
+2 moves for the first time since the school opened**, 32 to 36, because this is the
+first drop of the day to touch a rung below the top. The Arcanist, which names no
+school, goes from 48, 85 and 121 to 48, 89 and 129.
+
+### The third sheet in the codex's notation, and the first that half commits
+
+Flora's sheet was the first written in the codex's own markers and Wild's was the
+second. This one is split down the middle: HEAL, VIGOR and SEVER LIFE carry `[[...]]`,
+`{roll}` and `{damage}`, while EXPOSED NERVES and HIBERNATION are longhand from the
+drops before them ("2d6 + 2 x Mind", "Make Mind roll"). HEAL's cell writes
+`[[4d6 + 4*Mind]]` with the attribute inside the token, where every spell in the
+codex takes its numbers off `*stat` so a Mycomancer's Instinct can print through the
+same card. Metres arrive with their feet beside them on every row.
+
+**Every difference between cell and card was listed and checked one at a time**, by
+mapping the markers back to the longhand the sheet writes and diffing the two sides
+word by word. SEVER LIFE and VIGOR came back word for word; the other six are the
+list under "the readings" and nothing besides.
+
+### The readings
+
+- **AGONY is printed as EXPOSED NERVES**, which is the rename the ask carries. The
+  plate on disk is still `Agony.jpg`, so this is the first entry in the `ALIASES`
+  table in `pull-card-art.mjs` that records a rename rather than a misspelling, and
+  it is the exact trade the STAMPED note predicted a day early: one line in the
+  codex, one line in the script, and the file keeps its old name.
+- **RESURRECTION is spelled out.** The cell says REssurection and the picture says
+  Ressurection, which is two different misspellings of one English word rather than a
+  name, and that is what separates it from STAMPED one family over: STAMPED is a word
+  on its own and this is not. Aliased the same way, for the ordinary reason.
+- **VIGOR arrived with no Action Point and no Willpower**, the only blank in the
+  sheet, and it is read as **3 and 3**. Every repeatable half on this family prices
+  its repeat one Willpower under the card's own cost (FORCE INEBRIATION 2 to 1, PURGE
+  3 to 2, HEAL 4 to 3), and VIGOR's repeat is 2, so the card reads 3. The 3 Action
+  Points are the only count the rung had not already used, between PURGE's 2 and
+  HEAL's 4. **This one wants Jules' word**: it is the only number in the drop that is
+  not on the sheet.
+- **VIGOR's half is labelled OVERCAST and written as a MULTICAST**, word for word the
+  sentence HEAL and PURGE carry two rows above it, resolution line included. It is
+  printed as a Multicast, because the codex's own split is that an Overcast spends
+  more to do more and a Multicast spends more to hit more, and buying another target
+  is the second of those. **Also worth Jules' word**, since the label is his too.
+- **LIFE LINK's leash converts wrong.** The cast range is "12 meters (40 feet)" and
+  the leash three lines later is "12 meters (60 feet)". Twelve metres is forty feet,
+  and a leash at the cast range is what makes the card one shape, so both are printed
+  40. If the leash was meant to reach past the cast, the number wanted is 18 meters.
+- **EXPOSED NERVES and SEVER LIFE both write the damage token and name no type**, so
+  both print untyped. That is the **fifth and sixth card in a row** with the hole
+  after COMPRESSION BLAST, CORPSE STRIDE, IMPALING GROVE and STAMPED, and the whole
+  set is still one ruling waiting to be made.
+- **RESURRECTION never says what a success does.** Its second paragraph gives a body
+  dead under a minute back at 1 Health and its third rolls for anything older and
+  names only the failure. Read as returning at 1 Health, which is the only rate the
+  card states.
+- **HIBERNATION's Upkeep is the first in the codex not paid at a Turn Start.** "At
+  each Long Rest, pay 10 Willpower" is the right clock for a spell that runs a day.
+  `secondHalf` prices it off the same words a Turn Start toll uses and needed no
+  change, and the tracker takes the card's 24 hours off the body before it ever reads
+  the toll.
+- Spelling and grammar, without further comment: the eight names arrived in four
+  different cases, HIBERNATION's roll sentence carried a comma splice and a repeated
+  clause ("On a success it sleeps, While it sleeps, it is incapacitated"), PURGE
+  ended on "entitiy", EXPOSED NERVES on a stray asterisk and SEVER LIFE on a stray
+  `**`.
+
+### EXPOSED NERVES is wired, and VIGOR is the one that got away
+
+Six of the eight are offered on the tracker: EXPOSED NERVES for a turn, VIGOR for an
+hour, HIBERNATION for a day, LIFE LINK for 5 turns and SEVER LIFE until a Long Rest.
+HEAL and PURGE resolve the instant they are cast and want no row.
+
+**EXPOSED NERVES is the first Life card that moves a number on the sheet**, and the
+number is the one it prints: disadvantage, on the sheet of whoever holds the row.
+That is UNLUCKY CLOVER's rider exactly, down to the trade it already documents (the
+Attack Roll is the sheet's, the skill check is the table's), and the card carries its
+own clock so the row expires without anybody dropping it. `lint:riders` walks it from
+a stored row through to the printed attack and back off: 11 riders now, up from 10.
+
+**VIGOR is the closest thing to a second rider and it cannot be one.** `healthMax` is
+a field the table already holds and the card plainly names it, but it names it as
+`[[3*stat]]` off the *caster's* Mind, and a rider is keyed on the card rather than on
+the caster, so the one sheet holding the row is the one sheet that cannot work the
+number out. Every entry in `EFFECT_RIDERS` today is a literal constant for exactly
+that reason. SEVER LIFE is the same wall from the other side: its cut to maximum
+Health is "the damage dealt", a number nobody knows until the dice land. Both are
+written up in the considered-and-left-out list in `riders.js`.
+
+### The shelf, the colour and the art
+
+**The third spell drop in a row that added no word to anything.** Life has been on
+the Primal shelf in `cardOrder.js` and had `--family-life` in `index.css` since those
+files existed, so `lint:order` still reports 4 schools and 15 families and the tag
+colours were not touched.
+
+Eight plates at 2400x1792, the same shape the Ethereal, Death, Flora and Wild drops
+arrived in: no white border, no banner, the painting and nothing else. So `data/Life/`
+joins both `FAMILY_FOLDERS` and `PLATE_FOLDERS` in `scripts/pull-card-art.mjs` and
+the crop is turned off for it. It is the seventh folder there claimed as a family
+rather than a school, and the first whose drop is not a Master rung, which nothing in
+that script counts.
+
+### What was checked
+
+- **The fits are the renderer's own**, off the throwaway harness rebuilt for the
+  purpose and deleted after (`fit.html` plus `src/fit-harness.jsx`, cards rendered
+  through the real `AbilityCard` behind `showsArt: () => false`, `--ac-fit` read off
+  each `.ac-body`). Proved first against the three cards whose fit is on the record
+  and all three came back exact: SENSE LIFE 0.902, RAIN OF FIRE 0.945, PESTILENT
+  CLOUD 0.969. **Seven of the eight print at full size** and HIBERNATION prints at
+  0.965, comfortably above the 0.9 floor.
+- **The transcription was proved rather than claimed.** Markers mapped back to the
+  sheet's longhand, both sides whitespace-normalised and diffed word by word: SEVER
+  LIFE and VIGOR matched exactly, and every word that moved on the other six is in
+  "the readings" above. Every AP, WP and tag matched except VIGOR's blank pair.
+- `npm run lint:cards`: 437 cards inside the 600 ceiling and spelled one way. One of
+  the eight is over the 480 target, HIBERNATION at 521, in a band the codex has 93
+  cards in and well under NATURALIZE's 599.
+- `npm run lint:halves`: all 75 priced off their own prose, up from 71. The four new
+  ones are three Multicasts and HIBERNATION's Upkeep, which is priced at 10 Willpower
+  off a Long Rest sentence rather than a Turn Start one.
+- `npm run lint:riders`: all 11 reach the sheet and come back off, up from 10.
+- `npm run lint:order`: 4 schools and 15 families shelved, 192 cards sorting up the
+  ladder, unchanged in shape.
+- `npm run lint:text` clean across 136 files. `lint`, `lint:math` and `lint:weapons`
+  clean and unchanged. `npm run build` clean.
+- Every marker resolves on the rendered card and every keyword the eight name lights:
+  entity, see, touch, Health, Grit, Action Point, Willpower, disadvantage, Turn End,
+  incapacitated, Long Rest, Upkeep. The two untyped cards render "you deal 4d6 damage"
+  with no type word, which is what STAMPED and IMPALING GROVE already do.
+- `data/templates/primal-spells.csv` at 52 rows with Life's eight exported into it
+  after GIANT GROWTH where the codex has them, their `Image` column carrying the
+  filename each picture arrived under, `Agony.jpg` and `Ressurection.jpg` included.
+
+## The Earth family and the Fire redraws, 2026-08-26
+
+Asked for in as many words: "In the fire folder there is all the final iamge to use
+for the fire spells. Also I have added all the elemental earht spell in the data with
+all image in the earth folder. including for shape arth. Remeberto correct the text,
+make sure it follow the system wording and guide line."
+
+Two folders and one sheet. `data/Fire/` holds nine pictures and asks for nothing else:
+Fire's nine cards have been in the codex since the school arrived, and these are the
+finished paintings for them. `data/Spells - Elemental - Earth.csv` sits at the top of
+`data/` with eight rows in the usual eight columns, and `data/Earth/` holds nine
+pictures for them, the ninth being a redraw of SHAPE EARTH.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | SHAPE EARTH *(already in the codex)*, STONE BARRAGE, STONEFLESH |
+| Adept | TREMOR SENSE, EARTH GLIDE, SINKHOLE |
+| Master | MOUNTAIN'S WEIGHT, EARTHQUAKE, AEGIS OF STONE |
+
+### Earth was one card, and is now three a rung
+
+Earth arrived with the Elemental school on 2026-08-20 as a single loose render at the
+top of `data/Elemental/`, no family folder under it and no rung above Novice. Its own
+note in `spells.js` said "the family exists the moment a second card does". Eight
+arrived at once.
+
+| | Novice | Adept | Master | Total |
+| - | - | - | - | - |
+| Elemental before | 12 | 9 | 8 | 29 |
+| **after** | **14** | **12** | **11** | **37** |
+
+**Earth is the fifth of the school's seven families to reach Master** and the third to
+stand at a full nine, beside Fire and Water. Lightning and Magma reach Master on one
+card a rung. Wind is the short family now at three Novice and one Adept, and Steam is
+still an empty folder holding somebody else's HURL.
+
+No talent set casts from Elemental yet, so no set's pool moves. The Arcanist, which
+names no school, goes from 48, 89 and 129 to **50, 94 and 137**. An Imbuement binds "a
+NOVICE spell" with no school named, so STONE BARRAGE and STONEFLESH can reach an item
+from the day they exist.
+
+### The sheet's own hand
+
+Longhand, like every Elemental cell before it: "Make a Mind Ranged Attack roll", "2d6 +
+Mind Blunt damage", "4d6 + 4 × Mind Shield". The markers were put back the way the
+school's first pull put them back, and every number comes off `*stat` rather than off
+Mind, so an Instinct caster prints through the same card. Metres arrive with their feet
+beside them on five of the eight rows and with the brackets left empty on three.
+
+### The readings
+
+- **AEGIS OF STONE is spelled out.** The Name cell says "Aegis of Stron" and the
+  picture says `Aegiis of stone.jpg`, which is two different misspellings of one
+  English phrase rather than a name. The read RESURRECTION got one school over, and
+  aliased in `pull-card-art.mjs` for the same reason.
+- **STONEFLESH's resistance gloss went to the glossary.** The cell spells the word out
+  inside its own sentence, "(reistance means halved damaged)", and a defined term is
+  never glossed in prose as well. `keywords.js` carries **resistance** now, beside
+  VULNERABLE: the two are one rule read from both ends, doubled against halved, and
+  only one end of it was written down. Five card bodies have printed the word with
+  nothing behind it since each of them arrived (UMBRAL FORM, DRACONIC SCALES,
+  AMPHIBIAN, the Cauldron Keeper's hardened scale and now STONEFLESH) and all five
+  light. It is the trade BURN made when this school first arrived.
+- **STONEFLESH costs 8 Willpower, and no Novice spell in the codex costs more than 4.**
+  It is level with the priciest Adept, double every other Novice, and it is what the
+  sheet says. **Worth Jules's word.**
+- **STONEFLESH names "physical damage"**, a category the codex does not define. The
+  only other card that uses the word is the Soak background's "non-physical damage",
+  unlit since it arrived. Left plain, and on the pile for the statuses tab this file
+  has been asking for since August.
+- **TREMOR SENSE and SINKHOLE are both labelled OVERCAST over an empty cell.** Neither
+  prints a second half, because there is no half to print. **Worth Jules's word**:
+  either the label is a leftover or two riders went missing on the way out of the
+  sheet.
+- **Three conversions arrived empty.** TREMOR SENSE reads "18 meter ()", EARTH GLIDE
+  "20 meter (.)" and MOUNTAIN'S WEIGHT "9 meters ( feet)". Filled at the codex's own
+  rates: 60 feet, 65 feet and 30 feet, the middle one being the conversion SINGULARITY
+  settled a day earlier.
+- **EARTHQUAKE doubles against "inaniamte entity"**, printed as inanimate ones. Nothing
+  in the codex defines an inanimate entity, and SHAPE EARTH's wall two rungs up is the
+  only thing in the school with Health of its own, so it is very likely the card that
+  was meant to break. On the statuses tab's pile with Difficult Terrain and Slow Fall.
+- **MOUNTAIN'S WEIGHT has no clock.** The boulder holds until 6 Action Points get the
+  target out from under it, which is the card's only exit and is priced the way a
+  grapple's is. Read as constrained until freed, and the tracker offers it no row.
+- **STONE BARRAGE and EARTHQUAKE print Blunt**, the sheet's own word on both rows and
+  the first typed damage this family has had.
+- Spelling and grammar, without further comment: "YOu", "teh", "entites", "isnbile
+  one", "silouhte", "imapre you vision", "your resitant", "bouldr", "boulder rock", a
+  missing space after a comma in STONEFLESH, and a "He" that is every entity the spell
+  can land on.
+
+### Two cards were cut to fit, and the estimate did not catch either
+
+`lint:cards` passed EARTHQUAKE at a load of 596, inside the 600 ceiling. The renderer
+disagreed: **0.894**, under the codex's 0.9 floor and the first card that would have
+gone out as fine print. EARTH GLIDE read **0.902**, exactly on it. Both were cut, and
+what went was repetition rather than rules:
+
+- EARTHQUAKE's "The area is Difficult Terrain" folded into the sentence that makes it,
+  and "The damage is double on inaniamte entity" became "Inanimate ones take double".
+  **0.949**, better than RAIN OF FIRE beside it.
+- EARTH GLIDE's "You move through earth and stone" is a second telling of "pass through
+  it like water" one line above, so the Movement Speed moved up into that sentence and
+  the repetition went. **0.965**.
+
+Every mechanic on both rows is still printed. This is the case docs/card-text.md
+describes: cut words, never mechanics.
+
+**The estimate has a blind spot worth knowing about.** RAIN OF FIRE at load 594 prints
+at 0.945 and EARTHQUAKE at 596 printed at 0.894, two cards two characters apart and
+half a rung of type apart, because the fitter breaks lines and the estimate counts
+characters. The static number is a gate, not an answer.
+
+### The redraws, and one folder that should be deleted
+
+**This is the first drop that replaces art the codex already had.** Elemental arrived
+in August as whole card renders in `data/Elemental/<family>/` — 1055x1496 with a white
+border, cost orbs and the banner baked in — and `cardPlate` cropped the painting out of
+the top 45% of each one. These nineteen files are those paintings, dropped as plates:
+1200x896 and 2400x1792, no border and no banner.
+
+So `data/Fire/` and `data/Earth/` join both `FAMILY_FOLDERS` and `PLATE_FOLDERS` in
+`scripts/pull-card-art.mjs`, and the crop is off for both. They are the eighth and
+ninth folders claimed as a family rather than a school and the first two under
+Elemental. This is the retirement the school's own note predicted on 2026-08-20: "a
+drop of art-only files would retire them, and nothing needs renaming when it comes."
+
+**Ten files in `data/Elemental/` are now dead weight and the art run says so on every
+pass.** Every picture in the two drops claims a card that a render in
+`data/Elemental/` also claims, so the "one card, two files" rule settles it: the newest
+file wins, by seven months, and the loser is named in the report. Ten lines a run:
+
+    shape-earth   two files claim it — using Earth/Shape Earth, not NOVICE SPELL - ELEMENTAL - EARTH - SHAPE EARTH
+    produce-flame two files claim it — using Fire/Produce Flame, not NOVICE SPELL - ELEMENTAL - FIRE - PRODUCE FLAME
+    ... and eight more
+
+**Deleting `data/Elemental/FIRE/` and the loose `NOVICE SPELL - ELEMENTAL - EARTH -
+SHAPE EARTH.jpg` beside it makes the report go quiet.** Nothing is lost: those renders
+are the paintings with a card drawn around them, and the paintings are now in `Fire/`
+and `Earth/`. Left in place rather than deleted here, the way the stray HURL in
+`Steam/` was left, because a picture in `data/` is the designer's.
+
+Three filenames needed an ALIASES row, all three from the Earth drop, whose Image
+column is empty: `Stone Flesh.jpg` for STONEFLESH, `Earth Quake.jpg` for EARTHQUAKE and
+`Aegiis of stone.jpg` for AEGIS OF STONE. The other six land on their own,
+`Mountain s Weight.jpg` included, because `flatten` turns the sheet's apostrophe into a
+space and the file already has one there. All nine Fire files land on their own.
+
+### The shelf and the colour did not move
+
+Nothing to shelve or colour. Earth has been sixth on the Elemental shelf in
+`cardOrder.js` and had `--family-earth` in `index.css` since those files existed, both
+put there by the drop that brought SHAPE EARTH. `lint:order` still reports 4 schools
+and 15 families.
+
+### What was checked
+
+- **The fits are the renderer's own**, off the throwaway harness rebuilt for the
+  purpose and deleted after (`fit.html` plus `src/fit-harness.jsx`, cards rendered
+  through the real `AbilityCard` behind `showsArt: () => false`, `--ac-fit` read off
+  each `.ac-body`). Proved first against the three cards whose fit is on the record and
+  all three came back exact: SENSE LIFE 0.902, RAIN OF FIRE 0.945, PESTILENT CLOUD
+  0.969. **Seven of the nine print at full size**, EARTHQUAKE at 0.949 and EARTH GLIDE
+  at 0.965.
+- **Every marker resolves and nothing is unspent**, resolved the way `CardText.jsx`
+  resolves it: `[[stat + level]]`, `[[5*stat]]`, `[[2d6 + stat]]`, `[[4d6 + 4*stat]]`
+  and `[[2d6 + 2*stat]]` all give numbers, `{damage}` finds Blunt on the two cards that
+  carry a type, and `{stat}` and `{roll}` find Mind. Twenty-one defined terms light
+  across the family, resistance among them.
+- `npm run lint:cards`: 445 cards inside the 600 ceiling and spelled one way, up from
+  437. Three of the nine are over the 480 target: EARTHQUAKE 585, EARTH GLIDE 544 and
+  STONE BARRAGE 515, in a band the codex holds 96 cards in.
+- `npm run lint:halves`: all 79 priced off their own prose, up from 75. The four new
+  ones are STONE BARRAGE's Multicast, EARTH GLIDE's and AEGIS OF STONE's Overcasts and
+  EARTHQUAKE's Upkeep.
+- **The tracker reads the durations off the prose**, unchanged: TREMOR SENSE 1 hour,
+  AEGIS OF STONE 3 hours, EARTHQUAKE an Upkeep each turn. STONEFLESH is offered no row
+  on purpose: its clock is the Shield pool, which is a condition and not a duration.
+- `npm run lint:order`: 4 schools and 15 families shelved, 200 cards sorting up the
+  ladder, up from 192. `lint:riders`: all 11 still reach the sheet and come back off.
+- `npm run lint:text` clean across 136 files. `lint`, `lint:math` and `lint:weapons`
+  clean and unchanged. `npm run build` clean.
+- **The art was looked at rather than counted.** Eighteen plates re-encoded, 720px and
+  a 200px thumbnail apiece, 21 to 67 KB. PRODUCE FLAME and EARTHQUAKE were opened: the
+  whole painting, no white border and no banner, which is what a plate is and what the
+  crop would have ruined.
+- `data/templates/elemental-spells.csv` regenerated straight out of `spells.js` at 37
+  rows, Earth's nine included, every named picture proved to exist on disk. It had been
+  stale since 2026-08-20 and carried the pre-readability-pass wording for all 29 of the
+  old rows; it now carries what the cards print. The Image column names the file each
+  picture came out of, `Stone Flesh.jpg` and `Aegiis of stone.jpg` included.
+
+### This is the Earth half of the compound-element proposal, written by hand
+
+Earlier the same day Jules asked for every missing Elemental spell to be designed and
+gave the shape: **Earth and Wind each at 3 Novice, 3 Adept and 3 Master, and Sand,
+Steam, Mud and Storm at 1 of each**, because "they are compound elements like magma is
+fire + earth, wind and water are storm". Twenty-five spells were proposed against that
+and none were written, because he said not to change the files.
+
+**These eight are Earth's share of that count, and they are his rather than the
+proposal's.** They land on exactly the 3/3/3 he specified. So the proposal's Earth half
+is retired, and what is left of it is **seventeen** spells: five to finish Wind and
+three each for the four compound families, none of which exist yet. Those designs and
+the nine rulings they raise are still only in the artifact and the `.mjs` handed over
+in chat, not in this file.
+
+### Still open
+
+Four, all of them Jules's to settle: **STONEFLESH's 8 Willpower** on a Novice card;
+**the two empty OVERCAST cells** on TREMOR SENSE and SINKHOLE; **what an inanimate
+entity is**, which EARTHQUAKE doubles against and nothing defines; and whether
+**"physical damage"** is Sharp and Blunt or something wider.
+
+## A redraw needs a new URL, 2026-08-27
+
+Reported the morning after the Fire drop: "in the spell preview I see the old image
+so like in arcanist spellbook and blazing suns is wrong no matter what".
+
+**Nothing was wrong with the drop.** The pictures were on disk, `cardArt.js` pointed
+at them, the build carried them and the render path asked for the right file. It was
+checked end to end: the brief that the Arcanist's spellbook draws asks for
+`/cards/blazing-suns-thumb.webp`, and the dev server answered with the new 5,912
+bytes rather than the old 7,154.
+
+**The bug is that the URL did not change when the picture did.** A redraw keeps the
+filename and swaps the pixels, which is the one shape of change no cache can see.
+Every browser and every Cloudflare edge that had already fetched
+`/cards/blazing-suns.webp` went on serving the painting it already had, and would
+have kept doing it until something evicted it. Eighteen redrawn pictures shipped to
+readers who could not see any of them.
+
+### Eight characters on the end of every art URL
+
+`pull-card-art.mjs` and `pull-item-art.mjs` now stamp each row with the first eight
+characters of its file's SHA-256:
+
+    'blazing-suns': '/cards/blazing-suns.webp?v=ff3242fd',
+
+The old Blazing Suns art hashes to `77fa1925` and the new one to `ff3242fd`, so had
+this been in place on 2026-08-26 the drop would have reached every reader the moment
+it deployed.
+
+- **Same bytes, same URL.** A run that changes no picture changes no line of
+  `cardArt.js`, which was proved by running it twice and diffing. The lookup does not
+  churn and neither does the diff.
+- **A query string rather than a hashed filename.** The file on disk keeps the name a
+  person would look for, and Cloudflare's default cache key already includes the
+  query. A hashed filename would work as well and would leave the beaten file behind
+  on every redraw, which is a second thing to clean up.
+- **The thumbnail rides the full picture's hash.** The two are cut from one source in
+  the same pass and are only ever written together, so they cannot disagree, and one
+  token per card keeps the lookup one flat map of one string. `thumbFor` inserts
+  `-thumb` before the query rather than at the end of the string.
+- **Items got the same treatment**, since `itemArt.js` is generated the same way and
+  has the same hole in it. Nothing has been redrawn there yet, which is the only
+  reason it had not bitten.
+
+### What is still uncovered
+
+**A talent, lineage or background plate has no version on it.** Those are not
+generated: `art: '/backgrounds/mercenary.jpg'` is written by hand in
+`backgrounds.js`, and the same in `talents.js` and `lineages.js`. Redraw one of those
+and the same thing happens again, with no generator to stamp it. The Mycomancer's
+overview plate has already been redrawn once, on 2026-08-20, back when nobody was
+looking at a cache.
+
+Fixing it means either generating those three lookups the way the two art files are
+generated, or hand-editing a hash into a data file on every redraw, which nobody will
+remember to do. **Left alone until a plate is actually redrawn**, and written down
+here so that day is not spent rediscovering this page.
+
+### While you wait for a deploy
+
+A reader already holding an old picture picks the new one up on their next load,
+because the URL they are asking for no longer exists in their cache. Nothing has to
+be purged and nobody has to hard-reload. That is the whole point of the eight
+characters.
+
+## The Storm family, 2026-08-27
+
+Asked for in as many words: "In the data there is now the Storm spells and in data I
+have the storm folder wiht hte images, add the spells. Add the m and make sure to
+conrecct the text and make the wording up to the system. reduce the cost of eye fo teh
+storm to 6"
+
+One sheet and one folder. `data/Spells - Elemental - Storm.csv` sits at the top of
+`data/` with three rows in the usual eight columns, and `data/Storm/` holds a picture
+for each of them.
+
+| Tier | Spell |
+| ---- | ----- |
+| Novice | DOWNPOUR |
+| Adept | HAILSTORM |
+| Master | EYE OF THE STORM |
+
+### Storm is the school's eighth family, and the first compound to open
+
+One card a rung is the compound shape. Storm is wind and water the way Magma is fire
+and earth, and a compound family runs three deep where a base element runs nine.
+
+| | Novice | Adept | Master | Total |
+| - | - | - | - | - |
+| Elemental before | 14 | 12 | 11 | 37 |
+| **after** | **15** | **13** | **12** | **40** |
+
+Plus DEEP SEA ACCRETION, which is Unique and item-bound, so the school holds 41 rows.
+
+No talent set casts from Elemental yet, so no set's pool moves. The Arcanist, which
+names no school, goes from 50, 94 and 137 to **51, 96 and 140**. An Imbuement binds "a
+NOVICE spell" with no school named, so DOWNPOUR can reach an item from the day it
+exists.
+
+### The one thing that is not the sheet's
+
+**EYE OF THE STORM costs 6 Willpower and the sheet says 10.** Asked for in the drop
+itself, so the cast is the second number. The 4 Willpower Upkeep is untouched, and 6
+sits inside the Master rung either way: the priciest cast in the codex is 12 and there
+are four of them.
+
+### The sheet's own hand
+
+Longhand, like every Elemental cell before it: "Make a Mind Roll roll", "2d6 + 2 x
+Mind Cold damage". The markers were put back the way the school's first pull put them
+back, and every number comes off `*stat` rather than off Mind, so an Instinct caster
+prints through the same card.
+
+### The readings
+
+- **DOWNPOUR's radius is twice its range.** A **36-meter** circle placed at
+  **18 meters**, which makes it the largest area in the codex by three times over and
+  puts the caster well inside their own weather. EARTHQUAKE's 18-meter radius at 30
+  meters is the next biggest. It is what the cell says, so it is what prints. **Worth
+  Jules's word**: 3.6 or 6 meters would both read as the number that was meant.
+- **The conversion arrived empty**, "36-meter ()", filled at the codex's own rate as
+  120 feet. Third Elemental sheet in a row to leave a bracket open.
+- **HAILSTORM prints Cold, the school's first.** The damage table answers to Cold and
+  Frost off one token and every real use in the codex writes Cold, so the sheet's own
+  word needed nothing done to it.
+- **Storm deals Cold and Blunt and no Lightning**, which is the sheet's own choice on
+  both rows and the thing that keeps the Lightning family's edge.
+- **EYE OF THE STORM carries a printed duration and an Upkeep at once.** HIBERNATION
+  and SHADOW BIND already do, so the **10 turns (1 minute)** is the ceiling and the
+  toll is what reaches it.
+- **The Upkeep is spelled out.** The Secondary Effect cell reads "4 Willpower or ti
+  stops", the toll and its consequence in shorthand, and it prints in the codex's own
+  Upkeep shape: "At your Turn Start, pay 4 Willpower to keep the storm turning. Miss
+  the Upkeep and the spell ends."
+- **Difficult Terrain stays plain** on HAILSTORM, which is where SINKHOLE, MAGMA SURGE
+  and EARTHQUAKE already leave it. Still on the statuses tab's pile.
+- Spelling, without further comment: "Downpou" on the picture and "ti stops" in the
+  Upkeep cell.
+
+### Three plurals light now, and one card paid a step for it
+
+DOWNPOUR prints "Ranged Attacks" and EYE OF THE STORM prints "Attack Rolls" and "Turn
+Starts". All three singulars have been defined terms since `keywords.js` existed, and
+a term is listed by its printed forms rather than guessed at by suffix, so all three
+arrived half lit, with the colour stopping in the middle of a phrase. The three
+plurals are in the table now, which is the trade STONEFLESH's **resistance** made a
+day earlier.
+
+It lights five other card bodies that have printed one of them since each arrived:
+PACK BOND and TAUNTING carry "Attack Rolls", DEVOURING BLOSSOM and DRAIN FLUIDS carry
+"Turn Starts", and FERAL FORM and LIGHTNING IN A BOTTLE carry one each.
+
+**`.ac-kw` is bold, so lighting a phrase widens it and the fitter can feel it.** All
+eight cards were measured against the real renderer before and after. Only PACK BOND
+moved, 0.934 to 0.930, one step of the binary search, and nothing came near the 0.9
+floor.
+
+### EYE OF THE STORM was cut to fit, and the estimate did not catch it
+
+`lint:cards` passed it at a load of 557 against a 600 ceiling. The renderer printed it
+at **0.902**, level with SENSE LIFE for the worst card in the codex. This is the
+EARTHQUAKE lesson again: **take the fit off the harness for any card over about 550,
+never off the static number.**
+
+What went was repetition, not mechanics.
+
+- "calm within **3 meters (10 feet)** of you" already says "around you" a second time,
+  so "of you" went.
+- "at each of their Turn Starts you deal [[2d6 + 2*stat]] {damage} damage to them" is
+  the long way round "take [[2d6 + 2*stat]] {damage} damage at each of their Turn
+  Starts", which is the shape MAGMA CHAINS and PESTILENT CLOUD already print.
+
+Nineteen characters of load, two rungs of type: **0.969** now. The other two print at
+full size.
+
+### The shelf, and a colour that did not exist
+
+**Storm is the first new family word since Spacial.** It goes seventh on the Elemental
+shelf in `cardOrder.js`, after Earth and in the order `spells.js` writes it, and
+`lint:order` now counts 16 families where it counted 15.
+
+`--family-storm` is **#7E9CB8**, a slate: taken between Wind's teal (h173) and Water's
+blue (h205) on hue, then pulled down on saturation toward `--dmg-blunt` so it reads as
+neither of them. A storm sky is the one grey thing in a school of embers, and Storm
+deals Blunt and Cold. It is the eighth marked lean in `index.css` and the first taken
+off two families rather than off a token.
+
+Checked numerically rather than by eye, against every school and family token in
+`index.css`: its nearest neighbour is Wind at a distance of 25, where the palette's
+own tightest existing pairs sit at 10 to 17 (Elemental and Magma, Ethereal and
+Spacial, Arcane and Energy). Nothing new is closer than what is already there.
+
+### The art
+
+Three 2400x1792 plates, one of them a pixel narrow at 2398, no white border and no
+banner, so `data/Storm/` joins `FAMILY_FOLDERS` and `PLATE_FOLDERS` in
+`pull-card-art.mjs` and the crop stays off. `Downpou.jpg` is a dropped letter and gets
+an `ALIASES` entry. The other two land on their own names.
+
+**This is the tenth family folder and the first that shadows nothing.** `data/Fire/`
+and `data/Earth/` a day earlier each claimed cards a render in `data/Elemental/` also
+claimed, which is what prints the ten "two files claim it" lines on every art run.
+Storm had no card in the codex before this drop, so nothing in `data/Elemental/`
+claims one of its three and the run says nothing about them.
+
+### What was checked
+
+- **A round trip.** Every marker mapped back to the sheet's written form and diffed
+  against the cell, whitespace-normalised. HAILSTORM matches byte for byte. DOWNPOUR
+  differs only by the filled conversion, EYE OF THE STORM only by the four departures
+  named above, and all three tag triplets and all three AP values match.
+- `lint:cards` 448 cards inside the ceiling, `lint:text` clean across 136 files,
+  `lint:halves` all 80 priced off their own prose, `lint:order` 4 schools and 16
+  families shelved and 203 cards sorting up the ladder, then `lint:math`,
+  `lint:riders`, `lint:weapons`, `eslint` and `vite build`, all clean.
+- **The printed order**, read off `sortCards` rather than off the shelf: Storm comes
+  last in each of the three rungs, after Earth.
+- **The fit**, off the real renderer with the fonts awaited, proved first against the
+  three cards whose numbers are on the record. SENSE LIFE 0.902, RAIN OF FIRE 0.945
+  and PESTILENT CLOUD 0.969 all read exactly as recorded, so the harness was telling
+  the truth about the rest. DOWNPOUR 1.0, HAILSTORM 1.0, EYE OF THE STORM 0.969.
+- **The art run twice**, second pass zero diff on `cardArt.js`, which is what the
+  content hashes are for.
+- `data/templates/elemental-spells.csv` carries the three new rows in the sheet's own
+  column order, so the workbook can catch up.
+
+### Still open
+
+Four for Jules, three of them small:
+
+1. **DOWNPOUR's 36-meter radius at 18-meter range.** Transcribed as printed. The
+   likeliest reading is that a decimal point or a digit went missing.
+2. Whether the Elemental shelf regroups as four bases then six compounds rather than
+   the arrival order it has now. Storm is the second compound to land and the question
+   is the one the Earth drop left open.
+3. One base and three compounds are still short: Wind stops at Adept and wants five
+   more, and Steam, Sand and Mud have nothing. Fourteen of the original twenty-five
+   proposals are left.
+4. **"Ranged Attacks", "Attack Rolls" and "Turn Starts" are three plurals somebody
+   noticed.** There may be others in the codex reading half lit. Nobody has swept for
+   them.
+
+## The Mud family, 2026-08-27
+
+Asked for in as many words: "In the data there is now the Mud spells and in data I have
+the Mud folder wiht hte images, add the spells. Add the m and make sure to conrecct the
+text and make the wording up to the system."
+
+One sheet and one folder. `data/Spells - Elemental - Mud.csv` sits at the top of `data/`
+with three rows in the usual eight columns, and `data/Mud/` holds a picture for each of
+them, named after the card it belongs to.
+
+| Tier | Spell |
+| ---- | ----- |
+| Novice | MIRE |
+| Adept | ENGULF |
+| Master | DROWNING EARTH |
+
+### Mud is the school's ninth family, and its second compound
+
+One card a rung is the compound shape. Mud is water and earth the way Storm is wind and
+water, and a compound family runs three deep where a base element runs nine.
+
+| | Novice | Adept | Master | Total |
+| - | - | - | - | - |
+| Elemental before | 15 | 13 | 12 | 40 |
+| **after** | **16** | **14** | **13** | **43** |
+
+Plus DEEP SEA ACCRETION, which is Unique and item-bound, so the school holds 44 rows.
+
+No talent set casts from Elemental yet, so no set's pool moves. The Arcanist, which
+names no school, goes from 51, 96 and 140 to **52, 98 and 143**. An Imbuement binds "a
+NOVICE spell" with no school named, so MIRE can reach an item from the day it exists.
+
+Nothing in this drop is anything but the sheet's, except the wording the request asked
+for and the cut DROWNING EARTH needed to fit on a card. Both are below.
+
+Against the compound law written up under the Earth family, this closes Mud and leaves
+**eleven of the original twenty-five proposals**: five to finish Wind, and three each
+for Sand and Steam. Wind still stops at Adept, and Sand and Steam are still empty.
+
+| Family | Kind | Has | Wants |
+| --- | --- | --- | --- |
+| Fire, Water, Earth | base | 9, 10, 9 | done |
+| Wind | base | 4 | 5 more |
+| Lightning, Magma, Storm, **Mud** | compound | 3 each | done |
+| Sand, Steam | compound | 0 | 3 each |
+
+### What the family does
+
+All three cards hold an entity down, and each one prices its own way out. MIRE trips
+whoever walks into it, ENGULF seals one target and bills it every turn, DROWNING EARTH
+sinks a whole area by degrees. None of them is a save-or-suffer with no exit: MIRE ends
+the moment the prone entity stands, ENGULF sells a Physique contest for 3 Action Points
+and DROWNING EARTH sells a stage back for 4.
+
+### Open for Jules
+
+1. **`buried` is not a defined term, and DROWNING EARTH is the card that wants one.**
+   Its ladder is "rooted, then constrained, then buried". The first two are keywords
+   that carry their own explanations; the third is a word the card glosses itself,
+   "buried and taking [damage] at each Turn Start". That reads fine as printed, because
+   the damage is stated on the line, so it is transcribed as prose rather than lit,
+   which is how Difficult Terrain has sat in five card bodies since the school arrived.
+   **But whether buried is a status with rules of its own is a design answer, not a
+   wording one.** Does it stop actions the way constrained does? Does it suffocate? Does
+   it end when the spell ends? Say the word and it becomes a keyword in `keywords.js`
+   with its own colour and its own tap-to-read explanation, the way STONEFLESH's
+   **resistance** did a day earlier. Inventing the definition here would have been
+   inventing design.
+2. **DROWNING EARTH's ladder has no stated floor and no stated release.** An entity
+   that fails once is rooted and one that fails three times is buried. Nothing says
+   what a fourth failure does, and nothing says the stages come off when the entity
+   leaves the slurry or when the spell ends. The Upkeep is the only clock, which is
+   EARTHQUAKE's shape, so the spell ending is what has been read as releasing them.
+3. **ENGULF deals 1d6 + Mind at Adept**, where that rung's damage is otherwise
+   2d6 + 2 × Mind. It is a toll every turn rather than a cast, and MAGMA CHAINS is the
+   precedent: an Adept card that binds one entity and bills it Mind at each Turn Start.
+   Engulf asks for more per turn than that. Transcribed as printed.
+4. **DROWNING EARTH casts for 5 Action Points**, the only Master spell in the school
+   that does; every other one casts at 4. MAGMA CHAINS spends 5 at Adept, so the number
+   is unusual rather than unprecedented. Transcribed as printed.
+5. **ENGULF's escape rolls against your Grit**, not your Mind. MAGMA CHAINS is the one
+   other card where a target buys a contest with its own Action Points, and it rolls
+   Physique against your Mind. Grit is a defence and the sentence works either way, so
+   the sheet's own word stands.
+
+### The wording, corrected
+
+Three typos and one verb, and nothing else was touched:
+
+| The cell said | The card says |
+| --- | --- |
+| "The netity" | "It" |
+| "4 action poitns" | "4 Action Points" |
+| "reduce teh effect" | "reduce the effect", then cut (below) |
+| "can use 4 action poitns" | "can spend 4 Action Points" |
+
+The verb is the only one that is a house rule rather than a spelling: the codex spends
+Action Points and never uses them, which is MOUNTAIN'S WEIGHT's word and CONTAINMENT
+SPHERE's. ENGULF's own clause already read "can spend".
+
+The rest of the pass is the school's usual one. Every "Make a Mind Roll roll" becomes
+`{stat} Roll {roll}` so the markers light and an Instinct caster reads the same card;
+"3d6 + 3 × Mind Blunt damage" becomes `[[3d6 + 3*stat]] {damage} damage` off the same
+rule; ranges, radii and durations take the bold that says how far, at whom and for how
+long. `rooted`, `constrained`, `prone`, `Difficult Terrain`, `Turn Start`, `Reflex`,
+`Grit` and `Action Points` were already the codex's own spellings and needed nothing.
+
+### DROWNING EARTH had to be cut to fit, and the cut is worth reading
+
+It arrived at a load of **696 against a 600 ceiling**, the worst overrun of any card
+pulled so far. The reason is that it carries four mechanics and an Upkeep: an area, a
+per-turn contest, a three-rung ladder with damage on the last rung, an escape priced in
+Action Points, and a toll. The Upkeep alone eats 192 of the budget, 92 of prose and the
+flat 100 that any second half costs, which left the body about 310 to work in.
+
+What went was repetition and one paragraph break. No mechanic was dropped.
+
+- **The clock is said once.** The paragraph opens "At the Turn Start of **any entity**
+  in the area", so the buried rung's damage inherits it instead of printing "at each
+  Turn Start" a second time, which is what the cell did.
+- **The escape moved into the paragraph of the ladder it undoes**, worth 30 on its own.
+  It also reads better there: "rise a stage" is the sheet's "reduce the effect by 1
+  stage" in half the words and the exact inverse of the "sinks a stage" above it.
+- **The range dropped "on a point"**, which is EARTHQUAKE's own shorter form for an
+  area made of ground.
+- The Upkeep holds "it" where "the ground" was.
+
+696 to **593**. See docs/card-text.md: cut words, never mechanics.
+
+That leaves it 3 short of EARTHQUAKE's 596, and EARTHQUAKE is the card that proved the
+static estimate wrong by printing at 0.894 under a 0.9 floor. So the fit was taken off
+the renderer rather than the number.
+
+| Card | Load | Real fit |
+| --- | --- | --- |
+| MIRE | 321 | 1 (full size) |
+| ENGULF | 399 | 1 (full size) |
+| DROWNING EARTH | 593 | **0.961** |
+
+0.961 is better than RAIN OF FIRE and level with EYE OF THE STORM. The estimate reads
+this card high because it counts markers at their source length, and this one carries 36
+characters of `{stat}`, `{roll}`, `[[3d6 + 3*stat]]` and `{damage}` that render to about
+17. The harness was proved first against SENSE LIFE, RAIN OF FIRE, PESTILENT CLOUD,
+EARTHQUAKE and EYE OF THE STORM and read all five to the recorded digit.
+
+### The shelf, and a colour that could not be sited the way Storm's was
+
+Mud goes eighth on the Elemental shelf in `cardOrder.js`, after Storm.
+
+`--family-mud` is `#9C8E70`. **Storm's method does not transfer to it.** Storm took the
+midpoint of the two families it is made of, because Wind and Water sit 32 degrees apart
+on hue and a midpoint between them is a colour. **Water and Earth sit 174 degrees
+apart, so their midpoint is green or purple.** So the lean is taken on the axis the
+colour law already names: Mud is Earth's hue, and the whole separation is lightness and
+saturation. Which is also what water does to earth, so the physical reading and the
+law's reading agree for once.
+
+Measured rather than eyeballed, in CIE76 against every school and family token in
+`index.css`:
+
+| Pair | Distance |
+| --- | --- |
+| Mud / Earth | 20.9 |
+| Mud / Death | 27.7 |
+| Mud / Storm | 36.2 |
+
+The palette's own tightest pairs sit at 10.8 (Primal / Flora) to 17.9 (Storm /
+Ethereal), so Mud against Earth is looser than nine pairs already on the wall, Storm's
+own nearest included. Two candidate families were rejected on measurement rather than
+taste: a grey-beige Mud separated from Earth better but landed 26 from Storm, which
+already owns the one grey slot in a school of embers, and an olive Mud landed 25 from
+Wild and read as moss.
+
+One thing that fell out of siting it: **Lab lightness is the binding constraint on any
+new family token, not hue.** A chip is 0.56rem on a dark panel, and every existing
+token sits between L\* 56 (Blood) and 85 (Light). Every genuinely mud-coloured brown is
+down at L\* 39 to 46, which is why Mud is a dulled tan rather than the brown the word
+suggests.
+
+### The art
+
+Three 2400x1792 plates, no white border and no banner, so `data/Mud/` joins both
+`FAMILY_FOLDERS` and `PLATE_FOLDERS` in `pull-card-art.mjs` and the crop stays off. All
+three filenames are already the card names, so unlike the Storm drop nothing goes in
+`ALIASES`. Nothing in `data/Elemental/` holds a Mud render, so like Storm these three
+shadow nothing and the run says nothing about them.
+
+### One thing found while measuring, which is not about Mud
+
+The card budget in docs/card-text.md was calibrated against cards rendered **without a
+character attached**, and that is what every recorded fit number in this file is. A card
+in a player's hands has one, and a live value renders longer with it: `[[3d6 + 3*stat]]`
+prints "3d6" with no character and "3d6 + 30" at Mind 10, and `{roll}` prints nothing
+against "(+10)".
+
+Swept the whole codex both ways at Mind 10, which is the worst case:
+
+| | At full size | Under the 0.9 floor |
+| --- | --- | --- |
+| No character (how the budget was set) | 386 of 448 | 0, worst 0.902 |
+| Character at 10 | 383 of 448 | **1: EARTHQUAKE at 0.894** |
+
+So the cost is three cards' full size and exactly one card under the floor, and that
+card is EARTHQUAKE, which this file already records as having been fixed to 0.949 on
+2026-08-26. That 0.949 is a no-character number. **Nothing was changed about it here**,
+because it is not this drop's card and the fix is a wording pass on somebody else's
+paragraph. Flagged so the next person to touch EARTHQUAKE knows, and so the budget's
+own calibration is on the record. The three Mud cards read identically under both, so
+the drop does not depend on which way it is measured.
+
+
+## The Pact of Ordenance, 2026-08-27
+
+Handed over in chat rather than as a sheet: a set built around a bargain with the
+entity living in a weapon. It filled the roster's `pactbound` slot (the id stays
+`pactbound`, the name is the one given in chat), so the wall is 13 written and 21
+placeholders. Every card is house-written to the chat spec and the whole tab is
+exported back to `data/templates/pact-of-ordenance-ability.csv` and
+`-overview.csv` with a `Source` column of `chat`, which is the overwrite list if a
+real sheet ever arrives.
+
+### What landed
+
+- **The set**, 5 cards across three ranks, in `src/lib/talents.js` under a new
+  `pact` spec — the ninth shape of what a set can hand over, resolved by the new
+  `src/lib/pact.js` the way `minions.js` and `feral.js` resolve theirs.
+- **A new jsonb column, `pact`**, keyed by the granting set id: which bargain,
+  the weapon's form and forged-record id, lifetime progress, the picks, the
+  standing missions and a capped log. `supabase/schema.sql` has the column and
+  the backfill line; re-run it in the SQL editor to deploy.
+- **The Pact block** on the Character tab (`PactBlock.jsx`, id `pact:<set>`),
+  grown into `block_order` like a creature's: rank and chosen pact on top, the
+  XP-style bar (tap it for the pact's own ledger), the claim button when a bar
+  fills, the next-boon line, then the mission tracker — one built-in action
+  (Tally souls / Offer tribute), at most two standing missions and a create
+  button.
+- **The sealing walk** (`PactPick.jsx`), opened on top of the Rank 1 take:
+  Soulreaping or Collector's, the weapon's form off the plain weapon wall, then
+  FIRST BOON's Novice spell and Novice Martial Move. Done stays disabled and
+  names what is missing; an unsealed pact badges the Advancement tab through
+  `levelQuestions`.
+- **The pact-bound weapon** is a forged-record instance flagged `pact`, pinned to
+  the Primary slot: the equip hook redirects anything aimed at that slot to the
+  Secondary, unequip refuses, the Loadout block's Swap is offered dead with the
+  reason, and the Inventory row wears a Pact-Bound chip and opens the item
+  instead of the browser. Its workings weigh **nothing** on Magic Burden
+  (`itemBurden` returns 0 for a pact item), which is the designer's own "does
+  not take burden".
+- **Reshaping** is a sixth long-rest action kind (`pact` in `restActions` /
+  `restPlan`), one night, no Supplies, workings ride along.
+- **The boon ladder**: four a rank in printed order (enchantment for the weapon,
+  spell, Martial Move, skill), Novice / Adept / Master, each claimable once.
+  Rank 3 opens the endless bargain once all twelve are claimed: each further bar
+  costs half again the last, for any spell or any Martial Move.
+- **The riders**: everything the pact grants (the weapon's attacks included) is
+  cast with the best attribute (`cast: 'highest'`, the lineage cards' own
+  HIGHEST), Empowered by 1 at Rank 2 and rolled with advantage at Rank 3 —
+  `pactModifiers` on the granted cards, `pactWeaponRiders` folded into
+  `attackModifiers` beside the Colossus and the hide.
+- **The Abilities tab** grows a "Boons of the pact" block per pact (kind
+  `pact`), riders on every row, with `PactTools` under it: adjust the bargain,
+  the form and every claimed pick. Permanent at the table, correctable there,
+  the pair every permanent choice keeps.
+- A skill the pact granted is refused by the odd-level chooser ("Your pact
+  already granted you this") and the pact's own skill wall refuses the ones a
+  background or a level taught, so no skill is ever sold twice.
+
+### The prices
+
+The designer's numbers, on the spec: a Collector's Pact starts at 4,000 coins and
+grows by 2,000 a bar; a Soulreaping Pact starts at 8 and grows by 4, a soul worth
+the dead entity's level (two level 4 kills are 8). Progress is a lifetime total
+like XP and bars are derived, so nothing is ever spent down or lost.
+
+### The readings, open for Jules
+
+The chat spec left more open than a sheet does. Each of these is one line to
+change if the reading is wrong:
+
+1. **The name is kept letter for letter: "Pact of Ordenance".** If Ordnance
+   (weaponry) or Ordinance (a decree) was meant, it is one string in talents.js
+   and two filenames in `data/templates/`.
+2. **It filled the roster's Pactbound slot.** If it was meant as a new set
+   beside Pactbound, the placeholder line goes back and the id changes.
+3. **Claim order.** The spec says boons "come in a specific order" and also that
+   the player is asked "which of the 4 he wants". Reading: the printed order is
+   what the block announces as next; the claim menu offers every open rung and
+   the player chooses. If the ladder is strict, the menu locks to the first open
+   rung.
+4. **Banked bars.** Progress keeps accruing past the current rank's rungs (a
+   Rank 1 pact that fills five bars claims the fifth the moment Rank 2 opens),
+   because the bar is lifetime like XP. If overflow should be lost, the walk in
+   `pactBars` caps instead.
+5. **The endless price compounds**: bar 13 is bar 12's cost times 1.5 rounded
+   up, and so on. If "increased by 50%" meant 50% of the flat step, the factor
+   line in `pactThreshold` changes.
+6. **The endless boon reaches every tier** (Novice, Adept and Master; Legendary
+   and Unique stay out of reach, as everywhere).
+7. **The weapon's own attacks count as pact abilities**: best attribute, the
+   Rank 2 Empower and the Rank 3 advantage all land on them. FIRST BOON prints
+   it, so the card is the place to correct it.
+8. **"Weapon enchant" reads as every enchantment that is not Body or Curse.**
+   An Imbuement binds its spell at the moment the boon is claimed. The spell an
+   Imbuement carries is dealt as gear (printed attribute, no pact riders): the
+   enchantment is the boon, the spell rides the item.
+9. **"Any existing weapon" reads as the plain weapon wall** (Common,
+   unenchanted, not Claws & Teeth). The five named enchanted blades are
+   particular items, not forms.
+10. **A skill boon is gated by level** the way the odd-level skill is, off "a
+    skill that he could learn".
+11. **Handing the set back** (a level lost) removes the block, the boons and
+    the guards. The forged weapon record stays equipped as an ordinary item
+    until removed by hand — what the entity does about a broken bargain is the
+    table's, not the sheet's.
+12. **An item tribute feeds the pact its codex price** and the item is
+    destroyed. A custom item has no price the sheet knows and goes through a
+    mission instead.
+
+### The art
+
+Nothing painted yet. The set plate goes in `data/Pact of Ordenance/` and the five
+card plates are keyed `what-it-hungers-for`, `pact-bound-weapon`, `first-boon`,
+`deepened-bargain` and `endless-bargain`; run `npm run art:cards` when they land.
+
+### The wording, corrected after review
+
+Three text-law findings from the same-day review pass, all fixed:
+
+- FIRST BOON said "your best attribute" where the codex's one spelling for the
+  mechanic is **"your highest Attribute"** (the INNATE lineage cards and the
+  background grants print those exact words, and the tie rule is documented
+  under that phrase). Card body, summary, the Abilities-tab note and both
+  templates now print the codex's own phrase.
+- PACT-BOUND WEAPON spelled the rest mechanic "spend your Long Rest Action"
+  where seven sibling cards print "use your Long Rest action". Reworded to the
+  sibling idiom.
+- The Tribute window abbreviated Game Master to "GM", the only place in the app
+  that did. Spelled out.
+
+## Four one-offs on the item shelf, 2026-08-27
+
+Handed over in chat, four sentences and one parenthesis:
+
+> "The deep sea trident should no cost Burden is a special item.
+>
+> Patien blade is misspelled fix it.
+>
+> Cloak of nightmare should have no burden.
+>
+> (to fix the no burden thing just add a special enchant that make the cost of
+> en enchant go down to 0 in burden.)
+>
+> Create a Ring called First Place: that increases your Willpower by +2, 'A rare
+> token given by the Liche of bones to those that have impressed them. Beside its
+> slight magical properties, it might impress the right persons.' 4 burden"
+
+| What | Where it landed |
+| ---- | --------------- |
+| UNBURDENED, the working that zeroes a piece | `src/lib/enchantments.js`, read by `itemBurden` in `src/lib/items.js` |
+| Deep Sea Trident and Cloak of Nightmare wearing it | `src/lib/weapons.js`, `src/lib/trinkets.js` |
+| Patien printed **Patient** | `src/lib/weapons.js`, both weapon templates |
+| ACCOLADE, +2 maximum Willpower at 4 burden | `src/lib/enchantments.js` |
+| First Place, the ring that carries it | `src/lib/trinkets.js` |
+
+### The parenthesis is the whole design
+
+The instruction could have been read as a field: type `burden: 0` on two rows and
+move on. It was read as the parenthesis says instead, because a 0 typed over a
+sum is a number with no reason attached to it — the player opens the trident,
+reads a Unique Imbuement worth 9 and a Cold Infusion worth 4, and the meter says
+nothing moved. UNBURDENED is that reason, printed on a card they can read.
+
+It is the first working on the shelf that reads *another* working. Every other
+row carries its own number and `itemBurden` adds them up; this one carries no
+number and silences the sum. So it is a flag (`burdenFree`) read on the item in
+`itemBurden`, never summed into a character in `enchanting.js` — which also means
+it lands everywhere at once, because that one function is what the meter, the
+codex browser, the equip prompt and the math line under the tile all go through.
+See `burdenTerms` in `statMath.js`.
+
+**Coin is untouched, on purpose.** `itemCost` still reads every enchantment's own
+`burden` at 1000 a point, so the trident is still worth 17,000 and the cloak
+9,150. What a working is worth and what it costs to carry are two questions, and
+only the second one was asked.
+
+`unique: true` keeps it off the Enchanter's shelf the way it keeps UNIQUE
+IMBUEMENT and SHROUDING off: no rank opens a Unique tier, so `enchantOptions`
+drops the row outright rather than refusing it as "needs a higher rank", which is
+the one thing a higher rank would never fix. Nobody lays this. It comes on the
+item.
+
+### What the two pieces weighed
+
+| Piece | Was | Now |
+| ----- | --- | --- |
+| Deep Sea Trident | 13 (Unique Imbuement 9 + Cold Infusion 4) | 0 |
+| Cloak of Nightmare | 9 (Unique Imbuement 9, the curse already free) | 0 |
+
+The trident is the one that mattered. Capacity is Level + Mind + 10, so 13 was
+more than a level-1 character had in total — the note over `unique-imbuement`
+flagged exactly that and left it as Jules's to reprice. This is that repricing,
+and it went to the item rather than to the working, so a Unique Imbuement laid on
+anything else still weighs what it weighs.
+
+The Ring of Shrouding reaches the same 0 the older way, with a working that costs
+nothing itself. Two routes to one number, and neither is worth rewriting into the
+other: SHROUDING is a cheap working, UNBURDENED is an expensive piece nobody has
+to carry.
+
+### Patien became Patient
+
+Jules's word that the name was a typo, and the sword's own comment already said
+where the name came from: the enchantment is PREPARED, and the blade is the
+waiting rather than the swing. Patient is that word spelled.
+
+**The id stays `patien`.** An id is what a saved character points at, and this is
+the same sword renamed rather than a second one — the same call `leather-vest`
+took when the sheet renamed it Leather Tunic. Both weapon templates print the new
+name; the art brief still names the plate `patien.webp`, which is a filename and
+not a label.
+
+### First Place, and the number left open
+
+The ring is a trinket like every other: burden 0 of its own, weight 0, and
+everything it does lives in `enchants`. The +2 had to be an enchantment, because
+`characterGrants` is what carries an item's riders to its wearer and it reads
+`enchants` and nothing else. So the working is named, the way SHROUDING is named
+beside the Ring of Shrouding, and it is called ACCOLADE.
+
+Jules's sentence is the ring's lore verbatim, with one edit: **Liche of Bones is
+capitalised** as the title it reads like. Nothing else in the codex names them
+yet, so that is a first appearance rather than a correction.
+
+Priced at a gold ring's 800 plus the working's 4 points at 1000 apiece, so the
+tile reads 4,800. Rare, because one working is what the Ring of Shrouding is
+rated on and because the designer's own sentence calls it rare.
+
+### The readings, open for Jules
+
+1. **4 burden is the designer's, and it is not the shelf's rate.** ARCANE BATTERY
+   buys 8 maximum Willpower for 6 burden; ACCOLADE buys 2 for 4, which is six
+   times worse per point. Burden on this sheet tracks what a working is *worth*
+   rather than what it does, and "it might impress the right persons" is worth
+   something the sheet cannot measure — but if 4 was meant as the ring's price
+   rather than its weight, it is one field.
+2. **"Willpower +2" reads as maximum Willpower**, the pool, not an attribute.
+   Willpower is derived (2 x Level + 2 x Mind + 10) and ARCANE BATTERY is the
+   only other thing that moves it, so `willpowerMax: 2` is the same rider.
+3. **Two First Places do not stack**, and the second one still weighs 4. That is
+   the same-source law working as written: the effect is deduped where the sum
+   happens, never on burden. Wearing two is 8 burden for +2 Willpower.
+4. **UNBURDENED is printed on the piece, so the player sees it.** If it was meant
+   as invisible bookkeeping, the card body is what to cut, not the flag.
+5. **The trident's and cloak's coin values did not move.** If "no burden" was
+   also meant to mean "worth less", `itemCost` is where that would go.
+
+### The art
+
+Nothing painted. First Place is keyed `first-place` in `public/items/`, and the
+two new enchantments carry no picture the way most of that shelf does not.
+
+## The potion shelf, replaced, 2026-08-27
+
+Handed over in chat, three sentences:
+
+> "In the the Potions folder you will find the design for all the potions and
+> their assoaicte iamge. Remove all the existing one and replace them iwth this
+> ones.
+>
+> Add the magma image from the magma folder to the magma spells.
+>
+> For price a potion cost 100 x Willpower cost in coins. Adpet add 1000 to that
+> and Master add 2000
+>
+> The tea cost 8000"
+
+`data/Potions/` is twenty four 1024x1024 plates and
+`Equipment, Enchantments and Items - Items - Potions.csv`: Name, Tags, AP, WP,
+Main Effect, twenty four rows, Novice to Legendary. `data/Magma/` is three
+2400x1792 plates for a family the codex has held since the opening Elemental
+drop.
+
+| What | Where it landed |
+| ---- | --------------- |
+| 24 potion cards and 24 flasks, replacing 9 | `src/lib/utility.js` |
+| Both prices off the sheet's Willpower column | the same, typed per flask |
+| The round trip that proves it | `scripts/check-potions.mjs`, `npm run lint:potions` |
+| 5 riders, replacing 4 | `src/lib/riders.js` |
+| The Aristocrat's belt, which lost its item | `src/lib/backgrounds.js` |
+| `data/Potions/` claimed by both art scripts | `scripts/pull-card-art.mjs`, `scripts/pull-item-art.mjs` |
+| Magma claimed as a family folder | `scripts/pull-card-art.mjs` |
+| 24 card plates, 24 item tiles, 3 Magma redraws | `public/cards/`, `public/items/` |
+| The importer's contract, rewritten | `data/templates/potions.csv` |
+
+### Nine went, twenty four came
+
+| Was | Now |
+| --- | --- |
+| Healing Potion (printed card, 2 AP) | HEALING POTION, the sheet's row 1, same id |
+| Love Potion (Novice, rolled against the drinker) | LOVE POTION, Adept, the drinker gets the advantage. Same id, different card |
+| Growth Elixir (its own numbers) | GROWTH ELIXIR, which hands over GIANT GROWTH. Same id, different card |
+| Healing Draught, Flame Burst Flask, Potion of Physique, Potion of Instinct, Potion of Mind | gone. The sheet has no row for any of them |
+| Aether Draught | gone. It was a stand-in written to fill a belt loop, and stand-ins go when the design arrives |
+
+The Aether Draught is the only one worth a second look, because it was the codex's
+one way to put Willpower back in a flask and the new sheet has no row that does
+that. It was also the **Aristocrat's starting kit item**, so that background now
+starts with a Luck Potion instead. One line in backgrounds.js if you want another.
+
+Bandage Roll and Smoke Vial stayed. Neither is tagged Potion, and neither is on
+the sheet: a Field Kit and a piece of Alchemy.
+
+### The prices, and the anchor that moved
+
+Your rule, applied to the sheet's Willpower column, which is the brewer's price
+rather than the drinker's:
+
+    coin     = 100 x WP, + 1000 at Adept, + 2000 at Master
+    Supplies = 10 x WP, at every rung
+
+Every number is typed on its own flask rather than computed, the way a weapon's
+damage is typed card by card, and `npm run lint:potions` is what proves the
+twenty four of them still add up. The Supplies rate is the one alchemy.js has
+carried since 2026-08-24 and it did not move.
+
+**The rung surcharge is coin only.** You said nothing about the crate, and a
+night's brewing is components rather than scarcity, so an Adept recipe costs ten
+a point like every other one. That is the one place the rule was extended by a
+reading rather than by your sentence.
+
+**The Healing Potion is 200 coins now, and it used to be 100.** That row was the
+coin anchor for the whole codex, your own "a healing potion is like 100 coins,
+and 100 coins is 10 dollars". Nothing else was repriced, so the scale is
+untouched and the sentence is still true of everything mundane. It is just no
+longer this row that says it. **Confirmed the same day: "200 coin healing poitons
+i fine."**
+
+| Rung | Rarity | Coin range | Supplies range |
+| ---- | ------ | ---------- | -------------- |
+| Novice, 8 rows | Common | 200 to 600 | 20 to 60 |
+| Adept, 8 rows | Uncommon | 1200 to 1600 | 20 to 60 |
+| Master, 7 rows | Rare | 2600 to 4000 | 60 to 200 |
+| Legendary, 1 row | Legendary | 8000, by hand | none |
+
+**Rarity is not on the sheet** and is read straight off the rung. Epic is skipped:
+four rungs into five words leaves a gap somewhere, and a gap is cleaner than
+crowding. Your coin surcharge is the same ladder said in money, which is what
+makes that a reading rather than a taste.
+
+**Life Tree Tea is the exception on every count.** Its Willpower cell is empty, so
+there is no number to multiply and you priced it at 8000 directly. It carries no
+`brew` either, for that reason and one more: ALCHEMY's ladder stops at Master, so
+nothing opens a Legendary tier for a recipe to sit on.
+
+**Weight is not on the sheet.** 0.3 kg is the shelf's flask, 0.4 kg the two that
+are thrown and the two heaviest elixirs, and the Healing Potion keeps the 0.5 kg
+it has always had rather than being quietly relabelled underneath somebody's
+pack. `check-stat-math.mjs` weighs four of them in one of its thirteen sheets.
+
+### The round trip
+
+Every body was mapped back to the words a reader of your sheet would have
+written and compared to your cell, whitespace and case flattened. **736 of your
+876 words survive, 84%**, and ETHEREALNESS POTION survives whole. Every one of
+the other 140 is one of six things:
+
+| Kind | Example |
+| ---- | ------- |
+| A misspelling | `applyig`, `duraiton`, `iresitable`, `lessl`, `agaisnt`, `secondlife`, `hte`, `peice` |
+| A unit written short | `1h` to **1 hour**, `12h` to **12 hours**, `a duration 3 hour` to **3 hours** |
+| `potion` where the row's own name says otherwise, 15 of them | LIFE DRAUGHT says draught, ELIXIR OF SLIME says elixir |
+| `creature` where the codex says entity, 3 of them | the vocabulary rule in docs/card-text.md |
+| `the user's` where every other row says `your` | LIFE DRAUGHT, DEFENSE DRAUGHT |
+| A garbled clause or a restatement | the four readings below, and POTION OF DISGUISE's "The changes last until the effect ends" |
+
+Three Oxford commas came out as well, which the word count does not see because
+punctuation is stripped before it compares: `lightning, cold, and fire` and its
+two siblings. That is `docs/text-style.md`, enforced by `npm run lint:text`.
+
+The fifteen `potion` swaps are the one systematic edit worth arguing about. Every
+row on the sheet opens "Drinking this potion", including the ones called draught
+and elixir and tea, and it reads as the copy-paste it is. The 2026-08-24 pass had
+already made the same swap for HEALING DRAUGHT and GROWTH ELIXIR. **One sed puts
+the word back** if you would rather it said potion throughout.
+
+### Four readings the sheet needed
+
+1. **EXPLOSIVE CONCOCTION's two distances. Settled: 3 meters.** "up to 6 meter ()"
+   has an empty parenthesis where the feet go, and 6 meters is 20 feet. "within 3
+   meters (15 feet)" is two different distances: 3 meters is 10 feet, 15 feet is
+   4.5 meters. The meters were taken, and your answer the same day was "explosion
+   conction is 3meter a radius", so the parenthesis was the wrong half. The throw
+   range is still the sheet's 6 meters.
+2. **SHRINK ELIXIR's missing 1.** "the damage dice you take are empowred by while
+   the damage dice you deal are depowered by 1" has no number on the first half,
+   and the symmetry answers it: 1 either way.
+3. **"Depowered" is not a word this codex has.** Empowered is one more die of the
+   same kind and there is no printed opposite, so the clause reads "you roll one
+   Damage Die fewer on the damage you deal". If Depowered is meant to be a real
+   keyword, it belongs in `keywords.js` and this card can name it.
+4. **ELIXIR OF SLIME's "Elemental and Physical".** Neither is one of the codex's
+   damage types; both are families, and your own two rows above name what is in
+   each: BRIGHTSCALE is Lightning, Cold and Fire, SKINSTONE is Sharp, Blunt and
+   Force. So the two words stay as you wrote them and are not chipped as damage
+   types.
+
+### Two notes to the developer, neither printed, both open
+
+A card never carries a note to the developer (docs/card-text.md section 7), so
+both parentheses were read as instructions and neither is wired.
+
+1. **POISON.** "make sure it is tracker o nteh tracker and modify the active
+   weapon". The tracking works already: every card in the codex can go on the
+   block. What cannot be wired is the weapon rider, because the effect is
+   "additional Decay damage equal to the number of Damage Dice rolled" and the
+   rider table has no field for a bonus that counts dice. It has `empower` (one
+   more die), `elevate` (a bigger die) and `damage` (a replacement type), and this
+   is none of the three. **A fourth field would do it: a flat bonus, in a named
+   damage type, equal to twice the Damage Dice count** (see the correction below,
+   where you doubled it). VULNERABILITY POTION and
+   TITANSBANE POISON coat a weapon too, and neither is wireable either: one asks
+   the sheet to hold a vulnerability and the other to pass an affliction to
+   somebody else's sheet.
+2. **LIFE TREE TEA.** "make is so that when use it does all the thing a long rest
+   does but does not cost anything nor does it propoer a a long rst action". This
+   is a real feature and a big one: nothing on this site can take a rest from an
+   item. A rest is a window with a plan in it (`restPlan` in rest.js), priced in
+   Supplies and buying exactly one Long Rest action, and the tea asks for that
+   window with the price and the action taken out. **The card prints both clauses
+   so the table can apply it by hand**, and the wiring is a job of its own.
+
+### Six more rulings
+
+1. **The Improvised Brewing column is gone.** The old table had an element-dice
+   column per row and this sheet has none, so `brew.elements` is absent on all
+   twenty four and the recipe shelf prints the price and nothing else. The old
+   dice could not be carried over: five of the seven rows that had them no longer
+   exist, and the three ids that survived are different rows now. IMPROVISED
+   BREWING still prints on the Alchemist's card and still asks for dice the codex
+   cannot name.
+2. **LIFE DRAUGHT is the rider that got away.** "increases the user's Health and
+   Max Health by 5 x level" is `healthMax`, a field the rider table holds, and
+   unlike VIGOR the scale is the *drinker's* level, which is the sheet holding the
+   row. What stops it is the shape: every rider is a literal constant, and
+   `runningRiders` is handed an effects list and no character to measure a level
+   against. One argument threaded through it unlocks this row and VIGOR together.
+3. **The card tags now carry a rung, and no item card did before.** Your Tags
+   column says `Item, Consumable, Novice Potion`, so that is what the cards say.
+   It changes where they sort on the Abilities tab: potions now stack Novice,
+   Adept, Master, Legendary instead of by name.
+4. **Nothing prints small, and the estimate said two would.** `lint:cards` puts
+   ELIXIR OF TIME at 536 and BOTTLED LIGHTNING at 523, both over the 480 target,
+   so the harness was rebuilt and the renderer asked (controls: SENSE LIFE 0.902,
+   RAIN OF FIRE 0.945, PESTILENT CLOUD 0.969, EARTHQUAKE 0.949, EYE OF THE STORM
+   0.969, all to the recorded digit). **23 of 24 print at full size and ELIXIR OF
+   TIME prints at 0.973**, which is better than five cards already in the codex.
+   Measured twice, with no character and at level 20 with every attribute at 10,
+   and the two readings agree: the live values cost nothing. So the two loads over
+   target bought back 84% of your wording for no visible type at all.
+5. **The Willpower is charged to the drinker. Settled, and it reversed a ruling
+   two days old.** This section first said the opposite, on the 2026-08-24
+   argument that a Willpower price paid inside a long rest is a price nobody pays,
+   since a long rest ends by filling the pool. Your answer was "The willpower is
+   for the cost of using the poitions", so every card carries it (Life Tree Tea
+   excepted: its cell is empty) and the same column still sets both prices. See
+   the correction below.
+6. **Adept and Master brewing is live for the first time.** ALCHEMY's Rank 2 and
+   Rank 3 opened tiers the codex had nothing on, and the note over `alchemyPreview`
+   in alchemy.js was written about exactly that. Rank 1 reaches 8 recipes, Rank 2
+   reaches 16 and Rank 3 reaches 23, the dearest of them ELIXIR OF TIME at 200
+   Supplies against a Rank 3 discount of 10. **That is worth a look**: a Rank 3
+   Alchemist brews three a night, so one night at the still can cost 570 Supplies,
+   and the discount was scaled against a table that topped out at 40.
+
+### The art
+
+Both scripts claim `data/Potions/` now, the way both claim `data/OF/`, because a
+belt item teaches exactly one card and every file in there is both an item's
+picture and a card's. 24 card plates at 720 and 200 px, 24 item pictures at 720
+and 128 px, 1.70 MB out of 15.8 MB read. Nothing is cropped: the plates are
+paintings rather than whole card renders.
+
+**Seven of the twenty four filenames are not the row's name**, and they are in the
+ALIASES table of both scripts. Three are misspellings (`Draguth of cleansing`,
+`Explosive Concotion`, `Shrinking Elixir`), three name the thing where the sheet
+names the row (`Healing`, `Chaos Potion`, `Seafarer elixir`), and `Poison (2).jpg`
+is what a browser calls a second download, with no `Poison.jpg` beside it.
+Renaming any of the seven retires two entries at once.
+
+**Magma is the twelfth family folder and the third redraw.** All three files match
+the card names, `Magma Surge.jpg` included, which is worth noting because the old
+render in `data/Elemental/Magma/` is called MAGMA SLIDE and the card is MAGMA
+SURGE: the plate is named for the card. All three cards already had art cut from
+those renders, so all three are shadowed and the newest wins by seven months.
+**`data/Elemental/Magma/` can be deleted**, and the run names its three files on
+every pass until it is, the same as `data/Elemental/FIRE/`.
+
+### Corrected the same day
+
+Four sentences back, and the first one reversed a ruling:
+
+> "The willpower is for the cost of using the poitions, explosion conction is
+> 3meter a radius. 200 coin healing poitons i fine. dobule the bonus of poison."
+
+1. **The Willpower is the drinker's cost.** Every one of the twenty three cards
+   with a Willpower cell now charges it, from the Healing Potion's 2 to the ELIXIR
+   OF TIME's 20. Life Tree Tea stays at 6 Action Points and nothing else, because
+   its cell is empty.
+
+   **The same column still sets both prices**, since you confirmed the 200-coin
+   Healing Potion in the next sentence. So one number does two jobs: what the
+   potion costs to make and what it costs to drink. That reads right rather than
+   merely being convenient, and it is now the shortest statement of the shelf: a
+   potion's Willpower is how much of a working it is, so ELIXIR OF SLIME is 10 to
+   distil, 100 Supplies to brew, 3000 coins to buy and 10 to hold down.
+
+   What this reversed is the 2026-08-24 ruling in alchemy.js, which argued the
+   Willpower was the brewer's alone because a price paid inside a long rest is a
+   price nobody pays. That argument was sound and incomplete: the brewer is still
+   never billed for it. The header there is rewritten rather than deleted, so the
+   two days it was read the other way stay on the record.
+
+   **It changes the shelf in play, not just the text.** A drinker now pays for the
+   flask a second time, and the top of the shelf is expensive: 20 Willpower for
+   ELIXIR OF TIME against a level-1 pool of 2 x Level + 2 x Mind + 10. Nothing on
+   this site refuses a use it cannot pay for without the "Use it anyway" prompt, so
+   the sheet will offer it and the table will decide.
+
+2. **EXPLOSIVE CONCOCTION's radius is 3 meters**, which is what the card already
+   said. The "(15 feet)" in the cell was the wrong half of the pair. Ruling closed.
+
+3. **200 coins for a Healing Potion is intended.** The anchor moved on purpose.
+   Ruling closed.
+
+4. **POISON's weapon coat is doubled**: "additional Decay damage equal to **twice**
+   the number of Damage Dice rolled". A swing rolling 3d6 adds 6 Decay, and one
+   rolling 3d6 Empowered by 1 adds 8. Still not wired, and the field it would need
+   is now twice the dice count rather than once.
+
+Every checker still passes, `lint:potions` included, and the renderer still prints
+23 of 24 potion cards at full size: the Poison body grew by six characters and the
+cost orbs are chrome rather than text.
+
+### Corrected after review, round two
+
+The second review pass (data flow and integration) confirmed five defects, all
+fixed and all covered by the smoke test:
+
+- **Changing the bargain now carries the standing over.** The kinds differ by
+  around five hundred to one, and the old write re-read the same lifetime total
+  in the new unit: 4,000 coins became 4,000 souls (nineteen filled bars), and a
+  Soulreaper switching back stranded their souls at nothing. convertPactProgress
+  preserves the bars filled and the fraction into the next one, and the ledger
+  row says what was carried.
+- **Re-tapping the bargain already held is a no-op** instead of a false
+  "reshaped" ledger row and a needless save.
+- **A rank given back lapses what it opened.** A claimed rung above the held
+  rank grants nothing (no card dealt, no working on the blade, no skill held)
+  until the rank returns, and the bar it cost stays spent, the way a stripped
+  enchantment keeps its Supplies. The claim window prints the waiting pick on
+  its rung.
+- **The weapon riders tie to the pact weapon's own cards.** The stowed
+  weapon's attacks, opened from the Inventory tab, printed the pact's
+  highest-Attribute, Empower and advantage riders; pactWeaponRiders now checks
+  the card against the form's own two abilities.
+- **The burden exemption ends with the set, at the reading.** The pact flag on
+  the forged record survives normalizeForged on purpose, so heldItem's forged
+  path now strips it when no held set answers to it (ruling 11's "ordinary
+  item" made true), and while the set is held it reads the ench list off the
+  pact's own picks, so a lapsed working comes off the blade without waiting
+  for a reshape to heal the record.
+- **Backing out of a boon's card wall returns to the claim ladder** instead of
+  closing the whole claim window; only a pick made closes it.
+
+## The bag ladder, redrawn, 2026-08-28
+
+Handed over in chat, two sentences:
+
+> "redo naming scheme for the bags, starting uncommon it should be magic. The
+> wieght should be form lowest to highest 5- 10-15-20-30-40-50. And price 20x the
+> weigh they add."
+
+| What | Where it landed |
+| ---- | --------------- |
+| 7 bags on a fixed ladder, replacing 6 | `src/lib/bags.js` |
+| Every price off the capacity | the same, typed per bag |
+
+### Seven rungs, and one number sets the price
+
+Seven capacities were named and there were six bags, so the shelf grew by one.
+Fives to twenty and tens after:
+
+| Rarity | Bag | Holds | Weighs | Costs |
+| ------ | --- | ----- | ------ | ----- |
+| Common | Canvas Satchel | 5 kg | 0.4 kg | 100 |
+| Common | Leather Rucksack | 10 kg | 1.5 kg | 200 |
+| Common | Ash Frame | 15 kg | 3 kg | 300 |
+| Uncommon | Twofold Pocket | 20 kg | 1.2 kg | 400 |
+| Rare | Threefold Pocket | 30 kg | 0.9 kg | 600 |
+| Epic | Fivefold Pocket | 40 kg | 0.6 kg | 800 |
+| Legendary | Ninefold Pocket | 50 kg | 0.3 kg | 1000 |
+
+    cost = 20 x capacity
+
+No rung surcharge and no rarity multiplier, unlike the potion shelf: you said the
+price is the weight it adds, so the price is the weight it adds. A bag is worth
+exactly what it lets you carry, and the Legendary one costs a fifteenth of what
+the old Legendary one did.
+
+### Three Commons, because the count forces it
+
+"Starting uncommon it should be magic" puts the first magic bag on the Uncommon
+rung. There is one rarity below Uncommon and five in all, so seven capacities
+into five rarities has only one solution: **three Commons and then one apiece.**
+Nothing was chosen there, it was counted.
+
+### The naming scheme
+
+The break at Uncommon is the scheme, and both halves are named off it.
+
+**Craft, at Common.** Material and form, the plainest word for each: Canvas
+Satchel, Leather Rucksack, Ash Frame. What a market town sells.
+
+**Magic, from Uncommon up.** One family, and the number in the name is the
+ladder: a Pocket is a pouch folded through itself, and how many times says how
+much is behind the seam. Twofold, Threefold, Fivefold, Ninefold. That is the
+Ninefold Pocket's own lore promoted to a naming rule, since it already read
+"folded through itself nine times" and was the only bag on the shelf explaining
+what it was.
+
+The two halves run opposite ways on the third column. A craft bag gets
+**heavier** as it grows, because more room is more canvas. A Pocket gets
+**lighter**, because the deeper it folds the less of it is actually here. A
+Ninefold holds fifty kilos at three hundred grams; an Ash Frame holds fifteen and
+takes three of them back. That gap is the argument for the magic half, and it is
+why the craft three are a worse deal than their capacity first suggests.
+
+### The tag is `Relic`, which the codex already had
+
+`Relic` is this codex's word for a piece that is magic without anybody having
+worked it, and the belt was already using it: the Terra Cotta Disk and the
+Druidic Tome carry it. The four Pockets take the same word rather than a new one,
+so the item browser gains one chip that cuts the shelf in half instead of a
+seventh vocabulary term.
+
+**No Magic Burden, and becoming magic did not change that.** What costs Burden is
+a *working*, laid at a forge or at a rest. A Pocket is folded, the way a Relic is
+found rather than made, and both Relics on the belt carry none either. The Runed
+armor set settled the shape of that argument already.
+
+### Three ids retired
+
+| Was | Now |
+| --- | --- |
+| `porters-frame`, Porter's Frame, Uncommon, 22 kg | `ash-frame`, Ash Frame, **Common**, 15 kg |
+| `quartermasters-pack`, Quartermaster's Pack, 35 kg | `threefold-pocket`, Threefold Pocket, 30 kg. Its ledger lore moved with it |
+| `hollowed-satchel`, Hollowed Satchel, 55 kg | `fivefold-pocket`, Fivefold Pocket, 40 kg. Its "do not climb in" rule moved with it |
+
+The Porter's Frame is the one that had to move rather than the one that happened
+to. It was Uncommon and its own blurb said "nothing magic about it", which is
+precisely the row your sentence outlaws: it cannot sit above the line that says
+magic starts here. It is Common now and keeps every word.
+
+`canvas-satchel`, `leather-rucksack` and `ninefold-pocket` kept their ids. An id
+is what a saved character points at, so **a sheet wearing one of the three
+retired bags finds its bag slot empty** and its carry ceiling back down to
+Physique alone. Nothing throws: `heldItem` hands back null for an id the codex
+has lost, and the slot reads as empty. The Canvas Satchel keeping both its id and
+its 5 kg is also what keeps the two carry fixtures in `check-stat-math.mjs`
+honest, since their arithmetic is written against a 40 kg ceiling.
+
+## Wind Grace moves the tile, 2026-08-28
+
+Handed over in the same message:
+
+> "Wind Grace should properly increase movement speed."
+
+| What | Where it landed |
+| ---- | --------------- |
+| `grants` on a lineage card | `src/lib/lineages.js`, on WIND GRACE |
+| The two readers that turn it into a number | `lineageGrantSources`, `lineageGrants`, same file |
+| The stat it moves | `deriveStats` in `src/lib/characterModel.js` |
+| The line the tile prints | `statMath` in `src/lib/statMath.js` |
+| The sheet that proves it | `scripts/check-stat-math.mjs`, one of 14 |
+
+### What was wrong
+
+Nothing was broken, exactly. WIND GRACE printed "Your Movement Speed is
+permanently increased by 1.5 meters (5 feet)" and the Speed tile ignored it,
+which is where [What is printed and not yet
+wired](#what-is-printed-and-not-yet-wired) said it stood. A Skybound's Speed read
+5 and should have read 6.5.
+
+### A card can carry its own number now
+
+The fix is not a special case for one card. A lineage card may carry a `grants`
+map, and `lineageGrantSources` walks the cards this character actually holds and
+hands back one row per card that has one:
+
+    grants: { speed: 1.5 }    on WIND GRACE, and nowhere else yet
+
+Two things follow from where that walk reads. It goes through `lineageCards`
+rather than `lineage.cards`, so **a Wildkin's pool card would count only once it
+has been taken** and would count the moment it is. And a row is named after the
+card rather than the ancestry, because the card is what a reader can go and look
+at:
+
+    3m base + 2m half your Instinct + 1.5m Wind Grace = 6.5m
+
+That is the shape `grantTerms` already drew an enchantment with, which is why
+statMath.js hands these rows to it unchanged rather than growing a second helper.
+
+**Attributes are deliberately not sayable this way.** A lineage's three attribute
+grants are the level ledger's, declared on the ancestry as `attributes` and
+rebuilt into the columns by `reapplyTotals`. A card that raised one from `grants`
+would raise it twice.
+
+**It stacks like a fourth source.** Blood, a worn working, an ephemeral hour and
+a card on the tracker are four different sources, so the same-source law never
+touches this. And it is permanent, so `syncDerived` bakes it into the stored
+`speed_m` column the way it bakes in a breastplate's Armor.
+
+### The six still printed only
+
+WIND GRACE was one of seven. The rest are left alone, because you named one card:
+
+| Card | Says | Would be |
+| ---- | ---- | -------- |
+| WILD SWIFTNESS | Movement Speed +1.5 meters | `{ speed: 1.5 }`, which `flat` already reads |
+| MINERAL SKIN | Defense +1 | `{ armor: 1 }` |
+| SCALEY | Defense +1 | `{ armor: 1 }` |
+| INNER TIDE | Willpower +4 | `{ willpowerMax: 4 }` |
+| FEY BLOOD, UNDEATH RESILIENCE, HEARTHY | Health per level, not a lump | a rider `flat` has no field for |
+
+The first four are one line apiece and a fixture each in `check-stat-math.mjs`.
+**WILD SWIFTNESS is the one worth a ruling**, because it is the same 1.5 metres
+on a Wildkin's pool card, and the two cards now disagree about whether the sheet
+believes them. The last three are a different shape: they change the *rate*
+Health is bought at rather than adding a lump to it, and nothing on the sheet can
+hold that yet.
+
+## Three bugs off the sheet, 2026-08-28
+
+Handed over in one message:
+
+> "Quick draw skill should properly recude the swap weapon cost when used.
+> Swap does not work with the pact weapon of ordenance.
+> frugal skill need to properly update the cost of supplies for long and short
+> rest"
+
+| What | Where it landed |
+| ---- | --------------- |
+| `grants` on a skill card | `src/lib/backgrounds.js`, on FRUGAL and QUICK DRAW |
+| The reader that turns it into rows | `skillGrantSources`, same file |
+| The composed reading, over all three sources | `characterSkillGrantSources` in `src/lib/levelPicks.js` |
+| What a rest costs | `restCut` and `restPrice` in `src/lib/rest.js` |
+| What a swap costs | `swapModifiers` in `src/components/sheet/LoadoutBlock.jsx` |
+| The pact weapon's pin | `useEquipSlots` in `src/components/sheet/useEquipSlots.jsx` |
+
+### A skill card can carry its own number now
+
+Two of the three were the same bug: a skill said a number in prose and nothing
+read it. FRUGAL read "reduced by 2 Supplies" and the rest button still charged
+10, QUICK DRAW read "reduced by 1" and the swap still charged 2.
+
+The fix is the one [Wind Grace](#wind-grace-moves-the-tile-2026-08-28) made the
+same week for lineage cards, in the same shape and deliberately so. A skill card
+may carry a `grants` map, beside the prose that says the same thing:
+
+    grants: { restSupplies: 2 }   on FRUGAL
+    grants: { swapAp: 1 }         on QUICK DRAW
+
+`skillGrantSources(ids)` walks a list of skills and hands back one row per skill
+that has one, named after the card. Rows rather than a sum, which is the one
+place this differs from the lineage reading: both consumers have a second
+question to answer, because a rest that cost 8 instead of 10 has to be able to
+say what cut it.
+
+**A skill reaches it from three places, not two.** `heldSkillIds` in
+`levelPicks.js` was reading the background and the odd-level picks, and a pact's
+skill boon is held exactly the way a background's is: `skillOptionsAt` in the
+same file has always refused to sell one twice. So it reads `pactSkillIds` as
+well now, and `characterSkillGrantSources` is the composed reading every consumer
+wants. Composed there for the reason `characterGrantSources` is composed in
+`items.js`: that is the file that knows where a skill can have come from.
+
+### What a rest costs, and who cut it
+
+`restCut(character)` is new and `restPrice` reads it. It merges two deduplicated
+readings that were never going to be one:
+
+| Source | Reading | Cuts |
+| ------ | ------- | ---- |
+| OZ'EM PICK, an enchantment | `characterGrantSources` in `items.js` | 2 Supplies |
+| FRUGAL, a skill | `characterSkillGrantSources` in `levelPicks.js` | 2 Supplies |
+
+**A working and a skill are different sources, so the two stack.** A Frugal
+Enchanter wearing a Pick rests for 6 rather than 10. The same-source law bites
+inside each half and never across them, which is exactly what keeping the two
+readings apart buys: two rings carrying a Pick cut it once, and a background and
+a pact both teaching Frugal cut it once.
+
+The rest window's own line names them now. It used to read `10 less 2, which is
+what you have laid on yourself`, which was true only while an enchantment was the
+only thing that could do it. It reads `10 less 4, which is Oz'em Pick and Frugal.`
+
+### What a swap costs
+
+SWAP WEAPONS is a card in `weapons.js` printing 2 Action Points, and the Loadout
+block was carrying its own `SWAP_AP = 2` beside it. It reads the card now, and
+`SWAP_AP` is only the fallback for a codex that has lost it.
+
+QUICK DRAW's cut rides that card the way an Arcanist's PERFECT CASTING rides a
+spellbook: `apCut` and `apCutFrom` meet the printed cost in `cardCost`, so the orb
+on the button, the orb on the pay button and the card inside the prompt all print
+1 with the 2 struck out beside it.
+
+**This is the second cut in the codex to be wired, and the first to ride the
+holder rather than a pool.** [The other four stay in
+prose](#the-other-four-stay-in-prose-and-it-is-not-the-same-call-twice) said what
+those four are waiting for: "a different rider, on the holder rather than on the
+pool". This is one, in the smallest possible case. It is not general enough to
+close them out, because a swap is one card and RECKLESS VIOLENCE cuts every
+weapon attack a Berserker makes, which has to be read where the attack is priced
+rather than at one button.
+
+**The advantage is the half still printed only.** "The next attack after you swap
+is done with advantage" is a rider on the swing after a named action, which is
+the shape AMBUSH and a Martial Move already have on the effects tracker (see
+`tricks.js` and `moves.js`) and which nothing yet lays from a swap. It is one
+`addEffect` in `askSwap` plus a read in `attackModifiers`, and it is not done here
+because the report named the cost.
+
+### The pact-bound weapon swaps hands
+
+PACT-BOUND WEAPON prints "always fills your first weapon slot", and the sheet read
+that as: the Primary slot is the pact's, so the Swap button is dead. That made the
+second weapon unreachable for the whole life of the pact, which is not what the
+card is for. The card's own next clause is "it returns to your hand at a word".
+
+The ruling taken, which is Jules's to overturn: **what the pact holds for good is
+a weapon slot, not the first one.** That is the designer's own sentence for it,
+off the 2026-08-27 spec: "the pact bound weapon permanently takes a slot in the
+weapon selection screen". So:
+
+- The Swap button is live. It moves the pact weapon between the hands like any
+  other weapon, at the same price.
+- **The pin follows the weapon** rather than naming the Primary slot.
+  `useEquipSlots` finds which hand holds it and guards that one: equipping another
+  weapon over it lands in the other hand, and `unequip` refuses. A stowed pact
+  weapon still cannot be lost or stolen.
+- `pactWeaponRiders` needed no change and reads better for it. It checks
+  `main_hand`, which is to say it rides the weapon only while it is actually
+  drawn, and a stowed weapon makes no attacks.
+- The Inventory row's Pact-Bound chip was already slot-agnostic, so it follows the
+  weapon on its own. Its tooltip says where the swap is.
+
+The one thing this allows that reads oddly: swapping a pact weapon with nothing
+stowed leaves both hands empty for 2 Action Points. That is what the swap has
+always done with a single weapon, so it is left alone rather than special-cased.
+
+### How this was proved
+
+Four harnesses in the scratchpad, 46 checks, all passing. Two are plain node
+against `src/lib`, and two mount the real components through Vite's own
+`ssrLoadModule` and `renderToStaticMarkup`, with a stub `AuthContext` standing in
+for the tier gate `useCodexArt` reads. That is the Pact of Ordenance's own
+pattern and it is worth rebuilding for any block work.
+
+- the cards declare what they print, and the codex still prints 2 and 5 and 10
+- Frugal cuts both rests from a background, from an odd level and from a pact,
+  and held twice it cuts once
+- a Pick and a Frugal upbringing cut 4 between them, and the plan's line names
+  both
+- Quick Draw cuts the swap to 1 and the orb carries the struck-out 2
+- the Swap button is live and not disabled with the pact weapon in either hand
+- a weapon equipped over the pact's hand lands in the other one, in either
+  direction, and neither hand will give the pact weapon up
+
+`npm run lint`, all eight lint scripts and the build are clean.
+
+## The tracker learns to fill itself, 2026-08-28
+
+Jules, on the sheet in general: "any skill, ability, spell, item or other that
+impact your character sheet should be visualy done." Then five things the tracker
+had to do, and one more that came in while it was being built.
+
+Block 6 could always hold a name, a count and a note. What it could not do was
+find out about anything on its own. You cast a ten-turn spell, you paid for it,
+and then you went back to the block, opened the picker and found the same card in
+a list of a hundred and forty to say so. Nobody did that twice in a fight.
+
+### A use lays its own row
+
+`spendUse` is where every use on the sheet turns into a write, so it is where the
+row is laid. What lands is what the picker would have offered: the card's own
+printed duration, read out of its prose by `effectDuration`.
+
+**Laid rather than added.** "Unless they say otherwise, effects do not stack from
+the same source", and one card is one source however many times it is cast. So
+`layEffect` refreshes a row that is already there and moves it back to the top,
+keeping its id. Recasting KINDLE WEAPON on the turn before it lapses is a fresh
+count on one row, not two rows racing each other to zero. `runningRiders` has
+always deduplicated by card id, so the block now agrees with the arithmetic.
+
+**A vague duration is offered and never written.** `effectDuration` answers at two
+confidences: a clause that says how long ("10 turns", "until a Long Rest", an
+Upkeep, "for 1 hour"), and one that only says the thing lasts at all ("stays
+until", "while it is active"). The picker takes both, because a player reading a
+shelf can look at the label and decide. Writing a row nobody asked for cannot
+decide. Three cards proved it inside an hour:
+
+- every Reload in the codex "stays loaded until you Shoot them", which is the
+  magazine the ammo pips already draw
+- STABILIZE leaves somebody else "unconscious until healed", on somebody else's
+  sheet
+- DISCORD opens "You bend the note until it is wrong", which is a sentence
+
+A card carrying a rider is the exception and is barely one: it printed no clock at
+all, and the reason to lay its row is that the sheet knows a number to bend for
+it. A WISP OF MIST that laid no row is a WISP OF MIST whose Speed never moved.
+
+116 cards now write their own row. 15 more are still offered in the picker and
+never written, and BARKSKIN is the only one of those worth a second look: "this
+effect is lost when all Shield is depleted" is a condition rather than a clock,
+and one tap in the picker is the honest answer for now.
+
+### Two parser bugs found on the way
+
+Both were already wrong in the picker. Auto-writing is what made them visible.
+
+- **A threshold is not a duration.** DRAUGHT OF CLEANSING removes "all status
+  effects that last 20 turns or less", and the count pattern read that as a potion
+  running for 20 turns. Its own card comment already said the number was a
+  threshold. Now the pattern agrees: a count followed by "or less", "or fewer",
+  "or more" or "or greater" is not a clock.
+- **A missing word boundary.** The open-ended pattern ends in `ends?` with no word
+  boundary in front of the group, so it matched the tail of any word ending in
+  "end". DISCORD's "bend the note until it is wrong" was read as a spell that runs
+  until it ends. Every word that could do it is common in card prose: bend, send,
+  extend, defend, blend.
+
+### The rows wear their school
+
+"tracker should use tag coloring like spell school." One rule down the left edge
+and the count beside it, off the same table the chips on a card's banner use. The
+family wins over the school, because it is the narrower of the two and it is a
+shade of its school's hue anyway: a block sorts into schools by eye and separates
+inside them. A row with no school keeps the block's own cyan, which is what makes
+the coloured ones read as spells. An ended row goes grey whatever school it was.
+
+`cardAccent` in tagColors.js, which stays a leaf: it is handed a tag list rather
+than a card.
+
+### The turn stops and says what is waiting
+
+"Whenever you press turn start or turn end. If there is effect that say either you
+get a pop up with a reminder of what happens."
+
+`turnTriggers.js` reads the running rows for the boundary that is about to be
+crossed. Nothing is a field on a card: the codex writes these in its own words and
+writes them consistently, which is what makes them findable.
+
+- 29 cards in the codex name a Turn Start, 8 a Turn End
+- whole sentences come back, resolved for this character, so the reminder reads
+  "2d6 + 12 Decay damage" rather than the token the card is authored with
+- an Upkeep's price rides along, and only when the Upkeep half is what matched.
+  Every Upkeep in the codex but one is paid at a Turn Start, and that one is paid
+  at a rest: reading the boundary off its own prose is what keeps it off the list,
+  rather than a rule naming the card
+- **`until` is not a trigger.** "rooted until its next Turn End" names the same
+  boundary and means the opposite thing: a duration the row's count is already
+  keeping. A reminder that fired every turn to say a root ends eventually is noise
+  on top of a number that already says so
+- **the keyword half is case-sensitive and the longhand half is not.** ELIXIR OF
+  TIME says "At your Turn End, time rewinds and your turn starts again", which
+  contains the letters of the Turn Start keyword and means a sentence. A keyword
+  is capitalised everywhere the codex prints one. A row typed in by hand is read
+  loosely, because nobody writing "save at the start of my turn" into the note box
+  is following the codex's capitalisation
+
+The prompt also says the two things no card prints: what runs out on this press,
+and what gets swept off the block. Nothing is paid or applied. Missing an Upkeep
+is a real choice, and a sheet that quietly paid it would be making that choice for
+the player, so the prompt says what is owed and against what is in the pool.
+
+**It only opens when it has something to say.** A turn with nothing running goes
+through on one press exactly as it always did, which is the whole reason a
+reminder is tolerable at a table.
+
+### The two cards that write your sheet
+
+"If there is trigger like long rest or clean potion that do something do it." Both
+printed the promise long before anything kept it. `onUse.js` is the table, keyed
+on the card id the way `EFFECT_RIDERS` is.
+
+- **DRAUGHT OF CLEANSING** clears rows off the tracker, and the card is wider than
+  it was. Jules: "update cleans potion to remove all effect under 20 turn of that
+  require a long rest". The designer's line was a count of turns, which left the
+  draught unable to touch the effects worth drinking a Master potion over: a
+  Titansbane, a disease, anything written to sit on you until you have slept. So
+  it is drawn at both ends now, and the second half is **everything a Long Rest
+  would have ended**, which is `until` of either kind since a long rest ends
+  everything a short one does.
+
+  Written "would only have ended at a Long Rest" and not "lasts until your next
+  Long Rest", because the second is how the codex writes a *duration* and
+  `effectDuration` reads it as one. The draught would have put itself on the
+  tracker as a thing running until bedtime.
+
+- **LIFE TREE TEA** is a Long Rest, run through the one function that knows what
+  one is. Not a copy of it: a rest fills six pools, brings a downed creature back,
+  reloads a belt, gives back every card that said you had to sleep before using it
+  again and ends everything written to end at one. `restPlan` grew a `free` flag,
+  which is what the card's own two clauses ask for: no Supplies out of the crate,
+  and no Long Rest action, so no labours, no prepared hand, no brews and no
+  reshaped blade.
+
+Both fire **after** the pools are paid, which is also the order the cards
+describe: you pay six Action Points for the tea and then you have the benefit of a
+night. And both fire for a use that was waved through, because an override
+withholds the price and never the effect.
+
+Left out, with reasons in the table: ETHEREALNESS POTION ("immune to all effects"
+is every rule at once), ELIXIR OF CHAOS (the 2d10 is the table's, and rolling it
+would take the one interesting thing away), ELIXIR OF TIME (a snapshot of a whole
+character, which nothing here keeps).
+
+### What is running, where the decision is
+
+Jules, while this was being built: "when you click on the quick bar button to use
+an action, it should list all the active effect on under the use buttons."
+
+This is the moment it matters. Half of what the tracker holds changes the thing
+you are about to do, and all of it was on another block behind the dialog you were
+looking at. So the list comes to the decision: block 6's rows at reminder size,
+same count, same school colour, same line about what each is doing to the sheet,
+same arrow when one is bending a roll. Nothing that acts, because the block is
+where a tracker is edited and a dialog that let you edit one while paying for
+something else would be two decisions wearing one Cancel.
+
+Above them, when the card lasts, the row this use is about to write, and for the
+two cards above, what they are about to rewrite. A sheet that quietly starts
+counting things is a sheet you stop trusting.
+
+### What a running card does to your swing
+
+The display half of the ask, and the piece that was missing. A tracked card can
+bend a tile, a swing, or both. The tile half was on block 1 already, in the
+"Running" line and in the tooltips. The swing half was applied correctly to every
+attack card the sheet printed and announced nowhere, so a player who was not
+looking at an attack card had no way of knowing.
+
+`swingShift` says it on block 2, in copper: Advantage or Disadvantage netted the
+way the arrow on a card nets them, the dice Empowered, the dice Elevated, the
+damage type a card laid on the blade, and the cards behind all of it by name.
+
+### The creature's own tracker
+
+A use played from a creature's bar goes through the same `spendUse`, so it lays
+rows too, and its rows live on the creature. `minionActor` now carries the
+creature's `effects` and `minionSpend` sends them back the creature's way beside
+its Action Points. Without both, an ally keeping a spell up would have written the
+row onto its bonded's block, counting down on the wrong press.
+
+### Still open
+
+- **A rider that scales off the holder.** `runningRiders` is handed an effects
+  list and no character, so every entry in the table is a literal constant. LIFE
+  DRAUGHT raises "Health and maximum Health by 5 x level" and the level is the
+  drinker's, which is the sheet holding the row, so the number is knowable: one
+  argument threaded through unlocks it. What stops it today is the other half of
+  the same sentence. A rider can raise `healthMax`, which is derived, and it
+  cannot move current Health, which is a stored column and a one-way pool move.
+  Half a potion wired is worse than none, so it waits on a ruling: does the
+  current Health rise with the maximum, and where does it go when the hour is up?
+- **BARKSKIN and five like it** are offered in the picker and never written,
+  because "lost when all Shield is depleted" is a condition rather than a clock.
+
+## Which card a rider rides, and who did it, 2026-08-28
+
+Two findings off the same afternoon of testing, and they turn out to be the same
+question asked from both ends: **what is this rider actually touching, and does
+the sheet say so.**
+
+### Reckless was riding an attack it never named
+
+Jules: "reckless is only for weapon attacks, then gets updated to also special
+weapon attack if you have the rank 3 talent."
+
+`Weapon Attack` and `Special Weapon Attack` are two different tags in this codex
+and every weapon teaches one card of each. `isWeaponAttack` matches both, and
+Martial Moves read it, so a RECKLESS bought for one swing was quietly doubling the
+value of a Cleave.
+
+The cards were on the right side of this all along. Every Martial Move in the
+codex that names an attack names the same one:
+
+- WOUND, WING CLIP, CONCUSS, RECKLESS, REND, DISARM, FEINT, SWEEP, EXECUTE,
+  PERFECT FORM, BLEED: "your next **Weapon Attack**"
+- none of the fourteen says Special
+
+So this supersedes the 2026-08-21 ruling the file was built on ("in the case of
+martial move it just apply to both and the first one of the two action used remove
+the effect"). A move now reads `isPlainAttack`, which is the narrow test a
+Trickster's AMBUSH always read, and the two rider systems finally agree.
+
+`spendMoves` takes the card now. It used to take none, and that one missing
+argument *was* the old ruling: a move rode either attack, so whichever was paid
+for spent it and there was nothing to check. A Flurry now leaves a RECKLESS
+sitting on the tracker waiting for the swing it was bought for, exactly as it
+always left an ambush.
+
+**The widening is built and nothing carries it.** `martial.special` is a
+rank-indexed array beside `perAttack` and `onReaction`, `moveAllowance` hands it
+out with the rest, and three places read the one answer: what prints on a card,
+what a swing spends, and what the tracker row says it is waiting for. No set
+declares it, because no card in the codex prints the rule. The three rank-3
+Martial Move talents each say something else:
+
+- Duelist SHARP: two moves on one swing, or one before a reaction
+- Feral Curse BESTIAL FRENZY: the same two clauses
+- Colossus PERFECT TECHNIQUE: two moves on one Heavy or Great Melee attack
+
+The only card in the codex that widens anything to a Special Weapon Attack is the
+Berserker's MASTER OF PAIN at Rank 2, and it widens RAGING BLOW rather than
+Martial Moves. **Open for Jules: which card carries this, and what should its text
+say?** One line of data turns it on once that is settled.
+
+### Nothing said who was doing it
+
+Jules, the same afternoon: "My finesse pact bound weapon as two adventage and on
+the action view I dont see the source. It is also empowred and I dont see the
+source below the action buttons. Everything that is modified need to be seen but
+only what modifies it. So if my spells are empowerd because of talents I should
+see on the side below the action buttons. No exceptions."
+
+The sheet always folded these in correctly and almost never said whose they were.
+`advantageFrom` existed and carried names, because the arrow badge in a card's
+corner needed them. An Empowered die carried not even that: the number moved and
+nothing anywhere said why.
+
+So every fold keeps a receipt now. `attribution.js` is the shape, a leaf like
+`tagColors.js`:
+
+    { from: 'Fire Infusion', gives: { empower: 1, damage: ['Fire'] } }
+
+`from` is the name a reader can look up: a card, an enchantment, a working. Never
+a number and never a mechanism. `gives` is what that one source contributed, so
+two sources of advantage are two rows.
+
+Five places build them and one place reads them:
+
+- `itemModifiers` a weapon's own workings, one row an enchantment
+- `loadoutModifiers` a set's boost, its cut and the attribute it casts off
+- `pactModifiers` the bargain's rank riders and its highest-Attribute rule
+- `moveRider` one row a Martial Move riding the swing
+- `attackModifiers` merges all of it with what the weapon in hand grants, what
+  shape you are in, what a Trickster bought and what is on the tracker
+
+The use prompt prints them under the two ways, as **Changing this**, and under
+that the tracker rows the list did not account for, as **Also running**. Nothing
+is printed twice.
+
+**"only what modifies it" was the harder half.** A row is written where a source
+gave something to *this* card and nowhere else. A Duelist's AGILE grants a point
+of Defense for the same Finesse weapon DEXTEROUS lends an arrow for, and only one
+of those two is changing the swing.
+
+### Three things the receipts caught
+
+Chasing "no exceptions" turned up three cases where the fold was wrong rather than
+merely quiet.
+
+- **The grants were credited to the set rather than to the card.** A Duelist
+  swinging with advantage was told the source was "Duelist" when the card they
+  wanted was DEXTEROUS. Every grant already named its card in a code comment, so
+  the comments became a `from` field: Dexterous, Agile, Giant Slayer, Colossal
+  Force, Perfect Technique.
+
+- **Running riders never reached a spell.** `attackModifiers` has always folded
+  them onto every card and said why in as many words ("a spell attack is an attack
+  and granting it Empowered names no weapon"), and the hand was the only group that
+  ever called it. So a GIANT GROWTH Empowered your sword and left your Fireball
+  alone. `knownGroups` folds it now, and a spell picks up the tracker and nothing
+  else, since every other rider in that function is already gated on a weapon
+  attack.
+
+- **KINDLE WEAPON would then have leaked onto spells.** Its clause is "when the
+  **imbued weapon** lands a hit, its damage is Empowered by 1 and the damage type
+  becomes Fire", so folding it onto a Frost Bolt would have changed what the spell
+  was made of. It carries `weapon: true` now and `runningRiders` takes a
+  `{ weapon }` option; it is the only entry in the table that needs one, because
+  every other rider names an attack, a roll or a sheet rather than a weapon.
+
+And one narrowing on top: riders fold only onto a card there is something to bend.
+Empowered and Elevate are both about damage dice, so a card that rolls none has
+nothing for them to do. A RECKLESS waiting on the tracker is not itself Empowered
+by a GIANT GROWTH, and neither is a RENEW.
+
+### How this was proved
+
+Two node harnesses over `src/lib` and one Vite bench mounting the real use prompt
+with a stub `AuthContext`, which is the Pact of Ordenance's own pattern.
+
+- a Duelist 3 with RECKLESS waiting: Strike carries it and spends it, Flurry
+  carries neither and leaves it on the tracker
+- the same swing credits Fire Infusion, Dexterous, Kindle Weapon and Reckless, each
+  with what it gave
+- an Arcanist 3 casting: Overload lends Advantage and a die, Perfect Casting takes
+  an Action Point off, and both are named
+- a damaging spell picks up a running GIANT GROWTH and prints 5d6 where it printed
+  4d6, keeping its own Fire
+- RENEW picks up neither, and neither does a Martial Move or any basic action
+- KINDLE WEAPON is credited on both weapon attacks and on no spell
+
+`npm run lint`, all eight lint scripts and the build are clean.
+
+### And the source rows open
+
+"I want to be able to click on the text block like dexterous to see the
+associated card", 2026-08-28, straight after the receipts landed. Naming
+DEXTEROUS is half an answer if reading it means closing the prompt, walking to
+the Abilities tab and finding the set.
+
+So a receipt carries `card` beside `from`, and the name is a button. It deals onto
+the same pile every other card on the sheet deals onto, which sits above every
+dialog, so the card opens over the prompt and closes back onto it with nothing
+spent.
+
+The field is optional and for most rows it is redundant: `getCard` resolves a
+printed name as readily as an id, so DEXTEROUS, OVERLOAD, PERFECT CASTING, FIRE
+INFUSION and RECKLESS all open off their own name. It exists for the rows where
+the two come apart, and the tracker is the case: a row is named whatever the
+player typed into it, so a Kindle Weapon renamed "The blade is lit" credits that
+name and opens KINDLE WEAPON.
+
+A row naming something with no card behind it stays a plain name rather than
+becoming a button that does nothing. A Feral Curse's form is the only one today:
+the source is the set, and a set is not a card.
+
+## The accounting lines move to the tracker, 2026-08-29
+
+Jules: "There is message about temporary effect appearing on the block 1 and 2
+of charactersheet, this should be confined to the tracker block."
+
+The two sentences that account for what is running: the green "Running" line
+block 1 printed under its attribute tiles, and the copper "On your attacks" line
+block 2 printed under its combat stats. Both were readouts of the tracker
+standing on blocks that describe the character, and both print on block 6 now,
+between the tracker's head and its list. The head says how many are running and
+these two lines say what that adds up to: one for the tiles, one for the swings.
+The first is relabelled **On your stats** so the pair reads as the two halves it
+always was.
+
+Nothing else moved. `liveShift` and `swingShift` are unchanged and still have
+one caller, TurnBlock now rather than CharacterTab. The tiles still show the
+bent number, and a hovered tile still prints its own arithmetic with every
+source named, off `statMath`. The lines sit above the list rather than in it,
+pinned with the head: an accounting line that can scroll out of sight accounts
+for nothing.
+
+## The attacks line comes back off, 2026-08-29
+
+Jules: "The On your attack block is redundant. The tracer already tell you
+that remove that block."
+
+The entry above moved two accounting lines onto the tracker, and one of them
+did not survive the day. "On your attacks" summed what the rows under it were
+already saying: a row that rides a swing wears the arrow and prints what it
+does under its own name, so the copper line was the list repeating itself one
+line up. "On your stats" stays, because the tiles it accounts for sit on other
+blocks and the rows are the only place that can say which card bent them.
+
+`swingShift` lost its one caller and is deleted, along with its copper CSS.
+What a riding row does to an attack is untouched: it still folds into every
+card the sheet prints, through `attackModifiers`.
+
+## The refused move chip counts itself, 2026-08-29
+
+Jules: "When you cannot have more martial move at once it should say 1/1
+active."
+
+A Martial Move chip with no room on the next swing used to wear "No room",
+which named the refusal and hid the arithmetic. It wears the count against the
+allowance now, "1/1 active" for everybody and "2/2 active" for a Master
+Duelist, off the same `canLayMove` answer the refusal has always read. The
+tooltip behind it still says the rule in words, and whose rule it is when a
+set raised the count.
+
+## The campaign manager opens, 2026-08-29
+
+Jules: "Accounts have a new page that is the Campaigns... Then the campaign is
+a page that as several tabs like similar character one. For now we will just
+have Overview and Details."
+
+Two new tables and two new pages. `campaigns` is a row the DM owns outright:
+name, description, thumbnail link, a join code and the Overview tab's own
+`overview_order` and `overview_columns`. `campaign_members` is one row per
+character sitting at the table, its `user_id` written by a trigger from the
+character's real owner rather than trusted from the client. Both live in
+supabase/schema.sql, which has to be re-run in the SQL editor before any of
+this works.
+
+**The Campaigns page** (`/campaigns`, behind the login) is the dashboard's
+grammar again: one card per campaign wearing the thumbnail, the title, the
+sentence and a small rectangle per linked character (face, name, level), a
+dashed Create card and a dashed Join card. How many campaigns an account may
+*run* is the tier's ceiling: 1 free, 10 premium and friend, 20 admin. The
+ladder is `campaignSlots` in src/lib/tiers.js for the interface and
+`public.campaign_slots` behind a trigger for the truth, because the client is
+not trusted with a ceiling. Campaigns you play in sit under the ones you run
+and count against nothing.
+
+**Two ways to a table, deliberately different.** The DM links a character by
+pasting its sheet link, on create or later from Details. A player links
+themselves by redeeming the campaign's join code (`KQ2M-8VXR`, minted by the
+app, dash optional, case ignored) for one of their own characters, through a
+definer function, so holding the code never requires being able to read the
+campaign. The code sits on the Details tab with Copy and New code beside it. A
+new code retires the old one and unlinks nobody.
+
+**The campaign page** (`/campaigns/:id`) wears the sheet's own chrome: the tab
+bar, the canvas, the block grid, the save light for the DM and the Live View
+badge for everyone else. Two tabs for now. **Overview** is one block per
+linked character, blocks 1 and 2 folded into one cell: round portrait, name,
+level, Experience, the two purses, attributes, combat stats, defenses, the
+three bars, the two pools and Karma. A member who controls a creature also
+puts that creature's first page on the grid, read only, drawn by the sheet's
+own MinionStatsBlock. Every number comes off `liveCharacter` and every hover
+off `statMath`, so a block can never disagree with the sheet it mirrors. The
+blocks rearrange from the same arranger the three tabs share, stored on the
+campaign row. **Details** edits everything the campaign has: the three fields,
+the code, the roster with Remove on every row for the DM, and Leave on your
+own row when you are the player.
+
+Nothing on either page ever writes to a character. The party streams in live
+over one `id=in.(...)` subscription, the roster over another, and the campaign
+row itself streams only to those not holding its pen, which is the editor
+guard the sheet already keeps.
+
+## The party block stops scrolling, 2026-08-29
+
+Jules: "I don't want to have scrolling in the character overview, I need a more
+compact overview."
+
+The overview's block was blocks 1 and 2 stacked at the sheet's own spacing,
+which comes to about 850px in a 640px cell, so it scrolled. A party overview is
+read by glancing across it, and a number you have to scroll to find is a number
+nobody checks. So the block is laid out tighter and **nothing is dropped**: it
+now measures 580px of the 636 on offer, and the leftover is spread between the
+rows rather than pooled under Karma.
+
+Three compactions, each paying for itself:
+
+- **The rows lie down.** Health, Shield, Willpower and the two point pools put
+  their label beside the bar instead of above it, sharing one 104px label
+  column, so every track and every pip row starts at the same place. That is
+  five rows at roughly half their old height.
+- **The headings go.** "Attributes", "Combat Stats" and "Defenses" were three
+  lines of heading over nine tiles that each name themselves. On the sheet they
+  separate two blocks; here they were a third of the tile grid spent on words.
+  Two hairline seams do that job instead, at a fraction of the height.
+- **The purse is a chip.** Experience is one thin line and Coins and Supplies
+  are two chips, where the sheet gives each of the three a panel of its own.
+
+What is not traded is which numbers these are. The tiles, bars and pips are
+still the sheet's own parts off `liveCharacter` and `statMath`, so a Grit here
+is drawn in the same box as a Grit there and hovering it prints the same
+arithmetic.
+
+The block is `overflow: hidden` rather than a scroller, which is the promise
+made honest: it fits, so there is nothing to scroll to. The name clamps at two
+lines, which is the one thing on the block with no natural ceiling, and it
+costs no height at all because the portrait sets that row. Measured at 580px
+with the real fonts and 580px with them replaced by the generic fallbacks, so
+a font that fails to load cannot push Karma off the bottom.
+
+The block-2 meter rule in sheet.css deliberately does **not** cover this one
+any more: it lays its labels differently, so sharing the rule would have meant
+one of the two drifting the moment the other changed.
+
+## The table log, 2026-08-29
+
+Jules: "when you connect a character in a campaign there is log event block that
+is added to all campaigns character page. this work as log of action. so
+whenever a character or later the gm from campaign take action. it shows for
+example if someone cast a spell, it shows on the log"
+
+This is the campaign plan's phase 1 log, and the first thing on the site that
+carries anything **between** two sheets. Until now a campaign could show you the
+party's numbers; it could not show you what the party was doing.
+
+### One table, one row per thing that happened
+
+`campaign_events` is insert only for everybody. A row is a name, a line under it
+and the receipt behind it:
+
+| Column | What it holds |
+| ------ | ------------- |
+| `kind` | `use`, `rest` or `turn` |
+| `actor` | the name that did it, copied at the time |
+| `title` | "Fireball", "Long Rest", "Turn 3" |
+| `detail` | "Spent 2 Action Points and 4 Willpower · lasts 3 turns" |
+| `data` | the card id the row opens, the pools that moved, the verb |
+| `seq` | an identity count, so every reader agrees what order it happened in |
+
+`actor` is denormalized on purpose. A character can be renamed or deleted, and a
+log that then reads "someone cast Fireball" has lost the only thing worth
+keeping, so `character_id` is `on delete set null` and the name stays.
+
+There is no update policy and no delete policy: a log that can be rewritten
+after the fact is not a log. The actor is taken from the session by the
+`claim_event_actor` trigger, which also refuses a character you do not own and a
+character that does not sit at the table it is speaking at. A Game Master may
+write a row with no character on it, which is the table speaking rather than a
+player; nothing raises one yet, and that is the hook the "later the gm" half of
+the ask hangs on.
+
+**Events live 90 days.** Swept by `trim_campaign_events` on insert rather than on
+a schedule, because there is no scheduler here, and one insert in fifty pays for
+the sweep so a table mid-fight cleans up every few minutes and a quiet one
+whenever somebody plays.
+
+**schema.sql must be re-run in the Supabase SQL editor** before any of this
+works.
+
+### The block is the same block in two places
+
+`LogBlock` takes a campaign id and nothing else, which is what lets it sit in
+both homes the ask named:
+
+- **On the campaign page**, one block on the Overview beside the party, arranged
+  with everything else.
+- **On the Character tab of every linked sheet**, one block per campaign that
+  sheet sits at, id `log:<campaign_id>`, appearing when the membership does and
+  going when it goes. It is arranged, moved and named like a creature's block.
+
+Newest at the top, because a log read during a fight is read from the top. A row
+whose event names a card deals that card onto the same stack the rest of the
+sheet deals onto, and on the campaign page it is dealt **against whoever played
+it**, so a spell read out of the feed prints the caster's numbers rather than the
+reader's. Older pages are asked for by a button rather than by an infinite
+scroller, which a 640px block has no room to fight.
+
+The block never writes. It reads once on mount and then rides a
+`campaign_events` insert subscription, so a use on somebody else's sheet lands
+here a second after they press the button, and a reconnect refetches rather than
+leaving a hole where the socket was down.
+
+### What writes to it
+
+Every place that already spends something, and nowhere else. The log is written
+**after** the patch and never instead of it: the points have left the pool
+either way, and a table nobody can reach must not be able to turn a use that
+happened into an error. `postEvent` swallows its own failure for that reason.
+
+| Where | What it says |
+| ----- | ------------ |
+| Quick Bar, Loadout | "Kaelen cast Fireball", "Kaelen attacked with Ashen Blade" |
+| A creature's action bar | logged under the creature's own name, because that is who acted |
+| Brewing, Ephemeral Enchantment | the window pays, so the window speaks |
+| The two rests | "Long Rest · 4 Supplies · spent the night on Enchant an item" |
+| The turn button | "Turn 3", "Ended turn 3", "Entered combat", "Left combat" |
+
+Three verbs and no more: a spell is **cast**, a weapon attack is **attacked
+with**, everything else is **used**. The distinction earns its place because the
+log is scanned mid-fight and those are the two things a reader is looking for.
+
+A BREW is the one use that logs nothing where it was tapped. Its printed cost is
+"x" and it spends nothing; what it actually costs is worked out in the window,
+and that is where its line comes from. One brew, one entry.
+
+### Who reads it
+
+Everybody at the table and nobody else. The read policy is the same reach that
+reads the roster, so a viewer looking at a public sheet they are not seated at
+sees no log block at all: the memberships come back empty and the blocks are
+never grown. That is also what makes the tables list worth reading once for the
+whole page, in `LogProvider`, and handing down through context the way the card
+stack is.
+
+## The bestiary and the encounters, 2026-08-31
+
+Jules: "The next feature I want to add to the campaign is the a beastery of
+enemies that can be used and a feature that can be used to create encounter.
+Encounter are grouping of enemies we will use later for player to setup combat."
+
+This is the campaign plan's phase 2, minus the combat manager. The party could
+be watched and the table could be logged; there was nothing on the other side of
+it. Now there is a codex of creatures, and a way to put a pile of them on a
+table.
+
+### Four rulings first
+
+All four are Jules's, taken before a line was written, because each of them
+would have built a different feature.
+
+| Question | Ruling |
+| -------- | ------ |
+| Where the bestiary lives | **House codex in src/lib**, like spells and weapons. Not a table the Game Master fills. |
+| Creature attributes | **The sheet's own three.** The 2023 stat block prints STR/AGI/INT/WIT and predates the live system. |
+| Live pools | **Per instance.** Six goblins are six rows with their own Health. |
+| Who sees it | **The Game Master alone.** Both tabs, and both policies. |
+
+### The page is the design
+
+`data/Source Temp/Hazebound/Creatures/` holds a blank template and one finished
+creature, and the shape of `src/lib/creatures.js` is that page line for line:
+name, the Difficulty line (`Minion - Level 1 - 10 XP`), the type line, Speed and
+INI, DEF and HP with its hit die, four attributes, Proficiencies / Sense /
+Language, AP / RP / WP, the abilities with their cost pips, and the lore
+paragraph at the foot.
+
+**The Blightgeist is transcribed, not invented.** Both its cards, both its pip
+costs, its lore. Two lines of its page were superseded and both are marked where
+they bite:
+
+- it prints **STR 2, AGI 2, INT 2, WIT 5** and the live system runs on three.
+  Its own Blightbolt casts off WIT, so WIT is the caster's attribute and lands on
+  Mind; STR is Physique and AGI is Instinct.
+- it prints **RP: 3** on a Minion, and a Minion can no longer take reactions at
+  all. The rule wins over the page, and `creatureStats` is where it is forced.
+
+The one edit to Jules's own prose is punctuation: the lore's em dash became a
+colon, which is the only edit `docs/text-style.md` allows on codex text.
+
+**What the page prints is printed, and nothing recomputes it.** Health, DEF,
+Speed, Willpower and the hit die are per creature, because a Blightgeist has 8
+Health at Level 1 where the character formula would hand it 30. What the page is
+silent about is derived exactly as a character's is, because player cards roll
+against it: Initiative is Instinct + level (and the printed +3 *is* that sum),
+Reflex is Physique + Instinct, Grit is Instinct + Mind, Shield is half the
+Health.
+
+The hit die averages the Health beside it. 3d4 is 7.5 against a printed 8, so
+every die in the codex averages what it sits next to, and `npm run lint:creatures`
+is what says so rather than a promise in a comment.
+
+### Three ranks, as data
+
+| Rank | Points | The rule |
+| ---- | ------ | -------- |
+| Minion | AP 6, RP **0** | Cannot take reactions. It has none and can never be given any. |
+| General | AP 6, RP 6 | The clock a character runs on, and its own Willpower. |
+| Overlord | AP **12**, RP 12 | Gains **3 Reaction Points every time a player takes a turn**. |
+
+They are `RANKS` in creatures.js rather than three branches in a component. The
+Minion's rule is enforced in one place, `creatureStats`, so it cannot be got
+round by a rank default, a printed override, an Overlord's grant or a stray
+write: the ceiling is zero, every writer clamps to the ceiling, and the pips draw
+an empty row beside a line saying why.
+
+The Overlord's grant is a **button** on the encounter and not anything
+automatic, because a player's turn happens at the table and the encounter has no
+way to see one. It ticks whatever is running on the Overlord at the same time.
+
+### Nine creatures, three of each
+
+Blightgeist, Cinderling and Fenrat Skirmisher; Hollowed Knight, Mireborn Hexer
+and Ashmaw Stalker; Vaultkeeper Lich, Thornmother and Emberthrone Tyrant. Every
+one gets at least one move it can play, which is the only thing the Minion's
+"tend to only have no special move" is held to: they carry passives where the
+others carry spells.
+
+Their 24 cards are ordinary codex cards, in the codex's own shape, and they are
+in `CARDS`. That is the whole reason no new component was needed: hand one to
+AbilityCard and it prints, to UsePrompt and it prices itself, to rollPlan and it
+says what it rolls. `Withering Word` opens out of the log by id like anything
+else.
+
+**One engine change, and the printed page asked for it.** The Blightgeist deals
+"1d4 + Half WIT" and the Ghoul "1d6 + Half Power", and `resolveValue` could only
+multiply a stat by a whole number. It now takes `0.5*stat`, floors after the
+multiply rather than before (half of a Mind of 5 is 2, not 2.5) and prints "half
+your Mind (5)" in the breakdown. Every whole multiplier in the codex lands on the
+number it always did, and Speed keeps its half.
+
+### Environmental passives
+
+Jules: "All of them can have passive that are environmental based like a lich
+which has a shield that protects it until a pillar is destroyed."
+
+That is a passive whose condition is a thing in the room, so the sheet does not
+try to check it. A passive carrying `ward` is drawn with a switch: **Break** when
+the pillars come down, **Restore** if the party puts it back, and the row is
+struck through in between. The condition is printed on the row so nobody has to
+open the card to be reminded what they are switching off.
+
+Four creatures carry one, and deliberately not only Overlords: the Mireborn
+Hexer's is Bog Born. A ward is not a boss privilege, and the checker holds the
+codex to that so the lich's example is not read as the rule.
+
+### The block: two panes in one double block
+
+Jules: "just like the draconic ally, a two block but in this case nestled inside
+a main double block for redabelity."
+
+So the layout is the minion's and the framing is not. A bonded creature's two
+blocks are two cells, because they belong to a character who might want them
+apart. An enemy's are one cell two tracks wide: a Game Master reads an enemy as
+one thing, and the pools they are pressing have to sit beside the Health they are
+pressing them against. A hairline down the middle rather than a gap, because a
+gap reads as two cells touching.
+
+The left pane is who it is and what it is made of. The right is its three pools,
+what it can play, its passives and what is running on it. **Neither scrolls**:
+the left is a fixed list and the right holds three folding lists that share the
+leftover height. Measured at 636 of 636 on every one of the nine, with the real
+fonts and with them replaced by generic fallbacks.
+
+Getting there cost the two stat headings. The pane came out 44px over, which is
+exactly two heading lines, and the nine tiles under them each name themselves.
+The party block on the Overview made the same trade for the same reason, so this
+follows a precedent rather than setting one.
+
+**The i button** is on the block head, and behind it the paragraph from the foot
+of the printed page plus the rank's rule. A dialog and not a tooltip: a
+Thornmother's lore is a paragraph, and a bubble that vanishes when you move to
+read it is not where a paragraph goes.
+
+**Willpower is its own.** That is the one line that separates an enemy from a
+bonded minion, which spends its bonded's. `foeActor` dresses it as a character so
+the prompt's affordability check reads its own three pools, and the whole spend
+lands on its own row.
+
+### The encounter
+
+`encounters` is one row per encounter on a campaign, with the whole pile in one
+`foes` jsonb column. One column rather than a row per enemy: six goblins losing
+Health over a turn is one write instead of six, every reader gets the whole fight
+in one payload, and an enemy needs no policy of its own. Held to 60.
+
+**A pool that is absent reads as full**, the law minions.js already keeps, which
+is what lets an enemy dropped on the table a moment ago stand there at full
+Health with nothing written for it. Shield and Reaction Points start empty, as a
+character's do at the bell.
+
+Where a creature appears more than once its copies are numbered as they were laid
+down (Blightgeist 1 through 6) and a lone one keeps its plain name, because
+"Vaultkeeper Lich 1" is worse than "Vaultkeeper Lich". Any of them can be renamed
+by hand, and clearing the name gives the number back.
+
+The tab is a picker, a head (name, notes, the tally, four presses) and the
+blocks. **Add enemies** is a shelf with +1, +2 and +5 on every row, because
+adding six Blightgeists one tap at a time is not a thing anybody does twice.
+**A player took a turn** is the Overlord's rule. **Reset** puts every pool back
+and every ward up, which is how the same encounter is run at a second table.
+
+An enemy playing a card **writes to the campaign log**, and it writes as the
+table rather than as a character: `character_id` null, which the schema has
+allowed the Game Master alone since the log was built and which nothing has
+raised until now. That is the "later the gm" half of the log's own ask, arriving.
+
+**schema.sql must be re-run in the Supabase SQL editor** before any of the
+Encounters tab works. The Bestiary tab needs nothing: it is codex data.
+
+### One bug, found by pressing it
+
+Four taps of + in the shelf landed one enemy. Every writer in encounters.js takes
+an encounter and hands back a whole new `foes` list built from it, and four taps
+land in one React batch: read the encounter off the render and all four build
+their list from the same starting point, so three adds are lost silently.
+
+Two changes fix it, and both are worth keeping:
+
+- **`patch` takes a function of the current row**, not a body. The tab holds its
+  rows in a ref that moves on the write rather than on the render, so a writer is
+  always handed the answer to the press before this one.
+- **a pool step is a delta, not a destination.** Two presses of -5 in one batch
+  both saw the same 8 Health and both wrote 3. `stepFoePool` reads the stored
+  value off the encounter it is handed, so the second press sees the first.
+
+`EnemyBlock` therefore has no `encounter` prop at all any more: a block holding
+its own copy could only ever be a stale second opinion.
+
+### And one thing the checker found in a file nobody had touched
+
+`supabaseClient.js` promised in its own docstring that the app "degrades
+gracefully" without env vars. It did not: outside Vite there is no
+`import.meta.env` at all, and it threw on line 3. `check-creatures.mjs` walks
+encounters.js, which reaches that file, and plain node crashed at import. It is
+optional-chained now, which is the idiom weapons.js already uses, and the
+comment is true.
+
+### Open for the designer
+
+1. **Blight** is a condition the Blightgeist's own card inflicts and no keyword
+   in keywords.js defines. Transcribed as written and left as a plain word.
+2. **The Minion's printed RP: 3** is overridden to 0 by today's rule. If a Minion
+   should keep reactions after all, the change is one field in `RANKS`.
+3. **An Overlord's Reaction ceiling** is 12, which is a guess: it fills over a
+   round of four players at 3 each. The grant itself is yours; the ceiling is not.
+4. **The three rank colours** (teal, amber, crimson) were chosen for separation
+   at chip size rather than for meaning. They are three tokens in index.css.
+5. **The encounter is read by the Game Master alone**, at your ruling. Opening it
+   to the players is one policy in schema.sql and one condition on the tab.
+6. **General health** is printed near the character line (10 a level and 10 a
+   Physique) so a General takes about as long to bring down as a player. The
+   Overlords sit well above it. Both are numbers rather than a rule.
+
+## Creatures scale, and an encounter can be run, 2026-08-31
+
+Jules, on the second pass: "move the willpower to the first block. The
+proficiencies, sense and language block here make no sense, remove it. I should
+be able to preview the abilities. All enemies should have a level scale option
+... The main goal at the end here is that when you have built an encounter you
+can run it which will take control of the character turn start and end."
+
+### Three rulings, taken first
+
+The curve was the one Jules flagged as open, so it was settled before a line was
+written.
+
+| Question | Ruling |
+| -------- | ------ |
+| The curve | **The character's own.** Base 4, +2 and +1 at level 1, +1 on two attributes at every odd level after. |
+| Does DEF scale | **It tracks Instinct plus a bonus**, exactly as a character's Defense tracks theirs. |
+| Where the level lives | **Per enemy in the encounter.** The same Blightgeist is level 1 in the crypt and level 9 in the vault. |
+
+### Almost nothing about a creature is a printed number any more
+
+A creature used to be twenty numbers. It is now a **shape**: a `primary`
+attribute, a `secondary`, a `bonus` spread set when it was written, two
+conversions and a die size. A level turns those into a stat block.
+
+    primary    4 + 2 + one per odd level from 3
+    secondary  4 + 1 + one per odd level from 3
+    the third  4
+    plus the creature's own `bonus`
+
+which is the character's growth read against the creature's own shape, and
+**a +1 bonus on the primary is what carries it to 12 at level 12**, where a
+character without a lineage tops out at 11. Every General and every Overlord
+carries that +1. The Minions deliberately do not: topping out lower is the point
+of being a Minion.
+
+What stays custom is exactly what Jules named and no more. Health is `perLevel`
+per level and `perPhysique` per Physique, where a character is ten and ten.
+Willpower is `perLevel`, `perMind` and a `flat`, where a character is two, two
+and ten. Defense is Instinct plus `avoid_bonus`. Speed and Armor stay printed,
+because neither is an attribute and neither breaks at level 12 the way an
+unscaled Defense would.
+
+The hit die is the design sheet's own arithmetic kept honest at every level: the
+creature carries a **die size** and the count is derived to average the Health
+beside it. 8 Health on a d4 creature is 3d4 because 3d4 averages 7.5.
+
+**The Blightgeist reproduces its own printed page from the curve.** All eleven
+lines: STR 2, AGI 2, WIT 5, DEF 8, HP 8 (3d4), WP 8, AP 6, Speed 3m, INI +3, and
+the Difficulty line. It is the only ground truth in the file and it is now the
+first thing `npm run lint:creatures` checks, which is what makes the shape
+trustworthy rather than plausible. Two of its numbers moved to get there, and
+both are the bonus spread doing its job rather than the page being edited.
+
+The level is two steps on the block's own chip, and an enemy moved off the level
+its page was written at says so in amber. **Changing it empties the pools**: a
+level 9 Blightgeist has six times the Health of a level 1 one, and "4 of 52" is
+not a reading of "it had taken four damage" that anybody wants. The name it was
+given and the wards already broken survive, because those are about the fight
+rather than the body. The shelf carries the level too, opening on the party's own
+average, and prints each creature's stat line **at the level it is about to go in
+at**.
+
+### The block, again
+
+- **Willpower moved to the first pane**, beside Health and Shield. It reads
+  better for it: the left pane is what an enemy *has* and the right is what it
+  can *do*, and Willpower is spent down over a fight the way Health is rather
+  than refilling every turn.
+- **Proficiencies, Sense and Language are gone.** They made no sense here.
+- **Every ability is previewable.** A chip is never disabled now: it opens the
+  use where a use is possible and **deals the card** where it is not. On the
+  Bestiary tab there had been no way to read a creature's card at all, and on a
+  live block a Game Master reading what a Blightbolt does should not have to
+  spend the Action Points to find out.
+
+That cost the pane its last heading. Measured, it came out 25px over its 636 with
+Willpower added, so "Resources" went the way the two stat headings went (all
+three bars name themselves inside their own track) and the row gap came down from
+0.5rem to 0.42rem, which is eleven rows' worth of the fifteen pixels that were
+left. **0 over on all nine creatures, with the real fonts and with them replaced
+by generic fallbacks.**
+
+### Running the fight
+
+`run` on the encounter row: `{ live, round, at, order, awaiting }`. The order is
+rolled once with `rollCheck`, the same 2d6 plus a flat every other check in the
+game is, and stored, so a Game Master who reloads mid-fight finds it on the row
+rather than in anybody's memory. Ties go to the higher Initiative and then to the
+order the encounter was built in, so two identical Blightgeists never swap places
+between renders.
+
+**The load-bearing constraint is one this site has kept since the campaign page
+was built: a sheet is the only writer of its own numbers.** RLS says so too, so a
+Game Master cannot write `turn_state` onto a player's character and must not be
+able to. So the runner does not push a turn. It **announces** one, on the table
+log every seated sheet is already reading:
+
+1. the Game Master advances the order
+2. the encounter row moves, and an event says whose turn it is
+3. **that player's own client** sees its own id, calls the sheet's own
+   `startTurn`, and covers the screen
+4. the player presses End Turn, which ends it there and says so back
+5. the Game Master's runner sees that and advances by itself
+
+The character is in `data` and never on the row, because the schema's
+`claim_event_actor` refuses a Game Master writing *as* somebody else's character,
+which is exactly right and exactly what this needed to work around rather than
+weaken.
+
+`startTurn` is the same function block 6's Turn button calls. An automatic turn
+and a hand-pressed one are the same turn, because a second quieter version of a
+turn start is the sort of thing that drifts.
+
+**The cover** is full screen, and it is the one thing on the site that covers a
+sheet. A player who has been watching the fight go round for ten minutes is not
+looking at their own Action Points, and a badge in a corner is something you find
+after somebody says your name out loud. It closes on End Turn, which is the real
+one, or on Keep Playing, which puts it away and leaves the turn running.
+
+**It never starts a turn twice.** The announcement's own row id is remembered, so
+a resync, a second tab or a doubled press cannot hand out two turns of Action
+Points. And it only listens when the sheet is yours.
+
+Three other things the runner does on each press, in this order and for a reason:
+the pointer moves, then **every Overlord is paid its 3 Reaction Points if the
+turn landed on a player** (before the announcement, or a boss gains its reactions
+after the player has already acted), then the turn is announced. An enemy's own
+turn gives it its Action Points back and ticks what is running on it, which is
+the half of a Start Turn an enemy has.
+
+Taking an enemy off the table mid-fight takes it out of the order in the same
+write, and whoever was up stays up.
+
+### The log reads as a fight
+
+"all actions under 1 turn are bundled under it in a X name turn 1 block."
+
+`bundleTurns` is a second gathering over the top of `groupEvents`: chains first
+(a use and its throws), then turns (a turn and everything done during it). The
+feed arrives newest first and a turn is opened by its own row, so everything
+newer than that row belongs to it.
+
+It draws as a **seam** rather than a panel: `TURN 4 · KAELEN ······ 3 entries`,
+the party in cyan and the enemies in copper, so the shape of a round is legible
+without reading a word. A panel would double the height of the block for what is
+really a heading. Rows that happened before any turn on the page get a bundle
+with no head, which is what a table that is not in a fight looks like.
+
+### Two bugs, both the same bug
+
+Four taps of `+` on the level chip moved it one level. The fix is the one the
+pool steps already had: **a step is a delta, not a destination.** Four
+destinations all worked out from the level on screen are four writes of "2".
+`setFoeLevel` takes `{ by: true }` now and resolves the step against the
+encounter it is handed. Found by pressing it, which is the only way either of
+these was ever going to be found.
+
+**schema.sql must be re-run**, and it now carries an `alter table ... add column
+if not exists run`, because the table is created `if not exists` and a campaign
+that already has encounters on it would not otherwise grow the column.
+
+### Open for the designer
+
+1. **Speed and Armor do not scale**, only the attributes and what is derived from
+   them. Neither breaks at level 12 the way Defense would have, but a level 12
+   Thornmother moves at the pace of a level 1 one.
+2. **XP is linear in the level** (a creature carries XP per level). The character
+   XP table is not linear, so a level 12 Overlord may be worth less than it
+   should be.
+3. **A Minion tops out at 9 or 10** in its best stat rather than 12, deliberately.
+   Say the word and it is a `bonus` field.
+4. **A player's End Turn from their own Turn block** does not move the table on;
+   only the one on the cover does. Both end the turn on the sheet. Wiring the
+   block's button to speak as well is a line, and it was left out because ending
+   a turn out of order should not be able to advance a fight.
+5. **Nothing checks that the fight is over.** Every enemy at 0 Health still gets
+   its turn announced until the Game Master presses End fight.
+
+## The fight manages itself, 2026-09-01
+
+Jules: "the encounters page should show encounter blocks ... Clicking it should
+then open the encounter view and from there the DM should be able to start
+combat. On the encounter page the user has the DM Log block there and an
+initiative and turn manager block." And then the manager itself: targeting
+before a use, effects populating on the target trackers, roll prompts at turn
+boundaries, tracked effects like wall of fire rolled off their rows, and
+"Health, shield and other changes by spells and abilities need to be auto
+applied based on the result."
+
+This is the campaign plan's phase 3, and the load-bearing idea is the one the
+schema wrote down the day the log was built: **`campaign_events` is both the
+log and the post.** A Game Master still cannot write a player's sheet, so
+nothing here made them able to. What lands on a player is *delivered*: an event
+names them in `data.targets`, their own client applies it through their own
+patch, and the row is also the table's record of what happened.
+
+### The tab is two views now
+
+The Encounters tab opens on a **shelf of encounter blocks**: one block per
+prepared encounter with the name, the Game Master's note, the rank tally, the
+bodies by name and a Round badge when a fight is live inside it. The whole
+block is the button. Behind it, the **encounter view**: the head that edits it,
+then the **Initiative & Turns block** beside the **DM Log block** (the same
+LogBlock the Overview grows, titled for the seat it is in), then the double
+blocks. Start combat lives in the view, which is the old Roll initiative press
+unchanged.
+
+Repeat creatures renumbered from "Blightgeist 2" to **"2.Blightgeist"**, the
+number in front where a scanning eye finds it (Jules: "they get named 1.Fenrat
+2.Fenrat"). One on its own still keeps its plain name.
+
+### The target chip
+
+One component wherever a body is pointed at: the order, the picker, the apply
+window. Fixed footprint, the name in the side's colour (party cyan, an enemy
+its rank), and the background is an actual reflection of the Health bar with
+the Shield over it in translucent blue. **No numbers on it**, per the ask: the
+blocks are where numbers live. `TargetChip.jsx`, styled in Campaigns.css.
+
+### Targeting, read off the card
+
+`src/lib/targeting.js` answers one question the way rollPlan answers its own:
+does this card land on other bodies, and on how many? "an entity" is one, "up
+to 3 entities" is three, "each entity" is an area with no cap, "you gain" is
+nobody. No card grew a field. A **Multicast raises the ceiling by one per
+take** as the dial moves ("spend more to catch more targets" is the glossary's
+own definition), and a taken Overcast that names targets contributes whatever
+its own text counts, which is what makes RENEW's overcast reach "all entities
+currently affected". The picker sits in UsePrompt above the pay buttons, only
+when the page hands in a `combat` roster, and **picking is optional**: nobody
+picked is the old flow exactly.
+
+### What a use does to its targets
+
+- **An effect lays on them, not on the caster.** The row `castEffect` would
+  have laid is stripped from the spend and relaid on every picked body: an
+  enemy's tracker directly (`layOnFoes`, one write for all of them, through
+  `layEffect` so a double landing refreshes one row), a player's by an
+  `effect` event their own client hears (TurnCall grew the ear). The vague
+  duration law is untouched: a card whose clock cannot be read still lays
+  nothing anywhere.
+- **The rolled numbers come back.** `usePlayCard` takes `onSettled` and the
+  chain hands back every value that landed. The **apply window** then opens
+  over the picked targets with the working said per body: Armor off each
+  landing (Armor is per hit, so a Flurry's landings stay separate), the Shield
+  soaking, Health taking the rest. Enemies land in one `applyToFoes` patch.
+  Players land as an `apply` event carrying the raw landings, and their client
+  does the arithmetic against its own live pools, because the Game Master's
+  copy of a sheet is seconds old by definition. Health moves through the
+  ledger with the caster's name on it.
+
+### The boundaries prompt, both sides of the table
+
+Next stops at an enemy's turn boundary exactly the way the sheet's own Turn
+button stops: `FoeTurnPrompt` reads `turnTriggers` off the foe's tracker for
+the turn being left and the one being started, and a clause that names dice
+wears a **Roll it** button. The handful is read back off the resolved sentence
+(`clauseThrow`), thrown on the tray over the prompt, and handed to the apply
+window with the boundary's own body preselected when the clause is about its
+holder.
+
+On the player's side the cover finally says what it starts: TurnCall computes
+the start triggers *before* `startTurn` ticks them and prints the same
+TriggerRow the block's prompt prints, with the same Roll and a labelled
+one-tap **Take it** that lands the number on the sheet through `characterDelta`.
+Ending from the cover walks the end boundary the same way. The block's own
+TurnPrompt got the identical roll-and-take, shared through `useClauseRolls`.
+
+### Wall of fire, clicked
+
+A tracked effect whose card rolls a value wears a Roll button on its row: on a
+foe's tracker it rolls and opens the apply window with nobody preselected,
+because only the table knows who walked in; on a player's block 6 it rolls onto
+the table log and the Game Master lands it from their page. `rollPlan` is what
+decides which rows get the button, so a row that rolls nothing offers nothing.
+
+### The table found its dice voice
+
+An enemy's throws never reached the log at all: only DiceSheet held the tray,
+and it is mounted on character sheets. `DiceTable.jsx` holds it for the
+encounter view and writes every logged roll as the table, signed by whichever
+enemy threw (the tray hands the spec's note through as `actor`). Players now
+watch enemy dice replay; the Game Master does not watch their own back
+(`worthReplaying` grew a `table` flag). And a value roll with no card above it
+keeps its own name in the feed now, where it used to flatten to "Damage".
+
+### Also fixed in passing
+
+The turn call cover was styled in Campaigns.css, which the character sheet
+never loads: a player whose first stop was their own sheet got it unstyled.
+The styles moved to sheet.css, which is the file the page the cover lands on
+actually loads.
+
+### The checker
+
+`npm run lint:combat`: target counts read off named codex cards (BRAMBLE WHIP,
+STRANGLING ROOTS, ENTANGLING ROOTS, GIANT GROWTH, RENEW), the census (281 of
+489 cards reach other bodies), the landing arithmetic including the per-landing
+Armor rule and the character floor at negative max, one-write multi-enemy
+applies, the relaid-once law across bodies, and RENEW's Turn Start clause
+coming back off a real enemy as a throwable 1d6 plus flat.
+
+### Open for the designer
+
+1. **Armor reduces every landing of damage**, spell and swing alike. The
+   glossary says "flat damage reduction, applied after a hit lands" and carves
+   nothing out, so that is what the window and the deliveries do. If magic is
+   meant to ignore Armor, say so and it is one line in combatApply.js.
+2. **The apply window applies what was rolled.** A table that rules half
+   damage lands the ruling by hand on the block, as before. A per-target
+   adjuster was considered and left out until asked for.
+3. **A stated number is not auto-applied.** A card that deals a flat "5 damage"
+   with no dice raises no window, because only rolls come back off the tray.
+   Same line rollPlan has always drawn.
+4. **A player cannot pick foes as targets yet.** Their casts still resolve on
+   their own sheet and the Game Master lands the numbers from the encounter
+   view. The delivery channel now carries foe refs in the initiative event, so
+   the reverse direction (a player's wall of fire proposing damage the Game
+   Master's open page applies) is wired-ready and one ask away.
+5. **A delivery needs the player's tab open.** Effects and applies ride the
+   realtime channel the way the turn call does: a sheet that was closed misses
+   them, and the log row is the recovery. The plan's `applied_seq` cursor is
+   the fuller answer if this bites at real tables.
+
+## The player's side of the table, 2026-09-01
+
+Jules, later the same day, off a screenshot of Strike on Lark's own sheet: "on
+this screen, in a combat encounter I should see all enemies I can target", the
+initiative and log blocks on the encounter view "should be half the width",
+and "the turn manager ... when Lark presses end turn it should end the turn."
+
+Two of the morning's open items closed before the day was out.
+
+### The fight reaches the sheet
+
+A player still cannot read the encounter row; that ruling stands. What they can
+read is the table log, and the initiative event already carried the whole
+order (the refs were added this morning "wired-ready and one ask away", plus
+the rank now, for the chip's colour). `FightProvider.jsx` sits inside the
+sheet's LogProvider and holds the fight per campaign: a fetch on mount so a
+reload mid-fight keeps its targets, the insert channel after it, newest word
+wins between initiative and fight-over, judged by `seq` so a late row cannot
+restart a finished fight.
+
+UsePrompt reads it through the new FightContext as the fallback behind the
+`combat` prop, so the same picker the Game Master gets appears on Lark's
+Strike the moment a fight is live and never otherwise. The chips are plain
+faces: `health01: null` draws no bar at all, because an empty bar would say
+"down" and a full one would say "untouched", and a player's client is allowed
+to know neither.
+
+### Their aim is delivered
+
+Targets now leave the prompt as bodies (kind, id, name) rather than ids,
+because everything downstream is building event rows and rows carry names. For
+every caller that has no page of its own — which is every sheet block —
+`usePlayCard` grew the generic half the encounter view does by hand:
+
+- the row the cast lays is stripped from the caster's spend (filtered by card,
+  never deleted wholesale, so a weapon swing's cleared AMBUSH is not
+  un-spent) and posted as an `effect` event naming the targets
+- when the chain settles, each kind of rolled value goes out as one `apply`
+  event carrying the raw landings
+- the use row itself says "at 2.Fenrat and Kaelen" in its detail
+
+The named players apply their own share exactly as before (TurnCall's ears,
+built this morning, needed no change). The enemies' share lands through a new
+consumer on the encounter tab: it reads only rows a *character* signed — the
+table's own writes were applied directly before posting, which is what keeps
+the Game Master's own applies from landing twice — finds whichever encounter
+actually holds the named foe keys (not whichever is open: the refs are the
+address), and writes `layOnFoes` / `applyToFoes` through the same pipeline,
+guarded by row id. The encounter view being on some other screen entirely is
+fine; the shelf consumes too.
+
+The morning's ruling number 4 is therefore closed: a player picks enemies, and
+their wall of fire's damage lands on the encounter row while their sheet never
+gains a write it should not have.
+
+### End Turn is End Turn
+
+Block 6's End Turn used to write a plain turn row and only the cover's button
+spoke the word the runner listens for. One act, one word now: ending a turn
+writes `turnDoneEvent` from the block and the cover alike, and the runner
+stays the judge of whether it moves anything — it advances only when the ender
+is the one it is awaiting, so an out-of-order end still cannot drag the fight
+forward, and on a sheet at no table the row is the same log line it always
+was. The morning entry's "open for the designer" number 4 from the *bestiary*
+drop closes with it.
+
+### And the blocks
+
+The Initiative & Turns block and the DM Log block dropped from double cells to
+singles: together they now take one enemy's footprint, and the bodies start
+one row down.
+
+## The fight found at the table, 2026-09-01
+
+Jules, testing: the player's prompt still offered no targets, End Turn on the
+sheet did not move the tracker, the tracker was nowhere on a linked sheet, and
+"there is no reason for the dice roller to ask for a DC as it should be known
+by the system. So I make an attack against a player, it knows it is DC 15 and
+just displays it and shows a roll button."
+
+### Two bugs, found by playing
+
+**The fight the sheet could not find.** FightProvider scanned one page of the
+feed for the initiative event, and a long evening of testing buries an
+initiative under sixty rows of casts and throws inside an hour: the sheet read
+"no fight", so the picker never appeared. The fight's own moves are asked for
+by name now — `listFightWords` filters the feed on `data->>move` for
+initiative, fight-over and the turn calls, newest first — so the fight is
+found however deep the table talk has grown.
+
+**The winner the runner was not waiting for.** `rollInitiative` started every
+fight with `awaiting` empty, so when a player won the roll — and Lark did —
+their own End Turn moved nothing until the Game Master pressed something. The
+roll now waits on whoever it put first. Pinned in the checker by a seat with
+Initiative 99 and a fixed die.
+
+Two structural holes closed with them: the ended-listener lived on the *open*
+encounter, so an End Turn arriving while the Game Master browsed the shelf
+moved nothing — it is tab-wide now, finds the fight by who it is awaiting and
+advances that one (`advanceEncounter` and `nextFor` take the encounter id, and
+the boundary prompt carries it too). And block 6's End Turn writes
+`turnDoneEvent` — the cover's own word — so the sheet's button ends the
+table's turn exactly as the cover does, with the runner still refusing an end
+from anybody it is not waiting on.
+
+### The tracker on the linked sheet
+
+`FightBlock.jsx`: one per campaign the sheet sits at, grown and arranged
+exactly like that campaign's log block (`fight:<campaign_id>` beside
+`log:<campaign_id>`), drawing the same order the Game Master's block draws —
+off the announcements, never off the encounter row. Plain chips with the
+rolled initiative on them, whoever the runner last called lit (the turn calls
+are read for who is up), and one line that says "It is your turn. Your End
+Turn is what moves the table on" when it is. With no fight running it says so
+and stays small, so the arrangement never reshuffles because one started.
+
+### The DC the system already knows
+
+A check aimed at a picked target carries its own number now:
+
+- `rollPlan`'s check link reads **which defense the sentence names** —
+  "against the Reflex of" is Reflex, "against the Grit of" is Grit, an attack
+  that names nothing is against Defense, and a check against the world (a
+  climb, a search) stays null and keeps asking.
+- The rolled order carries each body's **avoid, reflex and grit**, frozen at
+  the roll: onto the run row, into the initiative event, and from there to
+  every seated sheet. This is a ruling as much as a field — the three numbers
+  a roll is judged by cross to the players' clients; the pools still do not.
+- `armCheck` in usePlayCard folds the two together: every picked target
+  answers with the same number, the link goes out with `dc` set and `askDc`
+  off, and the surface opens reading "2d6 + 5 against 15" with the roll button
+  ready. The verdict lands off it — 13 against 15 read FAILURE with no
+  question asked, and the miss still ends the chain.
+
+Targets answering with *different* numbers keep the question: one throw judged
+three ways is three verdicts, and the tray has one to give. The common case —
+one target, or a volley into same-level copies of one creature — is armed.
+
+A fight rolled before this build carries no defenses in its order, so the DC
+stays asked until initiative is rolled again.
+
+### Moved while it was still cheap
+
+The target chips, the picker and the turn manager block styles moved from
+Campaigns.css to sheet.css, because all three render on the character sheet
+now and that page never loads Campaigns.css — the same cold-load trap the turn
+call cover had, caught this time before anybody saw it unstyled.
+
+## The turn belongs to the table, 2026-09-01
+
+Jules, still playing: the cover should say "Start My Turn" instead of offering
+keep-playing and end; a linked character cannot start combat himself; the turn
+buttons are dead outside your turn and read "Not in an Encounter" outside a
+fight; a targeted roll knows its DC everywhere and a volley "goes against all
+the different entities. So it should show a list of hit entities, critically
+hit entities and missed"; the enemy blocks follow the order with the acting
+one highlighted; the up-chip should be clearer; and an Upkeep "should ask you
+if you want to keep it up or drop it."
+
+### The bell and the cover
+
+Combat state on a linked sheet is the table's now, end to end. The initiative
+event is the bell: every sheet the order names enters combat through its own
+`startCombat` — Action Points full, PREPARED's reactions, the gear's Shield —
+and the fight-over event rings it back out through `endCombat`. Nothing was
+lost by taking the button away, because the button never granted the bell's
+gear either: it is the same write, made when the fight actually starts.
+
+The cover stopped starting the turn for you. It says the order reached you,
+prints what the boundary sets off (rolls to make, Upkeeps to answer) and waits
+on **Start my turn** — the same press, read, press the Turn block has always
+kept, now kept by the announced turn too. Ending happens from the Turn block
+when you are done, and the block's End Turn is the same word the runner
+listens for.
+
+### The seated Turn block
+
+For a character at a table the block's button is the fight's:
+
+| The fight | The button |
+| --------- | ---------- |
+| Your turn is running | End Turn, live |
+| The order stands on you | Start Turn, live |
+| Somebody else is up | Start Turn, dead, saying who |
+| No fight running | "Not in an Encounter", dead |
+
+Mid-turn End is deliberately always pressable: closing your own turn is yours,
+and the runner already refuses an end from anybody it is not waiting on. A
+sheet at no table keeps all three moves by hand, untouched.
+
+### One roll, judged per body
+
+`armCheck` moved into combatApply.js and grew the volley half. An aimed check
+now always carries `judged` — who, against which number — and arms itself two
+ways: one shared number opens the surface saying "against 15" as before, and
+differing numbers roll with no question and no verdict buttons at all, the
+total judged against each body once it lands (`aimOutcomes`, the same four
+bands, so 6 over somebody's Reflex is a critical against them alone).
+
+What follows the check follows the verdicts. Everybody dodging ends the chain.
+The held-back effect — "On a hit, the spore embeds" — lays only on who was
+hit, on both sides of the table: the generic delivery waits for the verdict
+now, and the encounter page does the same through `onResults`. Deliveries go
+to the hits alone. A **verdict row** goes on the log for the whole table
+("Critically hit 1.Fenrat, hit Lark, missed Kaelen"), and the apply window
+opens with the same list in colour, hits preselected, misses listed and still
+pickable because the table outranks the sheet. Everybody dodging opens the
+window too, saying so, because a silence is not an answer.
+
+One ruling inside it: **a critical against anybody maximises the shared damage
+roll**, which is the single-target rule read across a volley. If a lone crit
+in a group should split the damage instead, say the word: the landings are per
+target already.
+
+### The blocks follow the order
+
+While a fight runs the enemy blocks stand in turn order *from whoever is up*:
+the acting enemy first, ringed in copper, and the rest in the order the fight
+will reach them, wrapping as Next is pressed. An enemy not in the order keeps
+to the tail; no fight, no reordering. And the up-chip everywhere got louder:
+filled, double-ringed, glowing and wearing a pointer, because "whose turn is
+it" is read from across a table.
+
+### The Upkeep asks its own question
+
+A boundary row wearing a toll asks it where it comes due, on every surface
+that prints one — the sheet's turn prompt, the turn cover and the enemy
+boundary prompt: **Pay N**, which takes the toll off the pools it names and
+leaves the row running, or **Let it go**, which drops the row, because missing
+the Upkeep is the spell ending in the card's own words. Paying is refused
+rather than clamped when the pools cannot cover it. An enemy's toll comes off
+its own Action Points and Willpower on the encounter row.
+
+## The window, the plate and the curtain, 2026-09-01
+
+Jules, the day's fifth pass: the roller's dice in rows with a seam and a
+different glow on the bursts, a styled plate with the action's image and name,
+Sweep failing to widen a Strike, a checkbox to show enemy health to the
+players, no leaving combat by hand on a seated sheet, and "when an entity does
+an action there should be a 6 second time before the dice roll happens,
+offering all entities with reaction to take a reaction."
+
+### The surface, redressed
+
+- **The plate.** The top of the roller is a framed rectangle now: the card's
+  own art beside the action's name and whose it is. The art travels as a plain
+  URL on the spec, so the tray still knows nothing about the codex; a roll
+  with no card keeps the plate and drops the picture.
+- **Rows and a seam.** The flat floor draws two lines: the dice that were
+  asked for, a thin amber seam, then everything that burst out of them. What
+  was rolled and what the roll did read as two different things, because they
+  are.
+- **The bursts wear their own colour.** Haze violet, glowing, where they used
+  to share the max-face amber. A burst showing its own maximum still goes
+  amber-hot, because it is about to burst again.
+
+### The reaction window
+
+An action taken with a fight standing invites reactions before its dice can
+land. The chain's first roll now carries a six-second `hold`: the surface
+opens saying "Reactions are open · the roll unlocks in 5s" with the Roll
+button counting down, and everyone who can answer gets the knock —
+`ReactionCall.jsx`, a corner banner naming who is doing what, shown only to a
+player with Reaction Points in a live fight or to the Game Master whose
+enemies have some, gone by itself when the window closes. Playing the reaction
+is the flow that always existed (any card, As a Reaction); the window is the
+moment to use it in. Replays are never held: the dice already landed on the
+thrower's screen.
+
+### Sweep widens the swing
+
+`targetPlan` reads the cards riding a use now. SWEEP's "your next Weapon
+Attack is made against every entity within your reach" waiting on the tracker
+turns a one-target Strike's picker into "0 of any", exactly as the prose says,
+and any future rider that names targets is read the same way. Which rows ride
+which attack stays moves.js's law; the prompt hands the riding cards in.
+Pinned in the checker with SWEEP by name.
+
+### The curtain
+
+A per-encounter checkbox on the view: **Show enemy health to players.** It is
+a read policy, not a broadcast — `share_health` on the encounter row, and the
+policy now reads: the Game Master always, the seated members when the box is
+ticked. With it on, every seated sheet's fight chips carry the enemies' bars
+live off the encounter row (FightProvider reads what the curtain lets
+through); with it off they are plain faces again. The flip is announced on the
+log, both because the table deserves the line and because a row that stops
+being readable sends no realtime word of its own — the announcement is what
+tells the sheets to look again and find nothing.
+
+**schema.sql must be re-run** for the column and the policy. And the honest
+caveat, printed on the checkbox's own tooltip: sharing opens the whole row to
+seated members, the Game Master's notes included. The flag is a curtain, not
+a filter; a narrower channel is one ask away if notes need to stay behind it.
+
+### And the door that closed
+
+"End the fight" left the seated Turn block. A linked sheet enters and leaves
+combat on the table's own bell now, and a player who could ring themselves out
+mid-fight would be a runner announcing turns to a sheet that left. Solo sheets
+keep the button.
+
+## The stack, 2026-09-01
+
+Jules, the day's sixth pass: "If a reaction is clicked on, it opens a window
+to choose the action they want to take, and pauses the roll of the reacted
+action. Actions resolve in the order they are put on the stack; movement is
+the only exception, as it happens last. When the reaction is over and we
+return to the player, he should see a popup that asks if the reaction made
+this action fail. If it does fail, the resources are spent but the action is
+not taken. If it targets multiple, the failed question is asked about all of
+them."
+
+### The gate
+
+The six-second countdown moved off the dice surface and became a thing of its
+own: `ReactionGate.jsx`, raised by the tray before any dice go up
+(`tray.gate`), for a use made with a fight standing that actually rolls
+something. It counts six, and the moment anybody opens a reaction it stops
+counting and says who. It stays held until every open reaction is taken or
+passed, which is the stack resolving before the action does, and a hung
+reactor can be carried past with one quiet link. Then, if any reaction was
+actually taken, the fail question: per picked target with Stands/Fails on
+each, or one plain "it fails / it stands" when nothing was picked.
+
+What the gate resolves is what the chain rolls. Failed everywhere: nothing
+rolls, the cost stays spent (pressing use was the decision), and a `failed`
+row tells the table. Failed against some: the chain re-aims at the survivors,
+checks re-armed against the numbers that are left, and the dropped names go on
+the log. The held-back effect of a checkless card also waits out the gate now,
+so an action the table fails has laid nothing on anybody.
+
+### The stack's own rows
+
+Three moves on kind `react`, addressed to the action by its chain id: `open`
+(the hold), `done` (taken; earns the fail question) and `pass` (stood back, or
+picked a movement). The gate subscribes for exactly its own action's rows, so
+two gated actions cannot hear each other's reactors.
+
+### The two windows
+
+The banner is a door now. On a player's sheet it opens `ReactionWindow`: their
+whole quick bar on a shelf, the hold posted the moment it opens, the pick
+walking into the ordinary UsePrompt. Confirming posts `done`; closing posts
+`pass`; **picking a movement posts `pass` immediately**, because movement
+resolves after the action and never holds it. On the Game Master's page it
+opens `ReactionHold`, which is only the hold itself: the enemies' cards are
+already on their blocks, so the window says the roll is held, the card is
+played off the block As a Reaction as ever, and the two buttons say how the
+hold lifts.
+
+A use made *as* a reaction is never gated itself: it is already the interrupt,
+and a window on the window would stack the table into a corridor of held
+rolls. Reactions to reactions stay the table's business.
+
+### Proved in the harness
+
+Open paused the countdown mid-word, done resumed it, the question offered
+Stands/Fails per target, and failing one resolved
+`{ targets: [1.Fenrat, 2.Fenrat], dropped: [Kaelen] }` into the chain, which
+is exactly the re-aim the survivors get.
+
+### The question, asked as one (same day, seventh word)
+
+The banner stopped being a tap-away notice and became the question in Jules's
+own phrasing: "Do you want to take a reaction to X using X?" with the two
+answers under it. **Take a reaction** is the yes: it holds the actor's roll
+(the window it opens posts the hold on mount) and opens everything the
+character can take, with all the time the hold buys. **Let it pass** costs
+nothing. And on the held side the gate now says it in the words the ask used:
+"A reaction is declared: this action cannot resolve yet", with a "Waiting on X
+to react" line per open hold.
+
+## The bell's notice and the stack's manners, 2026-09-01
+
+Jules, the day's seventh pass, off playing the stack: an "Encounter start"
+notice with your roll and your place; a critical's cascade that lost its d10;
+the Game Master's reaction popup telling them to go click a block instead of
+showing the actions; the hold lifting at the reactor's press instead of at the
+reaction resolving; the fail question as a toggle; reactions paying Action
+Points; and one reaction slot for now.
+
+### The bell says your place
+
+When initiative is rolled, every named sheet gets the timed notice: "Encounter
+start · Initiative 14 · You play 2nd of 5." News, not a question — it clears
+itself in eight seconds, a tap puts it away sooner, and your own first turn
+outranks it. Same bell as before underneath: `startCombat` through the sheet's
+own patch.
+
+### The cascade's lost die
+
+Not the arithmetic — the engine's chain was right all along, proved by forcing
+a d6 into a d8 into a d10 into a d12 under a fixed die. The physics table was
+the thief: the library's force-to-value loop stalls on a d10 *added* as a
+burst (a plain d10 in the opening roll is fine), sometimes leaving the die on
+a wrong face and the landing promise unresolved, which ate the d10 of a
+critical's cascade and left the surface rolling forever. Every wave runs under
+a four-second watchdog now: a wave that never settles throws, and the flat
+floor — the reference renderer — stands up with the true faces. Flaky
+confirmed by reproduction: the same cascade landed clean on one run and hung
+on another.
+
+### The stack, finished to the letter
+
+- **The Game Master's window shows the actions.** ReactionHold (the
+  hold-with-instructions) became `ReactionShelf`: every enemy with a Reaction
+  Point left lays its own moves out as chips, the pick walks into the prompt,
+  the spend lands on that enemy's row, and an aimed reaction runs through the
+  same targeting and apply window an aimed use does.
+- **The hold lifts when the reaction resolves, not when it is paid.** `done`
+  is posted by the reaction's own chain settling (`afterSettled` in
+  usePlayCard, fired exactly once whether the chain rolled, was abandoned or
+  never existed), so the actor waits for the reaction action to actually
+  happen. The window may close meanwhile; the hold stands.
+- **Two choices, not a toggle.** The fail question puts Stands and Fails side
+  by side under every target and the confirm sleeps until each one has an
+  answer — an unanswered body is not a body that stands by default.
+- **A reaction pays Reaction Points.** The prompt raised from a reaction
+  window offers the one way, with the question line saying why. No Action
+  Point path.
+- **One reaction slot, for now.** The first open on an action clears everyone
+  else's question banner. The gate itself still handles a photo-finish race by
+  holding both, which is the honest fallback.
+
+## The trays, the blank space and the log's one clear, 2026-09-01
+
+Jules, the day's eighth pass: a button that clears the table log, with a
+question first; side trays for the blocks you reach for every turn; blank
+space as a real part of an arrangement; and the reaction rule cut down to one
+per action with no chains.
+
+### The log can be emptied, once asked
+
+`campaign_events` was insert-only by design, and it stays that way with one
+deliberate hole. `clear_campaign_log(campaign)` is SECURITY DEFINER with the
+check written where nobody can reach around it: the Game Master of that
+campaign, or an admin, and nobody else. Not a delete policy, because a policy
+is a standing permission and this is a single act.
+
+The button is on the log's own head, quiet until it is hovered and rose when
+it is, disabled with nothing to clear, and it opens a question naming what
+goes. The delete happens first and the line saying it happened is written
+after: written first, it would be the one row the delete took with it. That
+line is an ordinary event, which is how every other open copy of the block
+finds out — a delete sends no word down the realtime channel, so the insert is
+the word, and hearing it the block reads itself again and comes back with the
+line and nothing older.
+
+### Two trays down the sides
+
+A tab is a grid you scroll, which is right for eighteen blocks and wrong for
+the two or three you touch every turn: your quick bar is at the top and the
+fight you are in is somewhere near the bottom, and a turn spent scrolling
+between them is a turn spent scrolling.
+
+So either side of the window has a tray, two slots apiece. What is on one does
+not move when the tab does, because it is not on the tab. On a desktop a
+handle at the screen edge pulls the tray open and the canvas gives up the
+width to make room: a tray laid *over* the blocks would cover the one thing
+somebody is reading. On a phone there is no room beside anything, so the four
+slots become four handles at the corners of the screen edges — top left,
+bottom left, top right, bottom right — and one of them opens its block over
+the whole screen until you slide it off the side it came from. The slide is
+judged on a ref rather than on state, because a fast flick can be batched away
+before a render sees it, and `touch-action: pan-y` leaves the block its own
+vertical scroll.
+
+Stored per tab beside that tab's order and column count: `block_trays`,
+`ability_trays`, `inventory_trays` and a campaign's `overview_trays`, each
+`{"left": [id, id], "right": [id, id]}` with a null for an empty slot. The
+slot is positional and stays so, since on a phone the top and the bottom of a
+tray are two different handles. Re-run `supabase/schema.sql`.
+
+### Blank space is a thing you can arrange
+
+An empty cell used to be the leftover at the end of the last row, and dropping
+a block on one meant "send it to the end". Now a hole is a real part of a
+layout: move a block and it leaves one where it was, and the hole stays. A
+`null` in the stored order is what carries it, trailing nulls are trimmed
+(a hole after the last block is a row of nothing nobody chose), and there is
+always one spare cell past the last block so there is always somewhere to make
+a gap.
+
+Which turned the arranger's one move into one move for everything. A cell of
+the grid and a slot of a tray are the same kind of address, and every gesture
+is a *trade* between two of them where "nothing" is a legal thing to be at:
+block onto block swaps, block onto hole leaves a hole behind, block onto an
+empty tray slot takes it off the grid, and block onto a full one sends the
+sitting block back to the cell that was vacated. The drag stopped keeping a
+map of measured boxes and asks the document instead, off a `data-spot` on each
+target, so a canvas that redrew itself mid-drag is never measured against
+where its cells used to be.
+
+### The picture stopped scrolling
+
+The tile had a 100px floor under it and the floor won over the fit, so eight
+blocks three across at 720px of laptop scrolled — and you were arranging a
+layout you could only see half of, which is a list again with extra steps.
+
+The height is the budget now and the tiles are sized to fit inside it: the row
+height fixes the tile width through the block's own 360x640, and the tracks
+are `1fr` so a narrower dialog shrinks them again. A floor of 44px under the
+tile width stops one column of nine rows coming out as a 22px hairline; past
+it the tile keeps its width and gives up its height instead, going squat
+rather than pushing the canvas off the bottom. A one-column tab really is a
+tall thin strip, and a strip of squat rows is still a picture of it.
+
+The name comes off a tile below 56px of content box rather than 74px, which
+had been taking it off a three-column canvas on a laptop where there was room
+for it. And on a phone the two rails come out from beside the canvas and lie
+under it as two short rows: 72px of rail either side of a 375px screen left
+125px of canvas, which is three tiles of 35px, and the rails would have been
+more than half the picture.
+
+### One reaction to an action, and no chains
+
+"Don't allow more than 1 reaction per action. As soon as someone reacts, that
+person takes his reaction. Once his reaction is done, then we continue with
+the main action. Don't allow chains for reaction" (Jules).
+
+The gate held a map of reactors and now holds one slot. The first open takes
+it and every later one is ignored; the reaction resolving closes the window
+for good rather than handing back whatever was left of the six seconds, so the
+action carries on the moment its one answer is done rather than sitting out a
+countdown nobody can use. A `done` or a `pass` from a key the slot never gave
+out lifts nothing.
+
+Two people pressing in the same breath is settled by a claim. The open row
+goes in and the *oldest* open against that action is read back: the log's own
+sequence is the arbiter, one presser is told they have it and the other is
+told somebody got there first, before a Reaction Point is spent on an action
+that is already answered. Nothing new is stored and nothing is locked.
+
+And no chains: a use whose `mode` is `reaction` never raises a banner on
+anybody's screen, so there is no window on the window and nobody is ever asked
+to answer an answer. The mode is set at the moment of spending and never by
+the card, which is the whole guard.
+
+### The checker
+
+`npm run lint:layout` holds a layout to its four rules: every block is
+somewhere exactly once, a hole is kept and a trailing hole is not, a tray slot
+is positional, and a move is a trade with nothing as a legal end. It restates
+the arranger's arithmetic rather than importing it, so a drift between the two
+shows up as a finding.
+
+## The blocks feel the trays, 2026-09-02
+
+Jules, on the trays as built: "the blocks need to feel the space between the
+two tray, there is a lot of empty space right now."
+
+They did not feel them at all. The push was half a push: an open tray added
+padding to the canvas, and the canvas is a 1290px box centred on the *window*,
+so the padding moved the blocks inside a box that never moved. Measured at
+1920 with both trays open: the trays sat at 0-407 and 1513-1920, 1106px of
+room between them, and the grid was a single column 453px wide stranded at
+726-1179 with three hundred pixels of nothing either side of it.
+
+The canvas spans the window while a tray is open, so its content box *is* the
+space between them. At 1600 with one tray open that is three columns beginning
+23px past the tray instead of two beginning 218px past it; at 1920 with both
+open it is two columns centred between them instead of one; at 2560 with both
+open it is three instead of one. Everything else measured against the grid
+(the arrange bar, the overview lines, the filter) centres there with them,
+since they were already `min(100%, --sheet-measure)` and 100% is now the
+region.
+
+What is left over is geometry rather than layout. A block is a hard 360 and a
+tray reserves 411, so 1440 with both trays open holds exactly one block between
+them however it is arranged, and the slack either side of it belongs to nobody.
+
+And a window too narrow to hold both trays and a block between them now opens
+one at a time: under 1200px, pulling one tray open pushes the other in. Two
+trays with the blocks squeezed out from between them is not a tab. Read at the
+press rather than watched, so there is no listener to keep in step.
+
+## The rulebook, and sixteen rulings, 2026-09-02
+
+Jules: "a document that is the system rule book based on what you see right now. then
+once you have collected the data prompt me with questions to know what is missing."
+
+### The book
+
+`docs/rulebook.md`, twelve sections and the whole 78-term glossary, transcribed rather
+than remembered: the formulas off characterModel, the glossary off keywords.js, the
+prices off the codex, the rulings off this file. It is the first document on the project
+that is about the *game* rather than about the app.
+
+What the transcription turned up is worth as much as the book. The app had to know a
+great deal to run, and everything it did not have to know was simply missing: no
+experience rate, no round, no difficulty ladder, no damage type list, no cover, no
+surprise, no environmental damage, no economy below the price of a breastplate, and
+nothing at all about what happens when you die.
+
+### Sixteen answers
+
+Asked in four rounds of four and all answered the same day.
+
+- **Experience is the Game Master's.** Creature XP is a suggestion, milestones are the
+  other way, and a table may count nothing at all.
+- **Magic Burden is a hard ceiling.** You cannot equip past it. There is no overburdened
+  state, which is the exact opposite of carry weight, and deliberately so: weight catches
+  you out, worked magic is a thing you decide to put on.
+- **1.5 m = 5 ft = 1 space**, and the table plays on a map or in the head as it likes.
+- **The dead are raised for 5,000 coins and 100 Supplies a level**, by an ability that
+  says it can. Primal Life is where that spell belongs and nobody has written it.
+- **A round is one pass through the order.**
+- **The ladder runs 9 to 30**, three points a rung, which is half the critical band. The
+  top three rungs are unreachable by a bare roll at any level: 2d6 and an attribute of 11
+  top out at 23, so Formidable and above need Advantage, Karma or a working.
+- **Surprise is Disadvantage on Initiative.** Everyone still acts in the first round.
+- **Cover is Disadvantage** on attacks against whoever is in it. Total cover already
+  broke line of sight and still does.
+- **Environmental damage is flat and scales with level**: 5, 10 and 20 times level for
+  minor, serious and deadly. A cliff takes a third of a level 1 and the whole of a level
+  12, which inverts how a monster works and is meant to.
+- **Nothing heals on its own.** Rests, cards, potions and field care, and that is the
+  list. A party out of Supplies and out of flasks stops getting better.
+- **Skills are never rolled.** There is no skill value. A Skill Check is an attribute Roll
+  and the card changes it.
+- **There is no retraining.** The sheet's hand-back is for correcting a mistake at the
+  keyboard, not rebuilding a character.
+- **A lineage costs nothing and forbids nothing.**
+- **Anyone may forge, anywhere, if they can pay**, and **Burden is the only limit on
+  enchanting**: lay as many as you like, you can only wear so many.
+- **A potion costs Willpower and anyone can drink one.** That is the whole of what a
+  potion is for: access without a caster.
+- **Ten coins is a euro**, and lodging has tiers that pay: a good house gives back a
+  Karma, a fine one adds a Shield.
+
+### The nine damage types
+
+Sharp, Blunt and Force. Fire, Cold and Lightning. Sacred, Decay and Psychic. Vulnerable
+doubles and Resistant halves, neither stacks with itself, and the two cancel each other.
+
+The codex printed eleven. **Vampiric Touch** and **Drain Fluids** dealt Necrotic and
+**Toxic Toad** dealt Poison; all three were retyped to Decay, so the nine are now the
+nine. Poison survives as a condition, which is a different thing, and the Toad still
+inflicts it.
+
+### And a Supply is ten coins, which was already true
+
+Not a ruling and not a proposal: a derivation. Every one of the eight Novice potions in
+the codex costs exactly ten times in coin what it costs in Supplies to brew, and laying
+an enchantment is 70 Supplies against the 750 coins the same working costs to buy. The
+rate was sitting in the price columns the whole time. Above Novice the market charges 20
+to 60 coins a Supply, which is the whole argument for having an Alchemist rather than a
+purse.
+
+### The Shove card
+
+The design sheet reads "1.5 meters (3 feet)". Ten other cards convert 1.5 m to 5 feet,
+so does every range in the codex, and so does the app's own unit switch, which snaps to
+5 ft steps because a battle map is drawn in them. Jules confirmed the conversion and
+called it a slip, so it joins "hieight" and "losoe" in the list of the sheet's typos that
+are corrected rather than carried.
+
+### What is left
+
+Four things, and none of them is a rules question. There is no resurrection spell written
+yet; twenty-one talent sets are still names, which Jules is filling in directly; Life Tree
+Tea is the one potion charging no Willpower and nobody has said whether that is
+deliberate; and the setting is deliberately out of scope, because this is a rules book and
+the world gets its own.
+
+## One action, one entry, and a knock at the door, 2026-09-02
+
+Four lines from Jules, and the first three are one bug:
+
+> In the log reacting should be part of the action block not its own.
+>
+> Same an attack should not be 3 entries in the log.
+>
+> When a new entry happen, like with the reaction, there should be a pop up showing.
+>
+> Add a new basic action which is to do a skill check that let you select an attribute
+> and then add any skill that could be relevant (like arcane marshal ect). Skill check
+> are modular action cost and can cost nothing.
+
+### The bug was one field
+
+A chain gathered throws and only throws. `groupEvents` looked for `kind === 'roll'`,
+so every *other* row an action writes had no way home and drew as an action of its own.
+One aimed swing writes five: the use, the attack roll, the verdict read against each
+body, the damage, the delivery that lands it. Three entries was the count Jules
+happened to see; with an effect and a reaction it was six.
+
+Now there is a set of kinds that are **never a head** because every one of them is a row
+written *about* an action that is already in the log: `roll`, `verdict`, `apply`,
+`effect` and `react`. Each of them carries the chain of the use that caused it, and each
+of them lands in that use's block, in the order the table saw it. `groupEvents` hands
+back a `trail` alongside `rolls`, interleaved, because "missed 3.Fenrat" belongs between
+the attack roll and the damage and a reaction belongs above the roll it held.
+
+Three rows had to learn the chain: `verdictEvent`, `appliedEvent` and `effectLaidEvent`
+all take it now. So does the whole reaction stack, and that one was a rename: a react row
+addressed its action in `data.to` while every other row in the system used `data.chain`.
+One id with two names is one name too many, so `to` is gone. The gate matches on `chain`,
+the one-reaction claim counts on `chain`, and the log groups on `chain`. Rows written
+before today are the only thing that will not gather.
+
+One thing to know at a live table: a page still open from before this change writes `to`
+and looks for `to`, so a reaction between an old tab and a new one would not hold
+anybody's roll. Everyone reloads once, which is the same thing a schema change asks for.
+
+The head learned something too. It used to carry a chain only when there were dice
+coming; an aimed cast that rolls nothing still writes a delivery, so aim counts as well
+as dice now.
+
+And the encounter page mints its own. An enemy's block and the enemies' reaction shelf
+both write rows themselves (the effect they lay, the numbers the apply window lands), so
+they mint the id and hand it to `play` rather than being handed one back too late to use.
+
+### Reacting reads as one line
+
+Inside a block the stack's two rows are one thing said twice: `open` when a reader steps
+in, `done` or `pass` when it settles. The announcement gives way to the outcome, so
+"Kaelen took a reaction" stands alone and "Kaelen is reacting" only shows while it is
+still true, which is exactly when a held action wants to show it.
+
+A line about an action prints the name only when it is somebody other than whoever is
+acting. On an attack's own verdict that is nobody. On a reaction in the middle of a
+Fireball it is the whole point.
+
+**Open ruling.** A reaction's own card is still its own entry. It is an action with its
+own cost and its own dice, and the line inside the reacted block points at it. Folding
+one player's action into another player's block is a bigger claim than the one Jules
+asked for, so it is asked rather than assumed.
+
+### The knock
+
+`LogCall`, in both places the log lives, in the shape `DiceWatch` already had. A row
+lands, and it is said in the corner over whatever tab you happen to be on, because the
+log is a block on one tab and a fight is not somewhere you can afford to have missed a
+reaction.
+
+**One notice per action, not one per row.** It is keyed on the chain, so the four rows of
+one swing land in one card and grow it a line at a time. Which is the same law the block
+underneath spent this same day learning.
+
+It stays quiet about three things and hides none of them. Your own rows, because you are
+the one who pressed the button. Throws, because somebody else's dice already land on your
+own table with their real faces on. And the initiative bell and the turn call, because
+both of those already take the whole screen on the sheet they name.
+
+Top right, since the dice tray holds the bottom left and the reaction banner the bottom
+right, and a notice must never sit on the two things you answer with.
+
+### The Skill Check
+
+A basic action, and the first card in the codex whose attribute is a **decision**. Every
+other one names its own: Grapple is Physique for everybody. So the card carries
+`picks: 'check'` and the prompt asks, with all three offered and what this character is
+worth on each printed on them, and the answer rides out as a `stat` modifier, which is
+the rider a Mycomancer's loadout already imposed. The card beside the buttons prints the
+attribute that is about to be rolled.
+
+`ap: 0` with `variable: true`, which is the pair that means "modular, and nothing is a
+real answer". A variable action's dial now **opens on what the card printed**: nothing
+for this one, 1 for Interact and Anticipate, which print no cost at all. It reads as a
+Skill Check in the log, off the sentence rather than off a flag, exactly as an Attack
+Roll does.
+
+And it offers the skills. Fourteen cells in the codex say "whenever you make a skill
+check, you can spend 1 Willpower to make it with advantage", and all fourteen now carry
+`grants: { checkWp: 1, checkAdvantage: 1 }` beside the sentence. Ticking one adds its
+Willpower to the button below and its die to the roll. **Whether it applies is the
+player's answer and never the sheet's**: no column anywhere says that this attempt is
+about a map, so ARCANE MARSHAL is offered with its own domain printed under it and the
+player is the one reading the map.
+
+Two more speak to a check and are **named rather than offered**, because neither is a die
+added to a roll: SKILLED swaps the check's own 2d6 for 2d8, and MASTERMIND maximises them
+once a Long Rest. The prompt says so in a line. A dead toggle would be worse.
+
+Two are deliberately not in the list. HELPFUL is "whenever **an ally** makes a skill
+check", which is not this check, and TAILOR reads a stranger's clothes "without doing a
+skill check", which is the absence of one. The reader matches the phrase and not the
+words, which is what keeps both out.
+
+### Left open
+
+- **A reaction's own action block.** See above.
+- **SKILLED and MASTERMIND.** The first needs `rollCheck` to take a die size, which is a
+  change to the dice core and to the tray's spec, and the second needs a use spent off a
+  card at the moment of rolling. Both are wiring, not rulings, and both are worth asking
+  about first: a check that is not 2d6 is a new shape of check.
+- **Whether the summary and the delivery line say the same thing twice.** "Cast Fireball
+  for 14 Fire damage" sits above "14 Fire damage · To 2.Fenrat" now. They are not the
+  same sentence (one is the total, the other is who caught it) and they are close enough
+  to be worth a look.
+
+## The space that belonged to nobody, 2026-09-02
+
+Jules, on the trays a commit later: "still to much empty space between the block and they
+tray. and abnormal spacing bettwen the to row in the argange block screen."
+
+Two boxes, both sized from one axis while the thing inside them was sized from the other.
+
+### The tab claimed a column it was not drawing
+
+`--sheet-measure` is the width the blocks come to, and every row above them is measured
+against it so they all begin and end on a block edge. It is built from `--sheet-fit`,
+which is a media query, so it is read off the **window**. An open tray takes 422px of that
+window off the canvas and the query never hears about it.
+
+The grid then fills what is left with `auto-fill`, which rounds down to whole blocks, and
+the box stayed the measure: at 1920 with one tray open the canvas had 1458px of room, drew
+three blocks in it, and kept a box measured for four. `margin: 0 auto` split the 373px
+left over into two gaps, and one of them was between the blocks and the tray you are
+reading them beside: **175px there and 210px past the last block**. The Arrange blocks
+button, measured against the same box, floated 175px right of the last block's edge.
+
+So the measure got a companion. `--sheet-span` rounds the room down to whole columns
+itself, `round(down, 100% + 16px, --sheet-step)`, and is never wider than the measure, so
+the box is the blocks in it. With nothing open the two are the same number, because the
+media queries were tuned for exactly that case. And `--sheet-pull` decides where the
+leftover goes: centred with no tray open, which is a page; against the open tray while one
+is, which is a sidebar and its content; centred again with both open, where the leftover
+is genuinely shared between them. All eight rows measured against the grid take the span
+and the pull together, so the arrange bar, the overview lines and the filter land back on
+the block edges.
+
+1920 with the left tray open: **16px to the tray and 346px at the far edge**, where a
+closed handle is the only thing in it. 2560 with five columns: 117 either side becomes 234
+at the far edge. 1440 with both trays open is unchanged, because two trays and one block
+is all 1440 holds however you arrange it.
+
+### And the push was a guess
+
+`calc(var(--block-w) + 3.2rem)` is 411.2px. A rail is 422.2: a block, 12px of panel
+padding either side of it, a border, the 22px handle down its edge and the 15px scrollbar
+the panel grows on any window too short to stand two blocks in. So the handle lay 11px
+over the canvas, which nobody could see with 175px of slack beside it and everybody would
+see with the blocks pulled up against it.
+
+BlockTrays measures the rail and writes `--tray-left` and `--tray-right`, with a
+ResizeObserver for the scrollbar coming and going under a resize, and the canvas gives up
+exactly that plus one block's gap. The same arithmetic moved `BOTH_TRAYS` from 1200 to
+1240: at 1200 exactly, both trays would open and leave 324px between them for a 360px
+block, so 36px of that block sat under the right-hand tray.
+
+### The arranger's rows were the height it was allowed
+
+The canvas never scrolls, so the dialog's spare height is a budget and the tiles are sized
+to fit inside it: `--row-h` is the budget divided by the rows, and a tile keeps the
+block's 360x640, so the row's height fixes the tile's width. The rows were then `minmax(0,
+var(--row-h))`.
+
+Those two numbers are only the same while the **height** is what binds. The tracks are
+`1fr`, so a dialog narrower than the tiles want shrinks them by their width instead, and
+the row stayed the height the budget would have allowed. Five columns of two rows at
+1280x1200: tiles 156px wide and 277px tall, in rows of 388. **A 111px band of nothing
+under every row**, 226px of the budget spent on nothing at all and the foot of the dialog
+that far below the last row.
+
+The rows are content-sized now, and the ceiling stays where it belongs, on the tile's
+`max-height`. So a row is the tile standing in it, and the canvas can only ever come out
+shorter than its budget and never taller. Checked at 9x1, 9x3, 3x3, 2x4 and the squat case
+the floor was written for, one column of nine rows, where the tile keeps its width and
+gives up its height: no bands, nothing over the budget, nothing scrolling.
+
+### Measured rather than looked at
+
+The sheet needs a login, so all of this was read off a probe page served by Vite with the
+real stylesheet linked and the real markup copied: `.sheet` with an open rail beside it,
+and the arranger inside a page-width modal. Every number above is a
+`getBoundingClientRect`, at 400, 1200, 1440, 1920 and 2560, with no tray open, each tray
+alone and both. The page is gone; the numbers are here.
+
+## A Martial Move is not an action, 2026-09-02
+
+The whole system, redesigned in one message, and eighteen cards rewritten under it.
+
+> We are going to change how martial move works:
+>
+> - Now they are not their own action you need to do before, instead whenever you make a
+>   weapon attack, you can choose to add 1 Martial move to the attack.
+> - All talent set that use martial move need to be updated to have a talent that give you
+>   the possibility to use 2 martail move on 1 Weapon attack at Master level. A talent that
+>   allow you to use martial move on weapon special attack.
+> - When you hav emarital moves and you makea weapon attack (or later special weapon
+>   attack). Then you should see list of your martial move on the action preview before you
+>   pay the cost so you can add one, or two later on.
+> - So they are not long their own action but something you can add on top to modify them.
+
+Then the eighteen, six a tier, and two statuses at the foot of the message.
+
+### What the old system was, and what it cost
+
+A move used to be its own use. You tapped it on the quick bar, paid for it, and it laid a
+pending rider on the Temporary Effects tracker where it sat until a weapon attack came
+along and spent it. That was built off the Duelist's own Developpement Notes ("martial move
+are activate before the attack so they show in tracker until the atakc is made") and it was
+a faithful reading of them.
+
+It also had four costs, and all four are gone now:
+
+- **You could pay for a swing you never took.** The Willpower left the sheet at the tap and
+  the attack was a separate decision made afterwards.
+- **You decided blind.** The move was chosen on the quick bar, where nothing tells you what
+  the swing was going to be worth. The card that shows the damage was two taps away.
+- **It could be forgotten.** A rider with no turn count sat on the tracker indefinitely, and
+  a player who moved on had a move waiting on a swing they were no longer planning.
+- **It was an Action Point on top of an Action Point.** Half the codex charged one for being
+  its own action, and that is the half the redesign deletes.
+
+### The new one, in three functions
+
+`src/lib/moves.js` lost `pendingMoves`, `pendingCount`, `canLayMove`, `moveEffect` and
+`spendMoves`, and the tracker row they wrote and read. What replaced them:
+
+    heldMoves       every move this character holds, from every source
+    offeredMoves    which of those may ride *this* card, right now
+    moveCost        what the ticked ones add to the price
+    withMoves       what the ticked ones do to the swing's numbers
+
+`offeredMoves` is where four rules meet, and each one was already written down somewhere:
+whether a move rides this card at all (`moveRides`, the plain attack unless a rank widened
+it), whether this is the reaction RIPOSTE needs, whether a reaction may carry one at all
+(`onReaction`), and whether the shape you are in allows it (a Feral Form's locks, asked per
+move because the answer is about the *set* that taught it).
+
+`withMoves` runs on top of `attackModifiers` rather than inside it, and that split is
+load-bearing: everything `attackModifiers` folds was true before the dialog opened, so a
+tick of a checkbox re-folds the moves without re-deriving the weapon, the form, the pact
+and the tracker behind them. PERFECT TECHNIQUE's die *per move* had to move with them,
+since its number is a count of moves and nothing knows that count until they are picked. It
+rides out on the modifiers as `perMove` for `withMoves` to multiply.
+
+**A pact was a hole the old flow had and nobody noticed.** A Pact of Ordenance hands over
+Martial Moves as boons, and they reached the quick bar as ordinary chips, which is where you
+laid one. Now that the offer is built in one place, `heldMoves` reads the boons as well as
+the four loadouts, or a wielder would have paid a rank for a card they could never use.
+
+### The offer, in the prompt
+
+A new panel in `UsePrompt`, above the targets because a move can change who a swing reaches
+and above the pay buttons because the Willpower it costs is on their orbs. Each row is the
+move, what it costs *this holder*, which set taught it, its own one-line summary and an ⓘ
+that deals the whole plate onto the same pile every other card on that dialog deals onto.
+
+The count in the heading is the allowance ("1 of 1", "2 of 2"), a row past it goes quiet
+wearing the rule in its tooltip, and the line under the list is the sentence the Duelist's
+notes asked for: *"This attack will Wing Clip and Reckless."* That sentence used to live on
+the Loadout block's attack row, where it said what was waiting; it moved in here, next to
+the choice that earns it.
+
+Amber throughout, which is what a talent and a Martial Move both wear on their own plates.
+
+**And a move is no longer a chip.** `combatBar` filters them off the quick bar entirely: a
+chip that spent Willpower and laid nothing would be a trap. The Abilities tab is still where
+the hand is read and re-chosen.
+
+### The price is Willpower
+
+Every move in the codex now prints `ap: null`. Jules priced four of the eighteen outright
+and all four were Willpower ("cost 1 Willpower", "cost 3 willpower", "for 1 willpower",
+"cost 6 Willpower"), and the two transcribed plates that never charged an Action Point
+(CONCUSS, MOMENTUM) were the two that were never really their own action. So the rule is one
+sentence: **a move costs Willpower, and the Action Points belong to the attack it rides.**
+
+That is also what keeps the economy where it was. Under the old flow a WOUND cost 1 Action
+Point plus 1 Willpower, then the Strike cost its own Action Points. Now the Strike costs its
+own and the Wound costs the Willpower. The change is when you decide, not what you pay.
+
+Three cards were discounting a pool a move no longer spends, and none of the three could be
+left standing:
+
+- **MARTIAL SWIFTNESS** (Colossus, Rank 3) read "Your Martial Moves no longer cost Action
+  Points", which is now true of everybody. It cuts a Willpower per move instead, and it is
+  **wired**: the reason the old version stayed prose was that there was nowhere honest to
+  take the number off, and now the prompt prices the moves it offers. `martial.discount` on
+  the spec, read by `moveAllowance`, applied by `moveCost`, and the row strikes the printed
+  number through the way an Arcanist's cut cast does.
+- **PRACTICED MOVES** (Colossus, Rank 2) lost its clause. What it buys is the permission
+  above it, and the permission is the whole card now.
+- **BASTION'S FURY** (Guardian, Rank 3) keeps its shape and changes its pool: a move added
+  to an attack SHIELD EXPERTISE has already cut costs 1 less Willpower. Still printed prose,
+  because the sheet has never known that SHIELD EXPERTISE's own reduction applied.
+
+### Eighteen cards
+
+**Five rows of the table below were superseded on 2026-09-03.** MOMENTUM left the codex, CONCUSS
+became a Novice reaction and the Master stun that held the name is STUNNING STRIKE, and RECKLESS,
+WOUND, REND and SUNDER are priced off the swing rather than off a flat number. See "A move you can
+only answer with" at the foot of this file; the table here is what the tier list was on the day it
+was written.
+
+Jules gave the mechanics as one line each and the sentences are this file's, which is the
+reverse of the six Novice plates of 2026-08-20. Nothing is marked `house: true` any more:
+that flag meant "an extrapolation nobody asked for" and there are none left.
+
+Five of the six Novice names survive, because the effect asked for is the effect the plate
+already had. Three cards moved tier: CONCUSS from Novice to Master (Jules's Master list asks
+for a stun and the name fits it), REND from Adept to Master, RIPOSTE from Master to Adept.
+Four ids left the codex: `feint`, `sweep`, `perfect-form`, `bleed`. A stored pick pointing at
+one of those is dropped by `loadoutState` the way any illegal pick is, so a hand that held
+one simply comes back one card short.
+
+    Novice, 1 Willpower each
+      Momentum      move your Movement Speed before or after the attack
+      Wound         on a hit, a Wound
+      Wing Clip     the target's Move costs double until its next Turn End
+      Reckless      advantage, and advantage on the next attack against you
+      Taunting      on a hit, disadvantage against anybody but you
+      Drive Back    on a hit, push 3 meters or knock prone
+
+    Adept
+      Riposte    1 wp   only on a reaction attack, and that attack costs 1 less
+      Disarm     2 wp   on a hit, what it held is on the floor
+      Lunge      2 wp   3 more meters of reach
+      Disengage  2 wp   cannot be reacted to, and you leave
+      Guarded    3 wp   Defense, Grit and Reflex each +1
+      Piercing   3 wp   the damage ignores Armor
+
+    Master
+      Breach              3 wp   on a hit, Defense down 2 until its next Turn End
+      Execute             4 wp   Empowered and Elevated below half Health
+      Coordinated Attack  4 wp   an ally in reach swings free
+      Rend                5 wp   a stack of Bleed per Damage Die
+      Concuss             6 wp   on a hit, stunned
+      Sunder              7 wp   the target is treated as vulnerable
+
+Only two carry `rides`, and the restraint is the point. RECKLESS is advantage on every swing
+so the sheet prints it; RIPOSTE's `-1` is a cost the prompt is already computing. EXECUTE is
+Empowered *and* Elevated and carries neither, because both halves hang on the target's
+Health and the sheet does not hold it. A printed number that might be wrong is worse than a
+printed sentence the table reads.
+
+### Bleed and Wound swapped jobs
+
+Both definitions are Jules's own sentences, in `keywords.js`.
+
+**Bleed** is new and took the old Wound's job: stackable, 1d6 at every one of the entity's
+Turn Starts, and **healing removes one stack** rather than the whole thing. That last part is
+the difference that matters: the old Wound came off entirely at the first point of Health, so
+any healing at all was a full cure. CAUTERIZE has named Bleed since the Fire family was
+written, with nothing behind the word, and it is lit now.
+
+**Wound** is no longer damage over time, it is an opening: weapon attacks made against the
+entity are Empowered, and it is **singular**, so a second one buys nothing.
+
+One card was reworded on the way in. HIBERNATION read "It does not breathe or bleed", where
+that "bleed" would now light as the status, so it reads "It neither breathes nor bleeds" and
+the ordinary verb stays ordinary. Same trade GORE ARMOR and VAMPIRIC TOUCH made.
+
+### The talents, on all four sets
+
+Jules asked for two cards on every set that teaches moves. Both are at the rank the ask
+names: the second move at Master, the special attack at Adept, since it was asked for
+separately from the Master card.
+
+|  | Rank 2, special attack | Rank 3, two on one swing |
+| --- | --- | --- |
+| Guardian | Bulwark Form *(new)* | Perfect Guard *(new)* |
+| Duelist | Flourish *(new)* | Sharp |
+| Feral Curse | Bestial Grace *(new)* | Bestial Frenzy |
+| Colossus | Broad Practice *(new)* | Perfect Technique |
+
+All four Rank 2 cards print the same sentence word for word, which is the law BESTIAL FRENZY
+already keeps against SHARP: two cards that move the same allowance have to say it the same
+way, or a table reading one will think the other does something else.
+
+**Guardian had no `martial` spec at all** until today. It taught the moves and moved nothing
+about them, so a Master Guardian added one to a swing exactly as a Rank 1 did. It has the
+whole block now.
+
+**`martial.special` was built on 2026-08-28 and nothing had ever set it.** It went in off
+Jules's own ruling ("reckless is only for weapon attacks, then gets updated to also special
+weapon attack if you have the rank 3 talent") and stayed false for everybody, because a rank
+that widened a move with no card saying so would have been the sheet inventing a talent.
+Four cards say it now.
+
+Two Master cards were reworded where the old flow's grammar had gone stale. SHARP and
+BESTIAL FRENZY both offered "one Martial Move just before a Weapon Attack reaction", which
+was a thing you did because laying one was an action of its own; both now read "or add one to
+a Weapon Attack you make as a reaction". `onReaction` did not change value, only meaning.
+
+### SWEEP is gone and its reading is not
+
+SWEEP turned a one-target Strike into a room, and on 2026-09-01 the target picker learned to
+read a riding move's prose so it would. Jules's new Adept list has no sweep in it, so the
+card left the codex and the reading stayed: `aims` on a move card says its own text names who
+the swing lands on, and `aimingMoves` is the filter every caller passes its chosen moves
+through.
+
+**That flag is data rather than a prose reading on purpose**, and COORDINATED ATTACK is why.
+Its "an ally within reach of the target" reads to `readTargets` as exactly one target, and a
+target chip picked there would deliver the swing's damage to a friend. A reader with only the
+sentence cannot tell an ally who *acts* from an entity that is *hit*. Nothing in the codex
+carries `aims` today, and `check-combat.mjs` proves all three halves of that: an aiming rider
+uncaps the plan, COORDINATED ATTACK does not claim to aim, and a swing carrying it still
+reaches one body.
+
+### A row left over from the old flow
+
+Nothing reads a `move` payload on the effects tracker any more, so a rider left there by the
+old system lends no advantage, blocks no swing and draws no arrow. It is an ordinary row and
+it can be dropped. A player mid-campaign will find one there.
+
+### Left open
+
+Nine rulings, and the first six are numbers Jules did not state and the cards had to choose.
+
+- **WOUND's clock.** Jules gave the effect and no duration. The old card's clause is kept
+  ("until it receives healing or takes a rest"), because it is the only clock this term has
+  ever had and the tracker already understands both halves of it. A vulnerability with no end
+  is a different card.
+- **GUARDED's clock.** "Until your next Turn Start", chosen so the stance covers the round
+  you spent it in. Jules named none, and a stance with no clock is either permanent or
+  nothing.
+- **CONCUSS's stun and BREACH's Defense.** "Until its next Turn End" for both, which is the
+  clock WING CLIP keeps: it costs the target the turn you interrupted and no more. A stun with
+  no clock ends the fight.
+- **BREACH's 2 points**, which is a Defense Draught's grant doubled and nothing more
+  principled than that.
+- **LUNGE's 3 meters**, one step of the grid, the same distance DRIVE BACK pushes.
+- **SUNDER at 7 Willpower.** "Very expensive" is a direction rather than a number. It is one
+  more than the stun Jules priced at 6, because doubling the damage is worth more than any
+  other single line in the file.
+- **Bleed's damage has no type.** "Deal 1d6 damage" is the designer's own wording and the old
+  Wound's was Decay. A bleed is not decay, untyped damage is not new in this codex, and a type
+  nobody stated would be this file inventing one.
+- **RIPOSTE names Reaction Points.** Jules wrote "action point cost by -1", and a reaction is
+  paid out of Reaction Points on this sheet, so the card names the pool that will actually be
+  charged.
+- **DRIVE BACK is not called Shove.** That id belongs to the basic action and a card id is
+  unique across the registry.
+
+And three things that are wiring rather than rulings:
+
+- **GUARDED is not wired.** `EFFECT_RIDERS` can move a Defense and cannot move a Grit or a
+  Reflex, and two of three numbers moving is worse than none: the player would trust the tile
+  and be wrong about two. Grit and Reflex riders are the change it needs.
+- **Nothing a move applies is delivered.** A WOUND, a Bleed, a stun and a push are all played
+  at the table, exactly as they were under the old flow. The delivery path lays what the
+  *card being used* prints, and a move is not that card. Worth doing and worth asking about
+  first, since it means a move growing its own effect payload.
+- **The Colossus's weapon clause still enforces nothing.** MARTIAL TRAINING says its moves
+  are used "with Heavy and Great Melee Weapons", and `offeredMoves` asks what card is being
+  paid for rather than what is in your hand. It is a permission on the old reading and it is
+  now checkable, since the swing is known at the moment the move is added.
+
+## A creature you built yourself, 2026-09-02
+
+> I want you to create a tool in the bestiary that allow the user to add a custom made entity.
+> Note that it should be able to learn any ability the player can use. For premium user they can
+> create personal one with a cap. They have to edit or remove existing one if they want to do new
+> one. Admins can create one that are added for everyone. Free and Friends for now cannot. Make
+> sure all the need field as adjustable, that you can see the which stat get increase as main ect.
+> do not that tereh is an error everyone starts at 4 in all stats.
+
+The Bestiary tab now has a forge on it. What comes out of one is a row in a new
+`custom_creatures` table, and from the moment it lands **it is a creature**: the same block draws
+it, the encounter shelf offers it, `creatureStats` gives it its numbers, and the log signs it the
+same way. Nothing downstream of `getCreature` can tell a forged creature from a printed one, which
+is the whole design rather than a shortcut.
+
+### The registry grew a second half
+
+`creatures.js` held one frozen list and one `Map` built from it at import. It now holds a second,
+mutable map beside the first, and `getCreature` reads both. That is the only way a forged creature
+could work at all: **every** reader of a creature goes through that one function, so a creature it
+cannot find is a creature nothing can draw, add to a fight, or roll for.
+
+Two rules keep the mutable half safe, and both are written on `FORGED` where anybody changing it
+will read them.
+
+- **The id is prefixed.** A forged creature is `custom:<row uuid>`, so it can never collide with a
+  printed id and a stored encounter says out loud which half of the bestiary it points at.
+- **The cards arrive resolved.** A printed creature names its cards by id and `getCreatureCard`
+  finds them, because they are in the same file. A forged one can learn anything a character can
+  play, and that registry is in `weapons.js`, which imports `creatures.js` and so can never be
+  imported back. `customCreatures.js` sits above both and resolves them on the way in;
+  `creatureCards` takes an entry that is already a card as well as one that is an id.
+
+`creatures.js` is still a leaf. It reads nothing, fetches nothing and imports nothing new.
+
+### The forge is the codex's own shape, with every field a control
+
+Nothing about a forged creature is a second, simpler kind of enemy, so the form has one control per
+field a printed page has: name, size and kind, rank, written level, XP a level, the two Health
+coefficients, the three Willpower ones, Defense over Instinct, Armor, Speed, the hit die, both point
+pools, a picture, the lore paragraph, and the cards.
+
+Two of those needed a decision rather than a box.
+
+**The rank carries its pools with it.** A rank is not a label: it sets the clock and whether
+reactions are possible at all. Switching rank moves the two pools *only if they were still the old
+rank's own numbers*, so nobody loses a typed twelve by changing their mind about Overlord, and
+nobody has to know that a General runs on six. A Minion's Reaction Points field goes quiet with the
+rule printed under it, because `creatureStats` forces that pool to zero whatever is stored, and a
+live-looking field that will be ignored is worse than a dead one.
+
+**The three attributes are printed as a sum.** This is the answer to "you can see which stat get
+increase as main", and to the note about 4.
+
+A creature does not store its attributes. It stores which one is its main, which its second, and one
+flat bonus each, and the curve does the rest: base 4, the +2 and +1 at level 1, one more on each at
+every odd level after. Type an 8 into a plain box and the honest question is *8 at what level*. So
+the panel prints the whole arithmetic, a column at a time:
+
+```
+  ATTRIBUTE      BASE   GRANT   CLIMB   ITS OWN   AT 4   AT 12
+  Physique main   4      +2      +1       +2        9      13
+  Instinct second 4      +1      +1        —        6      10
+  Mind            4       —       —        —        4       4
+```
+
+The editable cell is **At 4**: the total at the level the creature is written at. Typing there solves
+back for the bonus, which is the only number that is really the creature's own. Nobody is stuck at 4,
+nobody has to work out what a -3 means, the main is marked on its own row, its climb is a column of
+its own, and the number it reaches at 12 is printed beside it. The panel spans both columns of the
+dialog because seven columns will not squeeze into half of one, and it scrolls inside its own box on
+a phone rather than pushing the dialog sideways.
+
+Beside it, the whole page it will print, at the written level and at 12 together: Defense, Armor,
+Health with its hit die, Shield cap, Willpower, both pools, Initiative, Reflex, Grit, Speed, XP.
+Every one of them moves as you type. A creature built at level 3 that turns out to be a 14 Physique
+at the top is a thing to find out in the forge.
+
+### It can learn anything
+
+The picker is the whole card registry, 487 of them, less the twelve basic actions every body on the
+board already has (offering one would print it twice: see `basicGroup`). Nothing else is filtered.
+A creature holding a lineage trait as a passive or an Alchemist's ingredient as a move is the
+table's call, and a codex pruned by taste here would be a second, quieter set of rules.
+
+It is a shelf rather than a wall of card faces, for the reason the encounter shelf is one: 487 cards
+at their real 360px footprint is a scroll nobody finishes. Rows are searchable by what a card says
+and chippable by what it is, the row opens the card itself on the stack, and only the first sixty
+matches are drawn, because a picker that takes a second to answer a keystroke is one people stop
+typing into. Twelve cards is the ceiling for one creature.
+
+### Who may forge, and the ladder that does not hold
+
+`CREATURE_SLOTS` in `tiers.js` is a count per tier, the shape `CAMPAIGN_SLOTS` already had, and a
+zero is how a tier is refused outright. That is why there is no `forgePersonal` capability beside
+`forgeCodex`: there would be two answers to one question and they could disagree.
+
+```
+  free 0    premium 6    friend 0    admin 60
+```
+
+**This is the first table on that file where a higher tier gets less than a lower one.** `friend`
+sits above `premium` on the ladder and gets nothing, on the instruction above, and both the file and
+this entry say so out loud so nobody "fixes" it without reading why. The word to hold onto is "for
+now": it is one number to change, and `public.creature_slots` in the schema has to change with it.
+`check-creatures.mjs` reads the SQL and compares the two tables, so a drift between them is a failed
+check rather than a bug found by a Game Master.
+
+The cap of **six** is this build's choice and not Jules's number. It is enough to forge a whole
+encounter's worth of one-off enemies and still feel the ceiling the instruction asks for.
+
+Publishing is separate and it is the keys: `forgeCodex` is admin, a published row is `scope =
+'codex'`, and the policy checks `scope <> 'codex' or is_admin()` on the insert **and** on the update,
+so a personal creature cannot be promoted by editing it.
+
+### What the database enforces
+
+The client decides what to offer and the schema decides what is allowed, which is the line
+`tiers.js` has always drawn. `public.creature_slots` and `guard_creature_slots` are the cap, counted
+per account on insert and counting only personal rows. The four policies are the rest.
+
+The read policy is the one worth reading twice. A published creature is readable by everybody signed
+in. A personal one is readable by its author, by an admin, **and by anybody who can already read an
+encounter that names it** — because an encounter whose Health has been shared is readable by the
+players at that table, and a player who could read the encounter but not the creature would be shown
+an enemy the app then silently dropped.
+
+Which is the same hazard, from the other side, that decided where the load goes. `normalizeFoes`
+drops a foe whose creature it cannot find and the next write persists the drop, so the forged shelf
+is fetched **in the campaign page's own gate**, beside the campaign and the roster, and nothing that
+could name a creature renders until it has landed. The one exception is a table that does not exist
+yet: `missingTable` catches exactly that (Postgres 42P01, PostgREST's PGRST205) and reads as an empty
+shelf, because with no table there are no forged creatures and nothing can be lost. Every other read
+failure is thrown, since a read that failed against a table that does exist is precisely the case
+where carrying on would cost somebody their enemies. A forge pressed before the SQL has been run
+says so: "The forge has no table to write to yet. Run supabase/schema.sql against this project and
+try again."
+
+### Two things moved that were not new
+
+`previewFoe` used to dress a creature by round-tripping through its id and `encounterState`. A
+creature being tuned has no id, no encounter and nothing stored, and it has to redraw on every
+keystroke, so the body of that map is now `dressFoe` and `previewFoe` calls it with the creature
+itself. Nothing else changed about what it hands back.
+
+The Bestiary tab stopped memoising its shelf. `bestiary()` now reads mutable module state, so a memo
+keyed on anything a component can see would be keyed on the wrong thing. Sorting a few dozen
+creatures on a render costs nothing and a stale shelf costs a Game Master their new creature.
+
+### Left open
+
+- **Jules's note about 4 is read as a warning rather than a bug.** The curve is right: the checker
+  has always proved that the Blightgeist reproduces its printed page from base 4, and it still does.
+  What the forge does about it is make the base a *column* rather than a floor, so the resulting
+  value is what you type and the bonus follows. If the note meant something else, this is the place
+  to say so.
+- **The cap is six and the friend tier gets none.** Both are one number in two files.
+- **Nothing versions a forged creature.** Editing one changes every encounter already holding it,
+  which is right for a stat block being tuned and wrong the day somebody wants last session's
+  version. The codex has the same property and has never needed the other.
+- **A removed creature takes its enemies with it.** An encounter holding one loses that foe the next
+  time it is opened, because `normalizeFoes` drops what it cannot resolve. The forge says so before
+  it removes one. Keeping a tombstone row so an old fight still draws is the alternative and it is a
+  bigger change than it looks.
+- **The published shelf has no author line.** A creature an admin published shows "Published" and not
+  who published it. The row knows; the block does not print it.
+
+### Three corrections, 2026-09-02
+
+> remove the size on creature forge
+>
+> The tach it something screen should be better organize, let show ability by type, so you
+> choose between, spells, weapons ect.
+>
+> Health is not rolled. Insed of adding a value to armr lethte creator choose light, heavy or
+> spelled. Let them give a bonus.
+
+**The size is gone.** It was a dropdown and a Kind box composed into "Medium Humanoid"; it is
+one typed field now, with the codex's own words on the datalist. Nothing else read the halves,
+so `splitType` and `FORGED_SIZES` went with it and the default type line is "Beast".
+
+**Health is not rolled**, and that ruling reaches further than the forge. A creature carried a
+`die` and `creatureStats` derived a count that always averaged the Health beside it, printed as
+`HP 78 (14d10)` on the block, in the encounter shelf and in the forge's readout. All of it is
+gone: `hitDie`, `hit_die`, the nine `die:` fields, the picker, and every place that printed one.
+The design sheet did print a die (`HP: 8 (3d4)`), so this is the second supersede on that page
+and it is marked beside the first, which is the Minion's printed `RP: 3`. Health is what the two
+conversions produce and nothing else.
+
+The checker had a whole section proving the die averaged the Health at every level for every
+creature. It has a shorter one now proving the die is **gone**, which is the promise that matters
+once the arithmetic no longer exists: a stat block that grew one back would print a roll on every
+enemy block on the site.
+
+**Armor is a family plus a bonus.** Instead of typing an Armor number into the void, the forge
+picks what the creature is wearing, and a family means for a creature exactly what a full set
+means for a character (docs/rulebook.md 7.2):
+
+| Family | What it does |
+| --- | --- |
+| **None** | Defense is its Instinct. What every printed page in the codex wears |
+| **Light** | Defense is equal to its Reflex |
+| **Heavy** | Defense is increased by half its Armor |
+| **Magic** | Defense is based on its Grit |
+
+`CREATURE_ARMOR` in creatures.js is that table, repeated rather than imported for the reason
+`BASE` and `CREATURE_MAX_LEVEL` are repeated: this file is a leaf, and items.js reaches weapons.js,
+which reaches back here. The bonus is `avoid_bonus`, and it is added **whatever the family**,
+which is the rulebook's own second ruling: a set changes what Defense is built from and does not
+close the door on everything else. So the Defense field is labelled "Defense bonus" now rather
+than "Defense over Instinct", and the form says what it is being added to, because with a family
+on the base is no longer Instinct.
+
+Nothing had to be migrated. A creature with no `armor_set` wears None, which is Instinct plus the
+bonus, which is what every creature in the file has always been. The Blightgeist still prints its
+own page. And the two armor tiles on the block now say what the family does rather than a fixed
+sentence, because "Defense 10" on a Heavy creature with 6 Armor is unreadable without it.
+
+**"Spelled" is the codex's "Magic Armor."** Jules named the third family "spelled", which is what
+`backgrounds.js` calls it on SPELLED ARMOR MASTERY. `items.js` and the rulebook both call that
+family **Magic Armor**, in nine items and a table. The codex's own word is used here so a creature
+and a character read against one table, and the disagreement between those two files is left where
+it is rather than doubled. Worth settling one way or the other.
+
+**The picker is organised by kind.** Twelve buttons over the shelf, Everything first, then the
+eleven groups: Weapons, Spells, Martial Moves, Talents, Creature Cards, Lineage, Skills, Utility,
+Enchantments, Ingredients, Actions. Choosing one narrows the rows, the tag chips and the search
+box, so the box says "Search spells" and offers Ethereal rather than Two-Handed. Each button
+carries how many of that kind the creature already holds.
+
+The groups are **the registry's own arrays** and nothing here reads a card's `kind`. That is the
+one design point in it: `kind` mixes the sources up, because a talent, a lineage trait and a
+creature card all call themselves `passive`, so a grouping keyed on it would file a Blightgeist's
+Blight Surge next to a Berserker's rank 2. Where a card comes *from* is the question, and the
+arrays answer it with nothing in between. The last group is a catch-all, empty today, so a card
+group spread into `CARDS` later shows up in the picker rather than vanishing from it.
+
+## A move you can only answer with, and eleven readings, 2026-09-03
+
+> Remove momentum - replace it with one that you can only takea s reaction that allow you to
+> interrupt the action you react to granted that you landthe attack and success at a rol lwith
+> the weapon stat against hte target grit. Name this concuss, then name concuss stunig strike
+
+One list, eleven items. Four of them are game design and all four are in the Martial Moves; the
+other seven are the sheet.
+
+### CONCUSS is a Novice reaction and STUNNING STRIKE is what it used to be
+
+MOMENTUM is gone. In its place is a card with two gates and a name that has moved down two tiers:
+
+    CONCUSS  ·  Martial Move · Novice · 1 Willpower · reaction only
+      Concuss can only be added to a Weapon Attack you make as a reaction.
+      On a hit, make an {stat} Roll {roll} against the Grit of the target.
+      On a success, the Action you reacted to is Interrupted.
+
+It is the second card in the codex that may only ride a reaction (RIPOSTE is the first) and the
+first that asks for anything past the hit. **Interrupted** is the Time family's own keyword and
+its definition is Jules's: the Action does not happen and its cost is spent anyway. That word was
+in the old CONCUSS's summary meaning the ordinary English thing, and it is the mechanical thing
+now, so the note in `keywords.js` saying it was never lit is retired.
+
+The Master stun that held the name is **STUNNING STRIKE**, same 6 Willpower, and it gained the
+same gate against the other number: *"Do the same for stunning blow[,] i require reflex."* Grit is
+what shrugs off a blow to the head and Reflex is what rides it out, so the two cards differ only
+in which of the target's numbers answers.
+
+**`concuss` is still the id, and it is a different card now.** A stored pick pointing at it comes
+back as the Novice reaction rather than the Master stun. That is the honest outcome — the name is
+what was chosen and the name is what moved — but a player mid-campaign will see it, and it is the
+one migration in the drop.
+
+### Four moves are priced off the swing
+
+> I want you to make it so Reckless, Wound, Rend, Sunder to scale of the weapon base action point
+> cost. being for example Rckelss is 1 work 2 action point cost or 2 for 4 ones. Rend is 2 for 2
+
+`scales: true` turns `wp` from a cost into a **rate**: what the move costs for every 2 Action
+Points the attack costs, rounded up. A cost-2 weapon pays exactly the printed number either way,
+which is what keeps the orb on the plate honest.
+
+**The flag became a word later the same day**, when AMBUSH joined these four with a rate of its
+own: `scales: 'ap'` is the rule described here and `scales: 'dice'` is the other. The table below
+is unchanged. See "Three abilities became moves" at the foot of this file.
+
+| Move | rate | Finesse (2 AP) | Heavy (4 AP) | Great (6 AP) |
+| --- | --- | --- | --- | --- |
+| RECKLESS | 1 | 1 | 2 | 3 |
+| WOUND | 1 | 1 | 2 | 3 |
+| REND | 2 | 2 | 4 | 6 |
+| SUNDER | 3 | 3 | 6 | 9 |
+
+Jules priced RECKLESS and REND outright. WOUND takes RECKLESS's rate, which is the number it
+already printed. **SUNDER's 3 is chosen and the ruling is open**: it is a rung above the REND Jules
+priced, and it replaces the flat 7 that "very expensive" had been read as.
+
+Why these four and not the other fourteen: what a move is worth is not always what the swing is
+worth. DISARM knocks a weapon out of a hand and the hand does not care what hit it; LUNGE is three
+meters whatever you are holding. These four are the ones whose value *is* the swing's — RECKLESS
+doubles the chance of landing it, WOUND opens the next one, REND counts the dice it rolled, SUNDER
+doubles what it dealt — and a Great Weapon bought all four for a dagger's price until now.
+
+The arithmetic is `moveWillpower` in `martial.js`, one function, and `moveCost` in `moves.js` is
+the only place the swing is handed to it. It is the attack's **printed** cost and not what the
+holder pays: an Arcanist's discount and a Quick Draw are things you bought, and a move getting
+cheaper because the swing did would be paying you twice. The Colossus's MARTIAL SWIFTNESS cut comes
+off *after* the scaling, so it is worth one point of the price and not one point of the rate.
+
+The row in the use prompt prints the scaled number with the plate's rate struck through beside it
+and "the swing" named as what did it, which is the account every other revised number on that
+dialog already gives.
+
+### A Paired weapon rolls twice the dice once
+
+> Paired weapon are incorrectly doing half the number of d4 they should Paired heavy should be 4d4
+
+"Their attack use twice d4 instead of d6" was read as the **landing** and it is the **die count**:
+
+| | was | is |
+| --- | --- | --- |
+| Paired Finesse | 1d4 + stat, twice | 2d4 + stat |
+| Paired Light | 2d4 + stat, twice | 4d4 + stat |
+| Paired Heavy | 2d4 + 2*stat, twice | 4d4 + 2*stat |
+| Paired Great | 3d4 + 2*stat, twice | 6d4 + 2*stat |
+
+The dice come out the same and the attribute is counted once, which is what the rest of the wall
+does. Under the old reading a Paired Heavy was worth 10 + 4x Physique for 5 Action Points against a
+Great Weapon's 10.5 + 2x for the same 5, and a cost column that sets the damage cannot also have a
+family that doubles the attribute. It fixes an Empowered pair for free as well: a die added to 4d4
+is one die, where a die added to "2d4, twice" was quietly two.
+
+`paired()` in `scripts/check-weapons.mjs` is the rule and the eight cards are measured against it.
+No card in the codex says "twice" any more, so `REPEATS` in `rollPlan.js` is held against a card
+written in `check-plan.mjs` instead: losing the assertion with the last card that tripped it would
+have left the branch live and untested.
+
+### The eighteen plates
+
+`data/Martial Move/` is claimed. Eighteen 2400x1792 plates for eighteen cards, against an Image
+column that does not exist, because the moves have never had a sheet, only chat. It behaves the way
+a school folder behaves — claimed by name, resolved against its own map (`moveNames`) and **not
+cut**, since these are plates rather than whole card renders.
+
+Its own claim rather than a spell folder's: a Martial Move has no school, no family and no rung,
+and adding it to `SCHOOL_FOLDERS` would put it on the shelf order's wall as a school with no cards.
+The scoped map is worth having even though nothing collides today — REND is printed by the move
+*and* by the Ashmaw's attack in `creatures.js`, and the day somebody spreads the bestiary into
+`cardIds` a codex-wide lookup would land `Rend.jpg` on a monster. That is the BARRIER lesson taken
+before it costs anything. `MARTIAL_MOVES` is in `cardIds` too, so a move named in a sheet's Image
+column is placed by the link pass like anything else.
+
+Two filenames are aliased: `Coordinated.jpg` is a word short of COORDINATED ATTACK and
+`WingClip.jpg` is WING CLIP with the space closed up, which `flatten` cannot bridge. `Momentum.jpg`
+is absent rather than orphaned — Jules took it out of the folder in the same pass.
+
+### Seven readings on the sheet
+
+**The level number is a door on two tabs now.** *"Allow use to access XP and level change on
+clicking on the level number."* The Experience ledger moves XP by signed entry and sets the level
+outright, and the only way into it was the badge on the Character tab. The Advancement tab's
+Identity frame has its own badge now, reading the level with the experience under it. That is the
+tab where the number is the thing you came to change, and the thing you do after changing it is
+answer the block that just appeared.
+
+**A finished level folds itself.** *"In the adveancment, after the player finish filling a section
+collapse it."* That reverses the call `LevelBlock` was written with. The worry then was shutting a
+panel under somebody's cursor; the worry turns out to be the wrong way round, because level 1 asks
+four things and answering the fourth left all four panels standing open under a heading that said
+"Complete". `shut` follows `complete` in both directions now, derived on the render that sees the
+change rather than in an effect — an effect would paint the finished block open for a frame first,
+and that flash is the thing being fixed.
+
+**And so does each panel inside it.** *"For redability make talent selection, lienage selection
+block collapsible as well when filled."* `PickBlock` takes `foldable` and `summary`: the head
+becomes a button with the same chevron a level block wears, and a folded panel says what it holds
+rather than the word "Chosen". All five of the level's panels ask for it; the Lore tab's two and
+the journal do not, because a journal with one entry is not a journal you have finished.
+
+**The two weapons stopped overlapping.** *"There is a small over lap between the two weapons in the
+inventory weapon block."* `.weapon-panel` was `flex: 1 1 0` with `min-height: 0`, which gave each
+panel half the block whatever was in it — so a panel with more than half a block of content drew
+past its own bottom edge and over the row below, and the second weapon's name sat under the first
+weapon's workings. `flex: 1 1 auto` with a `min-content` floor: an ordinary pair still splits the
+block down the middle, and a pair with too much between them overflows into the block's own
+scroller instead of into each other.
+
+**The bar of tabs is one width per sheet.** *"Nav bar should stay consistenct between screen, right
+now it keeps resizing base on block layout."* It was measured against `--sheet-measure`, the column
+count of the tab on screen, and the three tabs each keep their own — so a Character tab set to 3
+and an Abilities tab set to 5 gave the bar two widths, and switching slid the tab row left and the
+save light right by a block and a half. `--sheet-bars` is the largest of the three counts, written
+inline beside `--sheet-cols`, so the bar is one width for the whole sheet and still never narrower
+than the canvas under it. Capped by `--sheet-fit` the same way, so a nine-column Abilities tab does
+not stretch the bar on a laptop that can draw three.
+
+**A quick bar chip wears its school.** *"in the quick bar give the block the color of their spell
+like wild, fire ect. Give a color to other effect so they can be [read] better at a glance."* A
+Fire spell is the Fire family's orange and a Wild spell is Wild's green, which is what their chips
+already take on the effects tracker and in the codex's filter row. The bar was the last place on
+the sheet printing every spell one violet.
+
+Everything with no school takes `KIND_COLORS`, new in `tagColors.js`, and none of the colours are
+new: each is what that thing already wears elsewhere. The change that matters is that **a basic
+action is no longer a weapon attack.** The codex gives both `kind: 'ability'`, correctly, and on a
+block where they stand in one column that left the row you reach for in a fight looking exactly
+like the row that says you can climb a wall. So a basic action is slate and a weapon attack keeps
+copper, decided off the `Basic Action` tag, which is the codex's own answer. `barAccent` is the one
+place either question is asked, and the stylesheet's `ac-kind-*` stays the fallback.
+
+**A greyed button says why.** *"When there is an error or something blocks you allow user to mouth
+over the greyoud button to get a tooltip that tells them what the issue is."*
+
+Almost every greyed button on the sheet already knew its reason and several already carried it in a
+`title`. Not one of those reasons has ever reached a reader, because a `disabled` button is not a
+control any more: it is out of the tab order, the platform is under no obligation to draw its
+tooltip, and the browsers that suppress mouse events on disabled form controls suppress the hover
+with them. It is a button that has stopped being able to explain itself, which is the wrong shape
+for the one button with something to explain.
+
+`Gated` in `parts.jsx` is `aria-disabled` instead. Screen readers say what `disabled` said, the
+pointer reaches it so the sheet's own hover bubble opens with the reason in it, it is back in the
+tab order so the reason is reachable without a mouse at all, and the press is swallowed in the
+component by mouse and by keyboard both. `[aria-disabled='true']` in `index.css` carries the
+greying that used to come free, and the bubble is wrapped `aria-hidden` because text inside a
+button is part of its accessible name: an open bubble would otherwise rename the control at exactly
+the moment a screen reader is on it.
+
+Measured in Chromium on the day: a real pointer over a `disabled` button *does* still deliver
+`mouseover` and `mouseenter`, so hover alone would have worked there. That is a browser being
+generous rather than a rule to build on, and it was never the whole of what was missing.
+
+Thirteen buttons are gated so far and all of them are the press that stops you: the rest and its
+labour chips, the Martial Move row whose refusal has been written and unreadable since the day it
+was written, a spent quick bar chip, the brew and the enchantment, the forge, the transformation,
+the steal, the attribute spread and point, the starting kit, the lineage's open questions and the
+pact mission. The rest of the sheet's disabled buttons are untouched: a button greyed because the
+sheet is read-only has nothing to say that forty of its neighbours are not already saying.
+
+### Left open
+
+- **SUNDER's rate.** 3 Willpower per 2 Action Points is chosen. "Very expensive" was a direction
+  and this is a rung above the REND Jules priced.
+- **Neither contest is rolled.** CONCUSS's roll against Grit and STUNNING STRIKE's against Reflex
+  are printed sentences the table resolves. A chain asks for its DC once (see `rollPlan.js`), the
+  attack has already spent that question, and a second check would either ask twice or borrow the
+  first one's number. Wiring it means the plan reading a move's body as well as the card's, and
+  deciding what a second DC is.
+- **STUNNING STRIKE's clock** is still "until its next Turn End", chosen when the card was CONCUSS.
+- **`concuss` means a different card.** Said above. Nothing migrates a stored pick.
+- **The old CONCUSS art is still on disk** as `data/Martial Move/Concuss.jpg`, redrawn for the new
+  card. `Stunning Strike.jpg` is the Master stun's. Both resolve and neither needs an alias.
+
+## Three abilities became moves, and Reckless got its die back, 2026-09-03
+
+> update reckelss to give elevated to the attack. Make sure thall ability liek ambush are reshape
+> to work like marital move. Actualy, make them special martail mvoe that are given by the talnet.
+> look for other similar cases and adjust them.
+
+### RECKLESS is advantage and a die size
+
+`rides: { advantage: 1, elevate: 1 }`, and the card reads "The attack is made with advantage and
+its damage is Elevated once."
+
+The plate had an Empowered half and it was cut the day before, when every move cost one flat
+Willpower: a die on top of advantage for the same 1 was the old card being its own action. The
+price is read off the swing now — 3 Willpower on a Great Weapon — so the card can carry both
+halves and still be paid for.
+
+**Elevated rather than Empowered**, which is what Jules asked for and is the better of the two
+here: it is the same dice one size up, so it scales with whatever is in your hands instead of
+adding one die of whatever the weapon happens to roll. A Great Weapon's swing goes from
+`3d6 + 2*stat` to `3d8 + 2*stat`. Both halves ride every swing, so both are wired.
+
+### The granted three
+
+**A talent set can hand over a Martial Move outright, as one of its own cards.**
+
+| | set | rank | what it was |
+| --- | --- | --- | --- |
+| AMBUSH | Trickster | 1 | an Ability that laid a rider on the effects tracker |
+| RAGING BLOW | Berserker | 1 | an Ability whose "your next" clause nothing read |
+| RECKLESS VIOLENCE | Berserker | 3 | the same again, at Master |
+
+All three did nothing to the world and everything to your own next swing, and all three had to be
+paid for on one turn to be spent on another. AMBUSH was the wired one — bought at the quick bar,
+a row on the tracker, spent by the next weapon attack — and was the last thing on the sheet still
+working the way every Martial Move worked before 2026-09-02. The other two were prose: "your next
+melee Weapon Attack is made with advantage" was a sentence the advantage never came out of, and
+the table had to remember it a turn after the Willpower had gone.
+
+As moves they are one tick inside the attack they were always for. Priced into the same pay
+button, folded into the same printed card, credited in the same arrow, spent by the same press,
+and impossible to buy for a swing that never happens.
+
+A granted move differs from a learned one in exactly two ways, and both follow from it being the
+set's own card: no chooser offers it and no rest re-picks it, and it is printed under its set on
+the Abilities tab rather than under a hand. `grantedMoves` in `moves.js` reads them off `kind`
+rather than off a list, so a fourth is one word on one card.
+
+### Two rates, and two words no number could hold
+
+`scales` was a boolean for one day. It is now `'ap'` or `'dice'`:
+
+    'ap'    per 2 Action Points the attack costs, rounded up   RECKLESS WOUND REND SUNDER
+    'dice'  per Damage Die the attack prints                   AMBUSH
+
+The second is not new design. AMBUSH has been priced "Willpower equal to the weapon's printed
+number of damage dice, before any enchantment or boost" since the Trickster arrived; what changed
+is that the rate is now a word on the card instead of `ambushCost` in `tricks.js`. So
+`moveWillpower(move, swing)` takes the **attack card** rather than a number, because the two rates
+read different things off it, and `moveCost` and the row in the prompt hand it the card.
+
+Two of the `rides` keys can now hold a word:
+
+- **`elevate: 'paid'`** is AMBUSH: "Elevated a number of times equal to the Willpower paid", and
+  what it paid is the swing's own dice count. Resolved at the moment of the tick rather than
+  stored, because the answer changes with what is in your hands and the plate the player is
+  looking at has to be the plate the dice are thrown for. One die and 1 Willpower on a dagger,
+  three and 3 on a Great Weapon. **Superseded hours later**, when Jules flattened the card to a
+  single Elevate; the word and its branch are gone. See "Ambush Elevates once" at the foot of this
+  file.
+- **`ap: 'free'`** is RECKLESS VIOLENCE: the attack costs no Action Points, which is a price being
+  *replaced* rather than reduced. RIPOSTE's `-1` is a delta and works everywhere; minus six would
+  be wrong on a dagger and right on a Great Weapon, so this is a flag and the prompt zeroes the
+  swing. The orb strikes the printed cost through and names the move, which needed its own branch:
+  `Number('free')` is NaN and NaN is not less than zero, so the old credit line would have struck
+  a 4 through and named nobody for it.
+
+### Two narrowings, on the card rather than the system
+
+Neither is on any of the eighteen in `martial.js`: those are written to ride whatever their
+holder's set allows, and it is a set's *own* move that comes with a sentence about which swing.
+
+**`plain`** means the plain attack whatever a set has bought. AMBUSH carries it because of the
+ruling of 2026-08-21 — "Ambush only apply on Weapon Attack, not special attack" — and that ruling
+has to survive the card becoming a move: a Trickster who also holds a Rank 2 Duelist bought the
+Special widening for the Duelist's hand, and reading it onto AMBUSH would quietly undo a ruling
+nobody revisited.
+
+**`melee`** means the swing has to be one. RAGING BLOW carries it and the card has always said it;
+what is new is somewhere to enforce it, because a weapon attack carries `Melee` or `Ranged` in its
+own tags. Transcription rather than invention: the alternative is a Berserker with a bow being
+offered a card that says it cannot be used.
+
+### What was looked at and left alone
+
+The sweep found four more cards with "your next attack" in them and none of them is this shape.
+
+- **SHIELD EXPERTISE** and **BASTION'S FURY** are Passives whose clause fires when you *block*.
+  Nothing is activated and nothing is paid, so there is no moment at which to tick a box: a Martial
+  Move is chosen and priced, and these are conditions.
+- **SPORADIC INFUSION** empowers **an ally's** next attack. A move rides the swing being paid for
+  on this sheet, and that swing is somebody else's.
+- **STEAL's Poison row** rides "your next Weapon Attacks", plural and unnumbered, and is a menu
+  outcome rather than an ability. It stays a tracker rider and is now the only one.
+
+QUICK DRAW and STICKY RESIN are the same two reasons again from outside the talent sets: a passive
+condition on a swap, and a coating that rides the next attack made with a weapon by whoever holds
+it.
+
+### What came out
+
+`ambushCost`, `ambushOption`, `ambushLine` and `ambushEffect` are gone from `tricks.js`, along with
+`diceCount` (which is `swingDice` in `martial.js` now, moved to the file that needs it) and the
+`times` helper only they used. `ambushUse` is gone from `combatBar.js`, and with it the last of the
+pay-now-spend-later machinery on that file — AmbushWindow.jsx went the same way on 2026-08-28 and
+this is the rest of it. Nothing replaced any of it: the price is a rate on the card, the refusal is
+`offeredMoves`, and the sentence about what it will do is the printed plate the prompt already
+draws.
+
+**The reading side of a rider stayed.** `trickRides` still narrows an `ambush` payload to the plain
+attack, for the rows already sitting on people's trackers: somebody mid-session has one they paid
+Willpower for, and it goes on behaving exactly as it did until a swing spends it. Deleting the
+branch would have quietly widened it onto a Special Weapon Attack, which is the one thing the
+ruling it came from forbids.
+
+### A pool was drawing from another set's grants
+
+`loadoutPool` filtered the whole registry by `kind`, which separated the codex from the sets only
+for as long as no set granted a card of a pool's kind. Three now do, and **a Duelist's chooser duly
+offered AMBUSH** — a Trickster card, pickable at a rest by somebody who had never paid a rank for
+the set, on all four of the sets that teach moves.
+
+The filter says the rule outright now: a card any set hands over is not in anybody's pool.
+`TALENT_CARDS` is exactly that list, it costs one lookup per card at module load, and it is right
+for every kind rather than this one — a set that granted a spell tomorrow would not want it turning
+up in a spellbook chooser either.
+
+### The checker
+
+`npm run lint:moves`, and `scripts/check-moves.mjs` is new. The risk it covers is not arithmetic,
+it is *shape*: five keys on a move are read by name somewhere else, and every one of them fails
+silently when it is misspelled. A `scale: 'ap'` prices at the plate for ever, a
+`rides: { elevates: 1 }` prints nothing, and neither is an error anywhere.
+
+So it asserts, across all 21 moves in the game:
+
+- `ap` is null, `wp` is a whole number, `scales` is one of the two rates, every `rides` key is one
+  something reads, and the two word-valued keys hold either a number or their own word
+- the plate is honest: what the orb prints is what the cheapest swing in the game charges, and a
+  move with no swing to price against falls back to its plate
+- every granted move is disjoint from the pool, carries `Martial Move` in its tags, carries no
+  tier, is handed over by the rank that grants it and **not** by the rank below, names the set that
+  granted it, and is actually offered on a swing it allows
+- no loadout pool draws from the grants
+- `plain` is not offered on a Special Weapon Attack even with every widening bought, and `melee` is
+  not offered on a Short Bow
+- the five rates climb the whole cost column and match their own rate at every rung
+- `elevate: 'paid'` comes out as the price on two different rungs, and `ap: 'free'` raises the flag
+  rather than being summed as a number
+- no Martial Move appears on the quick bar, asserted against `quickBar` itself rather than against
+  the filter that drops them
+
+Two of those caught real problems on the first run: AMBUSH priced at 0 Willpower with no weapon in
+hand, which is what a codex list and a presentation page would have printed, and the pool leak
+above. The pool assertion was then re-tested against the broken version to be sure it can fail.
+
+### Left open
+
+- **`plain` is a ruling the widening can now see.** Every set that teaches moves reaches a Special
+  Weapon Attack at Rank 2, and AMBUSH is the one card in the codex that visibly does not. The 2026-08-21
+  ruling is kept as written; it is worth asking whether it survives the card being a move.
+- **"Your next attack" is read as a Weapon Attack** on RECKLESS VIOLENCE, which is a narrowing: a
+  Martial Move rides one of the two attacks a weapon teaches and nothing else, so a free spell is
+  off the table. Almost certainly what a Rampage card in a rage meant, but it is a reading.
+- **A turn of the rage is still nobody's to spend.** RAGING BLOW takes 1 and RECKLESS VIOLENCE
+  takes 2, and nothing on the sheet has ever counted one: `Rampage` is a tag and every card says
+  its own price in prose. Exactly as wired as it was, which is to say the Willpower is charged and
+  the turn is announced.
+- **"Once per round" is still unenforced** on RECKLESS VIOLENCE, for the reason it always was: a
+  round is neither of the two rests a use limit refills on.
+- **A stored `ambush` tracker row is still honoured.** Said above, and it is the kind reading rather
+  than the tidy one.
+- **The scripts are not rule-linted.** `eslint.config.js` scopes `files` to `**/*.{js,jsx}`, so
+  every `.mjs` under `scripts/` is parsed and never checked. Probed with a Node-globals block: the
+  whole directory is clean apart from one pre-existing finding, so it is a cheap addition. That
+  finding is a dead assertion in `check-weapons.mjs` — its Reload regex holds two literal backspace
+  characters where `\b` was meant, so it has never fired — and it is left where it is rather than
+  bundled in here, because repairing it may surface weapon findings that want judging on their own.
+
+## Ambush Elevates once and costs no slot, 2026-09-03
+
+> adjust ambush,, it is leveatd once. o matter what. However it should statethat it does not count
+> toward the martial move limit.
+
+Two adjustments to the card, hours after it became a move.
+
+### One Elevate, whatever the weapon
+
+`rides: { advantage: 1, elevate: 1 }`, and the card reads "the attack is made with advantage, and
+on a hit its damage is Elevated once."
+
+It Elevated as many times as the Willpower paid, which meant as many times as the weapon rolled
+dice, so a Great Weapon's ambush was three steps up the die ladder for three Willpower. One step
+now, at every rung.
+
+**`elevate: 'paid'` is gone with it.** That word existed for one card for one day, so the branch in
+`withMoves` went too — and with it the `swing` argument, which nothing else there needed. `elevate`
+is a count again and `check-moves.mjs` asserts it: every `rides` count has to come out the same on
+a dagger and on a Great Weapon, walked on both rungs, because a rider read off the weapon by
+accident would pass on one of them and not both. That is exactly what this card did yesterday.
+
+### Besides the allowance, not inside it
+
+`uncounted: true`, and the card says so in its last line: "it does not count toward how many
+Martial Moves you can add."
+
+It is the only card in the game that carries it. A Duelist 1 who ambushes still has their one move
+to add, which is the trade for the Elevate being flat: the card got smaller and stopped taking the
+slot with it. Verified — a Duelist 1 / Trickster 1 ticks WOUND and AMBUSH on one swing and has
+spent 1 of their 1.
+
+On the card rather than in the system, for the reason `plain` is: an allowance is what a set
+bought, and being outside one is what a card says about itself.
+
+### The allowance is counted rather than measured
+
+`clampMoves` is new and is the one place the rule lives. It was `added.slice(0, allowed)` — the
+count was the length — and it cannot be a slice any more:
+
+    every uncounted tick survives
+    the counted ones fill the allowance in the order they were made
+    a tick past the end of the list is dropped
+
+The third is unchanged and is what the slice was also for: a rank lost while the dialog is open has
+to release the *newest* move rather than an arbitrary one, and it has to do it on read rather than
+in an effect racing the render. `toggleMove` asks the clamp rather than counting for itself — a tick
+is legal exactly when it survives being run through it — so there is one rule and not two that can
+disagree.
+
+**It lives in `moves.js` rather than in `UsePrompt.jsx`, which is its only caller.** The node
+checkers do not load JSX, and the first version of the assertion tested a copy of the rule
+restated inside `check-moves.mjs`, which is asserting against nothing. Moved, so the checker holds
+the real function. Both of its properties were then re-tested against a deliberately broken clamp:
+an uncounted move must never fill a slot, and it must never be the tick that gets dropped when the
+allowance is full, whichever order the boxes were checked in.
+
+The prompt's count reads `1 of 1 + 1 beside` when one of the ticks is besides the limit, and that
+count is now the whole of what says so. The row used to wear a **No slot** chip next to its orb as
+well; Jules asked for it gone on 2026-09-03, and the count above the list already says the same
+thing once for the whole hand rather than once per row.
+
+### Left open
+
+- **The price is still per Damage Die.** `scales: 'dice'` is untouched, because it is the
+  designer's own printed line: "Willpower equal to the weapon's printed number of damage dice". With
+  the Elevate flat, that line no longer has the Elevate to justify it — **a Staff pays 3 Willpower
+  for exactly what a dagger pays 1 for**, advantage and one die size, and it is the only card in
+  the codex where the same effect has three prices. Left as transcribed rather than quietly
+  flattened, since the Elevate was the thing asked about and the cost is a cell on a sheet. Worth a
+  ruling.
+
+
+## Hiding, and what breaks it, 2026-09-03
+
+> When using hi[de] it should set an effect that is removed: at the end of the tru[n], if the
+> player [does] anny action during this turn. Otherwise it stay [until] manual[ly] removed.
+>
+> Add to skulk the[n] it remove the cost of hide whenever you land a critical hit.
+>
+> In the logs, there should be no End turn block, instead just teh sepration line between turn.
+> Also there is [a bug] were turn x name appear ta[w]ice in a row.
+>
+> As an Admin I should be able to clean the log of any character or campaign i view.
+
+Four asks, and the first two are one card each: HIDE finally leaves something behind, and SKULK
+pays for the next one.
+
+### A row with no clock on it
+
+HIDE used to be the only action on the bar that plainly changed the state of the world and wrote
+nothing down. You paid two Action Points, the enemies lost sight of you, and whether you were still
+hidden four turns later was a thing the table remembered or did not.
+
+It lays a row now, and the row has a rule the tracker has never held before. Every other row ends
+one of two ways: a count reaches nothing, or a rest sweeps it. This one is **broken by acting**.
+
+    turns: null      nothing is counting it. It stays
+    stirred: true    you have paid for something while it stood
+    endTurn          a stirred row comes off. An unstirred one does not
+
+`stirred` is the only new field on an effect row, and it is the only thing stored. **Whether the
+rule applies at all is read off the card**, which is the law `effectDuration` has always kept for a
+clock: the card says "You stay out of sight until you act", `readDuration` matches the phrase and
+hands back `breaks: 'act'`, and `breaksOnAction` is what asks. A second card written that way
+tomorrow behaves the same with nothing added here. It is ranked with the *precise* durations rather
+than the vague ones, and that ranking is load-bearing: the `ends` clause underneath reads the same
+sentence as "Until it ends", and a vague duration is offered in the picker and never written, so
+without the rank HIDE would have laid no row at all.
+
+The mark goes on in `spendUse`, at the one moment the sheet can be sure an action happened: when
+one is paid for. **Before the cast, and that ordering is the rule.** Hiding while already hidden
+marks the standing row and then lays a fresh one over it, so hiding again is hiding again. The
+other way round, a Hide would stir the row it had just written and reveal you at the end of your
+own turn.
+
+### Three readings that had to be made
+
+- **The Hide that lays the row does not break it.** The stir is read before the cast writes, so the
+  action cannot reach the row it is about to create. Anything after it can.
+- **A reaction stirs it.** It is still you doing something. Nothing comes off until the end of your
+  own turn either way, so the sheet is never the thing that reveals you early — it is the
+  conservative reading, and the table can always take the row off by hand.
+- **The turn is yours.** `endTurn` is the only place this happens, and it is the sheet's own End
+  Turn press. Somebody else's turn ending has never touched your tracker and does not start now.
+
+The press says so first. `turnTriggers` grew a `breaking` list for the `end` boundary, beside the
+`ending` and `clearing` the `start` boundary already had, and the prompt prints **Broken by
+acting** before the button does it. On the block the row's pill reads `∞` until you move and
+`ENDS` after, in the block's own colour rather than the ended grey: it has not ended, it ends when
+the turn does.
+
+### Skulk buys the next one
+
+> it remove the cost of hide whenever you land a critical hit
+
+A row again, and for the reason an ambush was one: a discount you cannot see is a discount you will
+forget you have. Land a Critical Hit and a `skulk` row goes on the tracker; the Hide chip then
+prints **0** with the 2 struck out beside it and the word **Skulk** under it, through the same
+`apCut` / `apCutFrom` pair QUICK DRAW cuts a weapon swap with. Paying for the Hide takes the row
+off.
+
+**The row carries no payload.** An ambush stored three numbers because they were history — what a
+particular Willpower actually bought. This buys one thing, so the row *is* the opening: a standing
+`skulk` row means the next Hide is free, and the card is the receipt. `hideModifiers` takes the
+whole printed cost off rather than a number of its own, so the cut survives HIDE ever being
+repriced.
+
+A critical hit is an attack landing six over, which is `kind` `weapon` or `attack` on the check
+`rollPlan` built. A Skill Check rolled six over is a critical success at picking a lock and opens
+nothing. The row is laid from the *verdict* rather than from the throw, in `usePlayCard`'s settle,
+which is also the first write on this sheet that happens after the dice rather than before them —
+so it reads the character through a ref rather than through the one the press captured. A chain
+takes as long as the table takes, and a delivered effect that arrived in the meantime must not be
+written back out.
+
+Only a player playing their own card on their own sheet. A minion and an enemy both come through
+`usePlayCard` with an `actor` that is not the sheet the patch writes to, and neither has a talent
+set.
+
+### The log stops saying it twice
+
+Two rules, both in `logChain.js` where `check-log.mjs` can hold them under Node.
+
+**A turn ending is a seam, not a block.** `drawnEvents` drops `move: 'end'` and `move: 'ended'`
+before either gathering. The seam over the next turn already says the last one finished, and
+"Ended turn 3" above it was the same fact again at the size of an entry. **Both rows keep being
+written**: one of them is what the encounter runner listens for to advance the fight.
+
+**A turn opened twice is one seam.** This was the reported bug and it was built in: an announced
+turn is written by two different people. The runner calls it (`your-turn`, by the table) and then
+the player's own client starts its own turn and writes that (`turn`, by the player). Both open a
+turn, so the feed drew two — an empty seam and the one holding the entries. `bundleTurns` now
+absorbs the pair when the newer row is the sheet's press, the older is the runner's call and they
+name the same actor. The call survives as the head, because it carries the run's round and the side
+that colours the seam. Two calls in a row stay two seams and so do two presses, and a throw made
+off the turn call's own cover joins the entries under the one seam, oldest first, which is where it
+happened.
+
+Four new sections in `check-log.mjs` walk all of it, including the four shapes that must *not*
+merge.
+
+### And the admin's clear
+
+The campaign page has offered its Game Master the Clear since 2026-09-01, and `canEdit` there has
+always included an admin. The other half of the sentence is the log block a *sheet* carries, one
+per table it sits at, which had no clear at all. It has one now for an admin and for nobody else.
+
+Nothing was needed in the schema: `clear_campaign_log` already reads
+`c.dm_user_id = auth.uid() or public.is_admin()`, which is what actually settles it. The prop only
+decides whether a button is drawn.
+
+### The entry got taller
+
+> make the log block a little bi taller as when collapsed text overlap a bit
+
+A closed entry is two lines set at `line-height` 1.2 and 1.25 with a 1px gap between them, which at
+0.72rem and 0.68rem gives line boxes of 13.8px and 13.6px for text whose glyphs want about 14.7px
+and 13.9px. So the name's descenders reached into the sentence under it, and `.log-title` clips its
+own box to make room for an ellipsis, which took the tail off a "g". Both lines are 1.35 now, the
+gap is 2px and the head's padding is 0.42rem: an entry went from 38.6px to 45.6px, measured.
+
+Nothing else on the tab moved. A block is a hard 640px everywhere, so what grew is the row inside
+it and not the block.
+
+### Left open
+
+- **How long the free Hide stands.** Nothing in the sentence puts a clock on the SKULK opening, so
+  nothing invents one: it stands until a Hide spends it, a rest sweeps it or a hand takes it off.
+  A crit landed in the last fight is still good in this one. Worth a ruling.
+- **One opening at a time.** A second critical hit while one is standing lays nothing, on the
+  same-source law. Two crits do not buy two free Hides.
+- **HIDDEN is not a keyword.** The row is named after the card and the card explains itself. The
+  word is in ordinary prose elsewhere in the codex ("extract hidden secrets"), and lighting it
+  there would be lighting a word that means the ordinary thing.
+- **A tracked HIDE on an enemy behaves the same.** A Game Master who picks the card onto a foe's
+  tracker gets a row the foe's own actions break, which reads right and was not designed for.
+
+## The Willpower ledger, and the curse that finally asks, 2026-09-03
+
+> rempve the no slot text in the martial move seelction
+>
+> When using teh quick bar actions. The cost in willpower need to be logged withthe source and
+> effect. Same when healed or damaged.
+>
+> For the bestial cusre whenever the character spend willpower or take health damage he should be
+> prompt the control roll. He can choose to fail those if he wants.
+>
+> For the reaction pop up make it large like 50% so.
+>
+> Bestiary aiblities for entites alway use their best attribute
+
+Five asks, and the middle three are one chain: a Willpower spend leaves a word behind, so the sheet
+finally knows what happened to it, so the Feral Curse can ask.
+
+### The pool that moved without saying why
+
+Health has always gone through the ledger. Take a delivered hit and the row says
+`2.Fenrat: Blightbolt`; pay a Blood Tithe and it says which spell took it. Willpower went nowhere:
+the column dropped and that was the whole record. Cast four things in a fight, come back to a bar
+at 3, and there was nothing to read.
+
+So `spendUse` writes one now, and what it writes is the ask's own two words:
+
+    the effect    the card. What the Willpower bought
+    the source    where the card came from: the line the chip already carries
+
+`spendNote` is those two joined, and it has one rule worth stating: most chips already open their
+source with the card's own name ("Fireball · Arcanist"), so saying it twice would be the ledger
+stuttering. The hand group is the one that does not — its source names the *weapon* ("Longsword ·
+in hand") — and that is exactly the half a swing's note would otherwise be missing, so a swing
+keeps both: `Cleave · Longsword · in hand`.
+
+Both pools are written in one call, so a card charging Willpower and a tithe is one write and two
+rows. **Action Points are deliberately not in it.** They are not a balance, they are a turn's worth
+of points that come back at the bell, and a ledger of them would be a hundred rows a session that
+nobody reads.
+
+And the other half of the ask: a Health row now names the effect as well as its source. The delta
+already says how much, so what was missing was *what hit* — `2.Fenrat: Blightbolt · Necrotic
+damage`, and `Nyx: Mending Word · healing`, because a row reading a name alone leaves the reader
+counting signs to work out whether it healed or hurt.
+
+### Two things that had to move out of the way
+
+**A minion borrows its bonded's ledger now, not just their Willpower.** `appendLedger` appends to
+whatever it is handed, and a creature's actor had no ledger at all: its cast would have handed back
+a list of one, and `minionSpend` sends `ledger` the bonded's way along with the Willpower. One cast
+from an ally would have wiped its bonded's whole history. The pool and the record of it move
+together or not at all.
+
+**The ledger is pruned per kind.** One column holds seven ledgers moving at wildly different
+speeds: a table books XP once a session and Willpower forty times a fight. Sliced on the total
+alone, one evening of casting would have pushed every XP line a character ever earned off the end
+of the array, so the pools would have quietly eaten the history. `LEDGER_KIND_LIMIT` is 40 and each
+kind is now counted against its own limit and never against anybody else's. The 200 total stays as
+a second fence and is no longer the one that trips.
+
+### The curse asks
+
+FERAL RAGE has said "whenever you lose Health or spend Willpower" since the day it was transcribed,
+and the sheet has never once asked. The reason was honest and is written into three comments: the
+sheet saw its Health column change and never learned what changed it, so a sheet that asked for
+this roll would have asked on every scratch and every repair. So it held the difficulty, offered
+the two presses that move it, and in practice the curse fired when somebody at the table remembered
+it existed.
+
+The ledger is what changed. **Both of the card's triggers now write a row naming what did it**, so
+the trigger is a row and nothing else — `FeralCall` watches for rows it has not seen and asks about
+the ones that spent something.
+
+Watching the two *columns* was the obvious alternative and it is the wrong one. A pool column moves
+for reasons that are not events: a recomputed ceiling clamps it, a realtime refresh from another
+tab rewrites it, a rest fills it. A ledger only ever grows a row because something happened.
+
+Three answers, and the card is the reason for each:
+
+    roll it          the Instinct Roll against the difficulty the block holds, with the DC
+                     handed in rather than asked for. Fail and the beast is out, through the
+                     same `enterFormBody` the block's Transform button uses, so the difficulty
+                     resets to 8 exactly as the card says. Pass and you held it in, +1
+    willingly fail   the card's own last sentence, and the way to give in on purpose
+    not yet          the way out, and it moves nothing
+
+Which way round that goes was ruled a few hours after this shipped, and it shipped the other way:
+pass to give in, fail to hold it in. See "The roll you are trying to make" below.
+
+Worth noticing what the card does not offer: there is no way to choose to *pass*. The beast can
+always be let out and never reliably held in.
+
+It stays quiet wherever the answer could not be acted on: while you are already in the form, while
+a spent one is still flagged and waiting to be shaken off, and at 1 Health or less, where
+`canEnterForm` refuses because half of what is left rounds to nothing. Which also settles the one
+case that looked circular: the transformation's own Health row is written in the same patch that
+sets the flag, so it never asks about the price of giving in.
+
+Giving in clears the whole queue. You cannot transform into what you already are, the difficulty is
+back at 8, and every occasion still waiting was a question about a change that has now happened.
+
+### A creature rolls what it is good at
+
+> Bestiary aiblities for entites alway use their best attribute
+
+A creature page prints one attribute per card and those were transcribed from the sheet the
+creature arrived on: a Blightgeist's Withering Word says Mind because a Blightgeist is a Mind
+creature. Read literally that let a creature hold a card written for an attribute it happens to be
+bad at and roll the bad one, which is not what a generated stat block is for.
+
+`foeModifiers` is the rider, and it is `HIGHEST` — the rule written as a word rather than as a key,
+the same mechanism a lineage's "cast with your highest Attribute" already used, resolved against
+whoever holds the card. **The card is not rewritten.** Its printed `stat` stays as the codex has
+it, and a card read with no creature behind it still prints what it was written with.
+
+Two boundaries on it, and both are about what an ability *is*:
+
+- **A basic action is nobody's.** A Shove is a Physique roll for a goblin the same as for a knight,
+  so `basicGroup` hands out no rider. Only the creature's own cards ride.
+- **A tracker row may be somebody else's spell.** A player's Wall of Fire burning on an enemy is
+  the player's spell however long it burns there, so `foeOwns` gates the rider on the card actually
+  belonging to the creature.
+
+And then the grammar. The article is baked into a card's body against the stat it was written with
+— "an {stat}" is Instinct's, "a {stat}" is everyone else's — and scripts/lint-cards.mjs holds the
+codex to that. Swapping the stat under it printed "Make a Instinct Melee Attack". So `castArticles`
+settles the article at the same moment `castStat` settles the stat, in both renderers. Instinct is
+the only one of the three that takes "an", which is the whole of the rule, and the case of what was
+written is kept because an article opens a sentence as often as it sits inside one. This fixes
+every `cast: HIGHEST` card in lineages and backgrounds too, which had the same reading and nobody
+had noticed.
+
+### The two small ones
+
+**The No slot chip is gone.** The count above the list already reads `1 of 1 + 1 beside`, which
+says the same thing once for the whole hand rather than once per row.
+
+**The reaction knock is half the screen.** It was a 320px corner banner, which is the wrong size
+for a question with six seconds on it: a notice you can miss in the corner of a sheet is a reaction
+nobody takes. It is 50vw now, centred along the bottom, wide enough to read as a row — the question
+on the left, the two answers on the right, one line tall on a desktop. On a phone half a width is
+not a width, so it takes what there is and the answers go back under the question.
+
+### Left open
+
+- **A minion's Willpower spend writes on its bonded's ledger, signed by the creature.** The row
+  reads `Wyrm Bolt · Kaelen's Wyrmling`, which is right — it is the bonded's Willpower — but it
+  sits in the same list as their own casts with nothing but the source to tell them apart.
+- **A minion's own abilities still ride their printed attribute.** The ask named the bestiary, and
+  a bonded creature's cards come off a talent set rather than a creature page. Worth a ruling on
+  whether the same rule should reach them.
+- **An enemy's Willpower spend writes no ledger row at all.** It is built and dropped by
+  `FOE_KEYS`, which is the right outcome as far as it goes: the lich's cast is on the table log
+  under the lich's own name, and the sheet's ledger is the player's account of their own pools. An
+  encounter row has nowhere to keep one.
+- **Nothing asks a creature the control roll.** FERAL RAGE is a character's card and `FeralCall`
+  is mounted on a sheet. A Game Master running a Feral Cursed enemy moves its difficulty by hand.
+- **The queue drops the oldest past four.** A fight that lands five triggers before any of them is
+  answered loses the first, and the difficulty it would have moved is still movable on the block.
+  A modal per row of a long fight is a sheet nobody can use.
+- **A hand-typed ledger entry triggers the roll.** Write "-9, took a hit from the boiler golem" in
+  the Health ledger and the curse asks. That is the card working as written rather than a leak, but
+  it is worth knowing before somebody corrects a balance downward and gets a prompt for it.
+
+## The roll you are trying to make, 2026-09-03
+
+> with the feral curse yo utransform whenyou fail not when you succed
+
+One sentence, and it settles the oldest open question on the Feral Curse tab.
+
+### What was open
+
+FERAL RAGE was transcribed off the sheet with two clauses that only agree if the roll goes one
+particular way:
+
+    On a failure the difficulty increases by 1 for your next roll.
+    It resets to 8 on a transformation.
+
+Read with a **pass** as the transformation, those are consistent and the card is a roll you are
+hoping to make. Read with a **failure** as the transformation, they are the same event written
+twice and they cancel: one failure would both raise the difficulty and reset it.
+
+The Developpement Notes had already asked for the second reading — a button that increments the
+difficulty **"as you succed your roll"** — and the block was built the card's way with the
+disagreement written down as *"Worth a ruling"*. It stood for a fortnight, and the prompt built
+earlier the same day inherited it: pass and you gave in, fail and you held it in.
+
+The ruling is the note's. **It is a control roll.** You throw it to hold the beast in, the failure
+is the transformation, and the sentence that moves the difficulty flipped with it.
+
+### What moved
+
+| Where | Was | Is |
+| ----- | --- | -- |
+| `FeralCall`'s verdict | `isFailure` held it in | `isFailure` lets the beast out |
+| **Willingly fail** | a failure, so the difficulty climbed | the way to give in on purpose |
+| FERAL RAGE, second paragraph | "On a failure the difficulty increases by 1" | "On a failure you transform. On a success the difficulty increases by 1" |
+| The block's step button | titled "On a failure…" | titled "On a success…". The label *"Held it in, +1"* was already right |
+| The block's Transform | "The Feral Rage roll passed. Apply it." | "…failed, or you chose to fail it." |
+
+Two of those are worth a sentence each.
+
+**The card now says which way the roll goes.** "On a failure you transform" is not on the tab, so
+it is an addition rather than a read — the same kind BESTIAL SENSE's second sentence is, and marked
+as one in `talents.js`. It is there because the direction was *inferable* rather than stated, and a
+fortnight of the sheet inferring it backwards is the evidence that inferable was not enough.
+
+**The transcription file is untouched.** `data/templates/feral-cursed-ability.csv` is the record of
+the sheet as it arrived, so it still reads "on a failure", exactly as it still carries BESTIAL SENSE
+without the sentence that was added to it in chat. A ruling lands in the codex; the CSV is where the
+sheet stays.
+
+### The shape of the curse, now
+
+Restraint costs. Every roll you hold is a roll you will have to make again harder, and the pressure
+comes off only by giving in, so a Feral Cursed who keeps holding it in is one the beast is getting
+closer to. That is the opposite of what this file said last week, where holding it in bought a
+quieter beast, and it is a much better curse.
+
+And the beast can always be called: "you can choose to willingly fail the roll" is now the sentence
+that calls it, so the prompt's middle button transforms rather than climbing the difficulty. Nothing
+anywhere on the card lets a Feral Cursed choose to *pass*.
+
+### Left open
+
+- **CALL THE BEAST is narrower than it was written to be.** It was house-written to fill the hole
+  where a Rank 1 Feral Cursed could not call the beast at all. Willingly failing calls it now, so
+  what the card still buys is the form **on demand** — no trigger needed first — for 1 AP and 2 WP.
+  But its own 2 WP is itself a trigger, and any other Willpower spend provokes a roll a Feral Cursed
+  may simply choose to fail, which is the same transformation for less. Worth a ruling on whether it
+  should do something the free route cannot.
+- **Nothing re-asks after a willing failure.** Giving in clears the whole queue, which is right,
+  but it means a player who meant to press **Not yet** and pressed the middle button has spent half
+  their Health with no confirmation. The block's own Transform button prints the price first; this
+  one prints it in the paragraph above and not on the button.
+
+## Every effect lands, and the roll stands aside, 2026-09-04
+
+Jules: "make sure that all the ability, spell, effect etc. when used can properly apply an
+effect, so if I use renew it applies the effect to the target. Or snake it create the poison
+status. That the targeting is always correct, spell and effect that applies from aura, as well.
+If someone has skulk then everyone on the table should see it. If something is created like with
+hard light in the target it should appear, become a target with proper health." Then the roll
+and its kin as "a rectangle that pop on the right side center vertically. So it does not take
+over everything as it happens", and a pass on the encounter manager's text.
+
+### What was already true, and what was not
+
+RENEW worked. Its text says how long it runs ("again at the Turn Start of the target's next 2
+turns"), `castEffect` lays a row for anything that does, and an aimed cast delivers that row to
+the target. SNAKE! did not, and the reason is the whole of the first half of this entry: "the
+target is poisoned" names no clock. The clock is in the glossary, under poisoned ("until they
+complete a Long Rest or regain any amount of Health"), and nothing read the glossary as a rule.
+A spell that inflicted a condition landed its damage and left the condition to memory. Thirty
+eight cards in the codex inflict one.
+
+### Conditions are rows now
+
+`src/lib/statuses.js` is the glossary read as rules. Seventeen status keywords, each with what
+a tracker row needs: which rest ends it, what it does to the numbers where the sheet holds the
+number, whether healing clears it, whether a Move clears it, and whether it stacks.
+
+| Condition | Clock | Bends | Cleared by |
+| --------- | ----- | ----- | ---------- |
+| Poisoned | until a Long Rest | Disadvantage on every roll | any healing |
+| Diseased | until a Long Rest | -1 to all three attributes | a Long Rest |
+| Burn | until a Short Rest | nothing the sheet holds | a Short Rest |
+| Prone | open | Disadvantage | a Move action |
+| Grappled | open | Disadvantage | breaking free, by hand |
+| Bleed | open, stacks | nothing, deals 1d6 at its Turn Start | one stack per healing |
+| Rooted, Stunned, Constrained, Incapacitated, Unconscious, Asleep, Blinded, Frightened, Marked, Vulnerable, Wound | open, or the card's own clock | notes only | by hand |
+
+A tracker row carries `status` beside `card`, and everything downstream reads it:
+
+- **`layEffect` matches a condition on the condition.** Two snakes are one Poisoned, and a card
+  that lays its own row and a condition (ENTANGLING ROOTS: the vines and Rooted) is two rows.
+  Bleed is the one the glossary calls stackable, and every stack is its own row.
+- **`runningRiders` folds a condition's rider** beside a card's, keyed on the condition so two
+  Poisoned rows are one Disadvantage. Diseased is the first rider in the table to take an
+  attribute *away*, and statMath's terms already carried a sign. `effectLine(row)` is the one
+  door every tracker row's "what it does" is read through now, condition first and card second.
+- **Healing washes.** `characterDelta` and `applyToFoes` both run the list through
+  `healedEffects` when Health comes back: Poisoned goes, a Bleed loses a stack. **Moving stands
+  you up**: `spendUse` runs a Move through `movedEffects`, at the moment it stirs the Hide row.
+- **A condition row reads the target's boundary.** `turnTriggers` drops the card's "At your Turn
+  End" clauses on a condition row (that is the caster's boundary) and never reads the Upkeep
+  half for one (a toll is the caster's to pay). A stack of Bleed carries the glossary's own
+  Turn Start clause, so the prompt offers its 1d6 to roll.
+- **The picker grew a Conditions row.** Every glossary condition is one chip on Track something,
+  landing with its own clock and rider, so a Game Master who used to type "Poisoned" gets the
+  poison.
+
+### What a card inflicts is read off the card
+
+`inflictedStatuses(card, { half })` reads the codex's own phrasing: "the target is poisoned",
+"they are rooted for 10 turns", "knocked prone", "inflicted with Burn", "inflicts a Wound",
+"gains one stack of Bleed". Everything the same word does *otherwise* is refused, and every
+refusal is a real card: a removal ("shed poisoned", SEEDLING SPIRITS), a precondition ("one that
+is stunned", AMBUSH), a refusal ("cannot be knocked prone", STONEFLESH), the caster ("your
+physical body is incapacitated", BIRD VIEW), a condition inside an "if" (HEALER). The half
+inflicts only once it is taken (BLIGHT POLLEN's tithe diseases, CLOAK OF FLAMES's flare burns).
+
+Two shapes come back **optional**, and the prompt offers them as a box rather than laying them:
+a choice ("push the target back or knock it prone", SHOVE and DRIVE BACK) and a progression
+("rooted, constrained, then buried", DROWNING EARTH sinks a stage at a time). MAGMA CHAINS
+stuns now and roots later, so Stunned is laid and Rooted is offered.
+
+A condition's clock is its own sentence's where it states one (Rooted for 10 turns, Stunned
+until its next Turn End, Asleep for 1 hour) and the glossary's where it does not (Poisoned until
+a Long Rest). REND counts its stacks off the swing's damage dice, Empowered and all. Forty four
+cards inflict something; the census is in `npm run lint:combat --list`.
+
+### Where a cast's own row lands
+
+The card's own row used to go to the targets whenever any were picked. That was right for RENEW
+and wrong for a wall: THORN RAMPART aimed at the one it roots would have moved the wall's ten
+turns onto the goblin. `castPlan` in combatBar.js reads the card once and says where the row
+goes:
+
+| The card | The row goes to |
+| -------- | --------------- |
+| inflicts a condition | the caster. The target gets the condition, the caster keeps the spell |
+| puts a body on the table | the caster. The row is the body's clock |
+| is anchored on the caster or a place ("around you", "at a point you can see", "you conjure", HIDE's "you stay out of sight", a potion's "drinking this") | the caster |
+| carries an Upkeep | both. The toll is the caster's and the affliction is the target's |
+| is on the body it touches, with none of the above (RENEW, GIANT GROWTH, CELESTIAL EDICT, BOLSTER, SCOURGE) | the targets |
+
+Every row delivered to a target is signed with the caster's name, so a Poisoned on a goblin
+says who did it. With nobody picked, a cast lays its own row on the caster as it always has and
+inflicts nothing on anybody, because there is nobody to inflict it on: the prompt says so, and
+the Conditions row on the tracker is the by-hand route.
+
+The use prompt prints all of it before the tap: **Leaves on the target** with one line per
+certain condition and a box per optional one, **Goes on your tracker** or **their tracker**
+under the duration line, and **Puts on the table** for a body. The ticked boxes ride out as
+`options.statuses` and the Martial Moves as `options.riders`, because WOUND and REND inflict
+theirs, and the chain lays exactly what the dialog said.
+
+### A body a spell makes is a body in the fight
+
+HARD LIGHT, DEVOURING BLOSSOM, GUARDIAN ANGEL and SHAPE EARTH each say what they make has
+("Health equal to [[10*stat]] and Defense equal to [[2*stat]]"), and `conjuredBody` reads that
+sentence for the caster. A sentence that says *sacrifice* is a cost and not a body, so GORE
+ARMOR makes nothing.
+
+The body is a row in the encounter's pile whose `creature` is the one registry stub
+creatures.js keeps for it (`CONJURED_ID`, never on the bestiary shelf) and whose numbers ride on
+the row as `body`. It wears a rank of its own (`CONJURED_RANK`, haze violet, a dashed chip), has
+no attributes, no moves and no Willpower, takes no turn (`rollInitiative` skips it) and is
+struck like any enemy through `applyToFoes`. A Game Master's enemy conjures straight into the
+pile; a player's cast **announces** a `summon` row on the log under a key the caster minted, the
+encounter tab's consumer turns it into a foe on the live encounter, every seated sheet's
+FightProvider turns it into a chip with the body's defenses, and the Remove button on a
+conjured block posts the `gone` row that takes the chips down. `listFightWords` asks for the
+summons by name, so a reload keeps the wall standing.
+
+What a body does is on the card that made it, and its clock is its caster's own row: the flower
+snaps at the caster's Turn End, off the caster's tracker. Reaching 0 Health draws it down; the
+Game Master removes it.
+
+### Everyone sees what is running
+
+Every chip carries the conditions on its body as a second line, two names and a count, all of
+them in the tooltip. The Game Master's roster reads a foe's tracker and a seated character's
+sheet directly. A player's FightProvider reads an enemy's through the curtain, exactly as it
+reads the pools, and every seated character's off their own row: a sheet is public to read, so
+what is on a tracker is not the secret an enemy's pools are. It watches the characters channel
+for the seated ids and the members channel for a seat changing, so a hidden Trickster is hidden
+on every chip that shows them the moment the row lands.
+
+### The roll stands aside
+
+The dice surface, the reaction gate and the turn call were three full-screen covers with a blurred
+backdrop each. All three are one panel now: 400 pixels wide, standing at the right edge at the
+middle of the screen's height, the same copper-topped box the tray and every modal wear, with no
+backdrop at all. The sheet behind stays readable and pressable while a roll is up, which is what
+"does not take over everything" asks for. Tapping the panel is what tapping anywhere was. The
+turn call no longer locks the page scroll. On a phone the panel takes the width and sits above
+the tray's button. Verified in a real browser: a check thrown behind a pressable page, the gate
+counting down, the call standing.
+
+### The encounter manager, shorter
+
+Every sentence a player or Game Master reads on the encounter view was cut to what it decides:
+the Initiative block's two notes ("Roll initiative", "Kaelen's turn. Their End Turn moves the
+table on."), the boundary prompt ("What happens before the order moves.", "Ends now", "Cleared"),
+the apply window ("Armor and Shield are taken off on landing", "their sheet has the final word"),
+both reaction windows ("Their roll waits while this is open. Close it to let the roll go."), the
+reaction gate ("Reactions open · your roll unlocks in 3s", "Did it stop this action?"), the
+share checkbox, the empty states and the Down chip. The sheet's own turn prompt and the turn
+call got the same cut.
+
+### The checker
+
+`npm run lint:combat` grew seven sections: every condition is a lit glossary word; nineteen named
+cards read as they should, refusals included; a condition lands with its clock and the row lands
+where the table above says; two poisonings are one row and two Bleeds are two; a condition moves
+the numbers and says so; healing and moving clear what the glossary says; a condition row reads
+the target's boundary and not the caster's; HARD LIGHT is a body with the caster's numbers that
+stands in the pile, takes damage and takes no turn. `npm run lint:log` holds a summon under its
+cast and the knock's two verbs.
+
+### Left open
+
+1. **Frightened lays no rider.** Its Disadvantage is "against the one frightening them", which
+   the sheet cannot see. It is a row with the glossary's sentence. Say the word and it becomes a
+   flat Disadvantage.
+2. **Burn and Vulnerable do not double incoming damage.** The sheet holds no vulnerabilities, so
+   both are rows that say what they mean and the doubling is the table's. Wiring it is a field on
+   the body and a line in `landHit`.
+3. **Stunned, Constrained, Incapacitated and Asleep refuse nothing.** The quick bar still offers
+   every card to a stunned character. Refusing is one guard in combatBar.js, if the sheet should
+   be the one to say no.
+4. **Wound and Marked bend the attacker, not the holder.** "Weapon attacks against them are
+   Empowered" is a rider on whoever swings at the Wounded body, and QUARRY's Empowered and
+   Elevated are the caster's against the quarry. Neither is wired: the swing's plan does not
+   read the target's tracker. The roster now carries every body's conditions by name, so it
+   could.
+5. **A condition with nobody picked goes nowhere.** A Snake! at no target poisons no one; the
+   prompt says so and the Conditions row on the tracker is the by-hand route. The alternative,
+   asking who it hit after the fact, was left out.
+6. **A delivered row prints the holder's numbers.** RENEW on a goblin reads "1d6 + the goblin's
+   Mind" at its Turn Start, because the clause is resolved for the body holding the row. Rows
+   have never remembered the caster's numbers; one field on the row would fix it.
+7. **A conjured body is removed by hand.** Reaching 0 Health draws it down and says so; its clock
+   is on the caster's tracker; the caster's Long Rest does not take it off the table.
+8. **SHOVE and DRIVE BACK offer Prone as a box.** The card leaves the knock-down to the player,
+   so the prompt does too. MAGMA CHAINS' Rooted and DROWNING EARTH's Constrained are boxes for
+   the same reason.
+9. **Stated numbers still land by hand.** "Shield equal to your Instinct" is not a roll and
+   raises no delivery, which is the ruling of 2026-09-01 unchanged.
+10. **An aura lays its row on the caster.** VERDANT FIELD, EYE OF THE STORM and CLOAK OF FLAMES
+    are anchored on the caster, so the caster tracks them and the bodies inside get only what
+    the card inflicts (Burn, off the flare). If an aura should also put its own row on every body
+    standing in it, that is the `landsOn` table above growing a fourth line.
+11. **The physics table is 240 pixels tall in the panel**, down from 300, and was verified on the
+    flat floor only: the harness has no Premium account.
+
+## The players roll their own initiative, 2026-09-04
+
+Jules: "make it so it prompt a roll for player with initiative and not just automatic."
+
+Chapter 5.1 has always said "everybody rolls Initiative", and the tool did not let them. One
+press on the Game Master's screen rolled the whole table's dice, and the players read the
+number they had been given. The press is an **ask** now, and the dice are back where the
+rulebook put them.
+
+### The three moves
+
+`encounters.js` grew a pending block on `run`, so the whole of an ask lives on the encounter row
+and survives a reload on either side:
+
+| Move | What it does |
+| ---- | ------------ |
+| `askInitiative` | the enemies roll here, because they are the Game Master's own bodies. Every seat is written down as asked, with the Initiative on its sheet and its three defenses frozen. The fight is not live yet. |
+| `foldInitiative` | one player's own throw folded in, off the table log. A second answer for the same body is refused. |
+| `closeInitiative` | the order, sorted and live. Whoever never answered is rolled for here. |
+
+`initiativeAsk(encounter)` is the reading the screens use: who has answered, on what, and who
+is still out. `dropInitiative` calls the whole thing off.
+
+### The call is the address
+
+The ask goes out as one event, `initiativeCallEvent`, whose `data.chain` **is** the call id.
+That single field does three jobs: the encounter row holds its pending block under it, a
+player's throw is written under it, and the log gathers those throws into the ask's own entry.
+A fight starting is one block in the feed with the whole table's dice inside it, which is the
+"one action, one entry" law of 2026-09-02 doing exactly what it was built for.
+
+Nothing new is written by the player. The throw *is* the answer: `kind: 'roll'`, its total
+decided by their own client, folded by the runner and never recomputed. No second event, no
+sheet written by anybody but its owner.
+
+### The panel
+
+`TurnCall.jsx` grew a third face, amber where the bell is copper and the turn call cyan, because
+it is the one of the three that is a question: **Roll Initiative**, `2d6 + Initiative` with the
+number the sheet is actually wearing, an advantage stepper and a "put it away". It is read off
+the fight context rather than the channel, unlike everything else that panel hears, so a player
+who reloads between the press and their throw is still being asked. A question survives a
+fetch; an act does not.
+
+The stepper is the first surface in the app that can obey 5.1's other sentence: "a side caught
+out rolls Initiative with Disadvantage."
+
+### The wait, and the way out of it
+
+The Initiative block on the encounter view lists who has thrown and what they got, and the
+fight starts **by itself** the moment the last answer lands. Nobody presses anything. Two
+presses hold the wait open all the same, because a fight must never be stuck behind a laptop
+somebody shut: **Roll the rest and start**, which rolls for whoever is missing, and **Call it
+off**.
+
+The listener that folds answers only lives while the encounters tab is mounted, so an ask also
+asks the log what it missed: `listCallAnswers` reads every throw under the call, once per call.
+Acting off a fetch is safe here in a way it is not for a delivery, because folding is idempotent
+by construction.
+
+### In passing
+
+- `listFightWords` asks for `init-call` by name, so a player's panel comes back after a reload
+  however deep the feed has grown. The fight context now hands down `asking` beside `fights`,
+  and `live` means a *running* fight: an ask standing on its own is not one, which is why
+  `ReactionCall` reads `fight?.live` now and not `Boolean(fight)`.
+- `FightBlock` on a linked sheet says "Rolling" and points at the panel, instead of saying no
+  fight is running.
+- `noticeOf` keeps the ask out of the pop-up: the panel is already saying it. The three
+  panelled moves are one set in `logChain.js` now.
+- `rollInitiative` stays as the primitive, and is what a table with nobody seated still gets: a
+  Game Master alone with a pile of goblins starts a fight on one press exactly as before.
+
+### The checker
+
+`npm run lint:combat` grew three sections: an ask leaves the fight not live with the enemies
+already rolled, a player's own total is what is kept, a second answer and an answer to another
+call are both refused, the closed order sorts on what came back and carries the frozen
+defenses, an ask read back off the stored row is the same ask, whoever never answered is rolled
+for on the number their sheet had, and a table with nobody seated is never kept waiting.
+`npm run lint:log` holds the ask's throws under it and keeps the ask out of the knock.
+
+### Left open
+
+1. **The enemies are still rolled for.** A Game Master with eight bodies would be pressing eight
+   times, so their dice stay silent and automatic. If the table wants to see the boss roll, that
+   is the same three moves pointed the other way.
+2. **A player can put the panel away and never roll.** That is deliberate: the ask is a question
+   and the escape hatch is the Game Master's press. A player who is asked twice for one fight
+   (a reload between the ask and their throw) is refused by `foldInitiative`, and both throws
+   stay in the log.
+3. **The order is not re-asked when somebody joins mid-ask.** A sheet linked after the press is
+   not in `asked`, so it is not in the order either. Ending the fight and rolling again is the
+   answer, as it was before.
+4. **Surprise is a stepper and not a state.** Nothing on the sheet knows a side was caught out,
+   so the Disadvantage is the player's own honest press.
+
+## The curtain had nothing behind it, 2026-09-04
+
+Jules: "there seems to be an issue with health does not show in initiative tracker for player
+when the check is toggled."
+
+Show enemy health to players was ticked and the chips on every seated sheet stayed plain faces.
+The read policy was right, the announcement was written, the refetch happened. What came back
+was a list with the enemies missing from it.
+
+### Why
+
+`getCreature` resolves an id against two halves of a bestiary: the printed one, frozen into
+`creatures.js` at build time, and the forged one, a map filled from the database.
+`normalizeFoes` drops a foe whose creature it cannot find, silently and on purpose, because a
+build that has never heard of a creature must not draw a broken one.
+
+Exactly one screen was filling the forged half, and it was `CampaignPage`, which is the Game
+Master's. A seated character sheet never called `loadForgedCreatures` at all, so it resolved
+every printed creature and not one forged one. `poolsOf` in `FightProvider` walked
+`encounterState` and handed back a map with no entry for a forged enemy, the chip fell through
+to its default `health01: null`, and `null` is the value that means "this reader is not allowed
+to know". The curtain was open. There was nothing behind it.
+
+A table fighting nine codex creatures never saw this. A table fighting what it built in the
+forge saw nothing else.
+
+### The three parts
+
+**The query.** `listForgedCreatures` learned a `guests` option that drops the owner from its
+personal query and lets the policy decide what comes back. That is not a new permission:
+`custom_creatures: read` already opens a personal creature to anybody sitting at a table whose
+shared encounter names it, written for precisely this case. The shelf still asks without it,
+because a shelf is what you may edit.
+
+**The reader.** `FightProvider` fills the registry before it reads a single encounter, in the
+order `CampaignPage` already reads them in, and fills it again every time the curtain moves.
+That second half matters: while the box was unticked the encounter was unreadable, so the
+creature it names was unreadable too, and the only read that can find it is the one after the
+flip. The encounters channel carries a guard of its own. A row naming a forged creature the
+registry cannot resolve is a row this reader is too early for, so it fills the registry and
+reads the campaign again rather than pooling what is left. Whichever of the flip, the
+announcement and the row reaches a sheet first, the one that arrives too early repairs itself.
+Each unfound id is asked for once and then let go, so a forged creature deleted out from under
+a stale encounter cannot send the sheet back to the database on every Health step of a fight.
+
+**The order.** The checkbox wrote through the same 500 millisecond debounce every other press
+on that screen uses, and announced at once. So the announcement beat its own write by half a
+second, every seated sheet read a row that was still shut and found nothing, and the curtain
+only appeared to open when the next Health step happened to arrive. The flip is flushed now and
+announced when it lands, and a write that failed says nothing at all.
+
+### The checker
+
+`npm run lint:creatures` pins the finding rather than the fix: with the registry emptied, an
+encounter holding two forged enemies reads back as none. Nothing throws and nothing says so.
+Any reader that draws an encounter before it has filled the registry draws fewer enemies than
+are on the table.
+
+### Unchanged
+
+A player's own tracker still paints no bar on a party chip, their own included. The curtain is
+about the enemies. What the Game Master sees of the party comes off the seated sheets, which
+they may read and the players may not.
+
+## What you can bring to a check, 2026-09-04
+
+Jules: "Feral sense is no visible as possible option to check when doing skill check."
+
+BESTIAL SENSE reads "you have advantage on skill checks related to using your 5 senses", and
+the SKILL CHECK prompt had never heard of it. Neither had it heard of SHARP SENSE, COLD BLOODED
+or SKULK, which say the same kind of thing from the other two places a card can come from.
+
+### Why
+
+The prompt's list was built by `checkSkills`, which walks the *background* tab and nothing
+else. That was the whole of the answer on 2026-09-02, when fourteen domain skills were the only
+cards in the codex that spoke to a check. A talent set's card and a lineage's were never read,
+so a Feral Cursed and a Wildkin both looked at a picker that was missing the card they wanted.
+
+### The law moved
+
+`src/lib/checks.js` is new and owns the reading. It asks about a card and knows nothing about
+where the card came from:
+
+- **whether a card speaks is read off its prose**, as phrases and never as the words "skill
+  check". That is what keeps HELPFUL out, which is an ally's check, and TAILOR out, which reads
+  a stranger's clothes without one. Five phrases now instead of two, and each is named beside
+  the card that is written that way.
+- **what it is worth is read off `grants`**, exactly as a skill's has been since 2026-09-02.
+  `checkWp` is what ticking it costs and `checkAdvantage` is the die it lends.
+
+`checkSkills` in backgrounds.js is two lines over the top of it, and `characterCheckCards` in
+levelPicks.js is the composed reading: the trade you came up in, every talent set you have
+taken, and the blood you were born with. A talent's cards are read *through* the rank held, so a
+Rank 3 Trickster still has SKULK.
+
+### Four cards wired, and a fifth named
+
+| Card | From | Price | What it covers |
+| --- | --- | --- | --- |
+| BESTIAL SENSE | Feral Curse, Rank 1 | nothing | the five senses |
+| SKULK | Trickster, Rank 1 | nothing | stealth and sleight of hand |
+| SHARP SENSE | Wildkin | 1 Willpower | the five senses |
+| COLD BLOODED | Wildkin | 1 Willpower | stealth and sleight of hand |
+
+Two of them print no price at all, which is the first time a card brought to a check has been
+free. DISTRACT is the fifth and is **named rather than offered**, beside SKILLED and MASTERMIND:
+it buys a retry once the roll has already failed, and none of those three is a die added to this
+roll.
+
+Two of the four needed a sixth field. `grants.checkWhen` says the domain in the row, because
+SKULK's own summary is about hiding in plain sight and BESTIAL SENSE's carries a Shield pool,
+and a player about to tick one needs to know what it is for.
+
+### The receipt
+
+A brought card now keeps one. It was the settled price that named these, which said nothing
+at all about the ones that are free: ticking BESTIAL SENSE bent the roll and left no account of
+itself anywhere. It rides as `advantageFrom` and as a `sources` row like every other fold, so
+the arrow names it, the list under the ways itemises it and the row opens the card. "Everything
+that is modified need to be seen but only what modifies it."
+
+The price note now names only the cards that charged something, which is what it always meant
+to say.
+
+### Flags
+
+- **A form does not shut this list.** FERAL FORM says "in this form you are unable to use
+  items, non-Feral Curse abilities or spells", and `feralLocks` is applied to the quick bar, the
+  belt and the Martial Moves on offer. It is not applied here, and was not applied to the
+  fourteen skills either. The rules question underneath it is Jules's: a skill card is passive
+  and spends its Willpower inside its own sentence, so it is not obvious that it is an "ability"
+  the form forbids. BESTIAL SENSE passes whatever the answer is, being the form's own set.
+- **A spell is not offered, on purpose.** SHARPEN SENSES speaks by the law above and is out of
+  reach: the gatherer walks a set's printed cards and never the spells it prepared, because an
+  hour-long spell is cast with its own action rather than brought to a roll. When it is running
+  it belongs on the tracker, which is where a rider already bends a roll.
+- **SKULK's ally half is still prose.** "When you or an ally within 3 meters make a skill check
+  related to sleight of hand or stealth, they do so with advantage." Only the holder's half is
+  wired. The ally has their own sheet and their own prompt, and no card anywhere reaches across
+  two of those yet.
+
+### Proved
+
+A scratchpad harness over `characterCheckCards`, 27 checks: the reported case, each source on
+its own, the two exclusions, a rank that is too low, a Wildkin who kept neither trait, a talent
+set the codex has never heard of, and a creature holding none of the three. Then the real prompt
+in the browser: ticking BESTIAL SENSE and SHARP SENSE read "2 of 4", the orb charged 1
+Willpower rather than 2, the arrow read 2, the list under the ways itemised both by name, and
+the confirm carried `advantage 2`, both source rows and `price { ap 0, wp 1 }` with the note
+naming only Sharp Sense.
+
+## Shield does not keep, 2026-09-04
+
+Jules: "Shield should be removed on a long rest."
+
+A long rest filled Health and Willpower and left the Shield pool exactly where the last fight
+put it. A ward laid at dusk was still up at dawn, and a character could bank soak across
+sessions by never spending it.
+
+### The rule
+
+A **Long Rest takes all of it**. A **Short Rest leaves it standing**: an hour off your feet
+binds a wound, the ward is still there when you stand. That is the same asymmetry every other
+line of the rest already reads, so it went in beside Willpower, which is also the long one
+only.
+
+### Where it sits
+
+`restPlan` in `rest.js`, after `feralRest` and before the Willpower block, guarded on
+`patch.shield === undefined`. The order is the whole point. FERAL FORM's Shield *is* the form,
+`feralRest` already empties the pool when the hide comes off and already says so in its own
+line, so a second line reading "Shield 9 to 0" underneath "The hide comes off, and 9 Shield
+with it" is the same sentence twice. The guard is what keeps it to one.
+
+A rest nobody can pay for still takes nothing: the whole block sits below the affordability
+return, like everything else the night does.
+
+### What it changed on the sheet
+
+Nothing in the window's shape. One more `tone: 'end'` line among the rest's lines, printed
+between Health and Willpower, so a player sees the pool leave before they press.
+
+### Said in four more places
+
+The keyword tooltips for **Shield** and **Long Rest** in `keywords.js`, and the rulebook's 2.4,
+its Chapter Eight table, its glossary and its quick reference. The tooltips and the glossary are
+the same sentence, which is how they were before.
+
+### Proved
+
+A scratchpad harness over `restPlan`: a plain sheet holding 9 Shield takes a long rest and the
+patch carries `shield 0` with the line printed, takes a short rest and the pool is untouched,
+holds no Shield and no line is printed at all, cannot pay and nothing moves. Then the same with
+FERAL FORM: in form on a long rest, one line and one `shield 0`; in form on a short rest, the
+same; in form with the Shield already run out, the "hide was already off" line and no shield in
+the patch; and the set held with the form off, where the Shield came from somewhere else and
+this block is the one that takes it.
+
+### Open
+
+- **A conjured body's Shield.** `minions.js` gives a creature its own `shield` and its own
+  `shield_cap`, and `minionRest` fills its Health and Action Points without touching it. The
+  same argument says a ward on an ally should not last the night either. Left alone rather than
+  widened without a ruling.
+- **Life Tree Tea.** It fires `restPlan(character, 'long')`, so the cup now takes your Shield
+  along with everything else it gives. That follows the card, which says it "gives you the
+  benefit of a Long Rest", but a Legendary potion drunk mid-delve to top up now strips the ward
+  the party just laid. Wanted or not is Jules's call.
+
+## A weapon you can touch is somebody's weapon, 2026-09-04
+
+Jules: "spells like kindle say weapon you can touch so it should allow you to target the
+weapon someone at the table."
+
+KINDLE WEAPON imbues "a weapon you can touch" and names no entity anywhere on the card. Every
+pattern in `targeting.js` reads bodies, so the card came back `{ some: false, count: 0 }`, the
+picker never opened, and the only blade the spell could ever light was the caster's own.
+
+### The reading
+
+**A card that names no body still lands on one when what it reaches for is a thing somebody is
+holding, and the body it lands on is the one holding it.** A weapon you can touch is a weapon
+in somebody's hand, and whose hand is exactly the question a row of chips answers. EPHEMERAL
+ENCHANTMENT says as much in its own next sentence: "applying its effect to the wielder of the
+item".
+
+Two guards keep the reading to the cards that mean it.
+
+- **Touch, not sight.** "a non-magical object you can see" (TEMPORAL MEND) is a broken cart and
+  "a simple stone object" (SHAPE EARTH) is a rock. Reach out and touch a thing and somebody is
+  holding it. See one across the room and nobody need be.
+- **Last resort.** It is read only once every body pattern has come up empty, so no card that
+  already counts entities has its answer moved by a weapon named further down its text.
+
+Picking is still optional, which is what makes the reading safe: a sword on the ground is a use
+with nobody picked, exactly as it was before.
+
+### Whose tracker
+
+`landing` in `combatBar.js` read the same silence the same way and kept the row on the caster.
+It reads the held thing now, which puts KINDLE WEAPON on the **both** rung it always belonged
+on: the row lands on the holder, because that is the sheet whose swing has to come out Fire and
+Empowered by 1 through `riders.js`, and it lands on the caster too, because the caster is who
+pays the Upkeep Willpower to keep it lit. Miss the Upkeep and the fire goes out on both sheets.
+
+Nothing new was needed to get the row across the table. A member target has been delivered as
+an `effect` event their own client applies since the combat manager was built.
+
+### The picker asks a different question
+
+"Targets" over a row of chips is the wrong question when what is being picked is whose blade
+catches fire, so `heldThing` names the thing and the head reads **Whose weapon**. With nobody
+picked the note says so: "Nobody picked: the weapon is your own, and the spell rides your
+sheet."
+
+### Two cards moved, and only two
+
+The census went from 284 to **286 of 499 cards reaching other bodies**. The two are KINDLE
+WEAPON and EPHEMERAL ENCHANTMENT. STICKY RESIN already read as one target off its own "the
+target on a hit", and the other 56 card halves that name a weapon or an item say nothing about
+touching one: an Infusion is about the weapon you already hold, an Imbuement about the item on
+your own sheet, a Martial Move about the Weapon in your own hand.
+
+### Proved
+
+`npm run lint:combat`, seven new checks: KINDLE WEAPON reaches one and names its weapon,
+EPHEMERAL ENCHANTMENT names its item, TEMPORAL MEND and SHAPE EARTH reach nobody and name no
+held thing, a synthetic card carrying both a held weapon and an "every entity" is answered by
+the entity, and a cast of KINDLE WEAPON lays a row that lands on **both**. The whole existing
+suite is untouched and green, `npm run lint` and `npm run lint:text` are clean, and the build
+passes.
+
+### Open
+
+- **The picker only exists inside a fight.** `offered` is `roster.length > 0`, and
+  `FightProvider` hands back no roster at all until Initiative has been rolled. So an ally's
+  blade can be lit in combat and not in the ten seconds before it, which is when a party would
+  actually want it lit. That is the law for all 286 targetable cards rather than anything this
+  reading introduced, and widening it means handing the seated party down as chips outside an
+  encounter. Jules's call.
+- **The weapon is not named.** The chip picks a body, and which of that body's two hands is
+  left to the table. Naming the weapon would mean reading somebody else's equipment off their
+  sheet, which is a read policy question rather than a targeting one.
+- **EPHEMERAL ENCHANTMENT still opens its own window.** It carries `pays: 'window'`, so
+  `ActiveBlock` sends it to `EnchantWindow` and it never reaches this prompt. The reading is
+  right and inert there: the window lays `ephemeralEffect` on the caster's own sheet. Wiring an
+  ephemeral enchantment onto an ally's item is its own piece of work.
+
+## The bestiary is a menu, 2026-09-04
+
+Jules: "the bestiary should be a menu with summary version of the enemies. THe lbock should show
+when you clock on it. Summary should be teh same size as like spell summary"
+
+The tab was nine enemy blocks laid on the canvas. It is now a wall of summaries with the block
+one tap behind, which is the same two steps a school of spells is: a brief you scan, and the
+whole of one when you ask for it. The shelf was nine when it was written and it grows every time
+a stat block is drawn; at 736x640 apiece thirty creatures are a wall you scroll past, and none of
+the questions you scroll for (what rank, how big, how much Health) needs the block to answer.
+
+### The brief *is* a card brief
+
+`CreatureBrief.jsx` is new and its class names are `card-brief-*`. That is the whole of how the
+sizes stay the same: "the same size as like spell summary" is a measurement, and two components
+that each carry their own numbers match on the day they are written and drift the first time one
+is tuned. So the plate is 92px because CardBrief's is, the summary clamps at two lines because
+CardBrief's does, and the wall flows at 275px because `.card-brief-wall` says so. Tuning a spell
+brief now tunes this one.
+
+Four things a creature has and a card does not, and those are `foe-brief-*` in Campaigns.css:
+
+- **the level**, in the corner the cost orbs hold. A card's cost and a creature's level are the
+  same question — how big is this — and CardBrief puts the cost there so a column of them reads
+  straight down without reading the names.
+- **the rank tone**, set as `--ac-accent` off the rank, so the top edge, the empty plate's haze,
+  the kind chip and the open label all read Minion teal, General amber or Overlord red. It is the
+  rule `.cell-foe` already keeps: the top edge is the danger.
+- **the portrait**, a plain URL off the creature drawn as the plate's background rather than an
+  `<img>`, because the plate has to stay the window CardBrief cut.
+- **the numbers**, below.
+
+### What it prints is the top of the printed page
+
+In the page's own order, and nothing else:
+
+```
+LONG CREATURE NAME     Difficulty: Minion - Level 1 - 10 XP
+Creature Type Details  Speed 3m(10f) / INI +3
+   DEF: 8   HP: 8 (3d4)
+```
+
+which comes out as the rank and the type as chips, the level in the corner, and DEF, HP, WP,
+Speed and the XP on the summary line. The one addition is a count of what it plays on the open
+label ("2 to play"), because that is what says whether opening this one is worth the tap. The
+rest of the page is the block behind it.
+
+The numbers are the creature **at the level its own page was written at**, which is the level
+`previewFoe` opens the block at, so the brief and the block never disagree. A creature scales and
+an encounter picks its own level; a shelf asked "what is a Blightgeist" has to answer with the
+Blightgeist.
+
+### The block, opened
+
+The same `EnemyBlock` an encounter draws, still `readOnly`, still dressed by `previewFoe`. It
+opens in a `size="page"` dialog, which is the first of the three kinds Modal keeps that width
+for: a thing drawn at its real footprint. `.foe-page` holds it at `var(--block-w) * 2 + 16px`,
+the 736px the grid used to give it, and centres it.
+
+Deliberately **not** `.sheet-cell-wide`. That class is a grid instruction (`span 2`), and both
+the 820px query and the one-column canvas rule take the span away and hand back a 360px block —
+correct in a grid, wrong in a dialog, where there is no grid and the width is the box's to give.
+
+The creature is held **by id**, not as an object. A forge save behind the open dialog rewrites
+the page, so reading it back off the shelf on every render means the block redraws as the
+creature it now is, and closes by itself if the creature was removed. Reading it off the whole
+shelf rather than the filtered list is also what keeps switching the rank filter from shutting an
+open block.
+
+`--rank-tone` is set on the cell here, which is what `.sheet-cell.cell-foe` has always been
+written to take and nothing had ever handed it. The brief that opened the dialog wore the rank as
+its whole accent, so the block has to. The Encounters tab still leaves it to the copper fallback,
+untouched.
+
+### The measure
+
+The Bestiary canvas went from four columns to three (`canvasColumns` in CampaignPage.jsx).
+Encounters keeps four, because everything on it is still a double block. A wall of summaries is
+three columns wide everywhere else on the site, because everywhere else it is inside a
+page-width dialog, and three tracks here comes to the same column and the same brief. It is also
+the width the block opens at, so the dialog lands about where the shelf edges are.
+
+The Edit button moved off the block head and under the brief, where the spell chooser puts its
+Learn button. It is on both now: either one is a place you have just decided this creature is the
+wrong shape. Editing the *page* is still not gated on `readOnly`, which is why the block in the
+dialog can be pressed there and nowhere else.
+
+### Proved
+
+In the browser, on a throwaway harness over `BestiaryTab` (auth is the only thing between this
+tab and a browser, so the tab was mounted directly with fixture props):
+
+- **the block keeps its footprint.** 736x640 in the dialog, two panes of 367px, and
+  `scrollHeight === clientHeight === 636` on both: nothing inside the block scrolls, which is the
+  law it was measured to. The dialog itself is 1180 and does not scroll at 820px of window.
+- **the brief and the block agree.** Vaultkeeper Lich, both read from the DOM: `DEF 14 · HP 154 ·
+  WP 56 · 4m · 4000 XP` on the brief, `DEFENSE 14 / HEALTH 154 / WILLPOWER 56 / SPEED 4m /
+  LVL 08 · 4000 XP` on the block.
+- **the rank lands.** Overlord opens with `rgb(239, 78, 91)` on the cell's top edge, Minion with
+  `rgb(77, 182, 172)`.
+- **the wall is measured to the toolbar.** Both 84 to 1196 at a 1280 window, three columns of
+  363px.
+- **a card still deals over the dialog.** WITHERING WORD opened from a chip inside the block and
+  printed against the lich (Mind +10, 4d6 + 20). One Escape closed the card, the second the
+  dialog, the wall behind it untouched.
+- **the filter does not shut an open block.** Blightgeist open, Overlord pressed: the wall behind
+  narrowed to three and the Blightgeist stayed.
+- **provenance and the cap.** With one personal and one published creature forged: the Forged
+  filter appeared reading 2, the personal brief wore FORGED and the published one PUBLISHED, and
+  Edit was offered on the account's own and not on the published one.
+- **units and the phone.** Imperial read 15ft and 25ft. At 375px the wall is one 360px column
+  with no horizontal overflow, and the block becomes one column of two panes and scrolls inside
+  itself, which is the rule at the foot of Campaigns.css.
+- **one column on a desktop.** `data-columns='1'` gives a one-column wall and still opens the
+  block at 736: the preference is about the canvas, the window is about the dialog.
+
+`npm run lint`, `lint:text`, `lint:creatures`, `lint:layout`, `lint:combat` and `lint:cards` are
+all clean.
+
+### Open
+
+- **No name box.** Nine creatures filter by rank and that is enough. Thirty will want the codex
+  browser's search, and the brief already carries everything it would search on (name, rank,
+  type). Left until the shelf earns it.
+- **The plate is haze on every printed creature.** None of the nine carries a `portrait_url`, so
+  the whole shelf draws the same empty window an unpainted card brief draws. The window is the
+  right shape for the day art arrives, which is the most that can be said for it.
+- **The encounter shelf is still its own row.** `AddFoes` keeps `.foe-shelf-row` rather than
+  becoming a wall of briefs, because its row carries the +1/+2/+5 counters and reads its numbers
+  at the level the fight is being *filled at*, neither of which a brief has anywhere to put. Two
+  shelves with two shapes is the thing this repo usually refuses; they are allowed here because
+  they answer different questions. Worth revisiting if the counters ever move.
+
+### The summary text, 2026-09-04 (same day, after the drop above)
+
+Jules, on the wall as it landed: "when you are in the bestiary you dont see the full block, you
+see a reduce view with name, image and summary text."
+
+The wall was right and the line in it was wrong. A brief carried the printed page's whole head
+line — `DEF 8 · HP 8 · WP 8 · 3m · 10 XP` — in the slot a card brief gives its summary, so the
+shelf read as a table of numbers rather than as a menu you read. "Summary text" is prose, and the
+reference was a spell summary, which is one sentence of what the card gives you.
+
+**The summary text is the creature's lore.** The paragraph at the foot of its printed page, the
+same one the block's `i` button opens, cut off at the same two lines every card summary is cut
+off at, with the whole of it on the title. Every one of the nine printed creatures carries one
+(164 to 222 characters, so all nine clamp), and it is the only sentence about a creature that is
+not a number.
+
+**The numbers are the fallback, not the line.** A forged creature is allowed to carry no lore at
+all (`lore: ''` is where a blank body starts), and a brief with an empty slot reads as broken
+rather than as terse. So the head numbers stay in the file and print only there, keeping the
+tabular figures they had. Nothing was lost by demoting them: they are on the block one click
+behind, and the encounter shelf prints them at the level the fight is being *filled* at, which is
+where a Game Master is actually sizing anything.
+
+What is left of the Difficulty line on the brief is `Lvl 04` in the corner and the rank chip, and
+between them they still answer the one question the name does not: how big is this.
+
+The toolbar note followed the change. It used to send you to the block for "its lore", which is
+now the line you are already reading.
+
+### Proved
+
+Harness again, over the same tab:
+
+- **Blightgeist** prints its lore, clamped to two lines (`scrollHeight > clientHeight`), with the
+  full 209 characters on the title.
+- **a forged creature with lore** prints it; **a forged creature with none** falls back to
+  `DEF 8 · HP 72 · WP 0 · 7m · 540 XP` and keeps `foe-brief-stats`, so the figures stay tabular.
+- the brief is 145px where the numbers were 128px, and the wall's rows stretch together exactly
+  as the spell chooser's do.
+- the block still opens whole: Thornmother at 736x640, both panes 636/636, the Overlord edge, and
+  the `i` still opens the full paragraph as a second dialog over the first.
+- at 375px the wall is one 360px column, the summary still clamps at two lines, and nothing
+  overflows sideways.
+
+## The codex became the rules, 2026-09-04
+
+Jules: "turn the codex into what is called rules, which is the how to play section of the
+website, based on the doc that was created here. Not only does it need to be a hub for all the
+rules of the game but also where you can browse cards, items etc. Make sure it is appropriately
+styled and that it has a how to play section that is short and sweet."
+
+`/codex` was a colour-token registry: three panels of swatches, a paragraph of sample prose and a
+list of what the badges on a card mean. Useful once, and never the page a link called "Codex" in
+the site bar promises. It is now `/rules`, and it is six shelves under one head.
+
+| shelf | what it is |
+| --- | --- |
+| `/rules` | how to play, in a screen, with the Game Master's one page under it |
+| `/rules/rulebook` | the whole book, rendered from `docs/rulebook.md` |
+| `/rules/cards` | 499 cards, filterable, with the card itself a tap behind |
+| `/rules/items` | 125 items, the same rows the sheet's own codex browser draws |
+| `/rules/bestiary` | the bestiary tab, read only |
+| `/rules/glossary` | 79 terms, searchable, and the colour key the old page was |
+
+The shelf is in the URL, so a link into one is a link into the thing being argued about rather
+than into the top of a page. `/codex` redirects, because links to it are out in the world.
+
+### The book is the book
+
+`src/lib/rulebook.js` imports `docs/rulebook.md?raw` and parses it. **Nothing on the rules page
+retypes a rule.** That is the same law the codex keeps for a design sheet: what the designer
+wrote is what is shown, and a transcription living in two places is a transcription that is wrong
+in one of them. Edit the markdown and the site changes with it.
+
+The parser handles the subset the book actually uses and nothing else: `##` sections, `###`
+rules, tables with or without a header row, lists with their wrapped continuation lines folded
+back in, `>` asides, `---`, and bold, code and italic. There are no links, no code fences, no
+nested lists and no images in the book, so there is no parser for any of those. It grows when the
+book does.
+
+Three things the parse has to get right, and each was a real row in the file:
+
+- **the 90-character wrap.** The book is wrapped for reading a file, not a page. Every hard wrap
+  comes out or the page prints the file's line breaks.
+- **`| | |`.** Several tables open with a blank header: two columns of a thing and its price,
+  where naming them would say less than the rows do. The separator row is still there, so the
+  header is found and then dropped when every cell in it is blank. `| | Price |` keeps its
+  header, blank first cell and all, because one of the two cells says something.
+- **the indented continuation.** "3. Choose a background." runs onto a second line indented three
+  spaces, and that is the same item rather than a new paragraph.
+
+Plain runs of prose go through `StatText`, which is what colours Willpower violet and Physique
+orange on every card and every row of the sheet. A rulebook that spelled Shield in a different
+colour from the sheet's Shield would be two games.
+
+The Contents chapter is the one thing not drawn: it is a table of the same seventeen rows the
+rail already is. Everything else in the book is on the page.
+
+### One page, and the browser's own find
+
+The rulebook is all seventeen sections at once rather than a chapter at a time, which is the
+deliberate half. A table mid-argument searches for a word, and the browser's own find is the best
+search there is as long as everything is on the page. The rail marks whichever chapter you are in
+and opens its own numbered rules under it, so `5.6.1 Martial Moves` is one click from anywhere.
+
+**The scroll spy is a scroll listener and not an IntersectionObserver, and that is a bug fixed
+rather than a preference.** An observer reports a *change* of state, and a jump to
+`#chapter-five` from Chapter Two is not one: with the top margin pulled in to clear the two
+sticky bars, the heading is outside the observed box before the jump (below the window) and
+outside it after (above the line), so nothing fires and the rail keeps marking the chapter you
+left. Caught in the browser, jumping between six chapters and watching the rail refuse to move.
+It is now a passive scroll listener coalesced onto one animation frame, plus `hashchange` for the
+jump itself. Seventeen rectangles a frame are read in one batch with nothing written between
+them, so the page lays out once and answers all seventeen off it.
+
+### Two sticky bars
+
+The site bar is sticky and the shelf row under it is sticky too, and the second one parked behind
+the first: `top: 0` on both, and the shelf row was drawn at y=0 under a 70px header, never to be
+seen. `--site-bar` and `--shelf-bar` are the two heights, written once on `.rules`, and
+everything that has to clear them reads them: the shelf row's `top`, the rail's `top` and
+`max-height`, and the `scroll-margin-top` on every heading a link can land on. The reading line
+the spy measures against sits a shade below the sum, so a heading a link jumped to lands *under*
+the line and the rail marks the chapter you were sent to.
+
+On a phone the six shelves wrapped to three lines, and three sticky lines is a third of the
+screen given to getting somewhere else. Below 860 the row is one line that slides sideways.
+
+### Everything is read off the registries
+
+`CARDS`, `ITEMS`, `KEYWORDS`, `bestiary()` and the rulebook markdown. Nothing on the page is a
+copy of anything, which is the only way a rules page and a game stay the same game. The reused
+components are the sheet's own: `CardBrief`, `TagFilter`, `useTagFilter`, `ItemIcon`,
+`ItemStats`, `ItemFoot`, `StatText`, `CardStackProvider` and `BestiaryTab` whole. A card opened
+here is the same object as a card opened on a sheet, dealt onto the same pile.
+
+Cards are shelved by kind first and then narrowed by chip or word, because five hundred briefs is
+not a wall anybody scrolls. "Everything" is offered for the times the question really is "what is
+called Bramble anything", and it is capped at 150 with the rest behind a button rather than
+refused. `kind: 'item'` is labelled **Gear Cards**: the fallback called them "Items" beside a tab
+of the same name.
+
+### Printed for somebody
+
+A card held by nobody prints a flat zero where its attribute goes, and the live numbers are most
+of what a card is. So the whole page is printed for one reader: level 3, Physique 4, Instinct 5,
+Mind 7, which is the +2 and the +1 from creation plus the point level 3 grants. It is said on the
+page rather than hidden, since every number on every card here is that character's.
+
+The one card in "Reading a card" is `artSource="promo"`, the same exception the landing page
+takes: that section explains what an art plate is, and drawing it empty to everybody who has not
+paid would explain nothing. **Every other plate on the page is behind the usual tier gate**, so a
+signed-out reader browses 499 cards with the haze plates. Whether the shop window should be that
+much wider is Jules's to rule, and it is one `artSource` either way.
+
+### Kept from the old page
+
+The colour key (nine damage types in Chapter 5.8's three families, the three attributes, the
+thirteen pools) is the top of the Glossary shelf. The card anatomy is the "Reading a card"
+section of the primer, with one repair: it quoted a banner as "Novice Spell - Nature - Blood" and
+the school had since been renamed Primal. It reads the banner off the card now, so it cannot go
+stale again.
+
+### Proved
+
+`npm run lint`, `lint:text` and all fifteen codex checkers clean. In the browser, at 1280 and at
+375:
+
+- all six shelves render, no console errors, no horizontal overflow at either width.
+- the rulebook parses to 12 asides (5 of them designer's notes), 27 lists, 4 numbered, 23 code
+  spans and every table, with no stray markup left anywhere on the page.
+- section 1.7's probability table keeps its blank first header cell; 2.3.1's price table drops
+  its blank header entirely.
+- `#5-6-1-martial-moves` lands the heading at 158px, exactly clear of the two bars, and the rail
+  marks The Fight.
+- Bramble Whip opens on the stack printed for the reader: `Mind Ranged Attack (+7)`,
+  `1d6 + 14 Sharp`.
+- at 375 the rail is a row of chips, the shelf row is one sliding line, and the sample card is
+  360px inside a 375px window.
+
+## The rulebook, second pass, 2026-09-05
+
+Jules, reading the book on the site: "do a pass on the text first ... Make all the text more
+explanatory less catchy bs. Make a clearer section about creating character. The rule how to play
+should guide properly the player on a turn. There should be a new how to dm section. Make the
+ladder 10 to 30 with a step every 4 instead of 3. The Ladder for rolls should be on a table, the
+explanation for the hit and crit and losses should use color. There is no starter store to buy
+from. Review all of it and make sure it matches how the website works. Not some other version.
+Don't mention exceptions like 'Six of each, and seven for a Master Trickster' ... in those cases
+it is just 'some effect might increase it'. It is a ttrpg system."
+
+### The book
+
+Every chapter was rewritten in plain explanatory prose. The book now says what a rule is and how
+to use it, and never why it is clever. The two worked examples ("At the table") stay, because
+they explain; the development history asides (the tenth damage type, the Life Tree Tea exception)
+are gone, because they do not.
+
+- **Chapter Four is the website's own creation flow**: the dashboard's Create Character box, the
+  creation page's two steps, the level 1 block's four panels in the order it draws them, the
+  outfitter (one Common armor set, one Common weapon, two for Military and Mercenary), the purse
+  landing in the ledgers, the lore page. **"Spend the purse" is gone as a step.** There is no
+  store on the site, and 7.8 says how buying works: agree the price, take the coins off in the
+  ledger, add the item from the codex browser.
+- **5.3 is a turn step by step**: Turn Start (what the sheet does on the press), the turn (every
+  kind of card and what it costs, and the action-or-reaction question), Turn End.
+- **Chapter Eleven · Running the Game is new**: what the Game Master decides, setting a DC, the
+  two costs they set, running a fight at the table, the campaign on the website (create, join
+  code, Overview, Table Log), building an encounter (Add at, numbering, the difficulty line, the
+  forge), running a fight with the tool step by step (ask for initiative, the order, enemy turns,
+  Land it, boundary prompts, the six-second reaction window, Next, End the fight, the share
+  switch), how rewards reach a sheet the Game Master cannot write, pricing. The Glossary became
+  Chapter Twelve; Contents, "How to read this book" and every cross-reference moved with it.
+- **The ladder is 10 to 30 in steps of 4**: Easy 10, Moderate 14, Hard 18, Demanding 22,
+  Formidable 26, Mythic 30. **This supersedes the 9-to-30-by-3 ruling of 2026-09-02**, on
+  Jules's instruction. The odds table was recomputed (a scratchpad script over 2d6): a level 1
+  best attribute makes Moderate 42% of the time and Hard 3%; nothing above 22 is reachable by a
+  bare roll (2d6 + 11 tops out at 23). Every derived sentence around it was rewritten (a rung is
+  now eight levels of climb, an Advantage die is a little over half a rung). The six rung names
+  are mine, kept from the old eight with Severe and Legendary dropped.
+- **The results are a table with a colour per result.** `Prose.jsx` sets a bold run that is
+  exactly one of the four verdict names in the tone `VERDICTS` gives it in `lib/dice.js`, so the
+  book's 1.2 table and Appendix A read in the colours of the tray and the log, and nothing else
+  in the book can ask for that colour by accident. The primer's own table is built from
+  `VERDICTS` and `CRIT_BAND` rather than typed.
+- **Exceptions are generalised**, per the instruction: "Six of each. Some effects can raise either
+  ceiling." "Shield caps at half your maximum Health. Some effects raise that cap." "Some gear
+  grants Reaction Points when a fight starts." "Some skills and enchantments make rests cheaper."
+  The Shield keyword in `keywords.js` lost its Feral Cursed clause the same way, so the glossary
+  shelf and the book still say the same sentence.
+- **Everyday prices moved to 11.9**, the Game Master's chapter, still marked as a proposal.
+
+### Corrected against the code
+
+- **3.2 said an odd level grants "an attribute point and a skill".** `levelGrants` in levelPicks.js
+  grants +1 on **two different attributes** and a skill (Jules, 2026-08-21). The table and the
+  sentence under it now say so.
+- **The rules page's reader was 4 / 5 / 7.** Under the rule above a level 3 character cannot have
+  that spread: the +2 and +1 plus level 3's two points make 7 / 6 / 4 or 7 / 5 / 5 or 6 / 6 / 5.
+  `READER` in Rules.jsx is now Physique 4, Instinct 6, Mind 7, and the footer says so. Every
+  Instinct-based card on the shelves prints one higher than before.
+- **The first edition said every background starts with 6,000 coins.** `startingCoins` in
+  backgrounds.js is Jules's rule of 2026-08-21: (4 minus the skills taught) x 2,000, so a
+  three-skill background walks in with 2,000 coins and a one-skill one with 6,000. Only the 70
+  Supplies are the same for everyone. 4.4, 4.8, 7.6, 2.3.1 and the primer's step four now say so.
+- Twelve basic actions, not eleven: Skill Check joined the list on 2026-09-02.
+- Hide's "you stay hidden until the end of a turn in which you do anything" (2026-09-03) is in
+  the 5.5 table and in 5.3's Turn End.
+- The two weapon slots are primary and secondary, as the block labels them, not main hand and off
+  hand. Only the primary's cards are usable, and the swap is 2 Action Points.
+- The glossary is all **79** keywords, verbatim, proved by a round-trip script (curly and straight
+  apostrophes normalised). Only `unconscious` carries `provisional: true` in the code, so only it
+  is marked in the book; the old book marked three.
+
+### Around the book
+
+- `scripts/lint-text.mjs` now walks `docs/rulebook.md` too. The memory said the book had to pass
+  `lint:text`; it was never in the checker's roots. Nine serial commas in the new draft were
+  caught by running it.
+- `Book.jsx` scrolls to the URL fragment once it has drawn, so `/rules/rulebook#chapter-eleven`
+  lands on a client-side navigation and not only on a full load. `go()` in Rules.jsx takes a hash
+  for it, and the primer's new "Running the game" block sends a Game Master there.
+- The primer was rewritten in the same voice: six creation steps in the website's order, a
+  five-step turn, a rest table and a Game Master block. The page ledes in Rules.jsx too.
+
+### Mine, worth Jules's eye
+
+- The six rung names and the third column of the ladder table (what each rung feels like).
+- 11.3's guidance on charging 1 or 2 Action Points for a Skill Check mid-fight.
+- The book says Karma is "the Game Master's to hand out". The sheet has no other source for it
+  (the pool is edited by hand, capped at one per level), and the only rule that grants any is the
+  lodging proposal in 8.2.
+- The order of the four level 1 panels in 4.2 is the one LevelLedger draws: talent, lineage,
+  background, attributes.
+
+### Proved
+
+- The site's own parser, run under Node over the new markdown: 17 sections, 87 headings, 35
+  tables (34 drawn, Contents skipped), 38 lists, 11 asides of which 5 are designer's notes, no
+  pipe or list marker left in a paragraph, no ragged table, no unclosed bold.
+- Glossary round trip: 79 of 79 keywords match the book's 79 rows.
+- `npm run lint`, `lint:text` (now including the book), `lint:help`, `lint:dice`,
+  `lint:creatures` and `npm run build` clean.
+- In the browser: `/rules` and `/rules/rulebook` render with no console errors, eight coloured
+  verdict cells (1.2 and Appendix A) in the tray's four tones, the rail lists Eleven · Running the
+  Game and Twelve · The Glossary, and no stray markdown anywhere on the page.
+
+## The Crossroads, 2026-09-08
+
+The fourth way to make a character is built. Jules, in chat, asked for "character creation
+that is done through storytelling", a "make your own choice type of adventure" that "start[s]
+our question, were you born in a city, in the countryside, and so on", where "every time you
+answer one of these questions ... it gives you a score", and at the end "contextualize[s] all
+the points": level 2, "the two talent sets that have the most points", "plus two to the one
+that has the most points and plus one" to the next, the lineage and background with the most
+points, "and give a logical weapon to it". He asked for a new name for The Long Road, and
+for the pool of questions to rotate so no two runs are the same and so a new talent set
+"integrate[s] into that" by being scored.
+
+### The name
+
+**Crossroads.** The other three ways in are named for the manner of choosing (Free Hand,
+Ready-Made, Walkthrough), and a choose-your-own-adventure is a run of forks. The key in the
+URL is `crossroads` too; `adventure` never worked, so no bookmark is lost. The glyph the card
+wears is the fork it always had.
+
+### What it is
+
+- `src/lib/crossroadsPool.js`: **40 questions in seven stages** (Birth, Family, Blood, Youth,
+  Trade, The Road, Leaving), 12 asked a run (1, 1, 2, 2, 1, 4, 1). Every option carries
+  `gives`, points grouped as attribute, talent, lineage, background, skill, weapon and armor,
+  and a `told` clause the backstory is built from. Two youth questions carry `requires` and
+  only appear after a city or a country birth, which is the "progressive logic" in the ask.
+  `WEAPON_DEFAULTS` and `ARMOR_DEFAULTS` are what the highest attribute reaches for when no
+  answer named either.
+- `src/lib/crossroads.js`: the run is a seed and a list of answers, and everything else is
+  replayed from it (mulberry32). Each stage draws from its eligible pool, weighted toward
+  questions offering a written set, lineage or background no earlier question offered, which
+  is the rotation Jules asked for. `resolve` ranks by points, then by which id was scored
+  earliest in the run, then a fallback on the highest attribute, then codex order. Written
+  sets only: a roster placeholder can be scored and never wins. `applyOutcome` writes the
+  character with `chooseAt`, `setBoosts`, `setLineage` and `buildKitPatch`, stamps 1,000 XP
+  through the ledger, and writes the answers into `lore.backstory` if it is blank.
+- `src/components/sheet/paths/Crossroads.jsx`: one question at a time under a stage rail,
+  then the reveal in the level-1 block's own `PickBlock` panels and colours. Back takes one
+  answer off; Start over draws a new seed; Take this character writes one patch and opens the
+  sheet. The run lives in sessionStorage under the character id until it is taken.
+- `src/lib/kit.js`: `buildKitPatch` and `buildReturnPatch` moved out of BackgroundPick.jsx,
+  unchanged, so the outfitter and the Crossroads hand a kit over the same way and one receipt
+  hands either back.
+- `scripts/check-crossroads.mjs`, `npm run lint:crossroads`: every id resolves against the
+  codex, every `requires` tag is set by an earlier stage, every stage has enough unconditional
+  questions to fill its draw, every written set, lineage, background and attribute is scored
+  somewhere, a run replays from its seed, and 4,000 random walks each make a whole level 2
+  character with every written set, lineage and background winning at least once. `--list`
+  prints the census.
+- The rulebook gained 4.9 The Crossroads, 4.1 names the four ways in, the Contents row and the
+  primer's first step say so, and the dashboard says two of the four are built.
+
+### Mine, worth Jules's eye
+
+- **Every question, option and number in the pool.** There is no design sheet behind it;
+  three examples were given and the rest is drafted around them. The trade stage hands out 3
+  points a background, the leaving stage 3 a talent set, everything else 1 or 2.
+- **Ties break on the earliest-scored id**, then on the highest attribute, then on codex order.
+  The reasoning is that birth and blood are the deepest roots. A coin flip was the alternative.
+- **Placeholders score but never win.** Points on Hemoturgy or Sharpshooter sit in the pool
+  now and start counting the day those sets are written.
+- **Level 2 is 1,000 XP through the ledger**, noted "Made at the Crossroads". A row already
+  above that is left where it stands.
+- **Skills**: the background's own pool ranked by the points the answers put on skills, filled
+  by pool order when the answers named too few. Three level-1 skills are scored by no question
+  yet: Unseen Spellwork, Arcane Marshal, Spell Eater.
+- **The kit**: armor and weapon by points, then the strongest set's own `martial.weapon`
+  families, then the attribute defaults. A two-weapon trade takes the top two.
+- **Follow-up questions stay open on the Advancement tab**: a Wildkin's two traits, a Draconic
+  scale colour, a Feral Curse's animal, a Draconic Bond's name, a pact, a spellbook. The reveal
+  says which set or lineage will ask, and the tab badges them as it always has. Answering them
+  from the story (scale colour off a "your scales were red" answer) is possible and not done.
+- **The balance, under random answers**: Physique takes the +2 about a fifth of the time and
+  Instinct about two fifths, Guardian is held in three runs of ten and Colossus in one of
+  twelve, Criminal and Outlander are the commonest trades and Fey the rarest blood. A player
+  answering in character will lean far harder than a coin does, so these are a floor rather
+  than a forecast, and the census is one command away when the numbers move.
+- The current pools are not refilled on creation: a level 2 Undead opens on 50 of 80 Health,
+  exactly as a free-hand character does after placing a boost. Left as the sheet has always
+  been.
+
+### Proved
+
+- `npm run lint`, `lint:text` (the pool is user-facing text and passes clean), `lint:crossroads`
+  and `npm run build` all clean.
+- In the browser, signed out: Create Character offers Crossroads as the fourth card, the name
+  form hands over to `/characters/local-…/new?path=crossroads`, twelve questions run with the
+  stage rail advancing and the run in sessionStorage, the reveal lists Colossus and Alchemist,
+  Undead, Merchant with Charismatic, Heavy Armor and a Melee Great, 6,000 coins and 70
+  Supplies, 6 / 4 / 5, and a three-paragraph story. Take this character opened the sheet at
+  LVL 02 with the kit worn, the belt clipped, the three ledger rows and the backstory written,
+  and the sessionStorage entry gone. No console errors.
+
+### Second pass, the same day
+
+Jules, on seeing the first draft: "the style of question is wrong. Like I said, the question is
+to be situation", "the number of answering selection never be more than four", none of the
+choices should read like "that type of element in this person's blood, fire, storm, water,
+because that's just telling the player", and "it shouldn't be possible for you to get something
+like a Duelist and Guardian, which are marked as Instinct and Physique, and to have Mind as the
+highest stat. There should be a certain amount of logic."
+
+- **Every question is a scene now, forty-three of them**, childhood to the night you left, and
+  every one ends by asking what you do: a dog cornered behind the mill, the barn on fire with
+  the calf inside, a debt collector at the door when you are twelve, wolves at the edge of the
+  firelight, the watch with a warrant. The birth, name, "what runs in the blood" and "which
+  ancestor" questions are gone. The stages are Childhood, Home, Blood, Youth, Trade, The Road
+  and Leaving, still 1, 1, 2, 2, 1, 4, 1 for twelve a run.
+- **Four answers at most**, held by the checker. The ten-option trade questions became four
+  scenes of four (the warehouse fire, the lord's broken axle, the missing singer, the body
+  behind the guildhall), each answer showing a trade by what you do rather than naming it.
+- **Every answer leans one way.** Exactly one attribute, and everything else it gives is built on
+  that attribute: a set shelved on it or on nothing (`setLeans`), a Stalwart, Wildheart or
+  Luminary point only in its own lane (`lineageRaises`), a weapon that scales on it
+  (`weaponStat`, read off the weapon's first card, which is why a Fist Weapon is Instinct here
+  and a Long Bow is Physique) and the armor set that suits it (`armorStat`). The checker holds
+  all 172 options to it. Backgrounds and skills are free of the law; the other ten lineages are
+  placed by hand where the reaction fits, and never named.
+- **The count refuses the contradiction.** `decide` in crossroads.js: the two sets come from
+  those shelved on the +2 or the +1 (or on nothing), the level-1 set is the strongest that
+  scored on the +2, a lineage may not raise the lowest attribute, and the weapon and armor follow
+  the same two. The checker feeds it Jules's exact count (Mind 9 / Instinct 4 / Physique 3 with
+  Guardian 7, Duelist 6, Arcanist 2) and expects Arcanist then Duelist, Guardian refused; the
+  flipped count keeps the Guardian and refuses the Duelist. Every one of the 4,000 random walks
+  is checked for the same four rules.
+- **Three conditional scenes** instead of two, on what you did rather than where you were born:
+  the watch comes for a thief (`did:theft`), the academy writes to somebody who spoke a word they
+  did not know (`did:magic`), the man you put down comes back with four friends (`did:violence`).
+- **Balance under random answers**, after thinning the folk lineages and the two commonest
+  trades: the +2 lands Physique 37%, Mind 35%, Instinct 28%; every set is held in between 6%
+  (Mycomancer) and 29% (Guardian) of runs; every lineage wins, Stonebound and Skybound the most
+  at 13% and 12%, Stalwart and Wildheart the least at under 2% now that they ride only the
+  answers that are theirs; backgrounds run from Aristocrat at 7% to Criminal at 14%. The
+  four skills nothing scored are scored now (Tailor, Arcane Marshal, Unseen Spellwork, Spell
+  Eater).
+- Rulebook 4.9 and the path's card say moments and answers rather than questions about a life,
+  and 4.9 states the rule: nothing is ever built on the attribute you left lowest.
+
+### Mine, worth Jules's eye
+
+- The forty-three scenes and every number under them. The three he gave are in: the hurt
+  stranger (flask, carry them to the watch house, rob them, hunt the one who did it), the locked
+  door (shoulder, pick, study, wait) and the birth question, which is gone by his own rule.
+- Whether the folk lineages should be this rare. They are the plain +1 to an attribute and now
+  ride only nine, six and eleven answers; a player who answers like a Stalwart all the way down
+  will still get one, but a coin almost never does.
+- A "Blood" stage that is scenes rather than traits. The blood shows in what you do (you dive
+  into the flood and the cold does not reach you, you pull the bar from the coals bare-handed),
+  and the stage title is the one word left from the old draft.
+
+### Proved
+
+- `lint:crossroads` clean with the new sections (one attribute an answer, every set, folk
+  lineage, weapon and armor in its lane, the refusal cases, coherence on every walk),
+  `npm run lint`, `lint:text` and `npm run build` clean.
+
+### Third pass, the same day: the scene is exposed and the answer is a means
+
+Jules, on the second draft: "you did not understand me. It's not the one question. You are
+exposing a scenario." And the whole of his example: "You are standing in front of a locked gate.
+You can see that on the other side is the treasure chest. How do you proceed to open the lock? a,
+use your lockpicks to pick the lock; b, use a vial of acid which you pour on the bars and then
+pass through; c, cast the powerful spell that allows your hand to melt metals; d, use your
+strength to pull away the grid and step in." Every question must be that: a scene that explains
+the situation the character is in, then the question, then at most four ways of acting.
+
+- **Every question carries a `scene`**, two to four sentences of where you stand, what you can
+  see and what is at stake, printed as a paragraph, and an `asks` that is only the question,
+  printed as the heading under it. The checker requires at least two sentences of scene and a
+  question of sixty characters or fewer. The old `text` field is gone.
+- **Every answer is a way of acting**, the means and what comes of it: not "pick the lock" but the
+  picks, the quarter of an hour and the turn; not "burn it" but the vial of acid poured over the
+  hinge pins and the wait for the metal to soften. The checker requires eight words at least and
+  a `told` clause on every answer. The locked gate is Jules's example almost word for word, and
+  its four answers are his four: the picks (Instinct, Trickster, Criminal), the acid (Mind,
+  Alchemist), the spell that lets a hand pass through iron (Mind, Arcanist) and the strength to
+  tear the grid out of the stone (Physique, Berserker, Colossus, Brawler).
+- **The points did not move.** Every option keeps the `gives` the second pass balanced, so the
+  census stands as reported above, except the gate, whose "study the hinges" and "wait for
+  someone to come" answers became the acid and the spell, both Mind.
+- Rulebook 4.9 says so, with the gate as its example.
+
+### Proved
+
+- `lint:crossroads` with the two new sections clean, `npm run lint`, `lint:text` and
+  `npm run build` clean, and a run walked in the browser end to end.
+
+### Fourth pass, the same day: the story is told, not traced
+
+Jules: "instead of directly narrating the trace of players as made, for each of the seven
+sections it takes all the choices and makes a little summary like a narration, something that
+makes more like a short story." The backstory had been twelve sentences in a row, one an answer.
+
+- **`src/lib/crossroadsStory.js` is a narrator.** One paragraph a chapter: an opening line
+  (two variants a chapter, picked off the run), the answers as beats with connectives leading in
+  from the second onward ("Later,", "And once,"), and a closing that says what the chapter
+  showed. Childhood, Home, Youth and The Road close on the way that chapter's answers leant,
+  Physique, Instinct, Mind or a mix. **Blood closes on the lineage the whole run made**, Trade on
+  the background and Leaving on the set taken at level 1, each with a sentence of its own ("That
+  was the tide in your blood, which has never yet met a water it feared." "It was a thief's
+  answer, and it was a thief the trade made of you." "Nobody saw you go, which is how you have
+  preferred it since."). A last paragraph says who came out: "That is how a Skybound thief came
+  to the road: quick of hand and quicker of eye, with a Trickster's fingers and a way of not
+  being where anyone looked, and an Arcanist's first words in the mouth."
+- The reveal prints each paragraph under its chapter's caption; the lore page stores the prose
+  alone, paragraphs apart.
+- **Writing every combination was not done.** Two road answers out of thirteen questions of four
+  make thousands of combinations; the paragraph is composed instead, and the closing sentence
+  is where the summary lives. Where a whole chapter is one answer (Childhood, Home, Trade,
+  Leaving) the closing reads as the summary of that one answer.
+- The checker requires a frame with an opening for every stage, a closing for every lane on the
+  four lane-closed stages, a closing sentence for all 13 lineages, all 10 backgrounds and all 13
+  written sets, a noun for every background and a phrase for every set and attribute, and on
+  every one of the 4,000 walks a paragraph per chapter answered plus one, each ending, with no
+  doubled space, no `undefined` and no sentence starting lower-case.
+- Rulebook 4.9 says the answers are told as a short story.
+
+### Mine, worth Jules's eye
+
+- Every opening, closing, noun and phrase in `crossroadsStory.js`: 14 openings, 16 lane closings,
+  13 lineage closings, 10 background closings, 13 set closings, 10 nouns, 3 attribute phrases
+  and 13 set phrases.
+- Whether the beats should be shortened further on the road, where four answers make the longest
+  paragraph.
+
+### Proved
+
+- `lint:crossroads` with the chapter section clean, `npm run lint`, `lint:text` and
+  `npm run build` clean, and a story read off a run in the browser.
+
+### Fifth pass, 2026-09-10: simpler, shorter, and an answer that looks after you first
+
+Jules: "Rework the text in the crossroad. Have the question and answer more simple and easy to
+read and shorter. Have more choices that can be amoral."
+
+- **Every scene and every answer is rewritten**, all 113 scenes, 452 answers and the `told`
+  clauses the backstory is built from. A scene is two or three plain sentences now (2.05 on
+  average and 29 words, against 2.9 and 48), an answer one line of 8 to 20 words (15.8 on
+  average, against 29.5) and a story beat 11 words against 17. The means are still named,
+  the picks, the acid, the word, the shoulder. What went was the second sentence that said
+  how it felt. `lint:crossroads` holds the ceilings now: three sentences and 45 words a scene,
+  20 words an answer, beside the floors it already had.
+- **Every scene has at least one way of acting that looks after the character first**, and
+  about half have two. Some were there already (the purse, the pockets, the ambush on the mill
+  road). Some seventy were rewritten to be that, each keeping its attribute lane: the child who
+  watches the barn burn instead of running the buckets, the swimmer who leaves the other three
+  in the water, the cousin's sickbed lie, the nurse who charges a silver a night, the hand that
+  digs up the ring it buried. 84 answers changed what they score and 24 changed their `did:`
+  tags (`did:theft` 14 to 36, `did:violence` 8 to 11), so the watch and the man you put down
+  come back more often.
+- **An amoral answer is not a Criminal's answer.** The first census after the rewrite had the
+  Criminal winning 24.9% of runs (from 10.7%), the Trickster 22.5% and Fey 16.8%, because forty
+  new answers all named the same trade, and how often a thing wins is how many answers name it.
+  Two passes of homes counting, 55 answers and then 22, put a fraud on the Merchant, a desertion
+  on the Mercenary, a cold experiment on the Erudit and blackmail on the Aristocrat, and left the
+  Criminal only where an answer steals or cons. Luminary went back onto eleven Mind answers it
+  had lost to Infernal and Draconic. The rule is in the pool's header.
+- Rulebook 4.9 says the scene is a line or two and that not every answer is a kind one.
+
+| under random answers | before | after the rewrite | after tuning |
+| --- | --- | --- | --- |
+| talent sets held | 3.6% (Spellblade) to 17.2% (Trickster) | 3.7% to 22.5% (Trickster) | 3.9% (Spellblade) to 18.9% (Colossus) |
+| lineages | 4.7% (Skybound) to 12.9% (Fey) | 4.5% to 16.8% (Fey) | 4.3% (Skybound) to 11.0% (Fey) |
+| backgrounds | 7.9% (Erudit) to 11.5% (Craftsman) | 6.1% to 24.9% (Criminal) | 7.9% (Erudit) to 12.9% (Outlander) |
+| Mind takes the +2 | 39.5% | 38.9% | 38.3% |
+
+### Mine, worth Jules's eye
+
+- **Every rewritten line.** The voice is plainer than the one read on 2026-09-08 and 09, and the
+  three scenes Jules gave (the hurt stranger, the gate, the fog) keep his four acts each in fewer
+  words.
+- **How dark the amoral answers go.** Most are self-interest: walk on, keep it, sell it, let them
+  blame somebody else. A few are cruel: let the lamb die and open it up, point the press gang at
+  the farm boys, sell the snared cat to the pit, dig up the ring you buried. The line is mine.
+- The Colossus tops the set census at 18.9% and Skybound is the rarest blood at 4.3%, both from
+  how many answers name them rather than from any number; the Outlander tops the trades at 12.9%
+  because walking away is an outlander's answer. The Tactician placeholder is named by 59
+  answers now, more than any written set, and arrives at the top of the census the day it is
+  written.
+- The checker cannot read morals. "At least one amoral answer a scene" is held by the reader,
+  not by `lint:crossroads`.
+
+### Proved
+
+- `lint:crossroads` with the two new ceilings, `npm run lint`, `lint:text` (no dash and no
+  serial comma in 452 answers) and `npm run build` all clean, and the diff stays inside the
+  questions array, comments and line endings untouched.
+- A run walked in the browser, signed out: the barn, the commission, the boat, the ship, the
+  armourer, the barrow, the wand and the letter, answered the selfish way where one was offered,
+  and the reveal made a level 2 Weaver and Runebearer, a Scorchbound Merchant with Haggler, Mind
+  6, and a seven-paragraph story built from the new beats. The Browser pane was hidden, so the
+  clicks were dispatched from the console and the app's own handlers ran them.
+
+## The Runebearer, 2026-09-08
+
+The fourteenth written set, and the second placeholder on the Physique shelf to be filled.
+Jules asked for it in chat and gave the whole design in eight lines: a caster who "can
+inscribe tattoo on his skin to cast spell, however spell will always be cast on touch or
+themselves", a limit on how many, one Action Point to fire one, "a rune interface so a new
+block that allow to preview and manage tattoo", a Long Rest action that changes a tattoo,
+"once the spell is used it cannot be used again", `half physique + 4 per rank` for the count,
+an Adept talent worth "1 willpower per point of physique" and a Master talent that
+"allow[s] to reactive some tattoo".
+
+### Three sources, and which one won
+
+- **The old cards**, `data/Source Temp/Hazebound/Ressources/Skillsets/Old/Runebearer/`: two
+  printed pages over five ranks. Basic Runework, Recharge, Runic Network, Instinctive
+  Activation, Streamlined Patterns. Spellpower is Wits + Level, the budget on Recharge is Wits
+  and the inscription cost is permanent Willpower.
+- **The conversion workbook**, `data/Conversion/Talent Set - Runebearer.xlsx`, from the
+  2026-08-23 pass. Seven tabs, six cards, and an Open Questions tab that flagged four things
+  the set could not be built without. The workbook is gitignored, so its six substantive tabs
+  are exported to `data/templates/runebearer-{overview,ability,notes,questions,feature,prompts}.csv`
+  and **those are the copy of record**.
+- **Jules, 2026-09-08**, who answered all four and reversed two of the workbook's own readings.
+  His answers are the design; the workbook is where the words came from.
+
+### The four answers
+
+| Open question | The answer |
+| --- | --- |
+| Which spells qualify? | **Any spell in the codex**, with its reach collapsed to touch. |
+| Does the permanent Willpower loss survive? | **No.** The count is the limit. |
+| What does a Long Rest do to fired runes? | **Brings every one of them back.** |
+| How is `half physique + 4 per rank` read? | `floor(Physique / 2) + 4 x Rank`. |
+
+The first is the biggest. Both older sources allow only spells "that have a range of Self or
+Touch", and Jules's own example is a Fire Seed planted on somebody you are touching and
+detonated within touch of them, which only makes sense if the ranged spells are in. So there
+is no reach filter and no `school`: the pool is the whole codex, gated by the tier ladder
+alone, exactly as the Arcanist's is.
+
+The second deletes the workbook's centrepiece. Its Special Feature tab is a page and a half on
+subtracting from a derived maximum, and none of it was built. Nothing on this sheet subtracts
+from a maximum and now nothing has to.
+
+The fourth means a Physique 4 Rank 1 Runebearer carries 6 runes and a Physique 8 Rank 3 one
+carries **16**. That is a lot of free casts a day, and it is the number worth watching first if
+the set turns out too strong.
+
+### What else changed, and why
+
+- **The ladder is normalised.** The old pages reach Adept at Rank 3 and Master at Rank 5, which
+  is slower than every other set on the wall. Jules ruled the usual ladder: Novice spells at
+  Rank 1, Adept at 2, Master at 3.
+- **An inscribed spell can be Overcast and Multicast.** The workbook kept "Inscribed spells
+  cannot be Overcast or multicasted" word for word and called it the one line already in the
+  site's vocabulary. It is the line Jules reversed, and it is what makes the Fire Seed example
+  work: the rune plants the seed for free, and the detonation is bought at the printed price
+  out of your own Willpower, as often as the spell allows.
+- **INSTINCTIVE ACTIVATION and STREAMLINED PATTERNS are not built.** Firing always costs an
+  Action Point, which deletes the first, and there is no inscription cost left for the second to
+  discount. The top two rungs are the Willpower grant and the recharge Jules asked for instead.
+- **RUNIC NETWORK grants the whole Physique**, where the workbook had half of it at Adept and
+  the whole of it at Master. There is no Master rung left for the second half to live on.
+- **The concentration clause is gone.** Both old pages carry one ("you can maintain
+  concentration on up to 2 spells", raised to 3 at Rank 3) and the workbook translated it to a
+  cap on how many Upkeeps you may pay at once. The site has no concentration and no such cap, so
+  printing one would be a rule nothing enforces. Flagged below.
+- **`printout` is not a card id.** Printout was the old page's heading for the printable-card
+  link. The card is RUNEWORK and the id is its name.
+
+### One contradiction, resolved rather than transcribed
+
+Jules ruled both that **every rune comes back on a Long Rest** and that the Master talent
+brings some back **"during a long rest"**. The second is nothing at all if the first is true.
+Built as the **Short Rest** the original Rank 2 card printed, which is the only reading where
+the Master card does anything, and the budget shape is untouched because it is the good idea in
+the set. Told to Jules at the time. If he meant something else at the Master rung, this is the
+line to change: `runes.recharge.rest` in `talents.js`.
+
+### What is built
+
+- `src/lib/talents.js`: the set, four cards. RUNEWORK and RUNE ACTIVATION at Novice, RUNIC
+  NETWORK at Adept, RECHARGED at Master. A `loadout` spec for the slate and a `runes` spec for
+  everything the pool machinery does not already do.
+- `src/lib/runes.js`: **the ninth shape of what a set can hand over**, beside a fixed hand, a
+  loadout, a brewing spec, an enchanting one, a minion, the Trickster's tricks, the Duelist's
+  martial and the Pact's debt. The slate, the fired state, the recharge budget and the Willpower
+  the set lends back. Same split as minions.js, feral.js and pact.js: talents.js describes,
+  runes.js resolves, talents.js stays a leaf.
+- `src/components/sheet/RuneBlock.jsx`: the interface Jules asked for. Every rune on one line
+  with what firing it costs in these hands, the fired ones greyed out with the reason, an ⓘ that
+  deals the card, an Inscribe button that raises the same chooser every other pool on the sheet
+  uses, and a foot saying what a rest gives back. One 360x640 cell, and the list is the only part
+  that scrolls.
+- `src/lib/loadouts.js`: two new spec fields the pool machinery grew for this set.
+  `capacity.perStat` is **the first ceiling in the codex an attribute moves**, and `price` is the
+  first pool to charge its own price for its cards rather than discount the printed one.
+- `src/lib/cardText.js`: `cardCost` reads a price that was *set* as well as one that was cut,
+  and reports what the Willpower came down from. Every orb on the sheet then strikes the printed
+  number through beside the new one: the card, the brief, the quick-bar chip's tooltip and the
+  pay button.
+- `src/lib/uses.js`: `limitFor` asks the card for its own limit first and the *holder* second,
+  which is the seam the whole set hangs on. A rune needed no column: what is inscribed is
+  `picks` on the talent entry like every other pool, and what has been fired is `card_uses` like
+  every other spent use, so **there is no migration behind this set**.
+- `src/lib/rest.js` and `RestPrompt.jsx`: the Long Rest action reads "Inscribe a rune", and a
+  Short Rest offers the fired ones back as chips against a Willpower budget. It sits beside the
+  plan rather than in the action slot, because a Short Rest buys no action.
+- `src/lib/crossroadsPool.js` and `crossroadsStory.js`: two new scenes, a closing and a phrase,
+  because `lint:crossroads` requires every written set to be scorable and to win at least once.
+  The Runebearer takes 4.0% of 4,000 walks, between the Mycomancer and the Cauldron Keeper.
+
+### Open, and waiting on Jules
+
+1. **"Once a turn" is printed and not enforced.** The use tracker holds a count and a rest, and
+   a turn is neither. Same ruling RECKLESS VIOLENCE's "once per round" got. A Runebearer with 6
+   Action Points could tap six runes if nobody at the table was reading.
+2. **The touch rule is printed and not enforced.** There is no range field on a spell, so
+   nothing can refuse a rune cast across a room. The table plays it, the way it plays a
+   Mycomancer's free hand.
+3. **RUNE ACTIVATION is tagged Passive and its cost columns are empty**, where the workbook has
+   Ability and 1 Action Point. The price it prints is the price of firing a *rune*, and the runes
+   are already the chips; left as an Ability it would have been a chip of its own charging an
+   Action Point for nothing. The sentence keeps the number.
+4. **The concentration clause was dropped** rather than translated. See above.
+5. **`spellcasting` was added to its tags**, beside the workbook's own Support, Defense and
+   Physique. Same addition the Arcanist got and for the same reason.
+6. **The panel fills the slate freely.** One rune a night is enforced in the rest window and
+   nowhere else, which is the law every pool on this sheet already lives by. It is what lets a
+   new Runebearer arrive with their skin already covered instead of spending six nights on it.
+7. **One tracker per card.** `card_uses` is keyed by the card and not by where it came from, by
+   the stacking law, so a Runebearer who also knows Barkskin from somewhere else spends it for
+   the day when the rune fires.
+8. **16 runes at Rank 3.** See above.
+9. **No art.** Both plates and all four card pictures are unpainted. The prompts are in
+   `data/templates/runebearer-prompts.csv`. Drop the pictures into `data/Runebearer/` and run
+   `npm run art:cards`; the set's `art: null` becomes `/talents/runebearer.jpg`.
+
+### Mine, worth Jules's eye
+
+- Every word of the four cards, the tagline and the blurb. The blurb keeps three of the
+  workbook Overview's sentences and rewrites the rest around the dropped Willpower debt.
+- The two Crossroads scenes (`youth-needle`, `road-bleeding`) and every number under them, plus
+  the Runebearer's closing sentence and phrase in `crossroadsStory.js`.
+- The wording of the rune block, the rest window's rune chips and the "cut to none" line in the
+  use prompt.
+
+### Proved
+
+- `npm run lint`, `lint:text`, `lint:cards`, `lint:halves`, `lint:order`, `lint:riders`,
+  `lint:plan`, `lint:layout`, `lint:crossroads`, `lint:help`, `lint:legal` and `lint:images`
+  all clean.
+- `lint:math` grew a **fifteenth sheet**: a Runebearer wearing a worn point of Physique, which
+  holds `deriveStats` and `statMath` to the same effective attribute. Both read 8 and the tile
+  agrees.
+- A Rank 3 Physique 8 sheet driven through `runeState`, the quick bar, `restActions`,
+  `restPlan` on both rests and `abilitySources`: capacity 16, two runes fired, the chips priced
+  1 Action Point with the printed 3 and 2 struck through, the Short Rest bringing both back for
+  4 of a budget of 8, and the Long Rest bringing them back on its own.
+
+## The Runebearer pays again, and stops being carved, 2026-09-09
+
+Two changes the morning after, both Jules's: **"reduce the maximum willpower so that the
+spell cost is baked in"**, and a wording ruling on how a rune gets onto the skin.
+
+### The Willpower is back
+
+The 2026-09-08 build dropped the permanent maximum-Willpower cost and left the rune count as
+the only limit. It is restored, and the count stays: a Runebearer is held twice over, by how
+many runes will fit and by what they are worth, and the two limits are different shapes on
+purpose. An inscribed spell lowers the maximum by its own printed Willpower cost for as long
+as it is on you, which is what makes firing one cost nothing. It was paid the night it went on.
+
+- `runeDebtFrom` in `src/lib/runes.js` is the whole of it. **Never stored**, always computed
+  off the pick list, which is the conversion workbook's own insistence: "store the number and
+  one bad edit costs a player their Willpower for good."
+- It is **the only term on this sheet that comes off a derived maximum**, so `deriveStats`
+  now works Willpower out in two passes rather than one expression: everything that adds
+  first, then the debt floored against that sum. `statMath` does the same two passes against
+  the same floor, because a floor in one file and not the other reads as `unaccounted` on the
+  tile, which is exactly what `lint:math` exists to catch.
+- The tile's line now reads, for a Rank 3 Physique 8 Runebearer at level 8 with three runes
+  on: `10 base + 20 your level + 8 Mind + 8 Runebearer − 8 runes inscribed = 38`. The debt is
+  named for the runes rather than for the set, because the set is already on the line above it
+  giving Willpower back, and one folded "−0 Runebearer" would be neither fact.
+- The block prints the total under the slate and turns it red the moment the maximum runs
+  out: "Your maximum Willpower is gone. The runes on you are worth 75, which is more than you
+  had to give." The workbook asked for exactly that, that it never be a silent trap.
+- `lint:math`'s fifteenth sheet now asserts both halves: `+8 Runebearer` off the worn Physique
+  and `−6 runes inscribed` off Barkskin at 2 and Heal at 4.
+
+**The floor is a repair, not a rule, and it is open.** A slate worth more than the maximum
+floors at zero rather than going negative, which means anything inscribed past that point is
+free. The alternative is refusing the inscription outright, and that is Jules's call. What the
+sheet does today is let a Runebearer spend themselves down to nothing on purpose (which the
+Overview's own "set of switches" reading allows) and say so in red when they have.
+
+### Nothing is carved, and nothing is a tattoo
+
+"The carving, the wounds on the skin, is not [right] ... but don't use the word tattoo",
+and the capacity line "sounds like you pretty need some more skin." All three complaints are
+about the same thing: the sheet had committed to a *tool*.
+
+**A rune is inscribed.** That is the old printed cards' own verb, it says nothing about what
+did the work, and the sheet now never names one. Everything that read cut, carve, scar,
+needle or ink is gone, from the cards to the code comments to the Crossroads scene id.
+
+| Was | Is |
+| --- | --- |
+| "You cut spells into your own skin" | "You inscribe spells on your own skin" |
+| "cut one spell in, cut one away" | "inscribes one, removes one or does both" |
+| "3 of 16 cut" | "3 of 16" |
+| "your skin holds 16 runes" | "your runework holds 16 runes" |
+| "Nothing cut into you yet" | "Nothing inscribed yet" |
+| "Bare skin. Your slate holds…" | "Nothing inscribed yet. Your runework holds…" |
+| a needle and a pot of grey ink, in `youth-needle` | a rune worked into the skin, in `youth-rune` |
+| "a slate of runes cut into your own skin" (rulebook 4.5) | "inscribed on your own skin" |
+
+The tagline and the blurb went back to the conversion Overview tab, which is honest again now
+that the debt is: "A spell is inscribed on the skin and from that moment it costs nothing to
+cast, because it was paid for once and paid in full." Only the two clauses his later rulings
+changed are rewritten.
+
+`youth-needle` became `youth-rune`, which breaks the pool's own "a run's answers are stored
+against the id" law. Safe here because no run has ever been saved against it, and noted on the
+question itself.
+
+### Still open
+
+Everything on the 2026-09-08 list stands except the Willpower one, which is now answered, and
+two are worth restating with the debt back:
+
+- **The floor at zero**, above. Refuse the inscription, or keep the warning?
+- **16 runes at Rank 3 is no longer the real ceiling.** What a Runebearer can afford runs out
+  long before the slate fills: a level 8 Physique 8 one has 46 Willpower to give and the
+  sixteen dearest spells in the codex are worth 187. The count and the cost want a second look
+  together.
+- **STREAMLINED PATTERNS has something to discount again.** The old Rank 5 card shaved a point
+  off every inscription, to a minimum of 1. It is still not built, because Jules asked for a
+  Willpower grant and a recharge at the top two rungs, but it is the obvious fifth card now.
+- **An illegal rune is not flagged on the block.** A pick that fell off the tier ladder (a
+  rank handed back, a hand-edited row) shows on the Abilities panel as "not legal at your rank
+  any more" and on the rune block as an ordinary firable rune. The chooser refuses to make
+  one, so it needs a broken sheet to see.
+
+## The Crossroads asks eight, 2026-09-09
+
+Jules: "12 question for the path is to long let reduce it to 8 in total."
+
+**Only the draws moved.** All seven chapters of the life still get asked, at 1, 1, 1, 1, 1, 2, 1 for
+eight a run. Blood and Youth gave up their second question and the road came down from four to two.
+Nothing in the engine needed touching: `RUN_LENGTH` has always been the sum of the draws, and the
+stage rail, the heading ("Leaving · Question 8 of 8"), the stored run and the reveal all read it.
+
+Cutting a chapter whole was the other way to reach eight and it is the worse one. The story is a
+paragraph a chapter, and three of the seven close on what the count decided: the blood names the
+lineage, the trade names the background and the leaving names the set taken at level 1. Dropping a
+stage drops a paragraph and the sentence that says what it was for. The road is the stage with
+fifteen questions behind it and the one that repeats itself most, so it gave up the most.
+
+**The count still adds up to somebody.** 4,000 random walks against HEAD, at twelve and then at eight:
+
+| | twelve | eight |
+| --- | --- | --- |
+| Guardian held | 27.4% | 28.0% |
+| Berserker | 26.0% | 23.0% |
+| Colossus | 19.7% | 17.6% |
+| Draconic Bond | 10.8% | 15.4% |
+| Duelist | 9.4% | 7.2% |
+| Runebearer | 4.0% | 5.1% |
+| the backstory | 555 words | 448 words |
+
+The two sets that stand beside any attribute gain a little, because fewer answers means fewer points
+pushing a shelved set past them. Every written set, lineage and background still wins at least once
+in 4,000 walks, every question in the pool is still asked in some run and every outcome is still a
+whole character with nothing built on the attribute left lowest.
+
+**Three sentences counted the questions out loud and were rewritten.** The blood chapter opened
+"Twice at least, the blood did the deciding before you could" and now opens once. The road's mixed
+closing said the road asked "in four different voices" and now says it asked twice in two. The story
+file's note about "four road answers" reads as the road's two. The path card on Make a Character,
+rulebook 4.9 and the headers of crossroads.js, crossroadsStory.js and Crossroads.jsx all say eight.
+
+### Worth Jules's eye
+
+**The scenes that only happen because of what you did earlier got rare.** A gated question needs the
+tag set and a draw left to spend on it, and both halves got smaller. `road-reputation`, the man you
+put down coming back with friends, is asked in 0.8 runs of 100 against 4.3 before. `youth-watch`, the
+watch coming for a thief, 2.7 against 7.0. `youth-letter`, the academy writing to somebody who spoke
+a word they did not know, 3.7 against 12.6. The draw already leans toward questions that widen the
+count, and leaning it toward a gate the run has earned would put them back where they were. That is a
+design call and it is not made.
+
+### Proved
+
+- `lint:crossroads` clean against HEAD with nothing but this change on it: 45 questions in 7 stages,
+  8 asked a run, 4,000 walks, every outcome whole. Clean again on the working tree an hour later,
+  with the Spellblade scenes in it: 47 questions, 8 asked a run. `eslint` clean on the four files
+  touched. The two `lint:text` serial commas standing today are both in Spellblade option text and
+  in nothing this touched.
+- In the browser, signed out: the path card reads "Eight moments from a life", the run asks Childhood
+  through Leaving with the heading counting 1 of 8 up to 8 of 8, and the reveal made a Celestial
+  Erudit holding Arcanist and Guardian on Mind 6, Physique 5 and Instinct 4, in Magic Armor with a
+  Psychic Tome, 2,000 ¢ and 70 Supplies. Seven chapters of story and Who you became, the road
+  paragraph closing on "The road asked twice in two different voices". Take this character opened the
+  sheet at LVL 02 with the kit worn and the belt clipped, and no console errors anywhere in the walk.
+
+## The Spellblade, 2026-09-09
+
+The fifteenth written set, and the first one in the codex with **no sheet behind it at all**.
+There is no Ability tab for the Spellblade, no conversion workbook and no old printed page.
+Jules described it in chat on 2026-09-09 and every card, number and word below was written
+here from that description. The description itself is transcribed in full in the comment
+above the set in `src/lib/talents.js`, because it is the only source of record there is.
+
+### What the set is
+
+A Spellblade puts a hand on a weapon and it stops being a weapon. **BOUND EDGE** costs 2
+Action Points and 2 Willpower, lasts until your next Long Rest, and does three things to
+whatever you touched: it swings off your **Mind** instead of the Attribute it prints, its
+damage type becomes **Cold, Fire or Lightning**, and at Adept it is **Empowered by 1**.
+
+Then **POINT OF IMPACT**: when you attack with that weapon you may cast one of your prepared
+spells, and it goes off where the attack lands. You pay its Willpower and **1 more for every
+2 Action Points it costs**, and its own Action Points are never paid, because the attack
+already bought the action. It needs no Roll of its own. An area spell centres on the target,
+you may strike an empty space to place one, it can be Overcast and it can never be
+Multicast.
+
+The hand is **1 + 2 x your Rank**, so 3, 5 and 7. **TWINNED STRIKE** at Master carries two
+spells on one attack, takes 1 Willpower off each and lets a Short Rest re-choose them.
+
+### The five readings
+
+Nothing in the description was contradicted. Five things it did not say are settled here,
+and each is written on the card or in the comment beside the data:
+
+1. **The pool is every school**, and the spec carries no `school`. Not said either way, and
+   the examples settle it: a wave of damage is Elemental and a healing field is Primal. The
+   Arcanist is the only other pool with no school and it is the same reason.
+2. **The surcharge rounds up.** "Half the Action Point cost" is exactly the arithmetic
+   `moveWillpower` already does for five Martial Moves, "per 2 Action Points the attack
+   costs, rounded up", and the note in martial.js argues the case: the rung matters and the
+   parity does not. So a 3 Action Point spell costs what a 4 costs. The card prints the
+   **rate** rather than the half, which is why no rounding clause appears on it.
+3. **The spells are cast on a strike and no other way.** Not said outright, and the ground
+   clause settles it: nobody needs permission to hit the floor unless hitting something is
+   the only way the spell leaves your hands. So they are kept off the quick bar the way a
+   Martial Move is, `ridesStrike` in spellblade.js is what says so, and the whole price of
+   one is worked out inside the attack's own prompt.
+4. **The miss is printed and not enforced.** "Whenever you land an attack" names a hit, and
+   this sheet has never known whether one landed. The Willpower is charged when the swing is
+   paid for, which is where every other rider on a swing is charged. **The dice do enforce
+   it**, though, and nothing had to be written for that: a chain stops dead at a failed
+   check, so a spell carried in on an attack that missed rolls nothing at all.
+5. **The Master cut has no floor.** It stops at 0 Willpower rather than at 1. No floor was
+   named, the Arcanist's cut names one because its own card does, and a Novice spell costing
+   nothing at Master is the rung doing what the rung is for.
+
+### And one collision
+
+**The pact wins where both are on one weapon.** A Spellblade who binds their pact-bound
+blade has two cards replacing the same Attribute: FIRST BOON's "your highest Attribute" and
+BOUND EDGE's "your Mind". The highest is Mind or better by definition, so letting the newer
+card win would be the sheet quietly handing back a worse number for something the player
+just paid 2 Willpower for. `attackModifiers` reads the pact first. Worth Jules's eye.
+
+### What is built
+
+- `src/lib/talents.js`: the set, five cards. BOUND EDGE, SPELL STRIKE and POINT OF IMPACT at
+  Novice, RESONANT EDGE at Adept, TWINNED STRIKE at Master. A `loadout` spec for the hand and
+  a `blade` spec for everything the pool machinery does not already do. Replaces the
+  `spellblade` roster placeholder, which was row 6 of the Mind column.
+- `src/lib/spellblade.js`: **the tenth shape of what a set can hand over**, beside a fixed
+  hand, a loadout, a brewing spec, an enchanting one, a minion, the Trickster's tricks, the
+  Duelist's martial, the Feral Curse's feral, the Pact's debt and the Runebearer's slate.
+  This one hands over a **bond**. Same split as the other four: talents.js describes,
+  spellblade.js resolves, talents.js stays a leaf.
+- `src/lib/combatTurn.js`: `blade` is the **fifth mechanical rider** a tracker row can carry,
+  beside an Ephemeral Enchantment, a Trickster's rider, a Martial Move and a condition. Two
+  strings, the weapon and the type, cleaned on the way in like every other one. **No
+  migration behind this set**: `until: 'long'` already ends a row at the right rest, and the
+  `effects` column was already jsonb.
+- `src/lib/moves.js`: `attackModifiers` folds the bond beside the pact's weapon and the
+  Colossus's grip. Tied to the card and to the drawn hand, so a stowed weapon opened from the
+  Inventory tab prints its own numbers.
+- `src/components/sheet/UsePrompt.jsx`: the ridden spells are offered in the attack's own
+  prompt, in the same rows the Martial Moves use, priced into the same pay button and spent
+  by the same press. They are riders for `castPlan` too, so a spell that inflicts something
+  offers it on the swing's targets.
+- `src/components/sheet/usePlayCard.js`: a carried spell's own **value** links are appended
+  to the chain and its check is dropped, which is POINT OF IMPACT as arithmetic.
+- `src/components/sheet/BladeBlock.jsx`: a new Character-tab block. What is bound, what it
+  deals, whether it is drawn, a Release, the spells with what carrying each one costs, and
+  the bind window. `BladeBind` is exported because the quick bar raises the same window.
+- `src/lib/loadouts.js`: `swap` may now be **rank-indexed**, the same shape `tiers` beside it
+  already carries. The first pool whose permission moves with the rank rather than only its
+  size.
+- `src/lib/combatBar.js`: a Spellblade's spells are not chips, the same line and the same
+  reason a Martial Move is not.
+- `src/lib/campaignLog.js`: a use may say what it carried. "Strike · with Reckless · carrying
+  Fireball".
+- `src/lib/crossroadsPool.js` and `crossroadsStory.js`: two new scenes, a closing and a
+  phrase, because `lint:crossroads` requires every written set to be scorable and to win at
+  least once. The Spellblade takes 3.5% of 4,000 walks, just under the Runebearer.
+
+### Open, and waiting on Jules
+
+1. **The card names are mine.** BOUND EDGE, SPELL STRIKE, POINT OF IMPACT, RESONANT EDGE and
+   TWINNED STRIKE. So are the tagline, the blurb and the two Crossroads scenes.
+2. **The pact collision**, above.
+3. **"Magic weapon" is printed and reads nothing.** There is no magic-weapon flag in the
+   codex and inventing one for a single card would be a rule with one holder. It is the
+   designer's own phrase and it stays on the card.
+4. **The bind offers the two weapon slots and nothing else.** "A weapon you can touch" is the
+   card; what this sheet knows about touching is what is in your hands. A blade in the pack
+   is one equip away and the block says so.
+5. **A Short Rest now has an action slot**, for exactly one set at exactly one rank. The rest
+   window's own note has said "a Short Rest buys no action" since the Runebearer, and
+   TWINNED STRIKE is the card that broke it. It reads correctly ("Your Short Rest action")
+   and is offered to nobody else.
+6. **The spells are one hand, not per weapon.** Binding a different weapon does not re-choose
+   them, which is what "they can change the spells at the Long Rest" says.
+7. **No art.** Both plates and all five card pictures are unpainted. Drop the pictures into
+   `data/Spellblade/` and run `npm run art:cards`; the set's `art: null` becomes
+   `/talents/spellblade.jpg`.
+
+### Proved
+
+- `npm run lint`, `lint:text`, `lint:cards`, `lint:halves`, `lint:order`, `lint:riders`,
+  `lint:plan`, `lint:layout`, `lint:crossroads`, `lint:help`, `lint:legal`, `lint:images`,
+  `lint:moves`, `lint:dice`, `lint:log`, `lint:combat`, `lint:creatures`, `lint:weapons`,
+  `lint:potions` and `lint:math` all clean, and `npm run build`.
+- A Rank 1 and a Rank 3 sheet driven through `bladeState`, `bindPatch`, `releasePatch`,
+  `attackModifiers`, `offeredSpells`, `strikePrice`, `quickBar`, `restActions`, `restPlan`
+  and `rollPlan`: the bond lays one row and ends at a Long Rest and not at a Short one, the
+  swing rolls Mind and deals Fire, the stowed weapon's own attacks are untouched, the three
+  spells are off the bar, the prices come out printed plus ceil(ap/2) and 1 less at Master,
+  the Short Rest swap appears at Rank 3 and at no rank below it, and a carried spell
+  contributes its damage link and no check.
+- The block and the prompt driven in a browser harness: binding a Finesse Weapon as Lightning
+  through the two-question window charged 2 Action Points and 2 Willpower once, the block
+  then read "Bound, and not in your hand", the printed Strike card read "a **Mind** Melee
+  Attack (+8)" and "3d6 + 16 **Fire** damage" with both cards credited under "Changing this",
+  two spells ticked priced the swing at 4 Action Points and 6 Willpower, the third was
+  refused with the reason, and the confirm carried both spells out.
+
+## The Necromancer, 2026-09-09
+
+The sixteenth written set, and the second in two days with **no sheet behind it at all**.
+There is no Ability tab for the Necromancer, no conversion workbook and no old printed
+page. Jules described it in chat on 2026-09-09 and every card, number and word below was
+written here from that description. The description itself is transcribed in full in the
+comment above the set in `src/lib/talents.js`, because it is the only source of record
+there is.
+
+> **Amended the same evening.** Eight of the numbers below were ruled on within hours of
+> being written: the Willpower a body costs, what a destroyed one gives back, the Command's
+> price, all seven stat blocks, the skeleton's sword, two granted Martial Moves and IRON
+> PROVOCATION. Read this section for what was described and why, then
+> [the amendment](#the-dead-cost-what-they-cost-and-four-smaller-things-2026-09-09) for what
+> the codex actually holds.
+
+### What the set is
+
+A Necromancer keeps an **Ossuary** with **Marrow** in it, and the Marrow is their **Mind**.
+Standing a body up spends the Marrow that body costs and holds it for as long as the body
+is theirs; while a body is in the Ossuary their **maximum Willpower is 2 lower**, 1 at the
+Master rung. Raising one is a **Long Rest action**, one a night, over a corpse, and without
+a corpse a body is built for **100 Supplies**.
+
+Seven bodies, at 3, 6 and 9 Marrow, opening on the rank ladder:
+
+| Marrow | Rung | Body | Built on | What it does |
+| --- | --- | --- | --- | --- |
+| 3 | Novice | Skeleton Archer | Physique and Instinct evenly | Bone Bow at 18 m, Rusted Sword |
+| 3 | Novice | Ghoul | Instinct | Rending Punch at 2 Action Points, Infected Claws that leave the target diseased |
+| 3 | Novice | Wraith | Mind | Grave Bolt at 12 m, and a 6 m fog that blinds |
+| 6 | Adept | Skeleton Magus | Mind | Withering Bolt, and 2 Novice spells chosen the night it rose |
+| 6 | Adept | Undead Knight | Physique, 3 printed Armor | Grave-Iron Blade, a taunt, and a Bonewall that takes a blow meant for you |
+| 9 | Master | Abomination | Physique | A paired-greatsword swing, a 9 m hook that drags, Carrion Reek, and 2 Martial Moves of any rung |
+| 9 | Master | Undead Cleric | Mind | Nothing of its own: 3 Novice or Adept Light or Shadow spells, chosen the night it rose |
+
+In combat none of them is autonomous. **COMMAND THE DEAD** costs 2 Action Points and wakes
+every body until your next Turn End; without it they stand where they are. And a
+Necromancer knows **every Death spell in the codex**, the Novice ones at Rank 1 and a rung
+a rank after that.
+
+### The two reversals, and the one thing they leave tight
+
+The arithmetic changed twice inside one message and the **last** answer is what is built:
+
+- **The pool.** Free points a rank, then "based off your Mind", then "we're still gonna use
+  Mind, the number of bones you have is equal to your Mind". So the pool is the Mind column
+  and a rank adds nothing to it. What a rank buys is *which* bodies are within reach.
+- **The prices.** Three, six and nine, then "so change the cost, instead of being three
+  it's four, eight and twelve", then "scratch that, it's still three six nine". So 3, 6
+  and 9.
+
+Those two together are **tight, and it is the first thing worth a ruling**. A Master
+Necromancer on Mind 10 holds exactly one abomination and nothing beside it. On Mind 12 it
+is four skeletons, or two of the Adept bodies, or one Master body and one Novice one. That
+may be exactly the intent, since the fantasy of the set is expensive rather than numerous,
+but the shape is unusual: it is the only pool in the codex a rank does not widen. Adding
+`marrow.perRank` to the spec is one number if the answer is no.
+
+### The words
+
+"Necromantic bones or something. I'll let you imagine the terms that's more fitting."
+
+- The resource is **Marrow**, the block is the **Ossuary** and a list of the raised is
+  **your risen**. Bones read oddly as a count ("you have 9 bones"), and what the pool
+  actually measures is animating substance that stays in a body while the body stands and
+  drains back out when it falls. Marrow says that; his own word is what it is made of.
+- The **Abomination's aura** is **Corpse Carrion**, which is already a defined term in
+  `keywords.js` off the GORE BLAST plate: "the afflicted entity takes the caster's
+  attribute in Decay damage at every one of its Turn Starts". That is the designer's
+  sentence for the thing he described, so the card inflicts the term rather than restating
+  it. It is named **CARRION REEK** rather than Pestilent Aura because a Necromancer knows
+  PESTILENT CLOUD, and two cards called Pestilent in one set's own blocks doing two
+  different things is a card nobody can find twice.
+- The **Ghoul's** infected claw leaves the target **diseased**, which is SICKNESS's own
+  defined term: "-1 to all attributes until they take a Long Rest". The second card in the
+  codex to inflict it.
+
+### What the sheet grew for it
+
+- **`src/lib/undead.js`**, new. The Marrow, the menu, the burden and the raising. It reads
+  the `minions` column directly and **writes nothing**, the same shape `runes.js` keeps and
+  for the same reason: `characterModel.js` imports it, so it may import neither
+  `characterModel.js` nor `minions.js`.
+- **`src/lib/minions.js`: a `minion` spec may now be a `roster`.** A kind is read *over* the
+  spec, so what is true of every body a set raises is written once and a kind says only what
+  is its own. Everything downstream works on the merged object: the same two blocks draw a
+  draconic ally and a ghoul, the same prompt pays for both. Three fields are new and generic
+  beside it: **`armor`** (the first printed Armor on a creature in the codex, the knight's
+  plate), **`perish`** (a Long Rest sweeps a destroyed body up rather than standing it back
+  up) and **`command`** (a card the bodies have to be woken by).
+- **A body's own `spells` and `moves`**, stored on its row rather than on the talent entry,
+  because two magi are two spellbooks and destroying one must not touch the other. That is
+  the first pool on this sheet that is not a `loadout`, and it is deliberate: a loadout's
+  picks are the set's.
+- **`heldMoves` in `moves.js` reads `character.moves`.** Everything else in that file reads
+  a talents column, which is right for every character and wrong for the one thing on this
+  sheet that swings a weapon and has no talents. An abomination's two moves ride on the
+  actor the prompt was handed, and nobody downstream can tell them from a Duelist's.
+  ABATTOIR SWEEP carries the `Weapon Attack` tag for exactly this reason.
+- **`src/lib/loadouts.js`: a third pool shape, `all`.** The pool *is* the hand. Nothing is
+  stored, nothing is chosen, and a Death spell added to the codex tomorrow is a spell every
+  Necromancer already knows. Plus a **`family`** gate beside the `school` one, because a
+  Death spell is a Primal spell and a Primal pool would have handed over the Flora and the
+  Wild with it.
+- **The second thing in the codex that comes off a derived maximum.** `deriveStats` and
+  `statMath` each take the runes off first and the bodies out of what is left, floored
+  against the same room in the same order, which is what `lint:math` proves. There is a
+  sixteenth sheet in `scripts/check-stat-math.mjs` holding three bodies at Rank 2 and
+  asserting the -6.
+- **`src/components/sheet/OssuaryBlock.jsx`**, new. One 360x640 cell: the Marrow left, every
+  body with what it cost and whether it is broken, the debt, and the Command. Measured at
+  12 bodies: the block holds its shape at 636 of 636 and the list scrolls inside itself.
+- **`src/components/sheet/RaiseWindow.jsx`**, new. The Long Rest step: the wall of seven,
+  the name and the picture, the corpse question, and the spells or moves off the sheet's own
+  `PoolWall` handed the *body* as its character, so a spell on the wall prints the numbers
+  it will actually roll. `PoolWall` is exported for it and `poolTags` moved to
+  `useTagFilter.js`, because a component file may not export a helper.
+- `src/lib/rest.js`: a `raise` action, priced among the supply movements so a rest that
+  cannot cover a built corpse is refused with everything else, and written after the crate
+  has agreed to it. Raising over your own remains drops the wreck in the same patch.
+- `src/lib/crossroadsPool.js` and `crossroadsStory.js`: two new scenes, a closing and a
+  phrase, because `lint:crossroads` requires every written set to be scorable and to win at
+  least once.
+- `docs/rulebook.md`: "there is no ability that raises the dead" is now "no ability that
+  brings a **character** back", because one of those is still true and the other stopped
+  being true today.
+
+### Open, and waiting on Jules
+
+1. **The pool a rank does not widen**, above. The first ruling worth having.
+2. **2 maximum Willpower a body is mine.** He gave the shape ("a small amount") and no
+   number. It is `burden` on the spec, indexed by rank, and THE CHARNEL COURT takes it to 1.
+   Per **body** rather than per Marrow, which is what he said it was for: three skeletons
+   are three things taking their turn.
+3. **The card names are mine**, all twenty-two of them, and so are the tagline, the blurb
+   and the two Crossroads scenes.
+4. **The stat blocks are mine.** "I'll let you make some that make sense and directly
+   utilize the scales." Every kind's Defense is the sum of the two attributes it is built
+   on, which is the draconic ally's own rule read as a rule; the abomination is the
+   exception and answers on bare Physique because it is huge and does not dodge. A Novice
+   body opens on 9 points of attribute where the ally opens on 16.
+5. **DREDGE CORPSE makes the corpse clause soft.** It is a Novice Death spell, so every
+   Necromancer knows it, and it costs 2 Action Points and 1 Willpower to raise "a corpse
+   from the earth at a point on the ground you can see". So the 100 Supplies only ever bites
+   somebody who cannot cast it. The window names the spell in the corpse question rather
+   than ruling on it: whether a dredged corpse is *fresh* is the table's.
+6. **The magus learns any Novice spell in the codex.** That is what he said and it is wide:
+   52 spells across four schools. Narrowing it to Primal, or to Death, is one field.
+7. **The Adept and Master ranks each buy one passive.** DEEPER GRAVES opens the two Adept
+   bodies and makes your own remains corpse enough; THE CHARNEL COURT opens the two Master
+   bodies and takes the burden to 1. The rungs are what a rank actually buys, which is his
+   design, but a rank that buys one card is thin beside a Runebearer's.
+8. **CARRION REEK reads against your Mind and prints no number.** Corpse Carrion says "the
+   caster's attribute" and the caster here is arguably the abomination, whose Mind is 2. He
+   said "the Mind of the necromancer", so the card says "your {mind}" in prose rather than
+   as a live value, because a live value on a creature's card resolves against the creature.
+9. **A destroyed body keeps its Marrow until it is buried.** THE OSSUARY says so outright,
+   and it is the reading that let `undead.js` stay out of `minions.js`: a count of rows
+   needs no Health arithmetic. A Long Rest sweeps the wreck, or one press lets it go.
+10. **No art.** No plate and none of the twenty-two card pictures. Drop them into
+    `data/Necromancer/` and run `npm run art:cards`; the set's `art: null` becomes
+    `/talents/necromancer.jpg`.
+
+### Proved
+
+- `npm run lint`, `lint:text`, `lint:cards`, `lint:halves`, `lint:order`, `lint:riders`,
+  `lint:plan`, `lint:layout`, `lint:crossroads`, `lint:help`, `lint:legal`, `lint:images`,
+  `lint:moves`, `lint:dice`, `lint:log`, `lint:combat`, `lint:creatures`, `lint:weapons`,
+  `lint:potions` and `lint:math` all clean, and `npm run build`.
+- Forty assertions driven through `marrowState`, `undeadOffers`, `raiseDraft`, `restActions`,
+  `restPlan`, `minionState`, `minionActor`, `minionBar`, `quickBar`, `offeredMoves` and
+  `abilitySources`: the Ossuary holds the Mind column, a Rank 3 body costs 1 of the maximum
+  and a Rank 2 body costs 2, a magus with no spells chosen is refused, the rest writes the
+  body and takes the Marrow and the Willpower in one patch, the body's cards are its own
+  two plus the two it rose knowing, its bolt is off its master's bar and the Command is on
+  it, the actor rolls the body's Mind and spends its master's Willpower, both of the
+  abomination's moves ride Abattoir Sweep and neither rides Flesh Hook, the knight's 3 Armor
+  reaches its tile, the Death family is 4 cards at Rank 1 and 12 at Rank 3, 60 Supplies
+  cannot build a corpse and a refused rest writes nothing, a destroyed ghoul keeps its 3
+  Marrow until a Long Rest sweeps it, and forty bodies floor the maximum at 0 rather than
+  going negative.
+- The blocks and the window driven in a browser harness: all three cells fit 358x636 with
+  zero overflow at 6 bodies and again at 12, where the list overflows by 341 and scrolls
+  inside itself; the Marrow bar reads what is *left* against the ceiling rather than the
+  debt against itself; the Command row lights and the body's chips go live on the same
+  press; and the raise window walks the whole road, refusing "It needs a name", then "It
+  needs a corpse", then "2 more spells to choose", and settling on "Ossric is ready to
+  stand up" with the third spell offered as "Take it instead".
+- And the remains held to an answer: choosing your own remains without saying **which** of
+  yours raises nothing and says so, a stale id raises nothing, and the one that names a
+  wreck drops that wreck in the same patch the new body arrives in, with no Supplies moved.
+  Without that check the answer was a free corpse.
+
+## A pool has two panes, and the Runebearer holds one twice, 2026-09-09
+
+Four rulings on the Runebearer and one change to the way **every** pool on the sheet is
+chosen from. Jules, in one message: three fixes to the set, then "In general lets change
+the way you select spells or other similar."
+
+### Two panes, everywhere a pool is chosen
+
+> "I want the screen split in 2 third is the list with filter and on the right there is the
+> selected one in a column. So you select (over even drag and drop them) to that column. Or
+> remove the from there."
+
+`LoadoutChooser` is the one chooser every pool on the sheet raises: a Mycomancer's hand, an
+Arcanist's spellbook, a Duelist's Martial Moves, a Spellblade's carried spells, a
+Runebearer's slate, and the rest window's own copy of all five. It was a single wall of
+briefs where what you held was said by a word on a button and a number in the footer.
+Choosing four spells out of a hundred and forty meant scrolling back up to find out what
+you already had, and giving one back meant finding it again among the hundred and forty.
+
+Now it is two panes, and the column is the answer to both:
+
+| | |
+| --- | --- |
+| the wall | two thirds. The lead, the filter and the briefs, cut into sections as before. |
+| the column | one third, sticky, listing what is held with its cost, the card behind it and an × to give it back. |
+
+- **A literal two thirds and one third** (`minmax(0, 2fr) minmax(280px, 1fr)`), rather than
+  the 1.4/0.6 the Cauldron, the Enchanter and the effect tracker take. It is the measure
+  that was asked for. The break is the same 900px all four share.
+- **Under the break the column comes first.** The one thing that is not the desktop layout
+  narrowed: on a phone the wall is a hundred rows long, and a column underneath it is a
+  column nobody ever sees.
+- **Drag and drop, as the second way to do both.** A brief can be carried into the column
+  and a row can be carried out of it onto the wall, and both panes light up while something
+  is being carried that they would take. Every tap still works and nothing needs a pointer
+  that can hold something, which is what keeps it usable on a phone.
+- **The column says what a tap costs.** "Full. The next one you take puts Barkskin out" used
+  to be a tooltip on one button in the wall; it is now a sentence beside the card that is
+  about to go.
+- The wall's button, the footer count and every word in the lead are untouched, so a
+  Mycomancer's chooser reads exactly as it did with a column added beside it.
+
+A drag has a direction and a tap does not, so `toggleLoadoutPick` learned two more verbs
+beside the toggle it already was: `add` ("have it") and `drop` ("give one back"). Without
+them, dropping a card you already held onto the column would have read as a toggle and
+quietly taken it off, which is the opposite of what the gesture looks like.
+
+### A rune is engraved twice over
+
+> "add the thing on top of it that is he can inscribe the same spells more than once. each
+> beings it on 1 time use instance."
+
+Both older sources forbid it and the 2026-09-08 build printed the ban on RUNEWORK. It is
+gone. `repeat: true` on a loadout spec is the first pool in the codex that may hold one card
+twice, and it is generic: any pool could carry it, and none of the others do.
+
+**It needed no storage at all**, which is the same thing that was true of the set the day it
+was built. Two copies are two entries in `picks`, and `runeLimit` hands the spell as many
+uses as there are copies, so the `card_uses` row it always had counts them down one firing
+at a time. The chip greys after the second, the morning clears both.
+
+- `normalizeTalents` and `setTalentPicks` both deduped picks on the way past, which was
+  right for every pool until this one. They now ask the set: `cleanPicks` keeps duplicates
+  for a spec that repeats and dedupes for every other.
+- `pickChanges` counts rather than asking `includes`, so a second Fire Seed inscribed over a
+  first is a night's work the rest window can see and save. It was a no-change before.
+- The slate lists **one row per copy**, marked "1 of 2" and "2 of 2": two runes are two
+  firings and twice the Willpower off the maximum, so folding them into one row with a
+  number on it would be the one place on the sheet where two runes read as one.
+- The Abilities tab and the quick bar list **one row per card**, because the tracker's own
+  count is what says there are two of them. Two identical rows there would be two of
+  everything downstream, starting with the key.
+- The line above the chooser's panes is where the rule is said out loud, off the spec's own
+  words: "The same rune can be inscribed more than once. Each copy is its own single use."
+
+### Two arrive with the set
+
+> "the runebearer engraves 2 rune when he take the talent set."
+
+`start: 2` on the pool, which is the Arcanist's own field and the same machinery: the panel
+*owes* them until they are chosen, and the block says so where an empty slate used to read
+as a Runebearer who had decided against runes. Everything after the two is what it was, one
+a night with the Long Rest action, up to half your Physique plus 4 a rank.
+
+### Four runes back, not a Physique of Willpower
+
+> "Have the tattoo return be 4 by master."
+
+RECHARGED was a Willpower allowance spent against the runes' own printed costs, which is the
+original card's shape and pays out backwards: a Physique of 8 brought back four cantrips or
+none of the one Master spell the slate was built around. It is a flat **4 runes** now,
+whatever they cost.
+
+- `recharge` on the spec is `{ rank: 3, rest: 'short', count: 4 }`. A rule naming a `stat`
+  instead still reads the count off an attribute, so a future set can say "a Physique of
+  them" without this going back to being a price.
+- The rest window offers **dearest first**, which is the reverse of the order it had while
+  the budget was Willpower: cheapest first fitted the most under a price, and four is four.
+  The orb beside each name is no longer a price being paid, it is what that rune is worth,
+  which is how you decide which four.
+- Fired copies are offered one row each, "Barkskin (1 of 2)" and "(2 of 2)", and reviving
+  one decrements the count rather than clearing the row.
+
+### A rune fires as printed
+
+> "Simply make it that Runebearer cannot overcast, multicast of other keywords."
+
+The reversal of the 2026-09-08 reversal, which puts the set where both older sources always
+had it. `halves: false` on the pool lays a `noHalf` rider on every card it hands out, and
+the use prompt replaces the Overcast control with a line in the Overcast's own colour:
+**"Overcast · Not open to you here. Rune Activation casts it as printed."**
+
+Said rather than hidden, because the card dealt beside the prompt still prints its second
+half in full and a prompt that quietly skipped it would read as the sheet having missed it.
+The same spell cast out of anybody else's book is Overcast as freely as it ever was: the
+refusal belongs to the slate, not to the card.
+
+### The cards
+
+| Card | Was | Is |
+| --- | --- | --- |
+| RUNEWORK | "no spell can be inscribed twice" | "two of them the day you learn how ... The same spell can be inscribed any number of times and each copy fires on its own" |
+| RUNE ACTIVATION | "Its Overcast and its Multicast are not, and you can pay for either as often as the spell allows" | "A rune fires the spell exactly as printed. It cannot be Overcast or Multicast, and nothing else the card offers is open to it" |
+| RECHARGED | "any number of fired runes whose Willpower costs add up to no more than your Physique" | "up to 4 of your fired runes" |
+
+### Proved
+
+- `npm run lint`, all nineteen `lint:*` scripts and `npm run build`, all clean, with the
+  Necromancer work landing in the same tree.
+- Forty-odd assertions driven through `loadoutState`, `toggleLoadoutPick`, `runeState`,
+  `runeLimit`, `cardUse`, `spendCardUse`, `normalizeUses`, `runeRecharges`, `rechargeSpend`,
+  `reviveRunes`, `pickChanges` and `deriveStats`: two Barkskins store as two picks and one
+  Heal as one, the limit reads `max: 2`, the second firing spends it and the third is
+  refused, the slate marks copy 1 fired and copy 2 ready, the debt counts both, reviving one
+  key leaves `{ barkskin: 1 }` and reviving both empties the row, and a Mycomancer handed the
+  same three verbs still holds one of each.
+- The chooser driven in a browser harness at 1180 and at 375: the column fills and empties by
+  tap, by × and by drag in both directions, both panes light up mid-drag, "Inscribe another ·
+  2 on you" counts the copies, the rest window's chooser still grants exactly one a night and
+  then replaces, and the column sits above the wall on a phone.
+- The rune block at 360x640 with four runes and one fired, and the Short Rest window with six
+  fired: the budget caps at four, the two it cannot reach are refused by name, and the plan
+  prints a line apiece.
+
+### Still open
+
+- **The slate's ceiling is still 16 at Rank 3**, and the Willpower cost still runs out long
+  before it. Two of the four rulings above (the two free runes, the four brought back) make
+  the early ranks kinder without touching that. It is the same open item the 2026-09-09
+  morning left.
+- **Nothing stops a rune being fired twice in one turn.** RUNE ACTIVATION prints "once a
+  turn" and the tracker holds a count and a rest, not a turn. A Runebearer with two copies of
+  one spell and 2 Action Points can now fire both in the same turn, which is the reading the
+  card forbids and the sheet cannot see. Unchanged by this pass, and worth a ruling.
+- **Drag and drop is mouse only.** HTML5 drag events do not fire on touch, so a phone gets
+  the taps. Nothing is lost, but it is the reason the buttons were not replaced.
+
+## The dead cost what they cost, and four smaller things, 2026-09-09
+
+One message, nine items. Eight of them are the Necromancer, which had been in the codex for
+about a day, and the other four are the log, the trays, the rests and the talent wall. The
+answers to the three questions this pass had to ask are recorded at the foot of it.
+
+### The Necromancer
+
+**The debt is 1 Willpower per Marrow.** "Max willpower is reduce by 1 per marrow it cost to
+animate the body." It was `burden: [null, 2, 2, 1]`, two a body with a rank rider taking it
+to one, which was this file's own guess at "a small amount" and answers **open item 2** of
+the morning's list. It is `burden: { perMarrow: 1 }` now, so the pool and the debt are the
+same number read twice: a Necromancer on Mind 9 holding a full Ossuary has 9 less maximum
+Willpower whatever it is made of, and three skeletons no longer cost three times what one
+abomination costs. The rank term went with it, and DEEPER GRAVES lost the third paragraph it
+was carrying, which claimed a discount the rank table never gave.
+
+**A body that falls gives its Marrow back and keeps its Willpower.** "An undead minion that
+reaches 0 is destroyed and the resources are freed, but the willpower comes back on a long
+rest." This is the one place on the sheet where two costs of one thing end at different
+times, and it is what the block's own prose already said and the arithmetic did not do. It
+reverses **open item 9**. `undead.js` can now tell a wreck from a standing body without
+importing `minions.js`: a Health of nothing is a body at nothing, since `floor: 0` is the
+whole of "it cannot go in negative". Two sums over one list, `spent` and `owed`, and the
+window's "your own remains" is held to an actual wreck rather than to any body of theirs,
+which had been an invitation to pull a ghoul down to save a hundred Supplies.
+
+**Command the Dead is 1 Action Point per 4 Marrow standing**, rounded up and never less than
+1, in place of a flat 2. So a lone skeleton is 1 and a Master's whole court is 3, and a
+bigger army is a slower one to wake. Wired rather than printed, through the same `apSet`
+rider a pool's own price uses, so the chip, the use prompt, the Abilities tab and the dealt
+card all read one number. The card prints 1, which is the floor and what the codex shows a
+reader with no Ossuary of their own.
+
+**Every body is built the same way, and nothing starts at 1.** "No entity starts with 1 in a
+stat, default is 4 as base. Minion entities should have 1 main and then alternate mind and
+instinct." This replaces the whole of **open item 4**. Two numbers are left to choose per
+kind: a floor of **4 in all three attributes**, and the one attribute it is *for*, at **5 at
+Novice, 7 at Adept and 9 at Master**. So the rungs open on 13, 15 and 17 points where a
+draconic ally opens on 16, against 9, 12 and 14 before. The growth is one rule for all
+seven: the main every odd level, then Mind and Instinct alternating on the even ones. Which
+reads oddly for a body whose main is one of those two and is right anyway, since Instinct is
+Reflex, Initiative and Speed, Mind is Grit, and Physique is Health, which grows per level on
+its own.
+
+**The skeleton swings off Instinct with both hands.** RUSTED SWORD was Physique, which made
+it the one body in the codex rolling two attributes and the one that had to grow both.
+
+**Two bodies know a Martial Move outright.** "Give reckless martial move to skeleton. Ghoul
+can use wound." `knows: ['reckless']` on the kind, which is a new field beside the
+`moves: { count, tiers }` the abomination already had: that one *chooses* some the night it
+rises, this one has them and cannot give them back. Both resolve into the same `moveRows` the
+actor carries, so nothing downstream can tell them apart. It needed the `Weapon Attack` tag
+on all four of those bodies' swings, because that tag and nothing else is what a move rides.
+
+**IRON PROVOCATION costs 2 Willpower and lasts one turn**, from 1 and two turns. A taunt on
+every enemy inside 9 metres is the widest single clause in the roster and it was holding a
+side of the board for a Willpower and a press.
+
+**The minions' abilities came off the ability lists.** "You should not see the minion's
+ability. Instead you should have a preview minion menu at each rank that gives you a pop up
+that shows the blocks like in the bestiary." A Necromancer at Master owned six cards and
+sixteen belonging to seven bodies, every one of the sixteen a brief in the set's own block
+and a row on its presentation page. None of them is a thing the character can do. So a rank
+that opens bodies now keeps a row of doors instead, and behind each one the creature drawn
+as the **two blocks it would stand up as**: `MinionStatsBlock` and `MinionActionsBlock`
+read-only, which are the very blocks it takes on the Character tab, rather than a second
+rendering of the same numbers. The pattern the bestiary set on 2026-09-04.
+
+A set with **one** body keeps its cards where they were. The split is worth drawing: a
+Draconic Bond's ally is *the* creature the set is about, its four cards are half of what the
+set is, and there is nothing to preview because the thing itself is already on the sheet.
+
+**The raise window confirms rather than going back.** "Instead of back to rest, have the text
+read confirm, have it greyed out until all choices are made. Have the mouse over tell you
+what is missing." It read "Back to the rest" and was always live, which made the way out and
+the way to accept the same button: a half-filled raising looked done. It is **Confirm**, dead
+until the draft is answered for, and its tooltip is the same sentence the footer count prints
+("It needs a name", "Say which of yours it comes out of", "2 more spells to choose"). Nothing
+about what it does changed: it closes the step, and the rest still writes nothing until "Yes,
+rest" is pressed. The dialog's own close is still the way to leave a raising unfinished.
+
+### A rest ends what it outlasts
+
+> "When taking a short rest, effects that are under 1 hour should clear. So for example cloak
+> of flame is 5 turns, a turn is 6 seconds. Same thing with long rest which is 8 hours."
+
+Until now a rest ended what *named* it: a row saying "until a short rest" or "until a long
+rest", and nothing else. So CLOAK OF FLAMES, five turns and half a minute of fire, sat
+burning through an hour off your feet.
+
+`restEnds` is both ways now, and the second is arithmetic and nothing else. `TURN_SECONDS`
+is **6**, which the codex has always known and never written down (every duration in it is
+printed as "10 turns (1 minute)"), and the rulebook's own table gives the rests as 1 hour and
+8 hours. So a row counted in turns clears at a rest longer than it has left.
+
+Written as the comparison rather than as "every turn count clears", so the two rests stay
+different: a row that somehow reached past an hour sits through a short rest and goes on the
+long one, which is what the numbers say. A row with **no count and no rest on it** is
+open-ended and no rest touches it, which is the tracker's own law and deliberately unchanged:
+a Grapple is not something you sleep off. `minionRest` takes the test as a predicate now
+rather than the list of durations it took before, so the rule lives in one place whoever the
+effect is on.
+
+### The log
+
+**The notice cards crop a face.** They drew the picture as the frame itself, with a bare
+`object-fit: cover` on a 24px circle, so a standing figure came out as a stripe of shirt:
+the one failure the three baked crops in `imageViews.js` exist to avoid. It is the feed's own
+two boxes now, a frame with the picture drawn at twice the size inside it keeping the top
+half, and an uploaded face crop left exactly as its owner framed it. Both halves of the log
+crop a person the same way.
+
+**A closed entry is a fifth taller**, 46px to 55px, measured. "Make the log blocks a bit
+taller like 20% taller so text does not overlap as much." Four numbers decide that height and
+they move together: the head's padding, the two line heights and the gap between the name and
+the sentence. The face is resized with them, 32px to 39px, because it is the two lines
+exactly.
+
+### The trays remember where they were
+
+"The page should remember the position of the tray." Which side stands open, kept per tab and
+per character in `localStorage` beside the folded groups, for the same reason: which drawer
+you like open is a reading preference and not a fact about the character. A remembered pair is
+held to what the window can show, so a narrow window that remembered both open does not draw
+them over the blocks between them.
+
+**The phone is deliberately not remembered.** There a tray is one block laid over the whole
+screen, and restoring that on arrival would open a sheet nobody asked for over the page they
+came to read. What is remembered is a position; the phone's is a thing being shown.
+
+### The talent wall has a Current shelf
+
+"Move the talent set you already have selected to the top on Current category." Four shelves
+and thirty-four sets is a wall you scroll, and the answer to "where is the set I am ranking
+up" was somewhere down the Mind shelf between two placeholders. Held sets are cut off the top
+into a fifth shelf and taken out of the attribute shelf they would otherwise sit on, because
+one set drawn twice on one wall is a reader wondering which tile is the real one. Not one of
+`TALENT_CATEGORIES`: those four are a fact about a *set* and this one is a fact about the
+reader, so it is cut in `talentShelves`, the only place both are known.
+
+One thing it inherits and does not change: a set already finished at Master is off the
+chooser's wall entirely, because a wall of sets you cannot take is a wall you read once. So
+the Current shelf holds the sets you hold *and can still rank up*, which at level 6 with a
+Rank 2 Necromancer is the Berserker beside it and not the Necromancer.
+
+### The three questions this pass asked
+
+- **The log's crop.** Its 32px circle already asked for the square `face` crop, so "the log
+  should be using the most zoomed in image" had to mean something else. It was the notice
+  cards, which are the other half of the log and were cropping a face centrally.
+- **Which tray.** The dice tray is a fixed button in a corner and cannot be moved at all, so
+  remembering its position would have meant making it draggable first. It was the sheet's
+  side trays.
+- **Which knight card.** BONEWALL is 1 Action Point and intercepts damage for you forever
+  once paid, which is the card that most wants a duration; IRON PROVOCATION is the one with a
+  Willpower cost to double. It is IRON PROVOCATION.
+
+### Proved
+
+- `npm run lint`, all nineteen `lint:*` scripts and `npm run build`, all clean, with the
+  Runebearer work landing in the same tree.
+- `lint:math`'s Necromancer sheet rewritten to the new rule and passing: a ghoul at 3, a
+  skeleton at 3 and a knight at 6 is **12** off the maximum, where a reading that had gone
+  back to counting rows would come out at 3 or at 6 and never at 12.
+- The Ossuary arithmetic driven through `marrowState` and `commandCost` on six sheets: a lone
+  skeleton is 3 spent, 3 owed and 1 Action Point to wake; the same skeleton destroyed is 0
+  spent, 3 still owed and 3 in a wreck; an abomination beside a destroyed ghoul is 9 spent
+  and **12** owed, and 3 Action Points to wake the one that can act.
+- The seven bodies at level 1 and at level 10: no attribute below 4, every main where the
+  rung says, the skeleton knowing RECKLESS and the ghoul WOUND, and the ghoul at level 10 on
+  Physique 4, Instinct 11 and Mind 7, which is the growth rule counted out by hand.
+- `restPlan` on a tracker holding five rows: a short rest ends CLOAK OF FLAMES, SHADOW BIND
+  and an "until a short rest" row, leaves PREPARED sitting and says so, and never touches the
+  Grapple. A long rest ends everything but the Grapple.
+- A browser harness at 1280 and at 375: the log head measured at 55px against 46 with the old
+  four numbers put back; the notice face drawing at 44px inside a 22px circle for a pasted
+  link and at 22px for an uploaded crop; the preview row two columns wide inside a 360px
+  block and the popup drawing both of the ghoul's blocks with no "Not commanded" line on a
+  body that does not exist; the Confirm button walking from dead through "It needs a name" to
+  live and only closing the step on the last press; and the left tray opened, reloaded, found
+  still open with its width measured, then closed and the key dropped.
+- And the trays' phone path: a stored pair of open sides draws two handles and lays nothing
+  over the page.
+
+### Still open
+
+- **The Ossuary's two numbers are now one number.** With the debt at 1 per Marrow, a
+  Necromancer's maximum Willpower is down by exactly what their Ossuary is holding, and a
+  full Ossuary is their whole Mind. Mind is also what buys the Willpower in the first place,
+  at 2 a point, so a Necromancer who raises to the ceiling has spent half of what their Mind
+  gave them. That is a clean shape and a strong one, and it is worth a look at a table.
+- **The base of 4 lifted every Novice body's defences.** The Healths barely moved, since
+  those are mostly per level, but a wraith answers on Grit and its Grit is 9 at level 1 where
+  it was 7. Nothing was balanced against the old numbers, so this is a note rather than a
+  worry.
+- **IRON PROVOCATION at 2 Willpower a turn** is expensive on a pool the knight's master also
+  spends. Deliberate, and the sort of number a session tells you about.
+- **BONEWALL still has no duration.** It is 1 Action Point, no Willpower, and it intercepts
+  damage meant for its master for as long as the knight stands within 6 metres. It was the
+  other reading of the ruling above, and the ruling went to IRON PROVOCATION, so this one is
+  untouched and still the widest promise on the sheet.
+
+## The Spellquill writes for other people, and the party hands things round, 2026-09-09
+
+Three asks in one message, and the third reaches furthest into the schema without touching it:
+"It seems the long rest and short rest do not properly use the character image. Then I want you
+to make the spellquill. It need to be able to craft spell scroll in long rest using supplies.
+Also take the oportuniy of adding spells scroll as an item that can be earned. It can be of any
+type. So there need to an interface to create them. I want when you are making it to also add a
+fareture so player can send items to each other in the campaing."
+
+### The face on a rest
+
+`restEvent` never carried a portrait, and neither did the two turn builders. Every row the log
+draws with a face reads `data.portrait` (see `Face` in LogBlock.jsx) and so does every pop-up
+notice (`noticeOf` in logChain.js), so a night's sleep drew as initials in a feed where every
+cast either side of it wore a portrait, and the banner over it drew an empty circle.
+
+One line each, on `restEvent`, `turnEvent` and `turnDoneEvent`, through a new `portraitOf` so
+the next builder does not forget it. It matters for more rows than it looks: "Entered combat"
+and "Left combat" are drawn as full entries with faces, and only `turn` and `ended` are seams
+the feed draws without one.
+
+`reactionFailedEvent` is deliberately **not** given one. Its rows are trail lines under an
+action rather than heads, and a merged notice keeps the head's face, so a portrait there would
+be a field nothing reads.
+
+### The set: five ranks into three, and four rungs into three
+
+| Sheet | Pulled | Landed in |
+| ----- | ------ | --------- |
+| `Source Temp/Hazebound System - Spellquill.pdf` | **2026-09-09, 1 set + 6 cards** | `src/lib/talents.js` (`TALENTS`) |
+| The scroll as an item, and its seven Power Words | **2026-09-09, written here** | `src/lib/scrolls.js`, `src/lib/utility.js` |
+| The night at the desk | **2026-09-09, written here** | `src/lib/scribing.js`, `rest.js`, `ScribeRest.jsx` |
+| Two Crossroads scenes, so the set can be scored and can win | **2026-09-09, written here** | `src/lib/crossroadsPool.js`, `crossroadsStory.js` |
+
+**The PDF had to be rendered to be read.** It is a Google Docs export whose headings were
+flattened to vector outlines, so the body text came out of the content streams and every
+heading was invisible to a text pull: the five rank titles, the four rung labels on the cost
+table and **all seven Power Word names**. They were recovered by converting the PDF's path
+operators to SVG, rasterising, and reading the result. Nothing in the transcription is guessed
+at. It would have been very easy to invent seven plausible words here and be wrong about all of
+them.
+
+**Five ranks became three**, the same normalisation the Runebearer had the day before. Each
+rung carries two of the sheet's pages, and every card keeps its own name and its own words:
+
+| Rank | Cards | The sheet's pages |
+| --- | --- | --- |
+| 1 · Novice | Arcane Scribe, Ephemeral Spell Scrolls | Rank 1 |
+| 2 · Adept | Improved Syntax, Arcane Specialist | Ranks 2 and 3 |
+| 3 · Master | Analitic Sight, Author of Truth | Ranks 4 and 5 |
+
+**And four spell rungs became three.** The sheet opens Novice, Apprentice, Adept and Master at
+its Ranks 1, 2, 4 and 5. **There is no Apprentice rung in this codex** and there never has
+been: `tierOf` in loadouts.js reads three words and every spell ever written carries one of
+them. So Apprentice is dropped rather than opened onto an empty shelf, and Novice, Adept and
+Master land on Ranks 1, 2 and 3. The three prices that survive are the sheet's own.
+
+**The price is the sheet's, in the site's currency.** This is the only labour in the pile
+priced in *coin*: 500 to 2000 Coins worth of Arcane Quartz. Jules asked for Supplies, and the
+rate was not invented. The potion shelf carries both currencies off one column (`coin = 100 x
+Willpower`, `Supplies = 10 x Willpower`), so ten coins is one Supply wherever the codex prices
+the same thing twice, and a Healing Potion is 200 coins and 20 Supplies to prove it. Divided by
+ten: **50, 150 and 200 Supplies**.
+
+### What a scroll is
+
+A **forged record**, on the shelf beside the rings and the pact weapons, carrying a `scroll`
+field of `{ spell, words, ephemeral }`. Not a column, and not 146 codex rows. The reasoning is
+the reasoning the forged shelf exists for: a scroll needs an identity, because two Fireball
+scrolls in one pack are two scrolls and one of them may be Unseen. It arrives with the pruning,
+the placement law and the share code already written.
+
+It is the first item in the codex that **teaches a card the item does not own**. Every other
+piece of gear teaches a fixed list; `scrollItem` swaps in the spell that was written on it,
+takes the spell's own art plate, and adds the rung to the tags so a bag full of Master scrolls
+can be found with the filter.
+
+The blank leaf is a real codex row (`spell-scroll`, Belt Gear, 20 coins, 0.1 kg, one use) and
+its card is the sheet's introduction. The rules of a scroll belong on the thing rather than on
+the set, because anybody can read one.
+
+### Two halves of a night, in two places
+
+The sheet is clear that a Spellquill's night is two separate permissions, and the rest window
+puts them in two places:
+
+- **The scrolls** are the Long Rest **action**. Two a night, paid for in Supplies, permanent.
+- **The fading ones** are not an action at all. `floor(Mind / 2) + rank` of them, free, and
+  they happen on every Long Rest whatever else the night was spent on, so the chooser sits
+  *above* the action slot beside a Runebearer's runes, and `clearAction` deliberately does not
+  touch it.
+
+**The fading ink is wired**, where the Alchemist's IMPROVISED BREWING is not. That card's
+potions "expire at the end of the day" and this site has no day; a scroll expires at a Long
+Rest, and a Long Rest is already a button. The sweep runs on every long rest, reaches the pack,
+the belt, the trinkets and the worn slots, and runs **before** the night's writing so a leaf
+written tonight is never mistaken for one that expired.
+
+**A Power Word is charged, and it comes off the refill.** The cost is Willpower, paid by the
+scribe at the moment of writing, and the writing happens inside the very rest that fills the
+pool, which would make it a price nobody pays. So a long rest now sets Willpower to its maximum
+*less the ink*: a night that spent nine on Power Words wakes at maximum less nine. The plan
+says so on its own line. Same reading the Necromancer's bodies already have.
+
+### And the interface for a scroll nobody wrote
+
+`ScrollWindow.jsx`, on the codex browser's head beside **Make an Enchanted Item**, and it makes
+the same argument in the same words: this is how a scroll *arrives*. Found in a barrow, bought
+off a guild, handed over by the table. So no rank gate, no price and no cap. Every rung, every
+school, any number of Power Words, and a pasteable code in and out.
+
+The one limit it keeps is the ladder. A Legendary or a Unique spell has no rung, so it has no
+price and cannot be scribed by anybody; those two live on the items that carry them.
+
+The fading ink is **not** offered there. An Ephemeral scroll is measured against its writer's
+own next Long Rest, and a found one has nothing to be measured against.
+
+### Handing something over
+
+The third ask, and it needed **no schema change at all**, because the law it runs into is the
+one the encounter runner already solved: nobody may write to anybody else's sheet. So a gift is
+not a write, it is a conversation over the table log. Four moves on one chain, the same shape
+the reaction stack has:
+
+| Move | Written by | What it does |
+| --- | --- | --- |
+| `offer` | the sender | the thing comes off their pack, and the row carries it |
+| `taken` | the recipient | their own client writes it into their own inventory |
+| `declined` | the recipient | they said no |
+| `returned` | the sender | their own client puts it back |
+
+Between the offer and its answer the thing belongs to **nobody**: off one sheet, not yet on
+another, and the log row is the only place it exists. That is deliberate, and the alternative
+is worse, because leaving it on the sender's sheet until the offer is answered lets two people
+spend it. The risk it buys instead is an offer nobody answers, and `returnable` is the answer
+to that: the sender's own client settles a decline by putting the thing back, reading it off a
+fetch as well as off the channel, so a gift refused while the laptop was shut comes home the
+next time the sheet is opened.
+
+Three payloads travel and nothing else: a codex id, a whole forged record, or a written-in
+note. **A forged record travels with its instance id**, because this is a move rather than a
+copy. The same ring leaves one pack and arrives in another, which is exactly what a share code
+refuses to be.
+
+Two things may not be given. A **pact-bound weapon**, because somebody else's bargain is not
+transferable, and anything this build cannot resolve: a payload from a newer build is declined
+rather than dropped, so the sender gets their thing back instead of losing it to a version
+mismatch.
+
+And one small law fell out of it. **A fading scroll may be given and may not be coded.** Giving
+it moves it and nothing is duplicated; a share code would make it the cheapest permanent scroll
+in the game, since a Spellquill writes five a night for nothing. `shareCode` refuses one and
+`codeRefusal` says so out loud, which is also the first time that function has had a reason to
+exist.
+
+### One thing the log had to learn
+
+The handover is the first thing in the feed whose **head and whose answers share a kind**. Four
+`give` rows on one chain, and the feed arrives newest first, so an `UNDER` set keyed on kind
+alone would have taken "Longsword taken" as the head and filed the offer underneath it. `UNDER`
+is now a predicate, `underneath`, and everything else is still decided by kind.
+
+`noticeOf` also takes the reader's own ids now, and silences an offer addressed **to** them.
+That one stands in its own panel on the sheet it names, the way a turn call does, and a banner
+over the top of it would be the same news twice. Everybody else at the table gets the banner,
+because a trade across the party is exactly what the rest of them want to see go past.
+
+### Proved
+
+- `npm run lint`, all twenty `lint:*` scripts and `npm run build`, all clean.
+- A round trip through the lib layer on a Rank 2 Spellquill with Mind 7: the rungs, the
+  two-a-night cap holding against a third leaf, the one-word-a-leaf cap refusing a second word,
+  the fading count coming out at `floor(7/2) + 2 = 5`, the plan's lines, 900 Supplies to 790,
+  Willpower refilling to 15 of 20 against 5 spent on Repeat, three records on the shelf, three
+  ids in the pack, and every one of them resolving through `heldItem` to a scroll that teaches
+  its own spell and carries its own rung.
+- The next long rest sweeping the one fading leaf: the line, the record off the shelf and the id
+  out of the pack.
+- The share code round-tripping a written scroll and dropping the ephemeral flag on the way.
+- Two sheets and a fake log handing things back and forth: a ring with a working on it arriving
+  intact, a fading scroll offered and declined and coming home with its flag, a written note
+  arriving under a fresh id, the pact weapon refused, a second settle skipped by `alreadyHome`,
+  and `groupEvents` drawing each gift as one block with its answers underneath it.
+- A browser pass on the public shelves: all six cards on `/rules/cards` (Talents 110 to 116),
+  ARCANE SCRIBE printing its banner and three paragraphs, and the blank Spell Scroll on
+  `/rules/items` under Belt Gear at 0.1 kg and 20 coins.
+- And a throwaway harness (`smoke.html` plus `src/smoke-harness.jsx`, deleted after) mounting
+  all four new windows: the desk at Rank 3 saying "2 leaves a night" and "Up to 2 Power Words a
+  leaf" over a shelf of **143** spells, which is 146 less the Legendary and the two Uniques,
+  with Barkskin on it at 50 Supplies and Repeat worked in, all seven words listed with their
+  costs, the budget reading "1 of 2 worked in · 5 Willpower off the morning", and the give
+  window correctly refusing a table with nobody else at it.
+
+### Still open
+
+- **50 Supplies for a Novice scroll is the sheet's own 500 coins, and it is steep against a
+  crate.** A starting purse is 6000 coins and 70 Supplies, so a Novice scroll is 8% of the
+  purse and 71% of the crate. The conversion is the codex's own rate and the number is the
+  designer's, so both halves are defensible and the *pair* may not be. It is the first number
+  to look at if scribing feels impossible at low level. Every price is in `SCROLL_TIERS`.
+- **Four of the seven Power Words are prose.** Enduring, Assured, Swift and Mighty each bend a
+  spell in a direction the sheet has a rider for; Unseen turns on a contest nobody has rolled,
+  Repeat is a second cast at the end of a turn, and Altered rewrites a damage type the printed
+  card names inside its own sentence. All seven are charged and printed, and what they do is
+  read off the scroll's own face. A card that said three of its seven options work would be
+  worse than one that is read out loud, which is how SPELLBOOK's free hand already works.
+- **AUTHOR OF TRUTH is printed and not wired.** "Ignore the Willpower cost … for an amount
+  equal to your Power" is a discount on the use of an *item*, spread across as many reads as it
+  covers, and there is no tracker row for it. Mind + level is the conversion key's reading of
+  "your Power" and the card says the number; the table spends it.
+- **The sheet says Level 4 for both its Rank 2 and its Rank 3.** Every other set on the wall
+  climbs 1/4/7/10/16, so it reads as a copy-paste. The normalisation makes it moot, since both
+  land on Rank 2 and Rank 2 is level 4.
+- **Nothing stops a gift crossing a table twice.** Two sheets at two campaigns can pass the
+  same ring back and forth, which is what a party does anyway. Worth knowing that the log is
+  the whole audit trail: there is no ledger of who owned what.
+- **A gift is items only.** Coins and Supplies do not travel, which the ask did not name and a
+  party will want within a session.
+
+## Forty more forks, the numbers shown to an admin, and what the cards do not do, 2026-09-09
+
+Four asks in one message: "expand on the crossraods. Add more varation, like 40 more. Create an
+admin only feature which is that when you are admin and you mouse over a choise it shows you what
+it gives weight to. Do a text consistency pass about the entire system. And check for any card
+effect that might now be working."
+
+### Fifty-one questions became ninety-one
+
+**Nothing in the engine or the stages moved.** A run is still eight questions in seven chapters,
+still a seed and a list of answers, still counted by `decide` under the rule that nothing is built
+on the attribute you left lowest. The forty new scenes went where the pool was thinnest against its
+own draw:
+
+| Stage | Draw | Was | Now | One question was asked |
+| --- | --- | --- | --- | --- |
+| Childhood | 1 | 4 | 10 | 25% of runs → 10% |
+| Home | 1 | 4 | 10 | 28% → 10% |
+| Blood | 1 | 5 | 10 | 25% → 11% |
+| Youth | 1 | 11 | 16 | 13% → 8% |
+| Trade | 1 | 4 | 10 | 36% → 12% |
+| The Road | 2 | 18 | 24 | 18% → 10% |
+| Leaving | 1 | 5 | 11 | 28% → 12% |
+
+Childhood, Home and Trade were the ones that mattered: four scenes behind a draw of one meant one
+run in four opened on the same dog behind the mill, and one in three found the same stage in the
+market town. They hold ten apiece now.
+
+Every new scene is drafted to the four laws at the top of `crossroadsPool.js` and nothing about
+them is new: a situation in two to four sentences, at most four answers, each answer a way of
+acting with a means you can picture, and each answer leaning exactly one way. The Spellquill's
+abbey and the Necromancer's plague cart were the shape to copy, so the new ones include a chapel
+bell rope with a word scratched inside the housing, a skull the plough turned up, a tithe-man
+counting eleven sacks of nine, a marriage contract on the front-room table, a press gang in a
+taproom and a horse in a stable on the last night.
+
+**The numbers under them were tuned twice, against the census and not by eye.** The first draft was
+coherent and badly balanced: it put the Trickster in a run in three and the Spellblade in one in
+seventy, because a scene about being quick and unseen writes itself and a scene about a word in a
+blade does not. 122 point edits later, over 4,000 walks:
+
+| Held | Before the drop | First draft | Shipped |
+| --- | --- | --- | --- |
+| Guardian | 30.3% | 26.4% | 23.4% |
+| Trickster | 18.7% | 33.2% | 24.2% |
+| Colossus | 14.4% | 22.5% | 18.5% |
+| Berserker | 21.5% | 13.1% | 17.1% |
+| Spellquill | 3.1% | 11.2% | 9.7% |
+| Duelist | 7.0% | 9.4% | 10.4% |
+| Runebearer | 3.5% | 3.0% | 6.6% |
+| Necromancer | 3.4% | 5.8% | 6.0% |
+| Mycomancer | 6.3% | 4.2% | 6.2% |
+| Spellblade | 3.0% | 1.4% | 3.5% |
+
+The spread was 3.0% to 30.3% and is 3.5% to 24.2%. Lineages moved the same way: Wildheart was the
+rarest ancestry in the codex at 2.5% and is 5.7%, and the thirteen now run 5.4% to 10.3% against
+2.5% to 10.9%. Backgrounds run 7.0% to 12.6% against 6.4% to 13.4%.
+
+Two scenes were rewritten during the tuning rather than renumbered. The press gang's Mind answer
+was reading a county warrant and is now a hand on a hilt and the other half of it said under the
+breath, which is the Spellblade's third scene and the reason it climbed at all. The barrow
+robbers' "piece that is moving" is now a blade, so the same card can carry it.
+
+### The gates got rarer, and that is the one number worth Jules's eye
+
+Three scenes in the pool only happen because of what you did earlier: `youth-watch` (the watch
+comes for a thief), `youth-letter` (the academy writes to somebody who spoke a word they did not
+know) and `road-reputation` (the man you put down comes back with friends). Twenty of the new
+answers set a tag, so the *gate* is satisfied far more often: `did:theft` by the Youth chapter went
+from 12.3% of runs to 17.0%, and by the road from 19.1% to 24.5%.
+
+They are still asked less, because the pool they are drawn from doubled. `road-reputation` is asked
+in 0.6 runs of 100 against 0.9 before, `youth-watch` 1.7 against 1.6, `youth-letter` 2.1 against
+3.0. The fix is the one the eight-question drop already flagged and did not make: lean the draw
+toward a gate the run has earned, the way it already leans toward a question that widens the count.
+That is still a design call and it is still not made.
+
+### An admin can see what an answer scores
+
+`weightsOf(option)` in `crossroads.js` resolves an answer's whole `gives` to the names the codex
+prints, group by group, in the order the pool wrote them. `Weights` in `Crossroads.jsx` draws it
+under the answer it belongs to, on hover **or on focus**, so tabbing the four of them reads them
+out in turn. Off entirely for everybody who is not `tier === 'admin'`: no panel in the DOM, no
+class on the list, no "+2" anywhere in the question.
+
+It is in the engine rather than in the screen for one reason: **the screen cannot print a raw id.**
+A set renamed in the codex would go on scoring and start reading as its own slug, and
+`check-crossroads.mjs` now has a section holding all 364 answers to resolving through it, to the
+point and to the group.
+
+What it shows beside each name is the part worth having: **the shelf.** A talent set reads
+`+2 Tactician · Mind, no cards yet`, an ancestry `+1 Luminary · +1 Mind`, a weapon and an armor set
+the attribute they suit. Every answer leans one way, and the shelf is where a point on the wrong
+one would show without running the checker. The row under the answers also lists what the answer
+makes true of the life, so the three gates are visible from the screen for the first time.
+
+The panel is opaque and `pointer-events: none`, which is what lets the mouse walk down the column
+and hand the panel from one answer to the next.
+
+### The text consistency pass found the talent roster two sets out of date
+
+Everything the rulebook claims about the registries was read back against them. The lineage and
+background lists match name for name and count for count, the skill picks range one to three with
+the Criminal at the top and the Merchant at the bottom, two weapons go to the Military and the
+Mercenary and nobody else, seven bags, armor in three families of three tiers, nine damage types.
+Four things did not match:
+
+1. **`4.5` said fifteen written talent sets and named fifteen.** There are seventeen: the
+   Necromancer and the Spellquill were written on the 8th and the 9th and never added. Appendix B
+   still counted eighteen placeholders and listed the Spellquill among them, so the two halves came
+   to 33 of a stated 34. Both fixed, and 17 + 17 is now 34.
+2. **`8.1` listed four Long Rest actions.** The sheet offers eight kinds. Writing (the Spellquill's
+   leaves), Raising (a body out of the Ossuary) and Reshaping (the Pact's weapon) were missing, and
+   Enchanting's second half (changing what you wear) was not named. `rest.js`'s own comment said
+   "Five kinds so far" and listed five. Both now list eight, and the comment says the rulebook
+   bullet is part of adding a ninth.
+3. **`6.1` accounted for seven Elemental families and its own table lists eight.** Lightning runs
+   three spells deep, which is the compound shape, so four of the six pairings are written and not
+   three. The sentence now says four and names it, and says nothing about which two elements make
+   it, because that is open ruling 01 on the compound law and this is not the place to settle it.
+4. **`4.5`'s list of what a set gives that is not a card** had seven entries for nine sets with
+   one. The Necromancer's ossuary and the Spellquill's desk are in it now.
+
+Four stale numbers in comments went with them: `LineagePick.jsx` said eighteen ancestries where
+there are thirteen, `Book.jsx` said seventeen rail rows where the rail draws sixteen, and
+`loadouts.js` and `LoadoutPick.jsx` both promised "a Mycomancer's thirty-four Elemental spells"
+where the school now holds 44. The last two lost the number rather than gaining a new one, so they
+cannot rot again. `check-crossroads.mjs`'s own header said forty questions.
+
+### Every card read for whether the sheet does what it says
+
+948 cards, every one whose printed text names a number this sheet holds, against everything that
+could carry it: an effect rider, a `grants`, an item grant, a `martial` spec, a form, a rune, an
+ossuary. Most of the hits are wired and were wired somewhere unobvious: the Duelist's AGILE through
+`martial.grants`, FERAL HIDE and FERAL FORM through `feral.js`, BESTIAL SENSE's Shield share through
+`shieldShareFor`, RUNIC NETWORK and THE OSSUARY through the two things that subtract from a derived
+maximum. Nothing this session's work touched moved any of them, and all twenty linters are clean.
+
+**One gap is new to this log, and it is small.**
+
+- **GUARDIAN · JUST IN TIME**, Rank 2: "Additionally your Movement Speed is increased by 1." Nothing
+  reads it. A rank-2 Guardian's Speed tile is the same 5.5 metres it was at Rank 1. This is not the
+  shape SHIELD EXPERTISE's Defense point is: it is flat, unconditional and permanent, exactly what
+  `grants: { speed: 1 }` does on WIND GRACE. What is missing is a reader: a talent card's `grants`
+  is read only by `checks.js`, for skill checks, so a `talentGrants` in `lineageGrants`'s shape is
+  the work, plus a term in `statMath` so the tile can say which card lengthened it.
+
+**And one gap is the largest unwired effect in the codex, and it was on the record as a shape
+problem rather than as a number.**
+
+- **UNDEATH RESILIENCE** ("You gain 15 Health per level in Fortitude and Physique instead of 10")
+  and **FEY BLOOD** ("7 instead of 10"). Neither is a pool card: every Undead and every Fey holds
+  one. `health_max` is `10 * level + 10 * physique` for everybody. At level 3 with Physique 6 an
+  Undead's sheet says 90 where its own card says 135, and a Fey's says 90 where its card says 63.
+  A third card, HEARTHY, is the same shape. `flat` has no field for a *rate*, and it should not:
+  the rate belongs in the formula, as a per-card multiplier the way `shieldShareFor` already takes
+  the Shield share off `feral.js`. That is a mechanism decision and a 45-point one at level 3.
+
+The rest were already on the record and are re-verified rather than re-found: SHIELD EXPERTISE's
++1 Defense (deliberately not added on 2026-09-02, because it moves the Defense of every Guardian
+on a sheet and nobody asked), MINERAL SKIN and SCALEY's +1 Defense, INNER TIDE's +4 Willpower,
+WILD SWIFTNESS's 1.5 metres against its wired twin WIND GRACE, the three Armor Masteries whose
+bonus is conditional on a full set where `grants` is flat, and BERSERKER'S RAGE, whose +Physique
+scales on the holder's own rank and so hits the same wall LIFE DRAUGHT and VIGOR do: `runningRiders`
+is handed an effects list and no character to measure a rank against. One argument threaded through
+it unlocks all three.
+
+### Proved
+
+- All twenty linters clean, before and after: `lint`, `lint:text` (260 files, and the 26 serial
+  commas the new prose introduced were rewritten rather than marked, because the fifty-one questions
+  already in the pool carry no marks), `lint:math`, `lint:halves`, `lint:riders`, `lint:weapons`,
+  `lint:potions`, `lint:order`, `lint:cards`, `lint:dice`, `lint:log`, `lint:layout`,
+  `lint:creatures`, `lint:combat`, `lint:moves`, `lint:plan`, `lint:help`, `lint:legal`,
+  `lint:crossroads` and `lint:images`.
+- `lint:crossroads`: 91 questions in 7 stages, 8 asked a run, 4,000 walks, every written set,
+  lineage and background winning at least once, every question asked in some run, every outcome a
+  whole character with nothing built on the attribute left lowest, and 17,284 cases including the
+  new "every answer can be read back" section.
+- In the browser, through a throwaway harness at the project root (deleted, `git status` checked):
+  the run asks Childhood through Leaving counting 1 of 8 to 8 of 8 and lands on a Guardian and
+  Arcanist with eight chapters of story. As `tier: 'admin'` the panel is `display: none` until the
+  answer is hovered or focused, shows one row a group with the shelf beside each name, is 786px
+  wide under a 786px answer with nothing clipping it and no console errors. As `tier: 'free'` there
+  are four answers, zero panels, no admin note and no `+N` anywhere in the question.
+- `/rules` re-read after the rulebook edits: seventeen written sets naming the Necromancer and the
+  Spellquill, seventeen placeholders without the Spellquill, the three new Long Rest bullets and
+  the four Elemental pairings, and no trace of "Fifteen are written" or "Eighteen talent sets".
+- The card audit is a scratchpad script, not a checker. It reads 948 cards against ten patterns and
+  every finding above was then confirmed against a real character through `deriveStats`,
+  `weaponRiders` and `lineageGrants` rather than off the regex.
+
+### Still open
+
+- **The three gates are rarer than they were**, and leaning the draw toward an earned gate is the
+  design call the eight-question drop left and this drop did not take either. Numbers above.
+- **The Spellblade is the thinnest written set at 3.5%.** It is scored in five scenes against the
+  Guardian's fifty-one, it leads three of them, and Mind is the most crowded shelf in the codex:
+  six written sets share it. Another scene is the fix and it wants his word on where a
+  Spellblade's youth happens.
+- **UNDEATH RESILIENCE, FEY BLOOD and HEARTHY need a rate, not a rider.** The largest number on
+  this page.
+- **GUARDIAN · JUST IN TIME needs a talent-card `grants` reader**, which is four lines plus a
+  `statMath` term and would be the first flat rider a talent card carries.
+
+## The Weaver, 2026-09-10
+
+The eighteenth written set, the fifth slot filled on the Other shelf, and **the second in the
+codex with no sheet behind it at all**. There is no Ability tab for the Weaver, no conversion
+workbook and no old printed page. What there is, in full:
+
+> "use the information you have to make the weaver whcih hte fletcher but for all weapon.
+> Effects you can choose to atctive when you hit with an attack like a smite. Magic
+> empweremnt on weapons."
+
+Three sentences and a comparison. Every card, name, number and word below was written here off
+them, and the quote itself is transcribed in the comment above the set in `src/lib/talents.js`
+because it is the only source of record there is.
+
+### The Fletcher, which does not exist
+
+**There is no Fletcher anywhere in this repository.** Nothing under `data/`, nothing in
+`talents.js`, nothing on the roster, nothing in the git history. The only fletched thing in the
+codex is the bolt `AmmoPips` draws for the Pact of Ordenance. So the word is read as shorthand
+for a set that prepares an arrow with an effect in it, and what it is doing in that sentence is
+fixing the **shape** rather than naming a source to transcribe: the Fletcher's trick, given to
+every weapon there is.
+
+**If a Fletcher sheet exists off-repository, this set is the first thing to check against it.**
+
+### What the set is
+
+Five cards, and it is deliberately the Spellblade's skeleton with the Spellblade's one
+expensive part removed.
+
+**THREADWORK** (Rank 1, Long Rest) is the pool: a number of weaves equal to **2 + your Rank**,
+so 3, 4 and 5, re-chosen with the Long Rest action, Novice at Rank 1 and Adept and Master at 2
+and 3. That is the Duelist's number for a pool of riders rather than the Spellblade's number for
+a pool of spells, because a weave is the cheaper thing.
+
+**WOVEN STEEL** (Rank 1, Passive) is the empowerment, and its second paragraph is the whole
+point of the set: *every weapon you hold* is a magic weapon and carries your weaves, nothing has
+to be prepared, no weapon has to be chosen, and a weapon picked up in the middle of a fight is
+woven in the hand that picked it up. There is no Action Point cost, no binding and nothing
+stored.
+
+**UNRAVEL** (Rank 1, Passive) is the release: when you make a Weapon Attack you may release one
+weave, paying its Willpower. It goes off where the attack lands, an area centres on the target,
+and it needs no Roll of its own because the Attack Roll carries it.
+
+**TAUT WEAVE** (Rank 2) Empowers the damage of every weapon you hold by 1. **DOUBLE WEAVE**
+(Rank 3, Short Rest) releases two weaves on one attack, takes 1 Willpower off each and hands a
+Short Rest the swap a Long Rest had.
+
+The set is shelved on **Other** and its pool carries `cast: 'highest'`, so a weave rolls off
+whichever Attribute its Weaver stands highest in. A Physique 7 brute's Emberthread deals
+`1d6 + 7`.
+
+### The eighteen weaves
+
+A new card kind, `weave`, in `src/lib/weaves.js`, folded into `CARDS` the way the Martial Moves
+are: a rank opens a tier of them and raises how many you know, and no rank hands one over. The
+banner reads `WEAVE · NOVICE`, which is a Martial Move's banner order.
+
+| Rung | Willpower | Damage | The six |
+| --- | --- | --- | --- |
+| Novice | 1 | `1d6 + stat` | Emberthread, Rimethread, Arcthread, Leechthread, Wardthread, Hazethread |
+| Adept | 2 or 3 | `2d6 + 2*stat` | Burstweave, Rustweave, Sunthread, Mendthread, Hollowthread, Windthread |
+| Master | 4 to 6 | `4d6 + 4*stat` | Unmaking, Crossweave, Severing Thread, Doomthread, Shroudweave, Riftthread |
+
+Both ladders are ones the codex already keeps. The Willpower is the Martial Move tier price
+(1 at Novice, 2 or 3 at Adept, 4 to 6 at Master) and the damage is the spell codex's own stair,
+with the dice count and the stat multiplier always equal, which is how every damaging spell in
+the codex is written. A carried weave is cheaper than the same effect carried as a spell, and it
+should be: a Spellblade pays a surcharge for the spell's Action Points and can reach the entire
+codex, where a weave goes nowhere but out of a wound and there are only eighteen.
+
+Nothing in the eighteen teaches the game a new word. Every effect is a keyword the codex already
+defines (Burn, rooted, blinded, prone, Shield, Armor) or a type already in `DAMAGE_TYPES`. That
+is the one discipline that keeps an invented list from becoming an invented ruleset.
+
+**None of them carries `rides`, and none carries a second half.** A Martial Move's `rides` moves
+a number the swing's own card prints; a weave is a second thing resolving where the first one
+landed, which is the bound-spell channel's shape and not the move's. And a half that could not
+be offered would be a printed price nothing charges, so there are none.
+
+### The six readings
+
+1. **The pool is the set's own eighteen weaves, house-written.** "Effects ... like a smite" is
+   not a spell: a smite is a fixed thing you spend on a hit, and the spell codex already arrives
+   on a hit through the Spellblade. So the set needed a pool of its own and there was none. **This
+   is the largest invention in the codex to date and it is written to be replaced**: the whole
+   list is in one leaf file that says so at the top.
+2. **No weapon is ever named or bound.** That is the whole of "but for all weapon", and it is
+   what separates this set from the Spellblade at every seam: nothing is spent to set up, nothing
+   is stored, nothing ends at a rest.
+3. **A weave rides any Weapon Attack**, plain or special, which is the broad reading of the
+   glossary. Neither was named, and the narrow reading would have made half of every weapon in
+   the codex inert for this set.
+4. **The miss is printed, and the dice enforce it.** "when you hit" names a hit, and unlike the
+   Spellblade this set can keep the promise: a weave's damage is a `value` link queued behind the
+   Attack Roll and a chain stops dead at a failed check, so a weave released on a swing that
+   missed rolls nothing. The Willpower still goes, because payment is unconditional on this
+   sheet, and **UNRAVEL prints both halves of that** where POINT OF IMPACT prints neither.
+5. **A weave rolls off your highest Attribute.** Not said either way. It is the Other shelf's own
+   convention and the Pact of Ordenance's own rule, and a set that works with every weapon in the
+   game should work for every character who can hold one. Picking Mind would have quietly made it
+   a caster's set on the shelf that exists for the sets that are nobody's.
+6. **The empowerment is two cards.** "Magic empweremnt on weapons" is one clause, and it is split
+   the way BOUND EDGE and RESONANT EDGE split the identical clause: the words at Novice, the die
+   one rung up. "Magic weapon" itself rides nothing, for BOUND EDGE's reason, which is that there
+   is no magic-weapon flag in this codex and inventing one to satisfy one card would be a rule
+   with one holder.
+
+### What is built
+
+- `src/lib/weaves.js`, a leaf: the eighteen, `WEAVE_TIERS`, `getWeave`, `isWeave`, `weaveTier`
+  and `weavesAt`, all four mirroring martial.js's.
+- `src/lib/weaver.js`, **the eleventh shape of what a set can hand over**, after the fixed hand,
+  the loadout, brewing, enchanting, the minion, tricks, martial, feral, the pact, runes and the
+  bond. It hands over a **weaving**, and it is the cheapest of the eleven: no column, no
+  migration and **not even a tracker row**, because the set names no weapon and nothing it does
+  outlives the swing that did it.
+- `weaveRiders` folded into `attackModifiers` beside the bond, the pact's weapon and the
+  Colossus's grip, **narrowed to neither a card nor a hand** unlike all three of those: a stowed
+  axe opened from the Inventory tab really is Empowered in a Weaver's hands, since picking it up
+  is the whole of what it would take.
+- `SpellRow` in UsePrompt.jsx became `RideRow` and now draws both, with `why` and `cutFrom` as
+  props. The Weaves block sits under the Martial Moves and the Bound Spells, third, and all three
+  can be on one swing: `options.carried` and `options.riders` are appended to rather than
+  assigned, so a Spellblade who is also a Weaver may carry a spell and release a weave in one
+  motion.
+- The quick bar drops a weave (`ridesHit`), asked of the card alone where `ridesStrike` has to be
+  asked of the character: a bound spell is an ordinary spell somebody else can cast the ordinary
+  way, and a weave is a card nobody can hold by any other route.
+- Violet everywhere, and not the move's amber: `.ac-kind-weave`, `KIND_COLORS.weave` and the new
+  `weave` keyword all take `--haze-glow`. A weave is ticked onto a swing the way a move is and is
+  magic the way a spell is, and a colour on this sheet says what a thing is.
+- The log line gained a third clause: "with Reckless · releasing Emberthread". Its own word,
+  beside `moves` and `spells`, for the reason those two are apart.
+- Two Crossroads scenes, `youth-broom` and `road-chain`, both about the implement not mattering:
+  one takes a practice sword away and leaves a broom, the other takes every blade in the camp and
+  leaves a cook pot and four feet of cart chain. Plus `TALENT_CLOSES.weaver` and
+  `TALENT_PHRASES.weaver`.
+- Rulebook **5.6.2 Weaves** beside 5.6.1's Martial Moves, a glossary row, and 4.5 and Appendix B
+  moved from seventeen written and seventeen names to eighteen and sixteen.
+
+### Proved
+
+- Every linter clean: `lint`, `lint:text` (264 files, and the two serial commas the new scene
+  prose introduced were rewritten rather than marked), `lint:cards`, `lint:halves`, `lint:order`,
+  `lint:moves`, `lint:riders`, `lint:math`, `lint:weapons`, `lint:dice`, `lint:log`,
+  `lint:layout`, `lint:creatures`, `lint:combat`, `lint:plan`, `lint:help`, `lint:potions`,
+  `lint:images` and `lint:crossroads`.
+- `lint:cards`: **all 23 new cards are inside the 480 target**, so every one of them prints at
+  full size. The registry is 568 cards and none is over the 600 ceiling.
+- `lint:crossroads`: 93 questions in 7 stages, 8 asked a run, 4,000 walks, every written set
+  winning at least once including the Weaver, and nothing else fell out of the draw when the two
+  new scenes joined the pool.
+- Through the model, on a real character: the pool offers 6 of 18 at Rank 1 for a hand of 3 and
+  18 of 18 at Rank 3 for a hand of 5; `offeredWeaves` prices Emberthread at 1 and Burstweave at
+  3 against a Finesse Weapon's Strike; the allowance clamps two ticks to one at Rank 2 and takes
+  two at Rank 3, where Emberthread comes down to 0 Willpower and Unmaking to 5; `attackModifiers`
+  puts TAUT WEAVE's Empowered die on the printed card and credits it by name; the rest window
+  offers the swap at a Long Rest at every rank and at a Short Rest only at Rank 3; the log line
+  reads "with Reckless · releasing Emberthread · Spent 2 Action Points · at 2.Fenrat"; and a
+  Physique 7 Weaver's Emberthread resolves to `1d6 + 7` off `cast: 'highest'`.
+- The Abilities tab draws two blocks for the set, `talent:weaver` with the cards a rank granted
+  and `loadout:weaver` with the hand.
+
+### Still open
+
+- **Everything below the mechanics is mine.** All five card names, all eighteen weave names, the
+  tagline, the blurb, every Willpower number, the hand size, the two Crossroads scenes and both
+  story lines. The mechanics follow the three sentences; none of the words does.
+- **Six of the eighteen are prose the sheet does not read.** Rustweave's Armor reduction,
+  Hollowthread's Shield strip, Severing Thread's silence, Windthread's push and prone, Riftthread's
+  move and Doomthread's three turns of Decay are all sentences a table plays. The ones that
+  inflict a named status (Burn, rooted, blinded) do reach `statuses.js` through
+  `options.riders`; the rest have no field to land in, which is the same wall the Martial Moves
+  hit and is on the record there.
+- **`SEVERING THREAD` is the only card in the codex that stops a caster casting.** Nothing reads
+  it and nothing else says it. It wants Jules's eye on whether that belongs to this set at all.
+- **The Weaver is untested in the browser.** The sheet is behind auth with no bypass and the
+  working tree already carried somebody else's unfinished harness, so verification is at the model
+  layer and through the linters. The Weaves block in the use prompt has not been looked at.
+- **Two Crossroads scenes is thin**, the same thinness the Spellblade is on the record for. It is
+  scored in two scenes against the Guardian's fifty-one.
+- **No art.** No plate and no card pictures for any of the 23. Drop pictures into `data/Weaver/`
+  and run `npm run art:cards`.
+
+## The fading leaf is thrown down where you stand, 2026-09-10
+
+One ask, and it turns a Long Rest permission into a card you play: "rework spellquill so that
+ephemeral scroll are created on the fly. Not after a long rest. He has an ability that allow him
+to create one. Creating an ephemeral scroll require 2 action points. The user can then choose to
+cast it if he can or keep it in enventroy or give it to soemone. Ephemeral spell craftigin alos
+cost 1 willpower for novice 2 for adpet and 3 for master. make the ephemral scroll aciton and the
+window that goes with it."
+
+### What the card was, and what it is
+
+EPHEMERAL SPELL SCROLLS landed the day before off the sheet's own words: "at the end of a long
+rest, you can prepare a number of Ephemeral Spell Scrolls equal to half your Intelligence plus
+your rank." So it was built free, capped at `floor(Mind / 2) + rank`, and chosen in a chooser
+that sat **above** the rest window's action slot precisely because it was not an action.
+
+Jules replaced that. It is now the shape every other ability on the sheet has:
+
+| | Was | Is |
+| --- | --- | --- |
+| When | at the end of a Long Rest | whenever you like, a fight included |
+| Cost | nothing | **2 Action Points** and the spell's rung in Willpower |
+| How many | `floor(Mind / 2) + rank` a night | one a use, and the Willpower pool is the cap |
+| Where | a slot in the rest window | a chip on the quick bar |
+| Tags | `Long Rest` | `Ability` |
+
+**The count is gone with the night, and nothing replaced it.** A price at the moment of use *is*
+the cap on this sheet, and a second ceiling on top of it would be design nobody asked for. A Mind
+7 Spellquill at Rank 2 used to lay five leaves a night for free; the same character now spends
+2 Action Points and 1 to 3 Willpower a leaf out of a pool of twenty, and stops when the pool does.
+
+The Willpower ladder is Jules's own number and is on the **rung**, in `SCROLL_TIERS` beside the
+coin and the Supplies, because a rung is where every price of a scroll already lives. That is what
+keeps scribing.js from carrying a price table of its own.
+
+### What survived untouched
+
+The ink. "Ephemeral Spell Scrolls expire at the start of your next long rest" was already wired
+and already right: `fadedScrolls` sweeps every fading record on the shelf, `withoutScrolls`
+reaches the pack, the belt, the trinkets and the worn slots, and the sweep runs *before* the
+night's writing so a leaf written tonight is never mistaken for one that expired. None of it cared
+which of the two ways the leaf was written, so none of it had to change.
+
+The desk did not change either. ARCANE SCRIBE is still the Long Rest action, still two leaves,
+still priced in Supplies off the rung, still charging its Power Words against the morning's
+refill. What went is the *second* draft the rest window held: one draft now, and the `ephemeral`
+flag that ran through `normalizeScribes`, `addScribe`, `dropScribe`, `toggleScribeWord`,
+`scribeRows`, `scribedRecords`, `scribeSummary` and `scribingWillpower` is gone with the branch it
+carried. `restEphemeral` is gone outright.
+
+### The window
+
+`EphemeralWindow.jsx`, off the quick bar, on `opens: 'scribe'` and `pays: 'window'`. The pair is
+EPHEMERAL ENCHANTMENT's and means the same thing here: the card prints 2 Action Points and `X`
+Willpower, the `X` is the rung of a spell nobody has chosen yet, so charging half at the chip and
+half in the window would ask the action-or-reaction question twice and take the Action Points off
+anybody who then closed the shelf.
+
+Three questions in the order EnchantWindow asks them, and then the prompt: what is on it, what is
+worked into it, where it goes. The working is shown rather than totalled, because the cost is
+three numbers off three places (2 on the card, the rung on the spell, a Power Word's own).
+
+**The card it charges is the ability and deliberately not the spell**, which is what EnchantWindow
+would have done. `castPlan` reads the request's card, so a scroll of DEVOURING BLOSSOM passed as
+the played card would have announced the summon at the desk and one with a duration would have
+started its clock. The ability lays nothing, and the spell is printed beside the prompt in the
+window's own panel anyway.
+
+`roll: false`, for the reason brewing and enchanting both give: this pays for a cast that has not
+happened.
+
+### And then three ways
+
+"Cast it if he can or keep it in inventory or give it to someone" are the three a scroll has
+always had, and none of them needed anything new. What the window does about them is put the leaf
+somewhere useful and then say where it went.
+
+**A free belt loop by default**, which is the one place this differs from the desk. A night's
+writing goes into the pack, because a loop is a place you have chosen to put something and the
+Inventory tab is where choosing happens. But a scroll can only be *read* off a loop, and a leaf
+written mid-fight is one you meant to read, so `withLeaf` offers the first free loop and the pack
+as the other answer. A character with every loop full is offered no choice at all, because there
+is one place it can go and a control with one option is a sentence pretending to be a control.
+
+Then the readout: what was written, where it is, and the three ways said in words. None of them is
+a control there, because all three already have one somewhere better (the Quick Bar, the pack and
+the handover), and a fourth door onto one room is worse than a sentence pointing at the first
+three.
+
+### Two bugs the browser pass caught, and one of them was already shipped
+
+**`shelfTags` handed the filter row bare strings.** `useTagFilter` wants `{ id, label, kind }` and
+`TagFilter` reads `tag.label.toLowerCase()` the moment anybody types, so the first keystroke in
+the search box threw `Cannot read properties of undefined`. Three windows had a private copy of the
+wrong helper: this one, **ScribeRest** and **ScrollWindow**. The last two shipped with it on
+2026-09-09, which means searching the Spellquill's own desk has been taking the sheet down since
+the day it landed. All three are `poolTags` now, which returns the right shape, sorts the rungs up
+the ladder before the schools and drops a tag every card carries.
+
+**`null` was doing two jobs in the destination.** It meant both "the pack" and "nobody has said
+yet", so picking the pack read as picking nothing and fell straight back to the first free loop.
+Three states now: `undefined` until somebody says, a number for a loop, `null` for the pack. It
+was only ever going to be caught by pressing the button.
+
+### Proved
+
+- `npm run lint`, `npm run build` and every `lint:*` script clean, bar two findings in another
+  session's unfinished work in the same tree (see the note at the end).
+- A round trip through the lib layer, 66 assertions: the card's own shape, the three rungs a rank
+  opens, 2 AP with 1, 2 and 3 Willpower at Novice, Adept and Master, a Power Word riding on top
+  (Master with Repeat is 2 and 8), a rung the rank has not opened pricing at nothing and minting no
+  record, the word caps at each rank, the record's `ephemeral` flag, both destinations, a loop that
+  filled up and a loop that closed both falling back to the pack, the leaf resolving through
+  `heldItem` to an item named after its spell, teaching its own spell, worth 0 and tagged
+  `Ephemeral` and `Master Scroll`, the next Long Rest sweeping it off the loop and off the shelf
+  with its line, and the desk still charging 200 Supplies and holding 5 Willpower back off the
+  refill.
+- The quick bar: exactly one chip, 2 Action Points, `X` Willpower the chip does not charge,
+  `opens: 'scribe'`, `pays: 'window'`, not refused; ARCANE SCRIBE still has no chip; `castPlan` on
+  the ability laying no row, inflicting nothing and conjuring nothing; and the leaf on loop 2
+  offering its own spell at the spell's own price, spending the leaf and saying "This is the last
+  of it".
+- A browser pass on a throwaway harness (`smoke.html` plus `src/smoke-harness.jsx`, both deleted):
+  the window at Rank 3 reading "off a shelf of 143", the search filtering to one card, an Ephemeral
+  Scroll of Devouring Blossom priced "Master · 3 Willpower to write · 5 Action Points and 10
+  Willpower to read", all seven Power Words with their costs, the working printing 2 Action Points
+  and 3 Willpower with Mighty's 2 on top, the prompt offering both ways at 2 and 5, the refusal
+  notice and its override, and the leaf landing on belt loop 2 as
+  `{ spell: 'devouring-blossom', words: ['mighty'], ephemeral: true }`. Then the same again into
+  the pack. And the desk next door filtering 143 spells to 1 for "Bramble" and 10 for "Fire", with
+  its tag suggestions offering "+ Ethereal", none of which it could do the day before.
+
+### Still open
+
+- **The Willpower ladder is a ruling and the Action Points are.** Both came out of one sentence in
+  one message. Nothing on the PDF prices a fading leaf at all, because on the PDF it was free.
+- **No cap on how many you can hold.** The pool is the cap, which is the argument above, and it
+  means a Spellquill at a full pool can walk into a fight carrying five fading leaves they wrote in
+  the corridor. If that is too many, the ceiling wants to be a number Jules names rather than one
+  this file invents.
+- **AUTHOR OF TRUTH is still printed and not wired**, and it now has more to bite on: the
+  forgiveness is a discount at the moment a scroll is *read*, and a Spellquill who writes their own
+  leaves mid-fight is reading rather more of them.
+- **The Power Words are still four-sevenths prose.** Unseen, Repeat, Altered and the rest are on
+  the record from 2026-09-09 and nothing here changed them.
+- **A leaf in a fight has not been played at a table.** The window pays through the same prompt
+  every card does and the leaf reaches the bar, but nobody has written one during a running
+  encounter with the reaction gate standing.
+
+## Every point is one point, twenty more forks, and the road stops before it is finished, 2026-09-10
+
+Two asks in one sitting. "In the crossroads system, avoid having thing give mutlipe points to 1,
+and have them spread out on more options. The goals is to have cross over. add 20 more secnarios."
+And then: "make sure that if the characte creaiton once done reuqire choice form palyer such as
+aspells, enchantment ect prompt them to take it before finalizing."
+
+### The fifth law: a point is a single point
+
+Outside the attribute, no answer weighs anything twice any more. Where an answer used to put a 2 or
+a 3 on one set it now names two or three sets the same act points at, so a thing wins a count by
+being **what several answers had in common** rather than by one answer choosing it. Tearing the
+gate out of the stone is a point for the Berserker and a point for the Colossus, and which of them
+you end up holding is decided by the other seven answers. That is the crossover Jules asked for.
+
+The attribute is the one exception and it is not a spread: an answer still gives exactly one, at 1
+or 2 depending on how hard it leans, because the lane is what makes the count add up to somebody
+and there is nothing to spread it across.
+
+`lint:crossroads` holds all 452 answers to it in a section of its own, and the law is written
+fifth at the top of `crossroadsPool.js`.
+
+**What that does to a pool is not obvious and is the reason this took four passes.** With every
+number a 1, *how often a thing wins is very nearly how many answers name it*, so the pool is now
+balanced by counting homes rather than by weighing them. The first draft of the flattening kept
+every id where it was and only cut the numbers, and the census came back worse than what it
+replaced:
+
+| | Before the drop | Points flattened, nothing moved | Shipped |
+| --- | --- | --- | --- |
+| Trickster | 24.7% | **35.5%** | 17.2% |
+| Guardian | 24.7% | 29.9% | 16.0% |
+| Spellblade | 3.3% | **0.2%** | 3.6% |
+| Cauldron Keeper | 6.7% | **0.3%** | 5.5% |
+| Weaver | 1.3% | 0.9% | 7.2% |
+| Luminary (lineage) | 8.4% | **32.1%** | 8.6% |
+| Entertainer (background) | 7.0% | **0.8%** | 10.4% |
+
+Luminary was on 101 of 372 answers because it is the lineage that raises Mind and I had put it on
+almost every Mind answer as the default; at two points a throw that was a nudge, and at one point
+a head count it wins outright. The trades went the same way: the Mercenary was named by 101
+answers and the Entertainer by 29, which under weights read as "the Mercenary is a common life"
+and under a head count reads as "you are a Mercenary".
+
+So the whole pool was re-laid against a homes census rather than by eye. The three registries now
+run:
+
+| | Was | Now |
+| --- | --- | --- |
+| Talent sets (18 written) | 1.3% to 24.7% | **3.6% to 17.2%** |
+| Lineages (13) | 5.5% to 10.8% | **4.7% to 12.9%** |
+| Backgrounds (10) | 7.0% to 12.3% | **7.9% to 11.5%** |
+
+### Two sets were gathering points and could never win
+
+The census found a failure the old weights had hidden. **The Spellblade was scored in twelve
+answers and never once alone**: every one of them also named the Arcanist or the Enchanter, and
+both of those are named by three times as many answers, so the Spellblade lost every count it was
+ever in. It was held in one run in five hundred. The Cauldron Keeper had the same shape against the
+Mycomancer, which stood beside it in 26 of its 29 answers.
+
+Both are fixed by splitting rather than by adding, on the line the codex already draws: **the
+Keeper brews and the Mycomancer grows.** A cup, a flask, a pot, a tea and a poultice are the
+Keeper's; what is in the ground, the rot and the forage are the Mycomancer's; five weeks of a
+garden bed by bed is honestly both and scores both. The Spellblade came out from behind the
+Arcanist the same way, and lost the two answers that were never its own: the half of a lesson that
+*refuses* the blade, and a tome, which does not swing.
+
+This is worth knowing before touching a number: under the fifth law, **two sets that always appear
+together are one set as far as the count is concerned.**
+
+### Twenty more scenes, and they were written for the census
+
+Ninety-three questions became a hundred and thirteen. Four went to each of the five stages that
+were thinnest against their own draw, so a question is now asked in 5.9% to 8.0% of runs against
+5.9% to 12.5%:
+
+| Stage | Draw | Was | Now |
+| --- | --- | --- | --- |
+| Childhood | 1 | 10 | 14 |
+| Home | 1 | 10 | 14 |
+| Blood | 1 | 10 | 14 |
+| Youth | 1 | 17 | 17 |
+| Trade | 1 | 10 | 14 |
+| The Road | 2 | 25 | 25 |
+| Leaving | 1 | 11 | 15 |
+
+Unlike the forty of the day before, **these were sited at things the count had nobody for.** A
+fair with a part going spare, a house on a square with eleven people in it, a wintering troupe and
+a counting house on a bridge are where the Entertainer, the Aristocrat and the Merchant live. A
+mill rope, a kite line and a ball of red thread on a shelf are where the Weaver does. A causeway
+under the tide, a hawk on a fence post and a charcoal stack that broke in the night are Tidebound,
+Skybound and Scorchbound, which were the three rarest bloods in the pool. An armourer's free bench
+and a father's sword off the wall are the Spellblade's only two scenes in the whole codex where a
+word goes into steel and nothing else is happening.
+
+Everything else about them is the four laws as before: a situation in two to four sentences, at
+most four answers, each a way of acting with a means you can picture, each leaning exactly one way.
+
+### The road stops before it says it is finished
+
+The second ask is the same law the free hand got the day before, at the other way in. A Crossroads
+character is made at **level 2 with two talent sets**, so it hands over more blanks than any other
+path: the count can decide a Mycomancer and it cannot decide which four spells, it can hand over a
+Draconic Bond and it cannot name the creature, and a Scorchbound has a lineage card whose sentence
+has a spell-shaped hole in it. **93 of every 100 Crossroads characters land owing at least one
+choice**, and until now every one of them went straight to the sheet with the blanks in.
+
+There is now a third screen after the reveal. Taking the character writes it, exactly as before,
+and then draws **the level ledger for the two levels it just bought** with every finished block
+folded away, so what is standing is only what is still open. The way out is `Gated` and says how
+much: "3 still open", "3 choices are still open below. Answer them and this opens." A count that
+left nothing open skips the screen and goes to the sheet as it always did.
+
+Counted by `openChoices`, which is the same function the Advancement tab badges itself with and
+the same one the free hand's last step waits on, so the three can never disagree about whether a
+character is finished. "Walk it again" is gone from that screen on purpose: the character is
+written by then, and starting over would be an undo nobody asked for. The Advancement tab can
+change every part of it afterwards, as it always could.
+
+### Checked
+
+- `lint:crossroads`: 113 questions in 7 stages, 8 asked a run, 4,000 walks. Two new sections. **A
+  point is a single point** holds all 452 answers to a 1 outside the attribute. **And a patch is
+  not the end of it** makes 300 characters and asserts that one can still owe a choice and that no
+  owed choice is above the level the Crossroads made, which is what keeps the new gate from being
+  a trap; it prints the distribution under `--list` (0 open in 7%, 1 in 32%, 2 in 37%, 3 in 19%,
+  4 in 6%).
+- The old "wins at least once" is now **"is held in one run in a hundred"** for all three
+  registries. A set held twice in four thousand runs passed the old check, which is exactly what
+  the Spellblade was doing.
+- `npm run lint`, `lint:text` clean across 263 files. Eleven serial commas the new prose introduced
+  were restyled rather than marked.
+- In the browser on a throwaway harness (`gate-test.html` plus `src/gate-test.jsx`, both deleted):
+  eight questions answered, the reveal, "Take this character" writing a level 2 Berserker and
+  Spellquill and **not** calling `onDone`; the settle screen reading "They are on the sheet. These
+  are the things the road could not decide for you." over a folded ledger; the way out gated at
+  "1 still open" with the reason; the Scorchbound's INNATE FIRE answered with Kindle Weapon; the
+  gate opening to "Open the sheet" and `onDone` firing on the press. A second run landed at 3 open
+  and gated the same way.
+
+### Still open
+
+- **Mind takes the +2 in 40% of random runs**, Instinct 32% and Physique 29%, because 177 of the
+  452 answers lean Mind against 129 that lean Physique. It was 37% before this drop and the twenty
+  new scenes moved it two points further. Nothing here is a numbers fix: the lanes are a property
+  of the scenes, and levelling it means writing physical answers into scenes that are currently
+  read-it-and-think. Worth a ruling before the next drop rather than a quiet re-laning of scenes
+  Jules has already read.
+- **The Spellblade is still the floor at 3.6%**, and it is not a tuning problem. It is scored in
+  eighteen answers because a word carried into a blade needs a blade in the scene and a Mind lean
+  in the answer, and a pool of villages, mills and roads has about that many. Lifting it further
+  means scenes written for it, not points moved onto it.
+- **The three gated scenes got rarer again.** `road-reputation` is asked in 0.7 runs of 100,
+  `youth-watch` 0.9 and `youth-letter` 2.4, because the pool they are drawn from grew by a fifth
+  and the draw did not learn to favour a gate the run has earned. That is the same ruling the
+  eight-question drop flagged, still not made.
+- **A placeholder is now as big as a written set.** The Tactician is named by 44 answers against
+  the Guardian's 48, and it can never win because it has no cards. Under weights that did not
+  matter much; under a head count it means the day the Tactician is written it arrives near the
+  top of the census with nothing else changing. Worth reading the homes column before writing any
+  stub, and 31 of the 452 answers put nothing on a written set at all because the roster has no
+  card for talking a man round or holding a room. That was 53 of 372 before this drop.
+
+## The question the screen would not show you, 2026-09-10
+
+Jules, an hour after the gate shipped: "so again I became infernal at the end oteh corssraods it
+should have allwo me to select which spell i want before finalzing. as pop prompt."
+
+The gate was working and counting correctly. **The screen it gated was hiding the question.**
+
+### One line, and every lineage question in the codex was invisible
+
+`asksOf` in `LineagePick.jsx` is what the block reads to know whether the blood still owes an
+answer:
+
+```js
+return lineageCards(lineage, choices).filter((card) => card.choice);
+```
+
+`lineageCards` hands back `{ card, modifiers }` rows, not cards. A row has no `choice`, so the
+filter dropped every one of them and **`asksOf` always returned empty**. Everything downstream
+of it was wrong in the same direction:
+
+- the block computed `done` as true and **folded itself away saying "Chosen"**,
+- the "Answer 1 question" button never appeared, because it is drawn on `asks.length > 0`,
+- the settle window drew its page with no question on it,
+- and `hasAsks` was false, so **taking a lineage never walked you into that window at all**,
+  which is the behaviour asked for on 2026-08-19 and shipped as working.
+
+Meanwhile `openChoices` reads `lineageSettled` in `levelPicks.js`, which unwraps the row properly.
+So the tab, the free hand and the new Crossroads gate all counted a choice correctly and pointed
+at a panel that said "Chosen" and would not open. An Infernal is the commonest way to meet it:
+INNATE SHADOW promises a Novice Shadow Spell and names none.
+
+**The talent panel had the same shape of bug for a different reason.** `TalentPick` set
+`done={slot.filled}`, so a set with a hand still to deal folded away under "Chosen" too. It now
+takes an `owing` prop worked out in the ledger and reads **Half done**, which is what the lineage
+panel has said since it was written.
+
+### One list of questions, and now it says which
+
+`levelQuestions` returned an array of booleans, which is enough to count and not enough to act.
+It is now `levelAsks`, returning one row a question, `{ level, kind, talent, answered }`, and
+`openAsks(character, level)` is every unanswered row across the ledger. `openChoices` is its
+length, so nothing about the badge changed. `levelQuestions` is gone: nothing called it once the
+ledger read rows.
+
+That is what makes a pop prompt possible without a second list of questions to keep in step.
+
+### The road asks, in a window, one at a time
+
+The Crossroads settle step hands the ledger `openAsk`, the first unanswered row. The ledger passes
+it to the panel that owns it, and that panel opens the window that asks it:
+
+| What is owed | What opens |
+| --- | --- |
+| a lineage card or a pool | `Infernal: What It Asks You` |
+| a rank's hand | `Guardian: Martial Moves` |
+| a creature | the minion window |
+| a shape | the feral window |
+| a bargain | the pact walk |
+
+Each panel is keyed on the window the settle pass wants open, so **answering one remounts it on
+the next**: the Guardian's two martial moves are chosen, its window closes, the Infernal's spell
+window opens behind it, and the foot counts down 2 → 1 → "Open the sheet". Every window is the
+one that already exists on the Advancement tab, opened through the `autoOpen` prop the sections
+already had for a set just taken.
+
+### Checked
+
+- In the browser on a throwaway harness: a Crossroads run landing on Infernal with a Pact and a
+  Weaver opened `Pact of Ordenance: seal the pact` with `pact, lineage, loadout:weaver` owed. A
+  Guardian and an Infernal opened the martial moves first, both panels reading **Half done**, and
+  answering the two moves flipped that panel to Chosen and popped the Infernal spell window with
+  its four Novice Shadow Spells. Learning Gloom Spike closed it, opened the gate and `onDone`
+  fired.
+- The free hand is untouched by the new props (they default to null): four questions waiting, no
+  window on mount, and **taking Infernal there now walks into its settle window**, which it never
+  did before.
+- `npm run lint` and all nineteen `lint:*` scripts clean.
+
+### Still open
+
+- **Nothing auto-opens on the Advancement tab**, only on the Crossroads settle pass. A player who
+  leaves a question open and comes back later still finds it as a badge and a "Half done" panel,
+  which is right for a sheet and would be an ambush on a tab you opened to read.
+- **The pact walk is one row in this list** and four questions behind it. It reports settled or
+  not and nothing in between, so the foot can read "1 still open" against a window with four
+  things in it. That was true of the badge before this and is unchanged.
+
+## The prompts come to you, 2026-09-10
+
+Jules, on the settle screen shipped an hour earlier: "What I want is not that you see the summary
+of everything and you have to [find it] yourself. I want that the player has prompts that appear.
+Because now you have to choose your spell. Now you have to choose your lineage, and some have to
+deal with you in a sequence. So essentially you open a menu where you can select those things, and
+it doesn't take you to another page. That doesn't need to be there."
+
+**The page is gone.** The reveal stays exactly where it is when you take the character, and what
+the count could not decide arrives over it as a window, one after another, until there are none
+left and the way out opens underneath.
+
+| | The settle screen | Now |
+| --- | --- | --- |
+| After "Take this character" | a second page, the level ledger | the reveal, unchanged |
+| Finding the question | expand a folded panel that says "Chosen" | it is already open in front of you |
+| Order | whatever you clicked | the order the ledger asks them, one at a time |
+| Between two questions | scroll | the next window opens as the last one closes |
+
+### AskWindow, a switchboard and nothing else
+
+`openAsks` already said what a character owes and what kind each one is. `AskWindow.jsx` turns one
+of those rows into the dialog that answers it, so a caller holding the list can put the questions
+in front of somebody without knowing anything about spells, bargains or beasts:
+
+| The row says | The window |
+| --- | --- |
+| `lineage` | `Infernal: What It Asks You` |
+| `loadout` | `Arcanist: Spellbook`, `Guardian: Martial Moves` |
+| `minion` | `Your ally` |
+| `feral` | the form window |
+| `pact` | the pact walk |
+| `background` | the skill wall, opening on the spell a skill has not named |
+
+Every one of them is the dialog the Advancement tab already opens from its own block, wired the
+way that block wires it. Nothing about a choice is decided in the switchboard. `LineageChooser`
+and `SkillChooser` were internal to their files and are now exported; the other four already were.
+
+It **returns null for a row it has no window for**, which is the honest answer and not a blank
+dialog. That would be a door that never opens, so `askKinds.js` holds the set of kinds it covers
+and the Crossroads counts only those. A question outside it is answered on the Advancement tab
+like anything else, and the way out is not held shut on it.
+
+### The chain
+
+The Crossroads renders `AskWindow` for `owed[0]`, keyed on the question. Answering a question
+takes it off the list, which changes the key, which closes that window and opens the next. There
+is no sequencing state: the list is the sequence, and it is the same list the tab badges itself
+with. The foot counts down beside it, and the line over the reveal reads "They are on the sheet.
+2 things the road could not decide are left to you."
+
+**Shutting a prompt is allowed.** The × stops the chain rather than reopening the window under
+somebody's hand, and the foot grows an "Answer the other 3" button beside the gate. The gate
+itself is unchanged: shut while anything is open, and it says how much.
+
+### What came back out
+
+The settle screen's plumbing went with it: `openAsk` threading through `LevelLedger`, `autoAsk` on
+`TalentPick`, `autoSettle` on `LineagePick`. Nothing else ever wanted a panel to open its own
+window, and the switchboard opens them directly.
+
+**The two "Half done" fixes stay**, because they were never about the settle screen: a lineage or
+a talent set that still owes something says so on its block instead of folding away under the word
+"Chosen". See the entry above for the `asksOf` bug that hid the first of them.
+
+### Checked
+
+In the browser on a throwaway harness (`gate-test.html` plus `src/gate-test.jsx`, both deleted;
+it needs a `MemoryRouter` as well as the real `AuthProvider`, because the ally window links out):
+
+- A run landing on an Arcanist and a Draconic Bond: "Take this character" left the reveal
+  standing, no level block anywhere in the DOM, and `Arcanist: Spellbook` opened over it with the
+  foot reading "2 still open". Writing the fifth spell closed it and opened **Your ally**. Naming
+  it Ashfall and taking green scales closed that, the line changed to "everything they left to you
+  is answered", the gate opened and `onDone` fired.
+- Shutting a prompt with its ×: the reveal, a gated "3 still open" and an "Answer the other 3"
+  button that reopened the chain on `Guardian: Martial Moves`.
+- `npm run lint`, all nineteen `lint:*` and `npm run build` clean.
+
+### Still open
+
+- **A pact is one row and four questions behind it.** The foot can read "1 still open" against a
+  window asking for a bargain, a weapon, a spell and a Martial Move. True of the tab badge before
+  this and unchanged by it.
+- **Nothing auto-opens on the Advancement tab**, only here. A window that opens itself on a tab
+  you came to read is an ambush; a window that opens itself at the end of the road is the road
+  finishing its sentence.
+
+## The Brams and the paint, 2026-09-10
+
+Seventeen creatures and forty cards: the first drop into the bestiary since the nine it opened
+with, and the first written from a one-shot rather than a design sheet. The one-shot is *Nine
+Blank Canvases*, a guide that lives outside the repository as an artifact, built the same day
+off Frederic and his portraits in Look Outside. Jules, on it:
+
+> "in the project, create the bram as new entities that can be used in combat. and create some
+> paitling minions and commanders. Give them themed abilityies"
+
+Everything went into `src/lib/creatures.js`, as codex data, under a PAINT section in each of
+its two arrays. No new component, no new grammar: a Bram is a shape on the curve like the
+Blightgeist and his cards are ordinary codex cards.
+
+### What went in
+
+- **Ten Brams.** Nine self-portraits of the painter Abram Hollins (Wriggly Bram, Tumor Bram,
+  Bright Bram, Shadow Bram, Bram Who Bites, Scared Bram, Toxic Bram, Godhead Bram and The Face
+  Taker) and the man himself. Eight Generals, one Overlord and Abram as a General-shaped
+  Humanoid who is not made of paint. All written at level 3, the one-shot's level.
+- **Four Paintlings.** Paintling, Green Paintling, Shadowling and Toxic Fragment: Minions at
+  levels 1 to 3, with a Splash or a Spit and one passive each.
+- **Three commanders.** Gesso Herald calls Paintlings off wet walls and coats them in Shield,
+  Impasto Warden is a wall with a knife, Smear Stalker blinds and hides in what it spilled.
+  Generals at levels 4 and 5, so the shelf sorted by level reads as a ladder.
+- **Forty cards.** Six shared (Paint Body, The Chorus, Corrosive Paint, Splash, Spit, Palette
+  Knife) and the rest belonging to one body each.
+
+### Rulings made here, all open to Jules
+
+- **Paint Body** is resistance to Blunt and vulnerability to Fire. The one-shot's turpentine
+  is not in the codex: Tumor Bram's Agony keys on Decay damage instead, which is what
+  turpentine deals at that table.
+- **The Chorus is prose.** The sheet cannot count voices in a head, so what it says is what the
+  Game Master knows. Nine Voices hands the Face Taker 3 Reaction Points per copy death, applied
+  by hand.
+- **Stolen Face is a ward**, the fifth in the codex and the first written at level 3: while it
+  holds, Health cannot fall below half. The Game Master flips the switch when the face comes
+  off, and the card says what happens then.
+- **Every General and the Overlord carries +1 on the primary**, because the checker asks every
+  non-Minion to reach 12 at level 12. Scared Bram and Abram Hollins therefore differ from the
+  guide's first printing (Instinct 8, and Mind 8 with Instinct 6). The guide was corrected to
+  the codex the same evening, and its appendix now says the creatures are in the bestiary.
+- **A card that swings more than once** is written "Bite an entity three times. Each bite is a
+  Physique Melee Attack." so `rollPlan` reads one Attack Roll and the table repeats it. There
+  was no codex precedent for a multi-hit card.
+- **Tongues** rolls a d6 for one of six conditions, written as a numbered list with no lead-in
+  words on purpose, so `inflictedStatuses` lays no rows. The table applies the one that came up.
+- **Shared cards carry no rank tag**, only Creature and Paint, because Corrosive Paint is played
+  by Minions, Generals and the Overlord alike.
+- **Yes or No** costs 1 Action Point so that Tumor Bram, who never attacks, still holds a move
+  the checker accepts. It is the first card in the codex whose whole effect is an answer.
+
+### Checked
+
+`lint:creatures --list` (26 creatures and 64 cards, every General and the Overlord at 12 by
+level 12, the Blightgeist still printing its page), `lint:cards` (608 inside the ceiling),
+`lint:text` after one serial comma came out of a lore line, `lint:halves`, `lint:combat`,
+`lint:plan`, `lint:riders`, `lint:log`, `lint:order`, eslint on creatures.js and
+`npm run build`. Rulebook 10.2 no longer says "three of each rank", since it is no longer
+true, and the comment above `CREATURES` says the paint faction sits beside the nine.
+
+### Still open
+
+- **No art.** Twelve prompts in the guide's Art section are written for these plates and
+  nothing has been generated. The cards draw the empty haze plate until then.
+- **Bodies that appear.** Call the Paintlings, Split and Rooted in the Closet say a body
+  appears; the tool does not add it. The Game Master adds Paintlings and Fragments from the
+  shelf, exactly as for Call the Vault.
+- **Abram Hollins is on the shelf** because Jules asked for all ten. He is a man who would
+  rather not fight, and his experience is for getting him out alive, which the difficulty line
+  cannot say.
+- **Whether the commanders belong to the Brams.** They are written as paint that was never a
+  portrait, so a table can use them without the one-shot. If Jules wants them tied to Abram's
+  atelier, that is one lore line each.
+
+## Every card that names a number, made to move it, 2026-09-11
+
+One line from Jules: "Mineral skin not adding to defence, review all the cards, again make sure
+that their effect are actualy always effective as they should on teh character sheet."
+
+MINERAL SKIN was real and it was one of twelve. The 2026-09-09 sweep had found most of these and
+reported them; this drop wires them. **Twelve cards moved from printed to wired**, and the two
+things that had been blocking half of them are built.
+
+### What a card can now say
+
+`grants` on a card was a flat map of numbers a lineage card could carry, read by `deriveStats`
+for four fields. It is now `src/lib/grants.js`, one leaf holding the rider's whole vocabulary and
+the three readings that are not sums, and **three codexes carry it** rather than one: a lineage
+card, a talent card and a background skill, each handing back the same `{ name, ...grants }` rows
+an enchantment already handed back. Four different sources by the stacking law, so they add.
+
+Three things are new in it:
+
+| Field | What it is |
+| --- | --- |
+| `defense` | the stat a reader calls Defense. `flat` never summed it, so `avoid` only ever took a point from the tracker. Two cards ride it. |
+| `healthPerLevel` | **a rate, not a lump.** Three cards say "you gain N Health per level in Fortitude and Physique instead of 10", which buys both halves of the formula. Composed as differences from 10 rather than summed, so two of them could never make 27. |
+| `when` | **a condition.** The three Armor Masteries hang on a full set being worn, which is why they were left alone in August: `grants` was flat and a set bonus is not. `skillGrantSources` answers it off what the caller knows about the loadout. |
+
+And a talent card's `grants`, which only checks.js had ever read, is now read by `deriveStats`
+too. `checkWp` and `checkAdvantage` sit in the same map and are simply fields no stat line asks
+for.
+
+### The twelve
+
+| Card | Says | Rides |
+| --- | --- | --- |
+| MINERAL SKIN | Defense +1 | `grants.defense` |
+| SCALEY | Defense +1 | `grants.defense` |
+| INNER TIDE | Willpower +4 | `grants.willpowerMax` |
+| WILD SWIFTNESS | Movement Speed +1.5m | `grants.speed`, its wired twin WIND GRACE's |
+| FEY BLOOD | 7 Health a level instead of 10 | `grants.healthPerLevel` |
+| HEARTHY | 12 instead of 10 | `grants.healthPerLevel` |
+| UNDEATH RESILIENCE | 15 instead of 10, and rests barely mend you | `grants.healthPerLevel` and `grants.restHealth` |
+| GUARDIAN · JUST IN TIME | Movement Speed +1 | the first flat rider a talent card carries |
+| GUARDIAN · SHIELD EXPERTISE | Defense +1 with a shield | `martial.grants`, where AGILE already was |
+| HEAVY ARMOR MASTERY | Armor +2 in a full heavy set | `grants` and `when.fullSet` |
+| LIGHT ARMOR MASTERY | Speed +1.5m in a full light set | `grants` and `when.fullSet` |
+| SPELLED ARMOR MASTERY | Willpower +4 in a full Spelled set | `grants` and `when.fullSet` |
+
+Two are worth knowing about beyond the table:
+
+**UNDEATH RESILIENCE is the largest number any card on this sheet moves, and the only one that
+makes a rest worse.** At level 3 with a Physique of 6 an Undead read 90 Health against its own
+card's 135. Its second sentence is wired too: a Short Rest restores no Health at all now and a
+Long Rest gives half your maximum, and the rest window's line says which card did that rather
+than leaving somebody to think the button is broken. **A Fey's maximum Health falls by a third**
+on the same mechanism, from 90 to 63, which is what its card has always said it costs for the
+flight.
+
+**SHIELD EXPERTISE was wrong on the record.** The Guardian's `martial` spec said its point of
+Defense "lands through `equipmentEffects` in items.js where the other shielded weapons' numbers
+land". It never did: what lands there is the *weapon's* own printed point, and the Guardian's
+extra one had nothing carrying it. It is a `martial.grants` entry on the `Shielded` tag now, so
+it goes on with the shield and comes off on the swap, exactly as a Duelist's AGILE does. The
+advantage the same sentence grants is deliberately not wired: `advantage` in that spec is dice on
+an **attack** roll and this one is on Instinct contested rolls, which is a different roll.
+
+### And a thirteenth, which is a rider rather than a grant
+
+**BERSERKER'S RAGE now raises the Physique it says it raises.** "You gain additional Physique
+equal to your Berserker Rank" had no home because every entry in `EFFECT_RIDERS` is a literal
+constant: a rider is keyed on the card and not on the caster, so the sheet holding a row laid by
+somebody else cannot look up a number living on them. **The Rage was never actually stuck behind
+that.** Nobody but you can put a Rage on you, so the rank it scales on is on the sheet the row is
+sitting on.
+
+So a rider field may be a function of its holder, resolved by `measure` in riders.js on the way
+past, and `who` is threaded through `runningRiders`, `effectRiders`, `riderShift` and the two
+term helpers in statMath.js. **It is the only measured entry and the others stay unwired for the
+stated reason**: VIGOR's "3 x your Mind" is the caster's Mind, and SEVER LIFE's is the damage
+dealt, which nobody knows until the dice land. The Rage's Elevate rides with it, and its
+compulsion stays on the card, because the sheet does not know where anybody is standing.
+
+### Two files moved, to untie a knot
+
+`deriveStats` had to read what a *skill* grants, and the reading that composed the three places a
+skill comes from lived in levelPicks.js, which sits above characterModel.js. Two files each
+wanting one thing from the other is a cycle, so the smaller halves moved:
+
+- **`src/lib/levels.js`** is new and holds `MAX_LEVEL`, the XP table, `levelForXp`, `xpForLevel`,
+  `xpProgress` and `levelGrants`. characterModel.js and levelPicks.js both re-export what they
+  used to own, so not one caller anywhere changed.
+- **`heldSkillIds` and `characterSkillGrantSources` moved to items.js**, for the reason
+  `characterGrants` is already there: it is the file that can see all three places at once, and
+  it is the file that knows what is worn, which is the only condition any skill names.
+  levelPicks.js re-exports both.
+
+There are **no import cycles in `src/lib`**, checked before and after.
+
+### Checked
+
+- All twenty linters, before and after. `lint:math` runs 24 sheets against 16: seven new fixtures
+  cover a Stonebound, a Tidebound, an Undead's rate, a Wildkin's two pool cards at once, a
+  Guardian wearing both new kinds of rider, the same Guardian with the set broken so the skill's
+  bonus comes back off, a shield in hand, and a Rank 3 Berserker mid-rage.
+- `lint:riders` learned about measured riders. `bendsSheet` now counts a function as a field, so a
+  broken measured rider is a finding instead of a silence, and `HOLDERS` in the checker gives the
+  Rage's fixture a Berserker to be measured against: testing it on a blank sheet would have proved
+  only that zero is zero.
+- A scratchpad harness, 36 checks. Every tile above against a real character through
+  `deriveStats`, every math line naming the right card, and no line reading `unaccounted` on any
+  of them. The Armor Masteries were checked from both sides, worn and stowed.
+- In the browser, through a throwaway harness at the project root (deleted, `git status`
+  checked): nine sheets rendering real `AttrTile`s, every number and every hover line correct.
+- `npm run build`.
+
+### Still open, and each one is a sentence the sheet cannot hold
+
+- ~~**VENOMOUS's "additional 1d4 Decay" is the one that could be wired and is not.**~~ It was a
+  whole extra damage roll of another type on every weapon attack and `attackModifiers` had no
+  field for one. **Closed 2026-09-17**: Jules ruled it applies to every weapon the Wildkin
+  holds, it is a die, and `added` is the field. See "The venom reaches the blade" below.
+- **BASTION'S FURY is three event clauses**: a Reaction Point on an Intercept, the next attack
+  carrying the damage you blocked, and a Willpower off a move riding an attack SHIELD EXPERTISE
+  already discounted. The sheet tracks none of intercepting, blocking or how much was blocked.
+- **SHIELD EXPERTISE's own last sentence** is the same shape: "after blocking damage with a
+  shield, your next weapon attack costs 1 less Action Point".
+- **The Rampage cards still spend turns of the Rage by announcement.** RAGING BLOW takes one off
+  and IGNORE PAIN and RECKLESS VIOLENCE take two, and nothing on the sheet has ever moved that
+  row's count. Unchanged by this drop, and now the only Berserker clause left.
+- **QUICK DRAW's second half**, the advantage on the attack after a swap, as before.
+- **What is not a number this sheet holds, and never will be**: FEY BLOOD's flight, AMPHIBIAN's
+  and DRACONIC SCALES' resistances, STICKY's walls and ceilings, and the Rage's compulsion.
+  *(The two resistances were wrong about "never": the damage channel arrived on 2026-09-19 and
+  both are wired. The other three stand.)*
+## The Oathbound, 2026-09-11
+
+The nineteenth written set, the sixth slot filled on the Other shelf, and **the third in
+the codex built off a spoken description with no sheet behind it** after the Spellblade and
+the Weaver. What arrived was long and detailed, which is the opposite of the Weaver's three
+sentences, and it is transcribed in full below because it is the only source of record
+there is.
+
+### What was said
+
+> "The way it works: when you become an Oathbound, you take a vow, and that vow binds you
+> to having to follow certain tenets. Each of these vows has three tenets. So for example
+> one could be the Oath of Protection, which means you would protect people, you would make
+> sure they get to safety, and you would not be the one to initiate violence.
+>
+> And based on that choice, you'll get to learn all the spells of two sub-schools. So for
+> example, if you had the Oath of Vindication that might be Light and Fire, and at Rank 1
+> you would know all the Novice Fire and Light spells, at Rank 2 all the Adept Fire and
+> Light spells, and so on until you are Rank 3 and you know all the Master of both
+> sub-schools.
+>
+> There are many Oaths, and each of the Oaths, on top of knowing two spell schools, has a
+> mechanic which is your Faith meter. Your Oathbound abilities are always scaled off your
+> highest stat, whichever is your highest Attribute, but you also get modifiers based on
+> your Faith. You start at neutral zero. Whenever you do things that go in line with your
+> tenets, when you do an action that is toward your tenets, you gain Faith. And if you do
+> anything that's against, then you lose Faith. If your Faith bar is in the positive, then
+> you essentially have a +1 to whatever your highest Attribute rolls. So if you're in the
+> positive and your Mind is very high, then the stat for your spell will be your Mind plus
+> one. On the other hand, if your Faith is low because you've been sinning against your
+> tenets, then it's the opposite effect, you have a -1. So part of your job is to maintain
+> this bar. This is like a minus hundred to a hundred with a zero in the middle, and taking
+> a Long Rest always gives you minus five to that score. So essentially you have to keep
+> doing good deeds based on the tenets to continue to maintain your Faith. When you start,
+> someone that starts as an Oathbound starts with fifty points right up there, so they
+> don't have to worry too much about it.
+>
+> Then at Rank 1 you always have, on top of the spells you learn, two abilities, which is
+> your Aura, and the Aura is based on your tenets. So here you'll have to be creative
+> because, for example, the Aura of Vindication is: whenever an ally is hit by an enemy,
+> that enemy also takes damage equal to your maximum Attribute plus your Faith bonus. Then
+> you have Smite, and the way Smite works is that whenever you see someone that has done
+> something that goes against one of your tenets, you can use Smite to do a large amount of
+> damage to them. So if a tenet says protecting life and someone's actively trying to
+> destroy life, then you can argue with your DM that this is sealing in front of you and
+> you'd like to smite it. It's a ranged spell attack that deals a bunch of damage and is
+> done with advantage.
+>
+> When you level up, the strength of your Aura is also increased. So your Aura is more
+> efficient as your rank is higher. The Aura you have to activate. It is an upkeep ability.
+> So once you have it, you have to activate it and then maintain the upkeep. The Aura is a
+> powerful and expensive ability that affects all your allies that can see you.
+>
+> At the Adept level you get the ability to mark a Sanctuary for your Oath. Essentially you
+> choose a space and during a Long Rest you make it your Sanctuary, and it becomes kind of
+> like a manifestation of your Faith, like a mini chapel or consecrated ground. While you
+> are on these grounds, anything you do has advantage. So if you take a rest in the tavern
+> room and you're going to stay there for longer, you can choose to use your Long Rest
+> action to create the Sanctuary and this place becomes your Sanctuary, and you get
+> advantage for anything you do inside of the Sanctuary. The limit of the Sanctuary is that
+> it cannot affect anything bigger than a living room.
+>
+> When you reach Master, the Sanctuary becomes more powerful. It also becomes not just the
+> space, but when you create it, it becomes a distorted space so it becomes bigger, and
+> instead of just a consecrated place it becomes something that matches your Oath. So if
+> you have an angelic Oath of Vindication then it becomes a large place that looks like
+> something an angelic temple would look like. The advantage is that whenever you or your
+> group takes a Long Rest in the Sanctuary, everybody has the Bolster effect on the next
+> day, but maintaining the Sanctuary will take away like eight Willpower points on the next
+> day from the Oathbound. Also another ability, which allows him to teleport himself and up
+> to twenty entities back to his Sanctuary. If it's an ally they can choose to just be
+> taken, but enemies can make a contested roll, you roll against the enemy roll to see if
+> you succeed into grabbing them to your Sanctuary. The enemy can choose to fail as well.
+> And in the Sanctuary, the enemies have disadvantage on everything.
+>
+> For the different Oaths, I'd like you to make at least ten different ones. An Oath is
+> always comprised of a core principle, three tenets which are the things you need to abide
+> by, and in your character sheet a new block appears that tracks your Faith meter and
+> tracks the tenets, and where you can interact with adding and removing from your Faith
+> meter, like any other resource you would manage. An example of a tenet should be, if
+> you're in a life-oriented one where maybe you have Life and Light magic, your tenet would
+> be to heal the people you pass across injured. And an example of a breach of that would
+> be if you pass someone that's clearly hurt and you could help them and you decide not to,
+> then there will be a negative thing against your own tenets."
+
+### The word
+
+**"Faith" is a reading of a speech-to-text transcript that consistently said "face".**
+The transcript renders "Oath" as "os", "Vindication" as "vindict" and "Oathbound" as "phase
+bound", so a dropped "th" is the commonest thing it does, and "Faith meter" is what the
+surrounding words are about: tenets, sinning, good deeds, a consecrated ground, a Smite. The
+idiom "gain face / lose face" is the other reading and it is not impossible. **It is one
+word in one constant** (`oath.label` in talents.js) and renaming it changes nothing else.
+**Jules's to settle.**
+
+### What is built
+
+- `src/lib/oaths.js`, a leaf codex: the ten Oaths, each a principle, three tenets, two
+  families, a damage type, a Master sanctum and its Aura. Plus `OATH_AURAS`, which builds
+  the ten Aura cards out of the ten rows so the parts ten cards share are written once.
+- `src/lib/oathbound.js`, **the twelfth shape of what a set can hand over**, after the fixed
+  hand, the loadout, brewing, enchanting, the minion, tricks, martial, feral, the pact,
+  runes, the blade and the weaving. It hands over a **vow**: the Faith ledger, the bend it
+  puts on an Attribute, the riders on the set's cards, the Sanctuary and what a night costs.
+- One `oath` jsonb column, keyed by the granting set:
+  `{ "oathbound": { oath, faith, log, sanctuary } }`. In `BLANK_CHARACTER`, in
+  `supabase/schema.sql` twice (the create and the alter).
+- `OathBlock.jsx` and `OathPick.jsx`, and `cell-oath` on the Character tab.
+- **`families: 'oath'` on a loadout**, which is new: every other pool in the codex names its
+  school and its family outright, and this one names *where to ask*. `familyGate` in
+  loadouts.js reads an array from the spec, an array from the caller, or refuses everything
+  when the spec defers and nobody answered. One spec, ten pools.
+- The ninth Long Rest action, `sanctuary`, in `restActions`, `restPlan` and `RestPrompt`.
+- `faithRest` in `restPlan`: every Long Rest logs its own -5 as a ledger row rather than
+  moving the bar quietly.
+- `sanctuaryBurden` in `deriveStats` and `statMath`: **the third thing in the codex that
+  subtracts from a derived maximum**, after a Runebearer's slate and a Necromancer's bodies.
+- A riders.js entry on CONSECRATION, so tracking the card while you stand on the ground puts
+  the advantage on the swing.
+- `TALENT_CLOSES.oathbound` and `TALENT_PHRASES.oathbound` in the Crossroads, and rulebook
+  4.5, 8.1 and the unwritten list.
+
+### The set
+
+Eight cards of its own plus the ten Auras, eighteen in all.
+
+| Rank | Card | Cost | What it does |
+| --- | --- | --- | --- |
+| 1 | The Oath | passive | Swear one, take its three tenets, and the bar bends your best Attribute |
+| 1 | Doctrine | passive | Both of your Oath's sub-schools, known in full, a rung a rank |
+| 1 | Aura of *x* | 3 AP, 4 WP, Upkeep 2 | Ten cards, one per vow, reaching every ally who can see you |
+| 1 | Smite | 4 AP, 6 WP | `4d6 + 4*stat` with advantage at anything that has broken a tenet |
+| 2 | Consecration | Long Rest | One room becomes your Sanctuary. Advantage on everything inside it |
+| 2 | Unwavering | passive | The Aura is Empowered, and costs 1 less Action Point to raise |
+| 3 | Hallowed Ground | Long Rest | The Sanctuary becomes a space of its own. A night in it is {{Bolster}} for a day, and holding it costs 8 maximum Willpower |
+| 3 | Call to Sanctuary | 5 AP, 10 WP | Open the way for you and 20 more. Enemies contest it and fight you on your ground with disadvantage |
+| 3 | Absolute Conviction | passive | The Aura is Empowered again, and a night costs 2 Faith instead of 5 |
+
+### The ten Oaths, and what they open
+
+**Superseded the same day.** Six of these ten were renamed and all thirty tenets rewritten
+a few hours later. See "The Oaths are creeds" below for the list as it stands; the table here
+is the first draft and is kept for the record.
+
+| Oath | Families | Aura | Smite |
+| --- | --- | --- | --- |
+| Vindication | Light, Fire | an ally is hit, the attacker takes it back | Sacred |
+| Succor | Life, Light | every ally mends at your Turn Start | Sacred |
+| the Bulwark | Earth, Flora | every ally gains Shield at your Turn Start | Blunt |
+| the Untamed | Wild, Flora | anything that moves in or ends its turn in it is torn | Sharp |
+| the Tempest | Storm, Lightning | an ally is hit, the attacker is shocked and slowed | Lightning |
+| the Last Rite | Death, Shadow | every enemy in it withers and cannot heal | Necrotic |
+| the Ferry | Water, Time | you take an ally's damage onto yourself | Frost |
+| the Anvil | Magma, Earth | your allies' Weapon Attacks come out of the fire hot | Fire |
+| the Threshold | Spacial, Shadow | an enemy entering it is hurt and slowed | Force |
+| the Fallow | Mud, Life | an enemy loses what an ally gains | Decay |
+
+All fifteen complete families are used, none more than twice.
+
+### The readings
+
+Eleven places the spec had two readings and this pass had to pick one.
+
+1. **The ten Oaths are mine.** "I'd like you to make at least ten different ones", and two
+   were sketched: an Oath of Protection ("protect people, make sure they get to safety, and
+   not be the one to initiate violence") and a Life-and-Light one whose tenet is "to heal
+   the people you pass across injured". Those two are the **Oath of the Bulwark** and the
+   **Oath of Succor**, written as closely to his sentences as the shape allows. The other
+   eight, all thirty tenets and all thirty breaches are written here.
+2. **Two families, not two schools.** "Two schools to sub schools" corrects itself
+   mid-sentence, and the worked example is "Light and Fire", which are two families in two
+   different schools. Every vow opens two families; the Untamed opens two out of the same
+   school, which nothing forbids.
+3. **The rungs open on the rank ladder**, which is said outright and is worth recording
+   because the Necromancer's identical clause was *not* said and had to be inferred.
+4. **The bend is on the card, never on the sheet.** "The stat for your spell will be your
+   Mind plus one" is a fact about a roll, so it is a rider carrying a bent `actor`, which is
+   `foeModifiers`'s exact shape. Nothing on the Character tab moves: no Health arrives with
+   a Physique and no Willpower with a Mind. The rider names the Attribute **as a key** and
+   not as the HIGHEST rule, because a -1 on a 6 / 6 / 4 spread would leave the bent sheet at
+   5 / 6 / 4 and HIGHEST read against that would name the Attribute the penalty missed.
+5. **Zero is neither.** "You start at neutral zero" and "in the positive" make 0 the middle
+   rather than the bottom of the positive half.
+6. **Every Aura's number is a live value with dice in it.** His worked example is a bare
+   Attribute (`[[stat]]`), and a bare stat has nothing for a rank to grow: "when you level
+   up, the strength of your Aura is also increased" needs a die to Empower. So the base is
+   `[[1d6 + stat]]` and two cards Empower it. **The Faith bonus is inside the `stat`**, which
+   is his "plus your Faith bonus", because the Attribute the card resolves against is bent.
+7. **Smite is flat across the ranks.** Its growth was never mentioned and the Aura's was,
+   twice. So the rank money goes on the Aura. Smite is priced once, at the Adept spell rate
+   the codex already uses for `4d6 + 4*stat` (Savage Slam, 4 AP and 5 WP), with a Willpower
+   on top for the printed advantage.
+8. **A deed is worth 5 Faith and the player names it.** Never said. Five is the one number
+   the spec does give, so one act in line with a tenet undoes one night off the road, the
+   50 a new Oathbound starts with is ten nights of grace, and a vow kept keeps pace with
+   the clock. The block offers +5 and -5 on each tenet and writes the tenet into the ledger.
+9. **The Sanctuary's 8 Willpower is a standing cost, not a morning charge.** "Maintaining
+   the sanctuary will take away like eight Willpower points on the next day" reads two ways
+   and only one of them is a thing a sheet can keep: it comes off the maximum for as long as
+   the ground is held, which is the Necromancer's reading of the same shape.
+10. **Call to Sanctuary reaches 18 meters.** No range was named, and a teleport with no
+    range at all is a card that can empty a city. It is the same reach Smite has.
+11. **Swearing a second vow throws the bar and the ledger away.** Never said. A Faith that
+    has changed its mind about what it believes is not the same Faith, so it goes back to
+    the 50 a new Oathbound starts at, the ledger empties and the consecrated ground goes.
+    The chooser asks before it does any of that.
+
+### Proved
+
+- Every linter clean: `lint`, `lint:text` (271 files), `lint:cards`, `lint:halves`,
+  `lint:riders`, `lint:order`, `lint:moves`, `lint:math`, `lint:weapons`, `lint:dice`,
+  `lint:log`, `lint:layout`, `lint:creatures`, `lint:combat`, `lint:plan`, `lint:help`,
+  `lint:potions`, `lint:images` and `lint:crossroads`.
+- `lint:cards`: **all 18 new cards are inside the 480 target**, the widest at 470 (Aura of
+  the Tempest), so every one prints at full size. The registry is 626 cards.
+- `lint:math`: the Sanctuary's 8 Willpower lands in `deriveStats` and in `statMath`
+  identically across 24 sheets.
+- Through the model, on a real character: an unsworn Oathbound knows 0 spells; a Rank 1
+  Oathbound of Vindication knows 7 and a Rank 3 of the Last Rite knows 24; the Abilities tab
+  draws `talent:oathbound` with one Aura out of ten and `loadout:oathbound` with the whole
+  Doctrine; a Mind of 8 at +50 Faith reads the Aura as `1d6 + 9` and at -20 as `1d6 + 7`; a
+  Physique 8 / Instinct 8 / Mind 4 spread at -20 correctly names Physique and prints 7; a
+  Rank 3 Aura reads `3d6 + 9` for 2 Action Points with the printed 3 struck through and
+  Unwavering named; the Long Rest offers `Consecrate your Sanctuary`, and taking it writes
+  "Faith 40 to 35" and "Sanctuary consecrated" in one patch.
+- In the browser, through a throwaway harness (see the Weaver's note on how): the block
+  renders at exactly 636 of a 640 cell with the tenets, the ground, the Aura and the ledger
+  scrolling under a fixed bar; the chooser walls all ten with their family colours; swearing
+  writes the vow and sets the bar to 50; pressing a tenet writes the tenet's own sentence
+  into the ledger; eleven presses of a breach drive the bar to -5 and the fill goes rose on
+  the left of the zero tick; consecrating drops maximum Willpower from 28 to 20.
+
+### Still open
+
+- **The word "Faith"**, above. One constant.
+- **Two families are one spell a rung.** An Oath of the Tempest knows 2 spells at Rank 1
+  where an Oath of the Last Rite knows 8, because Storm, Lightning, Magma and Mud each hold
+  one spell a rung and the older families hold three or four. The pool is `all: true`, so
+  every spell added to one of those families tomorrow is a spell every Oathbound of that vow
+  already knows and this corrects itself as the Elemental school fills out. **Until it does,
+  four of the ten vows are markedly thinner than the other six.**
+- **Smite may be hot.** `4d6 + 4*stat` with advantage, unlimited, at Rank 1, is an Adept
+  spell's damage on a Novice card. What holds it back is fiction rather than arithmetic: the
+  target has to have broken one of your tenets, and the spec says that is argued with the
+  Game Master. If it wants a leash, a `uses` and a `recharge` is the shape.
+- **Four Auras name a trigger the sheet cannot see.** Vindication and the Tempest fire when
+  an ally is hit, the Untamed and the Threshold when an enemy enters. None of those is an
+  event on this sheet, so all four are sentences the table plays, the same wall six of the
+  eighteen weaves hit.
+- **"Everything you do inside your Sanctuary is rolled with advantage" is narrower than it
+  reads.** The riders.js entry puts the advantage on the Attack Roll, which is the half the
+  sheet holds. A skill check is still the table's, exactly as the two clovers are.
+- **The Sanctuary is a name and a note, and the sheet does not know where you are.** It
+  cannot: the ground is a real place at a real table. The block holds what it is called so
+  the table can point at it.
+- **The Aura, Smite and Call to Sanctuary have no art**, and neither has the set. Drop
+  pictures into `data/Oathbound/` and run `npm run art:cards`.
+- **No Crossroads scenes.** The set has a closing line and a phrase, so it can be reached
+  and named, but nothing in the 113 questions scores toward it yet. The Weaver is on the
+  record with the same thinness at two scenes; this is at zero.
+- **An unsworn Oathbound still draws an empty Doctrine block** on the Abilities tab, reading
+  "0 of 0 chosen". Honest and useless. It wants a line saying why.
+## The Oaths are creeds, and they are sworn once, 2026-09-11
+
+Six asks, the same evening the set landed, and between them they change what an Oath **is**.
+The first pass wrote ten jobs with procedures attached. This one writes ten beliefs.
+
+> "When you select the Oathbound, you need to select the Oath before you finish the
+> selection. It's not something you select later, it's something you select at character
+> creation, and that's permanent, so you cannot change it later. So you're making an
+> Oathbound, you choose directly the Oath.
+>
+> And in the preview, don't preview all the Smites. Just preview the ones related to the one
+> you're observing. So there should be a page where you can see the Oath, the tenets you're
+> gonna take, a little bit of lore about what that means, and then the specific, because the
+> Smite should have damage related to your Oath. If you're Oath of Vindication you should
+> probably do Fire damage.
+>
+> I want a new ability which is called Divine Fervor, which is essentially that as long as
+> you're doing an action which is in line with one of your tenets, you can spend Willpower
+> to give yourself advantage. So when I do a skill check, you can spend the Willpower to give
+> yourself advantage to a skill check that is in line with your tenets.
+>
+> The Oaths and the tenets need to be less action specific. They just need to be more of an
+> overall creed. Like, if we talk about the life one, the Oath of Succor, as you wrote it,
+> 'nobody bleeds within your reach' is more about be sure to tend to the wounded, this type
+> of thing, but not in a specific. They need to be more generic, so players have real leeway
+> to play around them. Having examples is good, but because you're gonna be making a page per
+> Oath to explain what you get and the difference of it and the spells to preview, you can
+> expand a bit more.
+>
+> Imagine that Oathbound is like multiple talents inside of a single talent set. It has sub
+> talent sets, essentially. So remake the Oaths, make them less specific about things. So if
+> you have an Oath of the Anvil, make it more like an Oath of Creation, so it's more generic.
+> If you have enough, things like Oath of Renewal, Oath of Decay, Oath of Vindication and so
+> on."
+
+### An Oath is a sub-talent set
+
+That sentence is the one everything else follows from. A vow decides the three rules you
+play under, the two sub-schools you know in full, what your Smite deals and which Aura you
+raise. It is not a chip on a set, it **is** a set, so each of the ten now carries what a set
+carries: a creed, a page of lore and three tenets a player can hold in their head.
+
+### The ten, renamed and rewritten
+
+**Superseded the next day.** Five of these ten were cut on 2026-09-12. See "Five Oaths, and a
+night spent in meditation" below for the list as it stands.
+
+| Was | Is | Families | Smite |
+| --- | --- | --- | --- |
+| Vindication | **Vindication** | Light, Fire | Fire |
+| Succor | **Mercy** | Life, Light | Sacred |
+| the Bulwark | **Protection** | Earth, Flora | Blunt |
+| the Untamed | **the Wild** | Wild, Flora | Sharp |
+| the Fallow | **Renewal** | Mud, Life | Decay |
+| the Last Rite | **Decay** | Death, Shadow | Necrotic |
+| the Tempest | **Defiance** | Storm, Lightning | Lightning |
+| the Ferry | **Constancy** | Water, Time | Frost |
+| the Anvil | **Creation** | Magma, Earth | Fire |
+| the Threshold | **Trust** | Spacial, Shadow | Force |
+
+Four of the ten keep their name; six become the belief the job was standing in for. The
+family pairs are untouched, so all fifteen complete families are still used and none more
+than twice. Vindication's Smite is **Fire** on his own instruction, which puts two Fires on
+the list beside Creation's; that is honest rather than a clash, since both vows carry a
+Fire-shaped family.
+
+### A tenet is a principle plus an instance
+
+The shape changed, and that is what made "wide" possible without making it vague:
+
+```js
+{
+  name: 'Tend what is hurt',           // two or three words, for the block's narrow column
+  keep: 'Whoever is suffering where you can reach them is your business, whatever they have
+         done and whichever side they were on an hour ago.',
+  break: 'Walking past, or deciding whose pain counts.',
+  example: 'The bandit who shot at you is bleeding out in the ditch. You leave him there.',
+}
+```
+
+The first draft had one sentence trying to be all four: *"Tend the hurt you come across,
+whoever they are"* with the breach underneath it. That is a procedure, and a table reading it
+asks "does this count" about the wording rather than about the belief. Now the belief is the
+rule, the breach is its shape and the example is one instance of it, clearly set apart on the
+page so nobody mistakes the instance for the rule.
+
+**The block prints the name and the principle. The page prints all four.** Three principles
+and three breaches and three examples is nine lines a tenet-block, and a 360x640 cell holds
+none of that, which is exactly why the page had to exist.
+
+### The page
+
+`OathPick.jsx` is no longer a wall of ten tiles. It is a **list and a page**: the pool
+chooser's two panes with the proportions turned round, because there are only ten things to
+choose between and each of them is a page.
+
+The page carries the creed, the two family chips in their own colours, the lore, all three
+tenets in full, the Aura, **Smite wearing this Oath's own damage type**, the Master sanctum
+and every spell the vow opens listed rung by rung with the rank each opens at. Every card
+name on it opens the real card on the stack, and Smite opens with `{ damage: [oath.damage] }`
+laid on by hand, exactly as `oathRiders` lays it on a sworn one. That is "don't preview all
+the Smites, just the one you're observing", answered on both surfaces:
+
+- the **page** shows one Oath's Aura and one Oath's Smite, never ten;
+- the **rank list** on the Advancement tab now runs through `heldOathCards`, so an Oathbound
+  sees the one Aura they swore and an Oathbound who has not sworn sees none of the ten rather
+  than ten cards of which nine will never be theirs.
+
+### Sworn once
+
+"That's permanent, so you cannot change it later." So:
+
+- `swearOath` refuses outright when a vow is already held. It is the rule and not a guard on
+  a button.
+- The chooser's press exists only while nothing is sworn. Afterwards the window is a reader,
+  the page is still there, and the sworn vow is marked in the list whichever page is open.
+- **`Forswear it` is gone from the sheet.** `forswearOath` survives as the function the
+  Advancement tab's undo calls, which is giving the whole rank back rather than changing your
+  mind about what you believe.
+- The question is asked **where the set is taken**. `levelAsks` gained an `oath` row at Rank
+  1, `askKinds.js` gained the kind, `AskWindow.jsx` gained the case, and `OathSection` on the
+  talent block opens the page on top of the take the way `FeralSection` and `PactSection` do.
+  So the tab badges an Oathbound who has taken the rank and chosen nothing, and the Crossroads
+  path counts it in `asksMore`.
+
+### Divine Fervor
+
+One new Rank 1 card, and it needed no new machinery at all:
+
+```
+Whenever you make a skill check or a roll toward one of your tenets, you can spend
+2 Willpower to make it with advantage.
+
+Whether what you are doing is in line with a tenet is your Game Master's call.
+```
+
+`speaksToACheck` in checks.js finds it by its prose and `grants.checkWp` / `checkAdvantage` /
+`checkWhen` price it, which is the same rider the thirteen background domain skills carry. So
+it appears in the SKILL CHECK prompt beside a Cartographer's and a Feral Cursed's without a
+line being added anywhere. **Its domain is the widest in the codex**, which is the point: a
+skill says "to read a map" and this says "toward what you swore".
+
+### Proved
+
+- Every linter clean, and the build.
+- Through the model: all ten vows resolve a pool at all three ranks; swearing a second vow
+  returns null; `oathSettled` flips the `levelAsks` row; `characterCheckCards` lists Divine
+  Fervor at 2 Willpower for one die; and Smite reads `4d6 + 36 Fire` for a Vindication and
+  `4d6 + 36 Necrotic` for a Decay off the same card.
+- In the browser, through a throwaway harness: the page lists ten and reads one, with the
+  creed, three paragraphs of lore, the tenets in four parts each and 7 / 7 / 7 spells across
+  three rungs; swearing writes the vow and removes the press from **all ten** pages; the
+  block redraws with the sworn Oath's three tenets and still fits 636 of a 640 cell; pressing
+  a tenet writes that tenet's own sentence into the ledger.
+
+### Still open
+
+- **2 Willpower for Divine Fervor** is mine. A background skill charges 1 for a narrow
+  domain, and this is a whole creed, so it is double. Nothing was said either way.
+- **Divine Fervor is at Rank 1**, which makes Rank 1 the heavy rung: four of the set's own
+  cards plus the Aura. It is the most basic possible expression of a vow and an Oathbound
+  without it is missing the point, so it went at the bottom rather than balancing the ladder.
+- **"Faith" is still a reading of a transcript that said "face"**, from the first pass. One
+  constant.
+- **Two families are still one spell a rung.** Defiance knows 2 spells at Rank 1 and Creation
+  4, against Decay's 8, because Storm, Lightning, Magma and Mud each hold one spell a rung.
+  The pool is `all: true`, so it corrects itself as the Elemental school fills out.
+- **The lore is ten pages of mine.** Every word of it, and the ten creeds, and every one of
+  the thirty tenets with their thirty breaches and thirty examples.
+- **Still no art and still no Crossroads scenes** for the set.
+## Five Oaths, and a night spent in meditation, 2026-09-12
+
+Five asks, and one of them is about where the magic comes from.
+
+> "Change Aura of Decay to not have the no-healing effect.
+>
+> Some effect triggers make no sense as it would only happen next turn. Make the Aura trigger
+> either be on other entities' Turn Start or your Turn End.
+>
+> Reduce the Oaths to Vindication, Mercy, Protection, Decay and Renewal.
+>
+> Give the Oathbound a new ability which is to meditate during a Long Rest. It allows them to
+> regain 10 Faith.
+>
+> Shape the Oathbound lore-wise that they gain power from belief. This can be belief in a
+> principle or belief associated with a deity or powerful being. But by swearing on something
+> to live on, they gain, and the stronger this conviction the stronger they are."
+
+### Where the power comes from
+
+**Nothing grants an Oathbound anything.** That is the ruling the last ask settles, and it is
+what finally separates this set from the Pact of Ordenance, which is the only other set in the
+codex built on a promise: a pact is a debt owed to somebody on the other end of it, and an Oath
+is a conviction held by you with nobody on the other end at all.
+
+A god may be involved and often is. Swearing Mercy to a healing deity and swearing it to
+nothing whatsoever are the same Oath at the same strength, and the difference is what the
+character says out loud when somebody asks. So each Oath gained a **`swornTo`** line that
+deliberately mixes deities, institutions, people and the bare principle:
+
+> **Sworn on** a god of scales, a court that stopped sitting, a murdered name, or nothing at
+> all but the certainty that somebody has to.
+
+It prints between the creed and the lore on the Oath's page, because it answers the question
+the creed raises, which is who on earth you said it to. The set's blurb was rewritten to open
+on it, and the chooser's own line now reads "An Oathbound draws power out of believing
+something, so a vow decides three things at once".
+
+### Ten came down to five
+
+Vindication, Mercy, Protection, Decay and Renewal. **The Wild, Defiance, Constancy, Creation
+and Trust are gone**, and with them the Wild, Storm, Lightning, Water, Time, Magma and Spacial
+families, and one slot each of Earth and Shadow. What is left:
+
+| Oath | Families | Smite | Spells at 1 / 2 / 3 |
+| --- | --- | --- | --- |
+| Vindication | Light, Fire | Fire | 7 / 14 / 21 |
+| Mercy | Life, Light | Sacred | 8 / 16 / 24 |
+| Protection | Earth, Flora | Blunt | 7 / 14 / 21 |
+| Decay | Death, Shadow | Necrotic | 8 / 16 / 24 |
+| Renewal | Mud, Life | Decay | 5 / 10 / 15 |
+
+**The spread got much better by accident.** Ten vows ran from 2 spells at Rank 1 (Defiance,
+on Storm and Lightning) to 8; the five that survived run 5 to 8, because the four thinnest
+compound Elemental families were all on vows that were cut. The open ruling about thin vows is
+down to one row: Renewal, whose Mud half holds one spell a rung.
+
+**Nothing in the code cared.** `families: 'oath'` means a pool is whatever the vow names, so
+removing a vow removes a pool; `heldOathCards` drops every Aura but the one sworn, so removing
+four Auras removed four cards from the registry and touched nothing else. A saved sheet holding
+a dropped vow reads as unsworn, which `getOath` already answered for.
+
+### No Aura fires at your own Turn Start
+
+The timing complaint is a real bug and it was in three of the five. An Aura is **raised on your
+turn**, for 3 Action Points, so a clause that waits for your *next* Turn Start does nothing at
+all for a full round: you pay, and then everybody waits.
+
+So the law is now written at the top of oaths.js: a timed Aura fires either at **the Turn Start
+of whoever it is about**, which is inside the same round, or at **your Turn End**, which is the
+same turn you paid for it. A reactive Aura has no timing to get wrong.
+
+| | Was | Is |
+| --- | --- | --- |
+| Vindication | when an ally is hit | unchanged, reactive |
+| Mercy | at your Turn Start | at the Turn Start of each ally in the Aura |
+| Protection | at your Turn Start | at the Turn Start of each ally in the Aura |
+| Decay | at your Turn End | at the Turn Start of each enemy in the Aura |
+| Renewal | at your Turn End | unchanged, already legal |
+
+"At the Turn Start of **each ally in the Aura**" is the codex's own shape, off EARTHQUAKE's
+"At the Turn Start of **any entity** in the area".
+
+And **Decay lost its no-healing clause**, which was the one rider on any Aura that inflicted a
+state rather than dealing a number. It now reads as the plainest of the five: everything
+hostile standing in it is quietly being finished, a turn at a time.
+
+### Meditation
+
+One new Rank 1 card and **the tenth kind of Long Rest action**:
+
+```
+Whenever you take a Long Rest, you can use your Long Rest action to sit with your Oath and go
+back over everything you have done since the last time.
+
+You regain 10 Faith.
+```
+
+Ten against the night's own five, so **a night spent meditating is worth +5**, not +10. That is
+the number doing the design work: an Oathbound who meditates every single night climbs at half
+the rate one good deed does, so it is what you do in a week where nothing happened rather than
+a replacement for keeping the vow. It also costs the night's one action, so it competes with
+consecrating a Sanctuary, brewing, enchanting and everything else.
+
+It is the only action in the rest window with **no step**, because there is nothing to choose:
+picking the row is the whole action, the way a labour is finished once its amount is picked.
+The window prints both movements rather than the net, which is right: "Faith 50 to 45" and
+"Faith 45 to 55" are two true things that happened, and one line reading "+5" would hide the
+toll the set is built around.
+
+### Proved
+
+- Every linter clean, and the build. `lint:cards`: 623 cards, all 15 of the set's inside the
+  480 target.
+- Through the model: the five resolve pools of 7 / 8 / 7 / 8 / 5 at Rank 1; every Aura prints
+  its new trigger; a meditating night reads 40 to 35 to 45 with both ledger rows written; a
+  bar at 98 clamps to 100 rather than 103; and an unsworn Oathbound is offered neither
+  meditation nor consecration.
+- In the browser: the chooser lists five with the "Sworn on" line under each creed, the rest
+  window offers "Meditate on your Oath" with "10 Faith back, against the 5 the night costs",
+  taking it fills the slot with no step, and confirming the rest lands Faith at 55 with
+  "+10 Meditate on your Oath" and "-5 A night passed" both in the block's ledger.
+
+### Still open
+
+- **10 Faith for a night** is his. **2 Willpower for Divine Fervor** is still mine, and so is
+  Divine Fervor sitting at Rank 1.
+- **"Faith" is still a reading of a transcript that said "face."**
+- **Renewal is the thin one now**, at 5 spells where the others have 7 or 8, because Mud holds
+  one spell a rung. The pool is `all: true`, so it fixes itself when Mud fills out.
+- **The five auras' triggers are still the table's to run.** "At the Turn Start of each enemy
+  in the Aura" is not an event this sheet fires; the combat runner announces turns and does not
+  walk auras. Same wall as before, one clause narrower.
+- **Still no art and still no Crossroads scenes.**
+
+## The Walkthrough, 2026-09-12
+
+> "I want to build the guide character creation. The goal of it is to help someone create a
+> character while explaining the system. To do so it takes step by step each element of the
+> character creation. Explain the rules and explain how the block work. This process can be
+> started and if the player leave in the middle of it i save the progress so they can
+> continue later. So create it and make a special interface for it that allow all the
+> essential to be learned while making a character."
+
+The third of the four ways in, the one the chooser has called **Walkthrough** since the four
+were named, is built: `guided` is `ready: true` in creationPaths.js and the dashboard's foot
+line says three of the four are built. See `src/lib/walkthrough.js`, `paths/Walkthrough.jsx`
+and `paths/WalkthroughLessons.jsx`.
+
+### Seven steps, two columns
+
+One screen a step. The lesson stands in one column and the panel that makes the choice in the
+other; under 980px the panel follows the lesson. The steps:
+
+| | Step | Asks | Teaches |
+| --- | --- | --- | --- |
+| 1 | How it works | the name and the campaign | the roll and its three names, cards, what Action Points, Reaction Points, Willpower, Health, Shield, Supplies and coins are, and what the walk will ask |
+| 2 | Attributes | the +2 and the +1 | the three attributes, the 4 they start at and the 12 they stop at, and every number they buy with its arithmetic |
+| 3 | Talent set | a set at Rank 1 | the three ranks and the levels they open at, the shelf by attribute, and that a set can ask for more |
+| 4 | Lineage | an ancestry | blood not race, chosen once, cards and a possible attribute point, the question a card can leave |
+| 5 | Background | a trade, its skills and its kit | skills as cards that are never rolled, the Skill Check, the kit, the purse and the trade between them |
+| 6 | Their story | nothing, optional | the lore page |
+| 7 | Your sheet | nothing, the way out | the pools, the five tabs, the six blocks, the two rests, level 2, and what is still to answer |
+
+**The panels are the level-1 block's own.** AttributeSpreadPick, TalentPick, LineagePick and
+BackgroundPick are drawn with the same arguments LevelLedger hands them, so a player who has
+learned this screen has learned the Advancement tab. The four grew a `foldable` prop (default
+true) so the Walkthrough can keep a finished panel open beside the lesson that is still
+talking about it; the ledger folds as before.
+
+**No number in a lesson is typed.** The base, the ceiling, the rank titles and levels, the
+skill range, the coins per skill count, the Supplies, what a rest costs and the width of the
+critical band are read off the code that enforces them, and the character's own numbers are
+printed through `statMath`, which is the arithmetic every tile on the Character tab shows on
+hover. So the first thing a new player reads about Health is `10 your level + 60 Physique =
+70`, and it is the same line they will hover later. Step one puts a practice roll on the dice
+tray (`present`, `log: false`, against a DC of 10) and prints three basic actions as briefs
+that deal onto the card stack. Every lesson closes on the rulebook: the headings each step
+points at are in `STEPS`, and the links open the book in a new tab.
+
+**Attributes first, on purpose.** The level-1 block prints talent, lineage, background,
+attributes. The walk goes attributes, talent, lineage, background: the three attributes are
+what every other number is built from, and the talent wall is shelved by attribute, so a
+player who has placed the +2 is told which shelf to read first (the lesson reads the spread
+off the row and says "Your +2 is on Physique"). The rail goes anywhere in any order and
+nothing is locked; the one gate is the way out, which is the free hand's and the Crossroads'
+gate on `openChoices`, and the last lesson lists the steps still waiting with a button each.
+
+### The bookmark
+
+The row already saved every choice; what nobody saved was where you were. A new `creation`
+jsonb column holds `{ path: 'guided', step: 'talent', ts }`, written through `patch` whenever
+the step changes and read on mount, so a walk survives a reload, a closed tab and a change of
+device. `onDone` in CharacterSheet.jsx clears it for every path, so a character finished on
+the free hand after starting the walk is not still bookmarked. The dashboard card wears a
+`Walkthrough · 3 of 7` tag and a **Continue the Walkthrough** button that opens
+`/new?path=guided`; the screen reads the step off the row. The step is stored by key rather
+than by index so the list can grow without sending anybody back to the wrong screen.
+
+**The SQL still has to be run.** `supabase/schema.sql` carries the column and the
+`add column if not exists`; until it is run against the live database the write is dropped
+with the usual console warning and everything else still saves, so an account character can
+walk the whole thing and only loses its place on a reload. A device character keeps its place
+already, because its row is localStorage.
+
+The Crossroads still keeps its run in sessionStorage. The column is shaped so it could hold
+that too, and nothing was changed there.
+
+### Two bugs, one old and one older
+
+**Every Martial Move shelf on the Advancement tab was empty.** `familyGate` in loadouts.js
+read any array it was handed as the pool's families, and LoadoutSection and TalentBlock hand
+every set `oathFamilies(character, id)`, which for the thirty-three sets that swear nothing is
+`[]`. An empty list means "no Oath sworn, so nothing is open yet", so a Guardian's and a
+Duelist's moves were refused to the last card, the chooser printed "This build's codex holds
+no martial moves this rank can take yet", and the set owed two cards nobody could take, which
+held the free hand's, the Crossroads' and the Walkthrough's ways out shut. Since the Oathbound
+first pass (df65417). Fixed: a spec with no `families` has no family gate whatever a caller
+hands in, a spec with its own list keeps it, and only `families: 'oath'` reads the holder's.
+
+**A pool could owe what the codex cannot pay.** `owed` was the count minus the picks, so a
+pool whose shelf was truly empty would badge the tab and shut the way out for ever. It is now
+capped at the legal cards not yet held (unbounded for a pool that allows copies). This is
+mine, and it only bites when a codex shelf is empty at a rank.
+
+### Proved
+
+- `npm run lint:walkthrough`, new: every rulebook reference resolves to a heading that
+  exists, every kind level 1 asks is owned by exactly one step, the bookmark round-trips
+  (string column, unknown step, garbage, another path's record), a blank character has four
+  steps open and a character made through `setBoosts`, `chooseAt`, `setLineage`, `takeSkill`
+  and `buildKitPatch` has none, with the tab badge agreeing at both ends.
+- eslint, `lint:text`, `lint:crossroads`, `lint:cards` and the build all clean.
+- In the browser, signed out on a device character: the enlist box offered the path and
+  opened it; the numbers moved on the spread (Health 50 to 70, Reflex 8 to 10); Stalwart put
+  the row at 7 / 4 / 5 and Health at 80; the Guardian shelf showed six Novice moves after the
+  fix and took Concuss and Wound; Military taught Vigilant and Quick Draw and the kit landed
+  Magic Armor, two weapons, 4,000 coins and 70 Supplies; a reload reopened step 7; the
+  dashboard card read `Walkthrough · 7 of 7` and Continue landed on step 7; Open the sheet
+  opened the tabs with no badge, cleared the bookmark and offered to keep the character; at
+  375px the body is one column, lesson first, with no sideways scroll.
+
+### Still open
+
+- **The step order is mine.** Attributes before the set is the argument above and Jules has
+  not ruled on it.
+- **The `owed` cap is mine**, see above.
+- **The practice roll's DC of 10** and the three sample actions (Move, Skill Check,
+  Anticipate) are mine.
+- **Rulebook links open in a new tab.** Leaving mid-walk is remembered, so the same tab would
+  also do; the new tab is a call about reading habits, not rules.
+- **Only the dashboard offers the way back.** A bookmarked character opened straight on its
+  sheet says nothing about the unfinished walk; the Advancement badge is the only sign.
+- **Ready-Made is the one path left.**
+
+## The Walkthrough, second pass, 2026-09-12
+
+> "Lets try to be more to the point and more direct, less text. The first page is redundant
+> right now because we already ask about the character name. Combine it with the following
+> page. Make recommendation along the way like focus on one attribute at the start and take
+> the talent set and weapon that work with it."
+
+**Six steps, not seven.** The first page (the primer, with the name and the campaign as its
+panel) is gone. Both fields are asked in the enlist box and both sit on the Advancement tab,
+so the walk asks for neither. The primer went into the Attributes step as three lines (one
+roll, everything is a card, everything has a price) with the practice roll under them, and
+the three sample basic actions went with the page. A bookmark left on `begin` reads as the
+first step, which is where its lesson now is.
+
+**Every lesson was cut to a few lines**: the rule, one recommendation, the panel in a
+sentence or two, the rulebook links. The ranks table became one sentence off `TALENT_RANKS`.
+The story step lost its "how" section; text boxes need none.
+
+**One recommendation a choosing step, all of them the same advice.** Build around the +2:
+
+| Step | Recommends | Read off |
+| --- | --- | --- |
+| Attributes | put the +2 on the attribute you want to build around | nothing, it is the advice itself |
+| Talent set | the shelf built on the +2, naming the written sets on it | `talentCategory` over `TALENTS` |
+| Lineage | the lineages that add a point to the +2 attribute | `lineageBonuses` over `LINEAGES` |
+| Background | the weapon shelf that rolls the +2, with how many weapons stand on it, and the armor set with the most Defense right now | `weaponShelves(startingWeapons())`, and `deriveStats` with each set worn |
+
+The armor line is the one that computes rather than looks up: each Common set is put on the
+character in turn and the Defense read back through the sheet's own arithmetic, so a Mind
+build is told Magic Armor and a Physique build is told Light or Heavy, with the numbers.
+Before the spread is placed the talent and lineage tips say to place it first, and the talent
+step keeps its button back to Attributes.
+
+### Proved
+
+- `lint:walkthrough`, eslint, `lint:text` and the build clean; the checker now holds the
+  walk to opening on Attributes and to reading an old `begin` bookmark as the first step.
+- In the browser, signed out on a device character: six pills; the first step shows the
+  primer, the three attributes, the numbers and the recommendation with no name field; after
+  a +2 on Physique the talent tip names the Physique shelf's four written sets, the lineage
+  tip names Stalwart, and the background tip names the Physique shelf and Light Armor at 13
+  Defense against 9 for Magic and 8 for Heavy. The first draft of that tip listed all twelve
+  Physique weapons by name and was cut to the count.
+
+### Still open
+
+- The recommendation wording is mine. Recommending armor by Defense alone was answered the
+  same day; see below.
+
+## The armor table, 2026-09-12
+
+> "The armor recommendation does not take into account all the details of armor, the damage
+> reduction and Defense and the Shield."
+
+The armor line named the set with the most Defense and nothing else. It is a table now: the
+three Common sets, each worn on the character in turn and read back through the sheet's own
+arithmetic, with four columns and a steer.
+
+| Column | Read off |
+| --- | --- |
+| Defense | `deriveStats` with the set worn: Reflex for Light, Grit for Magic, Instinct plus half the Armor for Heavy, and the flat points the pieces add |
+| Armor | the same, which at Common is 9 for Chainmail and 0 for the other two |
+| Shield | `combatStartEffects` with the set worn, held to the Shield cap: three Runed pieces put 3 x Mind in front of Health when a fight starts, the other sets nothing |
+| Weight | the three pieces' own weight, with "over" beside it when `carryState` says the character cannot carry it |
+
+The steer is computed too. The +2 attribute is raised by one and a set is marked as building
+on it if its Defense or its Shield moves: Light moves with Physique (Reflex), Magic with Mind
+(Grit and the Shield), and every set with Instinct, so an Instinct spread marks all three and
+the line says so. Under the table one sentence says what the three numbers are, in the
+rulebook's own words: Defense is what an attack has to roll against, Armor comes off every hit
+that lands, Shield stands in front of Health when a fight starts.
+
+On a Physique 6, Instinct 4, Mind 5 spread at level 1 the table reads Light 13 / 0 / 0 /
+7.5 kg, Heavy 8 / 9 / 0 / 19.5 kg, Magic 9 / 0 / 15 / 3.5 kg, with Light marked. Willpower is
+not a column, because no Common set moves it.
+
+## The Beastbond, 2026-09-12
+
+The twentieth written set, the seventh slot filled on the Other shelf, and **the fourth in
+the codex built off a spoken description with no sheet behind it**, after the Spellblade, the
+Weaver and the Oathbound. What arrived was four sentences and a comparison, and it is
+transcribed here because it is the only source of record there is.
+
+### What was said
+
+> "Make the Beastbond now. It works very similarly to the Draconic Ally, with the exception
+> that instead of choosing a dragon the player chooses a mammal predator, a reptile predator
+> or an avian predator. Each of the three types has a different bonus, but is a controlled
+> melee attack during combat. Sturdier than the dragon counterpart. Instead of Dragon's
+> Favor, any time you can justify your companion helping you in a task they give you
+> advantage (to skill checks)."
+
+Cleaned of the transcription's slips and nothing else. The same words are in the comment
+above the `beastbond` entry in `src/lib/talents.js`.
+
+### The skeleton is the dragon's
+
+"Works very similarly" was read as an instruction, so the set is the Draconic Bond card for
+card, and what changed is exactly what the four sentences name.
+
+| Rank | Draconic Bond | Beastbond | What changed |
+| --- | --- | --- | --- |
+| 1 | One and the Same | Hunting Pair | the shadow becomes dragging itself clear, and "if you die, it dies" becomes the bond breaking |
+| 1 | Wyrm Bolt | Pack Bite, Crushing Jaws or Swooping Talons | one ranged bolt becomes three melee strikes, and a companion holds one |
+| 1 | Dragon's Favor | At Your Side | 1 Willpower to turn a near miss becomes free advantage on any check you can justify the companion helping with |
+| 1 | Draconic Recall | Call to Heel | the same 3 Action Points, no shadow |
+| 2 | Draconic Mark | Marked Prey | the same mechanic, on the codex's own `marked` |
+| 2 | Dragon Breath | Go for the Throat | a cone against Reflex becomes one throat: `2d6 + 2 x Physique` and a stack of Bleed |
+| 3 | Empowered Bond | Apex Predator | the same mount and the same Elevate, and an avian carries you through the air |
+| 3 | Frightful Roar | Hunting Cry | the same Roll against Grit, on Physique, and without "While Empowered" |
+| 3 | Draconic Link | Shared Senses | the trance stays, the spell origin goes |
+
+The Tags column split is the dragon's too: `Beastbond` on the six cards the bonded plays and
+`Beast Companion` on the five the companion does, so the two quick bars are cut the same way
+and nothing is paid out of the wrong pool.
+
+### The body
+
+| | The draconic ally | The beast companion |
+| --- | --- | --- |
+| base | 5 / 4 / 7 | 6 / 5 / 4 |
+| growth | Mind every odd level, Physique and Instinct alternating on the even ones | Physique every odd level, Instinct and Mind alternating on the even ones |
+| Health | 5 a level and 5 a Physique | **10 a level and 5 a Physique** |
+| Defense | its Grit | **its Reflex** |
+| at nothing | retreats into your shadow until a Long Rest | drags itself clear until a Long Rest |
+| Rank 3 | damage Elevated by 1 | damage Elevated by 1 |
+
+"Sturdier than the dragon counterpart" is the Health line: a character's own level share and
+the dragon's Physique share. Its Defense is its Reflex rather than its Grit, and because the
+two bodies grow their two Defense attributes on the same schedule the number comes out the
+same at every level. So the pair are equally hard to hit and this one has more to lose.
+
+| Level | Companion Health | Dragon Health | Defense, both |
+| --- | --- | --- | --- |
+| 1 | 40 | 30 | 11 |
+| 4 | 75 | 50 | 13 |
+| 8 | 125 | 75 | 16 |
+| 12 | 175 | 100 | 19 |
+
+### The kind is a gate, and not a second body
+
+"Instead of choosing a dragon the player chooses a mammal predator, a reptile predator or an
+avian predator." The choice is asked in the naming window, in the slot the dragon's scale
+colour takes, and it is stored in the same field. What it decides is **which of three Rank 1
+strikes the companion holds**, and nothing about its stat block, because "sturdier" was said
+of the set and the bonus was said of the type.
+
+| Kind | Strike | The bonus |
+| --- | --- | --- |
+| Mammal predator | Pack Bite | made with advantage when you are within 1 meter of the target too |
+| Reptile predator | Crushing Jaws | on a hit the target is grappled by it |
+| Avian predator | Swooping Talons | declared at 9 meters, resolved as a Melee Attack beside the target, and the only place the codex says it flies |
+
+All three are 4 Action Points for `2d4 + Physique`, which is Wyrm Bolt's price and Wyrm
+Bolt's dice brought to a meter: the strike is the dragon's bolt without the range, and the
+bonus is what the missing range buys. Every bonus is a word the codex already defines.
+
+What the sheet grew for it, all generic:
+
+- **`scale: '<kind>'` on a card** gates it on the creature's choice, the way `oath` gates an
+  Aura on a vow. All three strikes are in the set's `cards` so the registry, the art and
+  every link resolve. `heldMinionCards` in minions.js is `heldOathCards`'s shape read against
+  a creature, and it sits beside it in the three places a rank's list is read: the Abilities
+  tab, the Advancement tab's summary and the chooser's presentation page. `minionCards` took
+  the kind as a fifth argument for the companion's own bar.
+- **While the kind is unchosen, all three show**, on the bar and on every list, so a player
+  choosing can compare them. The naming window's Done is shut until one is picked, the same
+  gate the dragon's colour already had.
+- **Three fields on `scales`**: `noun` ("kind"), which the block's chip and the section's
+  line say when the choice is still open, where the dragon's said "colour"; `note`, the
+  button's second line, where the dragon's shows its damage type; and `hint`, the window's
+  sentence about what the choice decides, where the dragon's talked about breath. The block's
+  chip stops at the label when the option has no damage type.
+- The kind-gate touched nothing in `minionState`, the pools, the rests or the blocks.
+
+### The favour became a check card
+
+"Any time you can justify your companion helping you in a task they give you advantage."
+AT YOUR SIDE is a passive on the bonded, written to the phrase checks.js reads ("you make a
+skill check") and carrying `grants.checkAdvantage: 1` with no `checkWp`, so the Skill Check
+prompt offers it beside the background skills at no cost, the way BESTIAL SENSE is offered.
+The justification is the player's answer and never the sheet's, which is the law every check
+card in the codex already keeps: no column says whether a hawk can help you read a map.
+
+### The six readings
+
+1. **One body, three strikes.** Said above. The alternative was three bodies read over the
+   spec the way a roster kind is, and it was refused because nothing in the four sentences
+   says a hawk is built differently from a bear, and a body per kind would have needed a
+   preview in the naming window that a choice between three cards does not.
+2. **The bonus is a rider on the strike.** Advantage, grappled and reach. Pack Bite's
+   condition is prose the sheet does not roll, exactly as the Fenrat's PACK TACTICS is: where
+   the bonded stands is nobody's column. Crushing Jaws lays its Grappled row through
+   statuses.js and Go for the Throat its Bleed; both are proved below.
+3. **Sturdier is 10 and 5, and Reflex.** Said above. The numbers are mine.
+4. **The favour is free.** Dragon's Favor costs 1 Willpower for a nudge after the roll. "They
+   give you advantage" names no price, and the two brought cards that cost nothing (BESTIAL
+   SENSE, SKULK) are the precedent.
+5. **The link keeps the trance and loses the spell origin.** A wolf is nobody's point of
+   origin for a Fireball, so SHARED SENSES's second half is knowing where the companion is
+   and how badly it is hurt, in or out of the trance, which is what a scout at heel is for.
+6. **Death breaks the bond.** "If you die, it dies along with you" is the dragon's knotted
+   life. A living animal is not knotted to yours, so the last line of HUNTING PAIR says the
+   bond breaks and it goes back to the wild. This is the one line on the set that is a ruling
+   rather than a transcription of the dragon's.
+
+### What is built
+
+- The `beastbond` entry in `src/lib/talents.js`, eleven cards, and the placeholder line
+  gone. Twenty written and fourteen placeholders.
+- `heldMinionCards` and `kindHolds` in `src/lib/minions.js`; `minionCards` takes the kind.
+- `abilitySources.js` and `TalentBlock.jsx` wrap `heldOathCards` in `heldMinionCards`, in
+  the three places the rank lists are cut.
+- `MinionPick.jsx`: the option button draws `note` where there is no damage type, the hint
+  is the spec's when it has one, and `choiceLine` says the kind where the dragon's line said
+  scales and a damage type.
+- `MinionBlock.jsx`: the chip stops at the label without a damage type, and the open chip
+  says "No kind chosen".
+- Two Crossroads scenes, `youth-whelp` and `road-hare`, each with one answer in which the
+  animal is the whole point and nobody's dragon is, plus `TALENT_CLOSES.beastbond` and
+  `TALENT_PHRASES.beastbond`. Four existing animal answers gained the Beastbond beside what
+  they already named: the wounded animal bound with moss, the camp edge walked in the dark,
+  the hound at your heel and the hawk that lets you walk up to it.
+- Rulebook 4.5 and Appendix B moved from nineteen written and fifteen names to twenty and
+  fourteen.
+- A fixture in `check-stat-math.mjs`: an Adept Beastbond with a mammal at heel, so the
+  Reflex Defense and the 10 a level both have a sheet that proves their hover lines add up.
+
+### Proved
+
+- Every linter clean: `lint`, `lint:text`, `lint:cards` (634 cards inside the ceiling, and
+  **all eleven new cards inside the 480 target**), `lint:halves`, `lint:math` (25 sheets),
+  `lint:riders`, `lint:order`, `lint:combat`, `lint:log`, `lint:dice`, `lint:walkthrough`,
+  `lint:layout`, `lint:moves`, `lint:creatures`, `lint:plan`, `lint:help`, `lint:legal`,
+  `lint:potions`, `lint:weapons`, `lint:images`, `lint:codex` and `lint:crossroads`.
+- `lint:crossroads`: 115 questions in 7 stages, 4,000 walks, every written set reachable.
+  The Beastbond is held in **60 runs of 4,000**, over the one-in-a-hundred floor. Before its
+  two scenes it was held in 19, and never first: every one of the nine answers that named it
+  also named the Draconic Bond, the two tied on every count and the tie went to the codex's
+  order, so it stood second nineteen times and won nothing.
+- Through the model, on a real sheet: the companion opens at 6 / 5 / 4 with 40 Health and
+  Defense 11 and stands at level 8 with 125 Health, Defense 16 and its damage Elevated; a
+  dragon on the same sheet at the same level keeps its 75 and its 16 and its four cards. A
+  mammal holds Pack Bite and nothing else of the three, a reptile Crushing Jaws, an avian
+  Swooping Talons; with no kind chosen the bar shows all three and the creature is not
+  settled, so the Advancement tab badges it. The Abilities tab lists nine of the eleven for
+  an avian at Rank 3, the companion's own bar carries its three, and the character's bar
+  carries none of them and does carry Call to Heel. Swooping Talons at level 8 prints
+  `2d6 + 9`, the companion's Physique on the Elevated die. The Skill Check prompt offers At
+  Your Side from the Beastbond at 0 Willpower and 1 advantage, and none of the companion's
+  cards. Crushing Jaws lays Grappled, Go for the Throat lays Bleed, Pack Bite lays nothing
+  and Hunting Cry counts 2 turns.
+
+### Still open
+
+- **Everything below the mechanics is mine.** The eleven card names, the three kind names and
+  their notes, the tagline, the blurb, every number in the body, the two scenes and both
+  story lines. The mechanics follow the four sentences; none of the words does.
+- **10 Health a level and 5 a Physique** is one reading of "sturdier". 175 Health at level 12
+  is three quarters of a character's, against the dragon's half.
+- **The strike is the bolt's dice.** `2d4 + Physique` for 4 Action Points, in melee, with a
+  rider. A melee body that has to stand next to what it bites may deserve `2d6`, and the
+  choice was made on the dragon's side of the line.
+- **Pack Bite's advantage is prose.** Nothing on the sheet knows where the bonded stands, so
+  the die is the table's to add, the same as the Fenrat's.
+- **An avian companion is a flying mount at Rank 3.** One clause on Apex Predator, and a big
+  one at a table.
+- **Shared Senses dropped the spell origin.** If a Beastbond should cast through its wolf the
+  way a Draconic Bond casts through its dragon, the dragon's second paragraph goes back.
+- **Death breaks the bond.** Reading 6. If the companion should die with its bonded, one
+  sentence changes.
+- **Call to Heel keeps the dragon's ambiguity**: whether keeping clear costs the 3 Action
+  Points or only the call back does. Draconic Recall reads the same way and was transcribed
+  as written.
+- **The Beastbond is untested in the browser.** The sheet is behind auth with no bypass, so
+  verification is at the model layer and through the linters. The kind buttons in the naming
+  window and the chip on the block have not been looked at.
+- **No art.** No plate and no card pictures for any of the eleven. Drop pictures into
+  `data/Beastbond/` and run `npm run art:cards`.
+
+## The Walkthrough leads, and the Free Hand starts above level 1, 2026-09-12
+
+> "Ok make the walkthrough the main first choice for character creation. Then we are going to
+> change the freehand pick to be made when you are creating character above level 1. ... instead
+> of campaign name you should have campaign code so character can be linked that way to a
+> campaign. ... for the freepick now you can also when you choose name select what you want to
+> set as starting level. you also get 1000 coins per level. Aslo at level 6 you get a full tier 2
+> armor choice instead of the basic. At level 8 you get to also choose in enchanted ring of mind,
+> physique or instinct. At level at level 10 you get hiehste quality armor. for each 2 level
+> above 1 yo uget a healing potion."
+
+### The chooser
+
+- `CREATION_PATHS` is dealt Walkthrough, Crossroads, Free Hand, Ready-Made. The Walkthrough
+  carries `recommended: true` and its card wears **Start here**; `DEFAULT_PATH` is `guided`,
+  so a `/new` URL naming no path and PathSoon's "take the way in that is" both open it. The
+  dashboard's two hint lines and rulebook 4.1 say so.
+- The Free Hand's line is "Start above level 1, with every choice at once." and it carries
+  `asksLevel: true`, the one flag the enlist box reads to ask for a level.
+
+### The campaign field is a join code
+
+- The enlist box asks for a **Campaign Code** instead of a campaign name, and only when signed
+  in: a device character sits at no table. On Create the row is inserted, then `joinCampaign` is
+  called with the code, then the campaign's name is copied into the old `campaign` text column
+  so the card's chip still says where the character plays. **A code nothing answers to takes the
+  fresh row back with it** and the box stays open with the message, so a mistyped code never
+  leaves a character at no table.
+- `CampaignJoin.jsx` (src/components/campaign) is the same field on the sheet: the tables the
+  sheet sits at, read off `campaign_members`, a code input and a Join button. It replaced the
+  free-text Campaign input on the Advancement tab's identity frame and on the Free Hand's. A
+  device character is told to save to an account first; a signed-out reader is told to sign in.
+
+### Starting above level 1
+
+`src/lib/startingLevel.js` is the rule, and `startingPatch` is applied to the blank in the
+dashboard's `handleCreate` before the row exists, so the creation page opens on a ledger that
+already stands at the level.
+
+| Level | Coins | Potions | Kit armor | Ring |
+| --- | --- | --- | --- | --- |
+| 2 | 2,000 | 0 | Common | |
+| 3 | 3,000 | 1 | Common | |
+| 5 | 5,000 | 2 | Common | |
+| 6 | 6,000 | 2 | Rare | |
+| 8 | 8,000 | 3 | Rare | one of three |
+| 10 | 10,000 | 4 | Epic | one of three |
+| 12 | 12,000 | 5 | Epic | one of three |
+
+- **Coins:** level x 1,000, into the wealth ledger. **Potions:** floor((level - 1) / 2) Healing
+  Potions, into the pack. Both logged under one note, `Made at level N`, beside the experience
+  stamp, the way the Crossroads writes "Made at the Crossroads".
+- **Armor:** the tier rides the background's kit. `buildKitPatch` takes `rarity`,
+  `armorSetOptions(rarity)` and `armorSetPieces(set, rarity)` pick the tier, the receipt records
+  it (a receipt written before tiers reads Common) and `KitOutfitter` reads
+  `startingArmorRarity(levelForXp(character.xp))`: Common below 6, Rare from 6, Epic from 10.
+  The window says "one full Rare set" and "At level 8 every set is offered at its Rare tier
+  rather than Common."
+- **Ring:** from level 8 the enlist box grows a second select, Ring of Physique, Instinct or
+  Mind, and Create refuses without an answer. The ring is a **Silver Ring** minted as a forged
+  record with Bodily Vigor, Primal Sense or Mental Focus worked in, named for its attribute and
+  put on `trinkets`, so it is a ring the forge could have made and can be taken off, renamed or
+  handed on.
+- The Free Hand screen draws `LevelLedger` at the character's own level, gates "Open the sheet"
+  on `openChoices` at that level, and prints a **Made at level N** frame off the ledger note:
+  the rows above and a line saying where each thing went.
+- Rulebook 4.1 and 4.10 rewritten, 4.11 "Starting above level 1" added; the primer's first step
+  rewritten to match.
+
+### Proved
+
+- `npm run lint:start`, new (scripts/check-start.mjs): the chooser's order and default, the
+  ladder at every level, every armor set with three pieces at Common, Rare and Epic, the kit
+  dressing and handing back at each tier, and a character made at every level 2 to 12 read
+  back: the threshold, the coins, the potions, the two ledger lines, the ring resolving through
+  `heldItem` to a worked Silver Ring with `liveCharacter` showing the point, and the count of
+  open choices (4, then 1 an even level and 2 an odd one: 15 at level 8).
+- `lint:walkthrough` gained the first card and the default; eslint, `lint:text`,
+  `lint:crossroads`, `lint:help`, `lint:plan`, `lint:math`, `lint:legal`, `lint:layout` and
+  the build all clean.
+- In the browser, signed out on a device character: the enlist box dealt Walkthrough (Start
+  here), Crossroads, Free Hand and Ready-Made (Soon); the Free Hand pane offered levels 2 to 12
+  and no code field; at level 8 the ring select appeared and the rows read 8,000 coins, 3
+  Healing Potions, Rare armor and, once chosen, "Ring of Mind · Mental Focus: 1 Mind"; Create
+  landed on `/new?path=freeform` reading "New character · Free Hand · Level 8" with eight level
+  blocks and the Made at level 8 frame; the stored row held xp 24,000, wealth 8,000, three
+  potions in the pack, the forged ring worn and two ledger lines under "Made at level 8";
+  Military's kit window read "one full Rare set" with Greater Runed, Half Plate and Studded
+  Leather pieces.
+
+### Still open
+
+- **1,000 a level is literal**, so a level 2 start holds 2,000 coins beside a background purse
+  of 2,000 to 6,000. The other reading, 1,000 a level above the first, is one line in
+  `startingCoins`.
+- **The armor tier follows the level the kit is taken at**, not the level the character was made
+  at: a level 1 character who leaves the kit untaken until level 6 is dressed Rare. Keying it on
+  `madeAtLevel` instead is one line in KitOutfitter, at the cost of a Crossroads or Walkthrough
+  character never reaching a tier.
+- **Level 1 is no longer offered on the Free Hand.** The select runs 2 to 12; `?path=freeform`
+  on a level 1 row still draws the one block it always did.
+- **The potions go to the pack, not the belt**, so the background kit's own belt items keep the
+  loops. Clipping them is one line in `startingPatch`.
+- **The ring's base is a Silver Ring**, the codex's own example of a ring worth wearing for what
+  is put in it, and the name is "Ring of <Attribute>". Both are mine.
+- **A bad code deletes the fresh row.** The alternative, keeping the character and carrying the
+  error onto the creation page, would leave a character at no table; the refusal was preferred.
+- **The joined campaign's name is copied into the `campaign` text column** for the dashboard
+  chip; two tables leave the last one joined there. The column itself is untouched and no longer
+  editable from the sheet.
+- **The join-code path is untested in the browser**: it needs a signed-in account and a live
+  campaign, and the sheet is behind auth with no bypass. Verified against the schema's
+  `join_campaign` only.
+
+## The roster goes behind the friend gate, 2026-09-12
+
+> "So that the talent set that are not finished. Only the admins can see it. So hide for all
+> non Admin and non friend unfinished talent sets."
+
+Until today every account saw the fourteen placeholders on the chooser wall, locked and
+reading "Not written yet", so a shelf read as the whole plan. That was the ruling of
+2026-08-24, and it is narrowed rather than reversed: a friend or an admin still sees the plan,
+and everybody else is shown the game as it stands.
+
+### Built
+
+- `roster` is a capability in `src/lib/tiers.js`, set at `friend`, the same rung as the art
+  and for the same kind of reason: unfinished work is for the table's own people. UI only,
+  with nothing behind it on purpose, because a placeholder holds nothing a policy could
+  protect.
+- `optionsAt` takes a `roster` flag beside `all`. Off, which is the default, it leaves every
+  `stub: true` set out before the `all` split, so the read-only wall and the chooser are
+  held to the same rule. The chooser passes `can('roster')`.
+- `chooseAt` is untouched. It refused a placeholder at every tier before and still does.
+- The Walkthrough's talent lesson says "20 of the 34 sets on the wall can be taken; the rest
+  are not written yet" only to an account that is shown the 34. Everybody else reads "20
+  sets are on the wall, and every one of them can be taken."
+- Rulebook 4.5 no longer says the rest are shown on the wall. It says they have no cards
+  yet, cannot be chosen and are named in Appendix B, which is true for every reader.
+- The roster header in `talents.js` counted sixteen placeholders and eighteen written slots.
+  It reads fourteen and nineteen now, beside the Draconic Bond.
+
+### Proved
+
+- `npm run lint:roster`, new (scripts/check-roster.mjs): the capability sits at `friend` and
+  answers false, false, true, true up the ladder; `optionsAt` hides every placeholder by
+  default and under `all`, and with `roster: true` shows every one locked with the same
+  reason; none of the fourteen can be taken while a written set can; and the two lists the
+  rulebook prints by hand, the twenty written in 4.5 and the fourteen unwritten in Appendix
+  B, match the codex count for count and name for name. The book was two sets behind twice
+  before, and this is what ends that.
+- eslint, `lint:text`, `lint:walkthrough`, `lint:crossroads` and the build clean.
+- In the browser, signed out on a device character, which reads as `free`: Wren's level 2
+  chooser drew 19 tiles under "19 sets", the written sets less the Spellquill already held,
+  shelved 4, 5, 5 and 5 with no tile reading "Not written yet"; Marra Quill's Walkthrough
+  talent step read "20 sets are on the wall, and every one of them can be taken." The friend
+  side of the gate could not be signed in to and is proved by the check alone.
+
+### Still open
+
+- **Friend was read as inside the gate.** The request said "only the admins" in one
+  sentence and "non Admin and non friend" in the next; the second was taken, and it matches
+  the art. Admin only is one word in `CAPABILITIES.roster`.
+- **Appendix B still names the fourteen for every reader**, signed out included. It is the
+  book's own list of what is not written and was left as documentation rather than treated
+  as a window onto the wall.
+- **A placeholder written into a saved sheet by hand** still prints "On the roster and not
+  written yet" on its level block at every tier. Nothing in the app can put one there.
+
+## The venom reaches the blade, 2026-09-17
+
+> "the lineage venemous should apply to all weapon held by the user, from the wildkin"
+
+VENOMOUS is a Wildkin pool card and reads "Your weapon attack deals an additional 1d4 Decay
+damage." It was the one open item left over from the drop of 2026-09-11: twelve cards that
+named a number were made to move it that day and this one was not, because there was nowhere
+on a swing to put it. Its own entry there said so and asked for a ruling, and that is the
+ruling above.
+
+### Why it had no home
+
+`attackModifiers` folds five things onto an attack and none of them is this:
+
+- `damage` is a list of **types**, and folding Decay into it would have the blade printing
+  "Sharp or Decay" as though the steel had changed.
+- `empower` adds another die **of the kind already rolling**, which is a d6 on a Melee Light
+  and never a d4 of anything else.
+- `elevate` grows that die a size.
+- `bonus` is a **flat** number, which 1d4 is not.
+- `stat` is what the swing is rolled off.
+
+So the venom is none of them. It is a second handful of dice, of a type the weapon does not
+deal, hanging on a card that will never have the sentence printed on it.
+
+### The sixth field
+
+**`added` on the modifiers object**, a list of `{ dice, damage, from }`, one entry a source.
+There is one source in the codex and the list is a list because the stacking law makes two
+different cards two sources, and because a rider that could only ever be one would have to be
+rewritten for the second.
+
+- **`swing` on a lineage card** is where it is declared, beside `grants` and deliberately not
+  inside it. riders.js has always split the riders by where the number they name lives — the
+  sheet's own columns, or the swing — and `grants` is the sheet's half. `lineageSwing` in
+  lineages.js reads the cards actually kept, so a pool card is worth its rider the moment it
+  is taken and nothing at all before.
+- **`bloodRiders` in moves.js** folds it, and `attackModifiers` hangs it on the attack.
+- **`rollPlan` appends it**, which makes it the only link in a plan that is not read out of a
+  card's own text. Last in the chain on purpose: a chain gates everything after its `{roll}`
+  on the hit, and venom on a miss is venom on nothing.
+- **`sourceRow` learned the word**, so the list under the pay button reads
+  `Venomous · adds 1d4 Decay damage` and the name opens the card.
+
+### The five readings, each of them a choice
+
+- **Every weapon, with no tag on it.** "all weapon held by the user", so `bloodRiders` is
+  narrowed to neither a card nor a hand, the way a Weaver's TAUT WEAVE is and unlike the pact,
+  the binding and the set grants. A stowed axe opened from the Inventory tab is venomous too,
+  because picking it up is the whole of what it would take.
+- **Both weapon attacks, plain and special.** The card narrows neither. That is deliberately
+  not the Martial Moves' reading: a move is bought for a swing and would be worth double on a
+  Cleave, and this was never paid for.
+- **Once an attack, not once a landing.** "your weapon attack" and not "each landing", so a
+  Flurry of three is one dose. The Bleed that counts Damage Dice still counts the blade's,
+  because `statusRows` reads the plan's *first* damage link and the venom is appended after.
+- **Empower and Elevate leave it alone.** Both are written against the dice the card rolls,
+  and a Fire Infusion on a blade has nothing to say about the venom in the hand holding it.
+- **Its own throw on the surface.** The tray heads a roll with the action's name; a link that
+  came from somewhere else heads with the card that put it there, so the player is not shown
+  the same swing asking for dice twice with no explanation.
+
+### Proved
+
+- `npm run lint:plan`, with a new section walking the whole line: the pool pick, through
+  `lineageSwing` and `attackModifiers`, to the dice. Sixteen cases. It comes on with the pick
+  and off with it, it is on both weapon attacks and on no spell, it is credited in the card's
+  own words, it is thrown last and it is Decay whatever the blade deals, Empower and Elevate
+  grow the blade and not the venom, and a Flurry is one dose.
+- Every other linter, eslint and the build, clean. No import cycles in `src/lib`, checked
+  before and after: moves.js imports lineages.js now, and lineages.js is a leaf.
+- In the browser, through a throwaway harness at the project root (deleted, `git status`
+  checked): a Wildkin's use prompt drew `Changing this · 1` under the two ways with
+  `Venomous — adds 1d4 Decay damage` on it and the card's own text unchanged beside it, the
+  plan read `weapon | 2d6+6 Sharp | 1d4 Decay`, and toggling the pool pick took the row and
+  the throw away and put them back.
+
+### Still open
+
+- **Armor comes off the venom separately.** Two damage throws are two landings and Armor is
+  per landing, so a target with Armor 2 takes it off the swing and again off the 1d4. That is
+  what `applyPlan` and `struck` already do with every multi-throw card and it is not a new
+  rule, but it is the first time one handful is a *rider* on another rather than a second
+  clause of the same card, and a 1d4 against Armor 3 is worth nothing at all. Worth a word.
+- **The card face does not print it.** The codex card is the codex's, and a rider that cannot
+  be folded into a printed number is shown in the list under the pay button, which is where
+  "everything that is modified need to be seen" put every other one. The player sees the venom
+  on their own VENOMOUS card in the lineage block and on every swing they take.
+- **The log titles both damage rows "Damage".** A roll raised by a card is logged by the kind
+  of roll it is, on the rule of 2026-08-31, so the venom's row is named like the blade's. The
+  chain summary names the types — "for 17 Sharp or Decay damage" — and that is what a reader
+  actually reads. Left alone rather than made an exception.
+- **What is still nobody's number**: FEY BLOOD's flight, AMPHIBIAN's and DRACONIC SCALES'
+  resistances, and STICKY's walls and ceilings. VENOMOUS was the last sentence on a lineage
+  card that named a number the sheet could carry. *(The two resistances landed on 2026-09-19
+  with the damage channel. See "Every effect reaches the roll" below.)*
+
+## Every effect reaches the roll, 2026-09-19
+
+> "1 - whenever an effect is conditional or not on ability, such as pack bond, the player
+> should have an option that allow them to check a box to allow the character to decide if it
+> applies or not. 2 - all card effect need to be reflected when using stuff, so if a character
+> is bolstered he should have advantage to all roll. 3 - the system need to take account
+> things like wound and resistance or weakness when attacking."
+
+Three asks, and a pass over the codex behind each one. What they had in common is that the
+sheet already knew the rule and did not apply it: BOLSTER had no rider, an Aimed Shot rolled
+without the disadvantage printed on its own face, a Wound sat on an enemy's block changing
+nothing, and half damage was a ruling the table landed by hand.
+
+### What was actually broken, proved before it was fixed
+
+A probe through `rollPlan` and `attackModifiers` on a blank sheet, which is where the work
+started:
+
+| Card | Its own text | What the dice got |
+| --- | --- | --- |
+| Bow - Aimed Shot | "with disadvantage" | nothing |
+| Smite | "with advantage" | nothing |
+| a Bolstered Strike | "advantage to all actions" | nothing, there was no rider |
+| a Poisoned Skill Check | "Disadvantage on all actions" | nothing |
+| a Poisoned Strike | the same | disadvantage 1 |
+
+The last two are the shape of the whole bug. A running effect reached a weapon attack and a
+card that rolled damage, and stopped there: `bendable` in `attackModifiers` dropped the whole
+rider for anything else, so a Bolstered Skill Check, a Poisoned cast and every potion on the
+belt rolled flat. Four of the six groups on the quick bar never called the fold at all.
+
+### One: a conditional clause is a box
+
+**`claims` on a rider**, in riders.js. A clause whose condition is a fact about the table
+carries its own `when` in the card's own words, and it is offered in the use prompt rather
+than applied. Ten cards left the "considered and left out" list at the foot of that table by
+it, and none of them was solved by arithmetic:
+
+| Card | The box |
+| --- | --- |
+| PACK BOND | two of them: where the *target* is standing, and where *you* are |
+| QUARRY | whether this swing is aimed at the quarry |
+| VERDANT FIELD | standing in the field, on a Flora spell |
+| SHARPEN SENSES, BEND LIGHT, SKILLSEED NUT, LOVE POTION | what the check is *about* |
+| DOWNPOUR, EYE OF THE STORM, SMOKE VIAL | whether the shot crosses the weather |
+| CONSECRATION, CALL TO SANCTUARY | standing on the ground, either side of it |
+| Frightened | whether this action is against whatever frightened you |
+| EXECUTE | whether the target is under half its Health |
+| ASHMAW REND, PACK BITE | their own printed "if it is prone" |
+
+CONSECRATION is the one that *changed*: it was applied outright on the reading that you track
+the card while you are standing on the ground and drop it when you leave, which asked a player
+to keep a tracker row in step with their own feet. EXECUTE is the one that was deliberately
+left unwired in the Martial Move drop for exactly the reason this mechanism now answers.
+
+Everything about the boxes follows the Martial Moves' shape, which is the other thing decided
+inside that prompt: off by default, folded on top of what the caller handed in, credited by
+name in the list under the pay button, and **forgotten the moment the prompt closes**. Where
+you are standing is not a setting.
+
+### Two: an effect reaches every roll
+
+- **`bendable` no longer drops the arrow.** Empowered and Elevate still need damage dice to
+  grow, which is what that guard was written for, but an advantage rides any roll a card asks
+  for. A Bolstered Skill Check, a Bolstered Barrier and a Bolstered swing all get the die.
+- **Four more groups fold.** The belt, the bound-in castings, the basic actions and a
+  creature's own bar all call `attackModifiers` now. A flask was the whole of the potion shelf
+  rolling flat, and SKILL CHECK is a basic action.
+- **`only` narrows a rider to a kind of roll**, read off the card's own sentence by the same
+  function that names the throw in the log. LUCK POTION is advantage on skill checks and has
+  nothing to say about a sword; POWER DRAUGHT is its twin on the Attack Roll.
+- **A card's own printed advantage is read**, by `printedSwing` in rollPlan.js, off the
+  sentence its `{roll}` is in and no other. Seventeen cards say something about their own roll
+  and every one of them was ignored: the seven Aimed Shots, both Swift Strikes, the eight
+  Paired attacks and SMITE. A hedged one ("with advantage if it is prone") becomes a box
+  instead.
+- **A taken half's own clause lands**, for the two cards in the codex that have one. BLOOD
+  SPEAR and VAMPIRIC TOUCH buy "the attack is made with advantage and the damage is Empowered
+  by 1" with a tithe, and the door is narrow on purpose: three other halves say something about
+  a roll in the same breath and none of them means this one.
+- **Eight cards got a plain rider** they should always have had: BOLSTER, SCOURGE, HAUNTING
+  SHADOWS, LUCK POTION, DARK BARGAIN, STONEFLESH, UMBRAL FORM and a Bram's wriggle.
+
+And the bug this work found in passing: **the folded modifiers only rode out on the confirm in
+two cases**, a Skill Check and a swing with a Martial Move on it. Everything else the prompt
+decided changed the card in the corner and not the dice. It is one test now, on identity, and
+every fold hands the same object back when it has nothing to add.
+
+### Three: Wound, resistance and weakness
+
+**A fourth channel, `against`**, for a rider written from the other side of the swing. A Wound
+is the whole of it: "Weapon attacks made against the entity are Empowered" is a number on
+somebody else's attack, read off the target's rows by whoever is aiming. Automatic on Jules's
+ruling: picking the target is the decision, and a sheet that can see the row and asks anyway is
+asking a question it knows the answer to. It is credited in the list under the pay button as
+`Wound · Goblin — Empowered by 1`. The keyword's own two clocks were on nothing until now
+either: a Wound closes at a rest, or the moment any Health comes back.
+
+**A fifth channel, the damage types.** Nothing on any sheet held a resistance before this.
+
+- `resist` and `vulnerable`, lists of damage types, at the three widths a card writes them:
+  a type, a family, or everything at once. `coversType` in cardText.js is where the three are
+  one question, and Cold and Frost are one cold there, as are Decay and Necrotic. Poison is
+  not, deliberately: DRACONIC SCALE grants one without the other.
+- Six cards, two lineage cards, four creature passives and two conditions carry one. AMPHIBIAN
+  shrugs off Cold, DRACONIC SCALES resists whatever colour the scales are (the first grant in
+  the codex whose value is the holder's own answer), a Bram is half a club and double a torch,
+  and Burn is the one condition that names its own type.
+- **Vulnerable and Resistant are rows a table can lay by hand**, which needed the row to learn
+  a field: `types` on the tracker, with a picker in the effect prompt, because "double damage
+  from *that* damage type" is a sentence with a blank in it.
+- The arithmetic is `typeFactor` in combatApply.js, and it holds the rulebook's rule (5.9):
+  neither stacks with itself, and the two cancel.
+- The Character tab says so, under the defenses, in words rather than on a tile: a resistance
+  is not a stat, it is a thing that happens to damage on its way in.
+
+**Three readings the rulebook does not make**, each of them a choice:
+
+- **The multiplier goes before the Armor**, on Jules's ruling. 21 Fire at a resistant body with
+  Armor 2 is 10 through the halving and 8 past the Armor. Armor first would have been 9.
+- **Half of seven is three.** Nothing in this game rounds up.
+- **A hit naming two types is read the way "or" reads at a table**: whoever is swinging picks.
+  So a resistance has to cover every type named to halve anything, and a weakness to any of
+  them doubles.
+
+### The curtain, and what may be folded without asking
+
+A player cannot read an encounter row the Game Master has not shared, and the curtain is all or
+nothing: no pools, no foes, no trackers. So an enemy's conditions cross to a player's sheet
+three ways, and only two of them may be folded silently:
+
+| Where it came from | What the swing does |
+| --- | --- |
+| a seated character's own row, live off the characters channel | folds it |
+| an open encounter's own row | folds it |
+| the table log, where a cast announced it being laid | offers it as a box |
+
+The third is hearsay: nothing there ever hears a Wound being *healed off*, so a row from it
+wears `heard` and the prompt asks "Wound · Rumour — if Rumour still has it". A wrong die is
+worse than a missing one, which is this file's oldest rule.
+
+### Proved
+
+- `npm run lint:combat`, with two new sections and forty-odd cases: the whole resistance
+  table, both orders, the rounding, the two-type reading, a Wildkin's Cold through
+  `characterDelta` to the ledger row that says `resisted`, a creature's passive behind its
+  ward, and a Wound from the status table through `takenRiders` to the Empowered swing.
+- `npm run lint:riders`, which grew three checks: a rider may now reach four channels rather
+  than two, every claim has to carry a condition and bend something, and a claim has to change
+  nothing until its own key is ticked. All 38 riders pass, and two of them caught a real bug
+  the day they were written: Frost was not Cold, and a skill rider was being walked through a
+  sword.
+- `npm run lint:plan`, with three new sections: a card that bends its own roll, a conditional
+  clause that is offered rather than applied, and a running effect reaching a weapon attack, a
+  Skill Check and a spell that only shields.
+- Every other linter, eslint and the build, clean. No import cycles in `src/lib`, checked
+  before and after.
+- In the browser, through a throwaway harness at the project root (deleted, `git status`
+  checked): the use prompt drew **Does it apply · 0 of 2** with PACK BOND and QUARRY unticked,
+  picking the wounded Goblin added `Wound · Goblin — Empowered by 1` to **Changing this** with
+  no box at all, picking the heard-about Rumour offered a box instead and folded nothing, and
+  ticking everything took the card to `4d8 + 6 Sharp` with the confirm handing back
+  `adv=2 dice=4d8+6`. The tracker's own prompt laid `{ status: 'resistant', types: ['Fire'] }`.
+
+### Still open
+
+- ~~**ENBRITTLE's "vulnerable to that damage type"** is a weakness to whatever hits next.~~
+  **Closed 2026-09-20**: there is something to write on the row now, and the row asks for it.
+- **CONTAINMENT SPHERE's breakout disadvantage** is bought with 3 Willpower at the moment
+  somebody tries to escape, so it is not a standing rider at all.
+- **WATER VORTEX's disadvantage scales with the target's height**, a metre at a time. Not a
+  flat number and not a box either.
+- ~~**SPORADIC INFUSION** hands an ally a whole extra throw on their next attack, of the
+  *caster's* Mind.~~ **Closed 2026-09-20**: the row asks for the Mind and carries the throw. See
+  "Ask for the number" below, which closes six of the entries in this list.
+- **DELAY's Elevate** is applied to the actions it held, and nothing models a held action.
+- **SLEEPING SPORES' "entities that can see you gain advantage on the roll"** is the target's
+  advantage on a roll the caster makes, which would have to be read as the caster's
+  disadvantage. That is an inversion rather than a transcription, and it wants a ruling.
+- ~~**A forged creature has no passives to carry a resistance.**~~ **Closed 2026-09-20**: the
+  forge has two rows of chips and the body carries both lists. See "Ask for the number" below.
+- **DARK BARGAIN's Overcast** buys the target Empowered and Elevated on top of the advantage,
+  and a rider is keyed on the card rather than on whether a half was paid for. Same wall
+  SICKNESS hit.
+
+## Ask for the number, 2026-09-20
+
+> "tihng you are nto sure how to track add a popup for confirmation of stat when relevant do a
+> double pass on that. For roged creature add an option to have resistenace and weakens and to
+> tweak it."
+
+Two asks. The second is small and the first is the other half of yesterday's work: yesterday a
+clause the sheet could not *see* became a tick box, and today a number the sheet cannot *know*
+becomes a question.
+
+### The forged creature's two lists
+
+A printed creature declares a resistance on one of its passives, behind a ward where the
+passive has one. A forged creature has no passives to declare anything on, so its two lists are
+on the body: `resist` and `vulnerable`, four words each, at the same three widths a card writes
+them (a type, a family, or All). The forge draws them as two rows of chips under the armor
+family, which is where the rest of "what lands on it" already is.
+
+- `foeTypes` reads the creature's own lists, then its standing passives, then its tracker. Four
+  sources into one answer, and a broken ward drops its passive's share of it.
+- **A type on both lists is allowed**, and the chip says so. The rulebook says a resistance and
+  a weakness to one type cancel, so it is a legal thing to build and a strange thing to build by
+  accident.
+- Both the enemy block and the character sheet now print what they take half and double of,
+  under the defenses, in words. A resistance is not a stat and has no tile: it is a thing that
+  happens to damage on its way in.
+
+### The question a row can carry
+
+**`ask` on a rider**, and the answer lands on the row as `values`. Three kinds:
+
+| kind | what it draws | who it is for |
+| --- | --- | --- |
+| `number` | a box | VIGOR's three times the caster's Mind, SEVER LIFE's damage dealt |
+| `choice` | named options | AIR CONTROL's two modes, SICKNESS asking which side of it you are |
+| `types` | the damage-type picker | ENBRITTLE, whose type is whatever lands next |
+
+A question carrying `from` names one of the **caster's** own numbers, so the sheet laying the
+row fills it in on the way over and the far end confirms it. That is the difference between
+confirming a number and being sent to go and ask somebody for one, and it is why the button
+says Confirm when nothing is missing and "Save what there is" when something is.
+
+**An unanswered question is worth nothing rather than worth zero.** The row sits on the block
+wearing a `?` in the warning colour, bends nothing, and offers the window. That is exactly what
+an unwired VIGOR did for a year, with the difference that the row now says so.
+
+### What that unlocked, which is the double pass
+
+Nine cards left the "cannot be wired" list, and every one of them had the reason written beside
+it in riders.js:
+
+- **VIGOR** and **SEVER LIFE**, which were the two entries that named the wall: a number on the
+  caster's sheet, and a number nobody knows until the dice land.
+- **SICKNESS** and **BLIGHT POLLEN**, whose note said word for word what would unlock them:
+  "the tracker learning which side of a card a row is on". A choice is that.
+- **AIR CONTROL**, whose note said "the tracker has nowhere to record which was chosen".
+- **ENBRITTLE**, which needed the type picker rather than a number.
+- **SPORADIC INFUSION**, which needed two things at once: an answer, and a rider able to carry a
+  whole extra *throw*. That channel is VENOMOUS's `added`, built three days earlier for a
+  lineage card, and this is the first tracker row to use it.
+- **LIFE DRAUGHT**, which needed nothing at all and nobody had noticed. Its scale is the
+  *drinker's* level and the drinker is the sheet holding the row; it was left out because
+  `runningRiders` had no character to measure against, and that argument arrived with
+  BERSERKER'S RAGE on 2026-09-11.
+- **HIBERNATION**, **ICE BLOCK** and the **ETHEREALNESS POTION**, which needed the damage
+  channel to have a third setting.
+
+### Taking no damage at all
+
+`immune`, a third list beside resist and vulnerable, written at the same three widths. It is
+asked first and nothing undoes it, not even a weakness to the same type: immunity is a different
+state rather than a bigger resistance.
+
+ICE BLOCK is the interesting one. "Immune to all non-Psychic damage" is an immunity with a hole
+in it, and it is written as the five things it *does* cover (two families and three types)
+rather than as an exception, because a list of exclusions would be a second shape for one card.
+The Vaultkeeper Lich's four pillars carry the same field behind their ward.
+
+**One bug the checker found the day it was written**: `landHit` scaled by `Number(factor) || 1`,
+and `0 || 1` is 1, so the first body immune to anything took full damage. Zero is a real factor.
+
+### A creature's conditional passive
+
+PACK TACTICS is advantage "against an entity that another Fenrat is within 1 meter of" and
+BLOOD SCENT is advantage on anything "below half their Health". Both are yesterday's tick box
+on the other side of the table, and both were unwired because a claim was read off the
+*tracker* and a creature keeps what is true of it on a passive.
+
+So `offeredRides` reads the actor's passives too, and `foeActor` hands them over with the broken
+wards already dropped. The Game Master gets a box on the Fenrat's bite, and ticking it is the
+whole of what "the litter has it surrounded" means.
+
+### Proved
+
+- `npm run lint:combat`, with two new sections: the whole ask mechanism walked from unanswered
+  to answered and back, both kinds of choice, the caster filling a box in on the way over, and
+  immunity including the hole in ICE BLOCK's.
+- `npm run lint:riders`, which grew a question round trip of its own: a fixture row now answers
+  whatever its rider asks, a question has to carry a label and bend something, and an
+  **unanswered** rider has to bend nothing. All 47 riders pass.
+- Every other linter, eslint and the build, clean. No import cycles in `src/lib`.
+- In the browser, through a throwaway harness at the project root (deleted, `git status`
+  checked): a tracker with two unanswered rows drew them wearing `?`, the window opened headed
+  "Vigor: what it is worth" saying "1 still open. It bends nothing until they are answered",
+  typing 8 turned the button to **Confirm**, and confirming took `health_max` from 70 to 94 and
+  the chip to `✓`. AIR CONTROL's Light took the Speed from 5.5 to 8.5 and Dense put it back. The
+  forge drew both damage-type rows, greyed the rest out at four, and said so when a type was on
+  both lists.
+
+### Still open after the second pass
+
+- ~~**A rider does not reach an enemy's stats at all.**~~ **Closed 2026-09-20**: `creatureStats`
+  and `minionDerived` both take the fold now, which is what finally wired BREACH and RUSTWEAVE.
+  See "The second pass, done properly" below.
+- **SLEEPING SPORES** reads the target's advantage on a roll the *caster* makes, which would
+  have to be wired as the caster's disadvantage. That is an inversion rather than a
+  transcription and wants a ruling.
+- **WATER VORTEX** scales its disadvantage by the target's height, a metre at a time. Neither a
+  flat number nor a box.
+- **WILD STRIDER's floor** ("your Movement Speed cannot be reduced") is a rule about other
+  rules, and the only thing on this sheet that reduces a Speed is being overloaded.
+- **DELAY** Elevates the actions it held, and nothing models a held action.
+- ~~**A heal that is refused**: BLIGHT POLLEN's five turns and DEATH WAIL's "cannot restore
+  Health until a Long Rest".~~ **Closed 2026-09-20**: `noHeal` is the channel and four cards
+  ride it. Both appliers simply write nothing.
+- **The flight and swim speeds** (WINGS OF RADIANCE, EARTH GLIDE, SEAFARER'S ELIXIR, POTION OF
+  FLYING, SPROUT WINGS). The sheet holds one Movement Speed and nowhere to say what it moves
+  through.
+
+## The second pass, done properly, 2026-09-20
+
+> "start with the second pass"
+
+The two drops before this one each ended with a sweep, and both swept *cards*: a
+regex over a card's whole text, a hand list of what was wired, and a review by
+eye. This one sweeps **sentences**, and cross-references each one against every
+channel that could carry it, assembled from the codex itself rather than from a
+list somebody kept up to date. What prints is the sentences nothing claims.
+
+It found 120 on the first run, 24 of them because the sweep did not know how a
+skill or an enchantment carries its numbers. The real list was 96, and most of it
+is genuinely prose. Four things in it were not.
+
+### One: a rider reaches a creature's stats
+
+**The biggest thing that was left**, and it was structural rather than a card. A
+creature's numbers were printed and nothing else: `creatureStats` read the
+creature and the level and never the instance. So a GIANT GROWTH cast on a goblin
+doubled nothing, and every card written against a target's Defense or Armor was
+unwired against the only bodies it is ever aimed at.
+
+- `creatureStats(creature, level, extra)` and `minionDerived(spec, attrs, level,
+  extra)` both take the same object `deriveStats` takes for a character, folded
+  before anything is derived from it so a bent attribute bends the Reflex too.
+- Handed in rather than read, because creatures.js is a leaf and riders.js is
+  not. `encounterState` and `resolveMinion` are the two that read it.
+- The enemy block and the bonded creature's block stop disclaiming: both said
+  `bends={false}` on every row, and a row that moves a tile now says so.
+- `who` is null on both. The one measured rider scales on a talent rank and no
+  creature holds a set; a rider that asks a question still works, because the
+  answer is on the row.
+
+### Two: a Martial Move that lasts leaves a row
+
+A move was a die on the swing and nothing else, so two of them were printed and
+forgotten. **Where each one lands is read off its own prose** by `landing`, the
+same function that places a spell's row:
+
+| Move | Its own words | Where the row goes |
+| --- | --- | --- |
+| BREACH | "the target's Defense is reduced by 2" | the target |
+| RUSTWEAVE | "the target's Armor is reduced by 2" | the target |
+| GUARDED | "**your** Defense, Grit and Reflex" | the swinger |
+
+`castPlan` hands the swinger's back as `mine` and the target's in `laid`, which
+already goes out over the log. Only the Defense of GUARDED's three lands: Grit
+and Reflex are built from the attributes and this channel has no term for
+either, which the row's own line says rather than quietly dropping.
+
+TAUNTING went in beside them as a claim, because its condition is who the target
+is swinging at.
+
+### Three: what a swing does when it *arrives*
+
+Two Master and Adept moves change the landing rather than the throw, and there
+was no channel for that at all:
+
+- **PIERCING**: "The damage of this attack ignores the target's Armor."
+- **SUNDER**: "The target is treated as vulnerable to this attack's damage."
+
+`lands` on the card, folded by `withMoves`, hung on the damage link by
+`rollPlan`, carried by `applyPlan` onto the delta, across the table in the
+delivery, and read by `struck` on whichever side applies it.
+
+**SUNDER is written as a weakness rather than as a doubling**, and that is the
+whole reason it is worth writing down: against a body already *resistant* to what
+is coming, the target now has a resistance and a weakness at once, the rulebook
+says those cancel, and the damage lands exactly as written. Nobody would have
+written that branch by hand and it is certainly right.
+
+### Four: a heal that is refused
+
+The one rider that is not a number to bend but a thing to say no to. Four cards
+say "cannot restore Health" and the arithmetic could refuse none of them: the
+Health went up and the row on the block was a note somebody had to remember.
+
+`noHeal` on the rider, `refusesHealing` on the way in, and both appliers simply
+write nothing. BLIGHT POLLEN for five turns, WITHERING WORD for three, HAUNTING
+SHADOWS while the paranoia lasts and DEATH WAIL until a Long Rest. Damage still
+lands on all of them, which is the point.
+
+### Proved
+
+- `npm run lint:combat` grew four sections: a rider moving a creature's own
+  stats and coming back off, a move's row landing where its prose says, the two
+  landing flags including the cancel, and the refusal.
+- `npm run lint:riders` learned the refusal channel. All 55 riders pass.
+- Every other linter, eslint and the build, clean. No import cycles.
+- In the browser, through a throwaway harness (deleted, `git status` checked):
+  two Fenrat side by side, one wearing a Breach, reading Defense 8 against its
+  twin's 10, and laying a GIANT GROWTH on the plain one took its Speed from 6 to
+  12 with the row underneath saying which card did it.
+
+### What the sweep leaves standing
+
+Nothing structural. What is left is a list of individual sentences, each with its
+own reason:
+
+- **SLEEPING SPORES** would have to be read as the caster's disadvantage, which
+  is an inversion rather than a transcription. Wants a ruling.
+- **WATER VORTEX** scales per metre of the target's height, per target, on a roll
+  made at somebody else's Turn Start.
+- **DELAY** Elevates the actions it held, and nothing models a held action.
+- **NIGHTMARE'S CURSE** makes you vulnerable to one *spell's* damage rather than
+  to a type, and the damage channel keys on the type.
+- **The flight and swim speeds** (WINGS OF RADIANCE, EARTH GLIDE, SEAFARER'S
+  ELIXIR, POTION OF FLYING, SPROUT WINGS, CRAWLER, SOAR). The sheet holds one
+  Movement Speed and nowhere to say what it moves through.
+- **WILD STRIDER's floor**, which is a rule about other rules.
+- **The Reaction Point events**: BASTION'S FURY on an Intercept, BRAM'S NINE
+  VOICES when one of them dies. Nothing tracks either moment.
+- **The Brew's own modifiers** (QUICKSILVER's cost, MANA CRYSTAL's Empower).
+  A Brew is built in its own window and priced there.
+- **Four cost-cutting talents** (MARTIAL SWIFTNESS, COLOSSAL GRIP, TWINNED
+  STRIKE, DOUBLE WEAVE) whose sets already discount through their own specs, and
+  which the sweep cannot see because a spec is not a card.
+
+## Life Link divides, 2026-10-10
+
+Jules asked whether the spell that links lives splits damage and healing. It did
+not: the card printed the rule and the cast laid a five turn row, and no number
+ever moved through it. It does now.
+
+- **The row carries its roll call.** The caster writes every target onto the
+  row they lay (`link` on the effect, built by `withLink` in `lifeLink.js`), so
+  whichever body is struck knows who else shares it. Five at most, two at least.
+- **Damage divides what got through.** The body struck is hit the ordinary way,
+  Armor and Shield first, and each member loses a whole-number share of the
+  Health that came through. Healing divides what was rolled, so a full body
+  healed still hands its share to a hurt one. Both round down.
+- **A share is never divided again.** It travels as an `apply` delivery marked
+  `link`, which lands as it stands. Players post their shares for the rest of
+  the link, the Game Master's page lands the enemies in the same write and posts
+  what the players are owed. Boundary heals and damage taken off a Turn prompt
+  go through the same door (`landLinked.js`).
+- **Checked** by three sections in `lint:combat`.
+
+### Left open
+
+- **The leash.** "More than 12 meters at its Turn End leaves the link" needs
+  positions the sheet does not have. The row is dropped by hand, and the other
+  members keep counting the one who left until the spell is recast.
+- **Health edited by hand** (a bar dragged, a Game Master pressing -5) is not a
+  hit and does not share.
+- **Which Health.** Damage shares what got through Armor and Shield and healing
+  shares what was rolled. The card says "Health lost or restored", so a ruling
+  that healing shares only what the body could actually take is one line away.
+
+## The Healer heals, and a target is a unit frame, 2026-10-10
+
+Two asks in one message. The Healer skill was prose, so a Healer's Renew rolled
+the printed d6. And the target picker drew each body as a tinted strip with the
+name over the fill; Jules wanted "the same setup as with images that's used in
+the log", a round picture with a Health bar beside it, closer to a World of
+Warcraft frame, with all of it readable.
+
+- **The Healer is a rider on the caster.** `healerRider` in moves.js gives one
+  step of Elevate on any card whose dice restore Health, found by `healsAnything`
+  in rollPlan.js: a Renew, a Healing Potion off the belt, a Bandage. It rides as
+  its own field, `healElevate`, because the skill grows healing dice and nothing
+  else, and VAMPIRIC TOUCH's damage stays on the printed die. `rollPlan` reads it
+  on healing links only, and the card renderer does the same through
+  `valuePurpose`, so a Healer's Renew prints and rolls 1d8. Credited under the
+  pay button as "healing Elevated by 1".
+- **The second step is the target's.** "Or by 2 if the target is unconscious"
+  lands in `withTargets` once a picked body is down, automatic the way a Wound
+  is, since 0 Health or below is unconscious by the rulebook (2.3).
+- **A target is a frame.** `TargetChip` is a round face (the log's own, moved to
+  `Face.jsx`), the name in the side's colour and the Health on a bar of its own
+  with the Shield over it. Still no number. An enemy whose Health is behind the
+  curtain gets a hatched empty track rather than an invented one.
+- **The faces cross.** The initiative event carries each enemy's picture
+  (`foeFaces`), and a player's fight roster now carries every seated ally's
+  portrait, Health and Shield off their public sheet (`vitalsOf` in
+  FightProvider.jsx). That is also what lets a player's Healer see an ally is
+  down.
+- **Fixed in passing.** The fight block on a linked sheet handed the frame
+  tracker rows where it wanted names, which printed as "[object Object]" on
+  anyone carrying a condition since 2026-09-19.
+- **Checked** by a section in `lint:plan`.
+
+### Left open
+
+- **Renew's Turn Start heals** are rolled on the target's own sheet off the
+  card, so the caster's Healer does not reach them. Carrying the step on the
+  laid row is the fix if it should.
+- **"Yourself or an ally".** The step lands on any healing the Healer throws,
+  an enemy's included. Nobody heals an enemy often enough to have asked.
+- **An ally's Health is now visible to the party** on a player's sheet. A sheet
+  was already public to read, which is the ruling this leans on, but it is the
+  first time the fight shows it.

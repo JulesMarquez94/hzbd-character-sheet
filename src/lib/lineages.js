@@ -15,20 +15,193 @@
  *                a paragraph about ancestry is not.
  *
  * ------------------------------------------------------------------- source
- * Transcribed from "Hazebound - Character Sheet V4 - LINEAGE". That sheet
- * predates the current three-attribute system, so a few cards still name things
- * V5 no longer has — Fortitude, Wisdom, Cunning — and six name spells the codex
- * has not been given yet. Those are left exactly as printed rather than guessed
- * at: the wording is the designer's to update, and a silent re-interpretation
- * would be far worse than a visible one.
+ * Transcribed 2026-08-21 from two tabs, `General Rules - Lineage` and
+ * `General Rules - Lineage Cards`, which replace the V4 "Hazebound - Character
+ * Sheet V4 - LINEAGE" sheet the previous codex came from. Thirteen ancestries
+ * and twenty-two card rows, against the V4 sheet's eighteen and twenty-seven.
+ *
+ * **The six beastkin lines are gone.** Featherborn, Furborn, Gillborn,
+ * Muckborn, Scaleborn and Slickborn are not on the new tab. In their place is
+ * one ancestry, Wildkin, which hands the player the pool those six used to
+ * divide between them and asks for two of it. See WILDKIN_POOL below: it is the
+ * first lineage on either sheet that asks you to choose a card rather than a
+ * value inside one.
+ *
+ * V4 cards with no row on the new tab are gone with them: Bolster Blessing,
+ * Dark Bargain, Produce Fire, Gravity Control, Stone Shape, Create Water,
+ * Chromatic Resistance, Feral Instinct, Light Body, Poisonous, Resilience,
+ * Quick Mind, Hardened Frame, Primal Instincts, Celestial Wings, Infernal
+ * Wings, Fey Flight, Furnace Heart, Windborn Stride, Stoneskin, Rising Tide,
+ * Draconic Hide, Undying and Feed. Several return under a new name and new
+ * numbers, which is why none of the old ids survive.
+ *
+ * The V4 casting-attribute question is gone too. Every spell a lineage now
+ * grants is cast with "your highest Attribute", so no lineage card asks which
+ * attribute you cast it with, and the Wisdom and Fortitude options that
+ * question used to offer are off the sheet.
+ *
+ * ---------------------------------------------------------------- the reads
+ * The tabs are a working document and carry the designer's own typing. Each
+ * correction is one word, recorded here rather than made quietly. This is the
+ * same trade actions.js and the Duelist's four moves made.
+ *
+ *   Names       "Sharpsen" reads Sharp Sense, which is what the Wildkin pool
+ *               and the picture both call it. "Venemous" reads Venomous,
+ *               "Canibalism"/"Canibalisme" reads Cannibalism, "Undeath
+ *               Resillience" reads Undeath Resilience, and "Wild Swiftness,"
+ *               loses its trailing comma. The Skybound row asks for "Wing
+ *               Grace" and the card tab prints WIND GRACE, so the card's own
+ *               tab wins. The Draconic row asks for "Draconic Scale" and the
+ *               card tab prints DRACONIC SCALES, likewise.
+ *   Spelling    "YOu" is You, "eahc" each, "aiblity" ability, "befoer" and
+ *               "befoe" before, "cna" can, "taka" take a, "agaisnt" against,
+ *               "additonal" and "additonaly" additional and Additionally,
+ *               "resitence" resistant, "advenatge" advantage, "cielings"
+ *               ceilings, "fice sense" five senses, "breath" breathe, "ony"
+ *               only, "half you maximum" half your maximum, "You breathes" You
+ *               breathe, and "draconicdracon" draconic. INTELLIGENT's sentence
+ *               ends on a hyphen; it is a full stop.
+ *   Number      "this spell use" reads uses, "is increase by 1" increased by 1,
+ *               "short rest no longer restore" short rests, "long rest ony let"
+ *               long rests only let, and "a sleight of hands" a sleight of hand.
+ *   Person      DRAGON BREATH is written off a monster's stat block: "in front
+ *               of itself" reads in front of you, "the entities Reflex" the
+ *               entity's Reflex, and "2 x Highest Attribute" 2 x your highest
+ *               Attribute. Every other card on both tabs addresses the reader,
+ *               and a player's card that calls them "it" is the odd one.
+ *   Units       "1.5 meter (5 feet)" reads 1.5 meters (5 feet) and "a 6 meter
+ *               (20 feet) cone" a 6-meter (20-foot) cone, which is how every
+ *               distance in spells.js is already written.
+ *   Terms       health reads Health, defense Defense, movement speed Movement
+ *               Speed, decay Decay. Every one of these exists so a defined
+ *               term lights, which is the trade the Duelist's moves made.
+ *   Modular     INNATE X carries "(mdoular card were X is replace with the
+ *               type of school in the anme)". That is a note to the builder
+ *               rather than rules text, so it is dropped from the card and
+ *               built instead: the six schools the lineage tab names each get
+ *               their own card. See `innate` below.
+ *   Built       DRAGON BREATH's "your draconic scale colour" is the colour
+ *               DRACONIC SCALES asks you for, so it is a `{{Draconic Scales}}`
+ *               link rather than prose: the reader taps through to the card
+ *               that holds the answer instead of going to look for it. INNATE
+ *               X's "a Novice X Spell" is a `{choice}` for the same reason,
+ *               and its placeholder is those four words: unanswered the card
+ *               still prints the cell, answered it prints the spell.
+ *
+ * ------------------------------------------------------- how this was proved
+ * Every card's body was resolved back through its markers and compared to the
+ * designer's cell with case and punctuation flattened, alongside its AP, its WP
+ * and all thirteen blurbs. **64 of 82 comparisons match**, and all eighteen that
+ * differ are the reads above: no body, cost or blurb differs for any other
+ * reason. The six INNATE cards were each checked against the one modular row
+ * they were built from.
+ *
+ * ------------------------------------------------------------- and the flags
+ * Three things the sheet leaves open. None is guessed at here.
+ *
+ *   1. **LIVING FURNACE does not say what you regain.** "You regain 10 + 5 for
+ *      each Willpower spent" names no pool. Health is the only one that fits
+ *      the numbers, and it is still not what the cell says, so the card prints
+ *      the sentence as written.
+ *   2. **SPROUT WINGS is one card given to two ancestries, and its text names
+ *      one of them.** Celestial and Infernal both take it and it reads
+ *      "Celestial wings". V4 had two cards for this, CELESTIAL WINGS and
+ *      INFERNAL WINGS; the new tab has one row and one picture. Left as
+ *      printed.
+ *   3. **Three cards still say "Fortitude", which V5 does not have.** FEY
+ *      BLOOD, UNDEATH RESILIENCE and HEARTHY all read "per level in Fortitude
+ *      and Physique". `deriveStats` computes Health as 10 per character level
+ *      plus 10 per Physique, so the app already reads the first half as level.
+ *      The wording is the designer's to update.
+ * **There was a fourth, and it is closed.** Innate Light and Innate Shadow named
+ * schools the codex had not got, so those two cards promised a spell that could
+ * not be looked up and a Celestial or an Infernal could never finish their level
+ * 1. Both held a stand-in spell that said on its own face it was standing in. The
+ * Ethereal school arrived on 2026-08-25 with Light in the morning and Shadow in
+ * the afternoon, four Novice spells apiece, and both stand-ins were deleted. All
+ * six Innate cards now offer real spells and every lineage card can be settled.
+ * See "the stand-ins" at the foot of spells.js.
+ *
+ * Two more, smaller. SPROUT WINGS is tagged `Basic Action` on a tab of lineage
+ * cards, and is treated as the Ability its 2 AP and 2 WP make it. LIVING
+ * FURNACE is tagged `Passive` while carrying a cost, and is treated as an
+ * Ability for the same reason; its Willpower column reads `x`, which no card
+ * shape can hold, so the ceiling is printed in the body the way V4's FURNACE
+ * HEART printed its own price.
+ *
+ * DRAGON BREATH and the six INNATE cards roll "your highest Attribute", which
+ * is not one of the three. It is a rule, and `HIGHEST` is that rule written as a
+ * stat: the card carries it in place of a key and `castStat` in cardText.js
+ * settles it against whoever is holding the card, so DRAGON BREATH prints a live
+ * `[[2d6 + 2*stat]]` off the attribute this character really stands highest in,
+ * and the spell an INNATE card hands over prints that same attribute instead of
+ * the Mind the codex printed it for. Both used to print their formula as prose,
+ * because there was nothing here that could resolve the word.
+ *
+ * ------------------------------------------------------ one id had to change
+ * **DRAGON BREATH is `dragon-breath-lineage`, not `dragon-breath`.** The Draconic
+ * Bond's Adept ability already held that id, and it is the same effect written for
+ * the ally rather than for you: 2d4 and its Mind, in front of *itself*. This one is
+ * 2d6 and your highest Attribute, so they are two cards and not one, and the older
+ * keeps the id because an id is what a saved character points at. Same trade
+ * RESILIENCE and CREATE WATER made, and see the note in weapons.js for why a
+ * collision has to be caught rather than left: it does not throw, it loses a card.
+ *
+ * The printed *name* still collides, by design, the way CREATE WATER’s does. No
+ * `{{Dragon Breath}}` link exists today, and one written now would resolve to the
+ * ally's card, because that is the one the registry sees first.
+ *
+ * What a lineage card *says* and what the sheet *computes* used to be two
+ * different things, exactly as they were under V4: only the three attribute
+ * grants below were declared, and Defense, Willpower, Health per level and
+ * Movement Speed were printed and not read by anything.
+ *
+ * **A card carries its own number now, and every card that names one does.**
+ * `grants` on a card is the sentence written as a rider, and
+ * `lineageGrantSources` below hands the lot to `deriveStats` and to the tile's
+ * own math line. WIND GRACE was the first, on 2026-08-28; the other six followed
+ * on 2026-09-11 off a one-line report that MINERAL SKIN was not adding to
+ * Defense. WIND GRACE and WILD SWIFTNESS carry a Movement Speed each, MINERAL
+ * SKIN and SCALEY a point of Defense, INNER TIDE four Willpower, and FEY BLOOD,
+ * HEARTHY and UNDEATH RESILIENCE the rate Health is bought at. See grants.js.
+ *
+ * **A card may also carry a rider on the *swing* rather than on the sheet**, and
+ * VENOMOUS is the one that does. Its extra 1d4 of Decay is a whole throw of a
+ * type the weapon does not deal, so no column could hold it and no Empower could
+ * mean it; it is declared as `swing` and handed to `attackModifiers` by
+ * `lineageSwing` below. Wired 2026-09-17, and it was the last sentence on any of
+ * these cards that named a number the sheet could carry.
+ *
+ * **A grant may also be a damage type rather than a number**, since 2026-09-19.
+ * AMPHIBIAN's "resistant to {damage:Cold} damage" and DRACONIC SCALES' resistance
+ * to whatever colour the scales are both ride `grants` as `resist`, and the
+ * second is the first grant in the codex whose value is the holder's own answer.
+ * Neither is a lump and neither is summed: the rulebook says two resistances to
+ * one type are still half. See `answered` below and characterTypes in
+ * characterModel.js.
+ *
+ * **Two sentences on these cards are still the table's**, and neither of them is
+ * a number this sheet holds: FEY BLOOD's flight, and STICKY's walls and
+ * ceilings. See data/README.md.
  *
  * --------------------------------------------------------------- card text
  * Card bodies use the same markers as every other card — see the header of
  * weapons.js. These are folded into the global registry by weapons.js, so every
  * link resolves and any of them can be dealt onto the pile.
  *
- * This file is a leaf: nothing here may import weapons.js or items.js.
+ * This file is a leaf: nothing it imports may reach weapons.js or items.js.
+ * spells.js is one, which is why the Innate cards can read their own shelf here
+ * rather than describing it and having somebody else resolve it. The registry in
+ * weapons.js folds in both, so an Innate card's options are the same objects
+ * every `{{link}}` and every `getCard` already hands back.
  */
+
+import { HIGHEST } from './attributes.js';
+import { withArt } from './cardArt.js';
+import { sortCards } from './cardOrder.js';
+import { sumGrants } from './grants.js';
+import { castModifier } from './cardText.js';
+import { SPELLS } from './spells.js';
 
 /** The families a lineage belongs to, and what it is good at. */
 export const LINEAGE_TAGS = [
@@ -47,88 +220,280 @@ export const LINEAGE_TAGS = [
   { id: 'attribute', label: 'Attribute', kind: 'boon' },
 ];
 
-/* ---------------------------------------------------- traits several share
- * A handful of ancestries hand out the same trait. It is one card, written
- * once and referenced, so the wording can never drift between them — and its
- * banner says "Lineage Trait" rather than naming any one line.
+/** Shorthand for a card only one ancestry hands out. */
+function own(lineage, card) {
+  return {
+    kind: 'passive',
+    ap: null,
+    wp: null,
+    ...card,
+    tags: ['Lineage', lineage, card.kind === 'ability' ? 'Ability' : 'Passive'],
+  };
+}
+
+/* ------------------------------------------------------- the card two share
+ * Celestial and Infernal both take SPROUT WINGS. It is one card, written once
+ * and referenced, so the wording can never drift between them — and its banner
+ * says "Lineage Trait" rather than naming either line. Flag 2 above is that the
+ * wording itself names Celestial.
  */
 
-const SHARED = { kind: 'passive', tags: ['Lineage Trait', 'Passive'], ap: null, wp: null };
-
-const SHARPSENSE = {
-  ...SHARED,
-  id: 'sharpsense',
-  name: 'Sharpsense',
-  summary: 'Advantage on any skill check that uses one of your five senses.',
-  body: 'You gain advantage on skill checks that use one of your five senses.',
-};
-
-const FERAL_INSTINCT = {
-  ...SHARED,
-  id: 'feral-instinct',
-  name: 'Feral Instinct',
-  summary: 'Once a combat, react twice to the same action.',
+const SPROUT_WINGS = {
+  id: 'sprout-wings',
+  name: 'Sprout Wings',
+  kind: 'ability',
+  tags: ['Lineage Trait', 'Ability'],
+  ap: 2,
+  wp: 2,
+  /* "You must take a long rest before you can use this ability again." One use,
+     and the Long Rest is what fills it. The sentence stays the designer's and
+     the rider is what the sheet counts. See uses.js. */
+  uses: 1,
+  recharge: 'Long Rest',
+  summary: 'Wings for an hour: fly at your Movement Speed, once a Long Rest.',
   body:
-    'Once per combat, you can react twice to the same action.\n\nThis increases to twice per combat at level 10.',
+    'You can manifest Celestial wings for **1 hour**.\n\n' +
+    'While the wings last, you can fly at a speed equal to your Movement Speed.\n\n' +
+    'You must take a Long Rest before you can use this ability again.',
 };
 
-const POISONOUS = {
-  ...SHARED,
-  id: 'poisonous',
-  name: 'Poisonous',
-  summary: 'Sharp weapons deal 1 extra damage per die rolled.',
-  body:
-    'Your body produces a poisonous secretion that increases the damage you deal with sharp weapons by 1 per damage die rolled.\n\nThis increases to 2 at level 10.',
-};
-
-const COLD_BLOODED = {
-  ...SHARED,
-  id: 'cold-blooded',
-  name: 'Cold Blooded',
-  summary: 'Advantage on Cunning.',
-  body: 'You have an advantage in Cunning.',
-};
-
-const AMPHIBIAN = {
-  ...SHARED,
-  id: 'amphibian',
-  name: 'Amphibian',
-  summary: 'Breathe underwater, and keep full speed while swimming.',
-  body: 'You can breathe underwater, and retain your full speed while swimming.',
-};
-
-const LIGHT_BODY = {
-  ...SHARED,
-  id: 'light-body',
-  name: 'Light Body',
-  summary: 'Movement Speed +2.',
-  body: 'Your Movement Speed increases by +2.',
-};
-
-const RESILIENCE = {
-  ...SHARED,
-  id: 'resilience',
-  name: 'Resilience',
-  summary: '6 health per point of Fortitude and Physique instead of 5.',
-  body: 'You gain 6 health per point in Fortitude and {physique} instead of 5.',
-};
+/* ------------------------------------------------------------ INNATE X built
+ * One row on the tab, six cards on the sheet. The row is marked modular and the
+ * lineage tab names which school each ancestry gets, so the six are built from
+ * the row rather than written six times: the body is the cell's, and the only
+ * thing that moves is the word the cell called X.
+ *
+ * **Which spell is a question, and the card asks it.** "You permanently learn a
+ * Novice Fire Spell" is a promise, and a promise is not a spell: until it is
+ * answered a Scorchbound holds a card about a spell and no spell. So the
+ * school's Novice shelf is the card's `choice`, asked in the window that hands
+ * the lineage over, and the spell it names joins the hand as a card of its own.
+ * The shelf is read off spells.js rather than listed here, so a spell written
+ * tomorrow is on offer tomorrow.
+ *
+ * All six shelves are real as of 2026-08-25. See the closed fourth flag above.
+ */
 
 /**
- * Several ancestries hand you a spell and leave the casting attribute to you.
- * It is the same question every time, so it is written once.
+ * The Novice shelf of one school word, in the codex's own order.
  *
- * Note this is V4 wording: Wisdom and Fortitude are attributes the current
- * system no longer has, and are left here exactly as the sheet printed them.
+ * One word, matched against the whole banner rather than against a position on
+ * it. That was load-bearing while Light and Shadow were stand-ins reading
+ * second, and it is not any more: all six words a lineage names are families
+ * that read third, four under Elemental and Light and Shadow under Ethereal.
+ * Matching the whole banner is kept anyway, because the next school to arrive
+ * gets to sit wherever the sheet puts it.
  */
-const CASTING_ABILITY = {
-  id: 'casting-ability',
-  label: 'Casting attribute',
-  prompt: 'Which attribute do you cast this with?',
-  placeholder: 'your casting attribute',
+function noviceSpells(school) {
+  /* Through cardOrder.js like every other shelf, although one word of one school
+     is already a family and already in codex order, so nothing moves today. It
+     is here so that a shelf naming a whole school tomorrow comes out family by
+     family without anybody having to remember to ask. */
+  return sortCards(
+    SPELLS.filter((spell) => {
+      const tags = spell.tags ?? [];
+      return tags.some((tag) => tag.startsWith('Novice')) && tags.includes(school);
+    })
+  );
+}
+
+function innate(school) {
+  const shelf = noviceSpells(school);
+
+  /* A school with an empty shelf promises a spell that cannot be chosen, and the
+     lineage that hands the card out can never be finished. Said out loud rather
+     than left for a player to find, the way weapons.js says a clashing id. */
+  if (import.meta.env?.DEV && shelf.length === 0) {
+    console.error(
+      `[hazebound] Innate ${school} offers no Novice spell, so the lineage holding it can never be settled. ` +
+        'Write one, or stand a placeholder in for it the way Light and Shadow were until 2026-08-25.'
+    );
+  }
+
+  return {
+    id: `innate-${school.toLowerCase()}`,
+    name: `Innate ${school}`,
+    kind: 'passive',
+    tags: ['Lineage Trait', 'Passive'],
+    ap: null,
+    wp: null,
+    summary: `You learn a Novice ${school} Spell, cast with your highest Attribute.`,
+    /* Which spell is the card's own question, and the school's Novice shelf is
+       the answer to it. `learns` is what says the answer is a card rather than a
+       word: the spell chosen here is one the character then holds, and
+       lineageCards below is where it joins the hand. */
+    choice: {
+      id: `innate-${school.toLowerCase()}-spell`,
+      label: `Novice ${school} Spell`,
+      prompt: `Which Novice ${school} Spell does your blood know?`,
+      placeholder: `a Novice ${school} Spell`,
+      learns: true,
+      /* And what it is cast with, which is the other half of what this card
+         promises. Every spell in the codex is printed for Mind; the one this
+         card hands over rolls off whichever attribute its holder stands highest
+         in, so it goes over with that rider on it and prints the numbers they
+         will really roll. See castModifier in cardText.js. */
+      cast: HIGHEST,
+      options: shelf.map((spell) => ({ id: spell.id, label: spell.name, card: spell })),
+    },
+    /* `{choice}` rather than the cell's own words, and the placeholder above is
+       those words: unanswered, the card still reads "You permanently learn a
+       Novice Fire Spell", and answered it names the spell. The same trade
+       DRACONIC SCALES makes with its colour. */
+    body:
+      `You permanently learn {choice}.\n\n` +
+      'This spell uses your highest Attribute.',
+  };
+}
+
+const INNATE_LIGHT = innate('Light');
+const INNATE_SHADOW = innate('Shadow');
+const INNATE_FIRE = innate('Fire');
+const INNATE_WIND = innate('Wind');
+const INNATE_WATER = innate('Water');
+const INNATE_EARTH = innate('Earth');
+
+/* --------------------------------------------------------- the Wildkin pool
+ * Eight traits, of which a Wildkin keeps two. These are cards like any other:
+ * they are in the registry, they can be dealt, and the two a character kept are
+ * the two that print on their sheet. See WILDKIN_POOL and lineageCards below.
+ */
+
+const AMPHIBIAN = own('Wildkin', {
+  id: 'amphibian',
+  name: 'Amphibian',
+  summary: 'Breathe underwater, swim at full speed and shrug off Cold.',
+  /* "Additionally you are resistant to {damage:Cold} damage." The lungs and the
+     swimming speed are the table's, as they always were. The resistance is a
+     number this sheet holds since 2026-09-19: half of every Cold hit, applied
+     where the hit lands. See characterTypes in characterModel.js. */
+  grants: { resist: ['Cold'] },
+  body:
+    'You can breathe underwater and your Movement Speed is not halved while swimming.\n\n' +
+    'Additionally you are resistant to {damage:Cold} damage.',
+});
+
+const SCALEY = own('Wildkin', {
+  id: 'scaley',
+  name: 'Scaley',
+  summary: 'Defense +1.',
+  /* `defense` is the stat a reader calls Defense, which the stored column calls
+     `avoid`. The two names are the relabel `CharacterTab.jsx` explains and the
+     rider table in riders.js already spells it this way, so a card and a potion
+     that both say "+1 Defense" carry the same word. MINERAL SKIN is its twin. */
+  grants: { defense: 1 },
+  body: 'Your Defense is increased by 1.',
+});
+
+const VENOMOUS = own('Wildkin', {
+  id: 'venomous',
+  name: 'Venomous',
+  summary: 'Your weapon attacks deal an extra 1d4 Decay.',
+  /* The first card in the codex to add a whole *throw* to a swing rather than
+     another die to one the swing already rolls. `grants` cannot carry it: that
+     channel is the sheet's own columns and this number never touches one. So it
+     is declared as `swing`, which is what riders.js has always called the other
+     channel, and read by `lineageSwing` below.
+
+     **No weapon is named, on purpose.** Jules, 2026-09-17: "the lineage venemous
+     should apply to all weapon held by the user". The venom is in the Wildkin
+     and not in the blade, so it rides every weapon attack whatever is in their
+     hands, the way a Weaver's TAUT WEAVE does and unlike the riders that hang on
+     a tag. A stowed axe opened from the Inventory tab is venomous too, because
+     picking it up is the whole of what it would take. */
+  swing: { dice: '1d4', damage: 'Decay' },
+  body: 'Your weapon attack deals an additional [[1d4]] {damage:Decay} damage.',
+});
+
+const COLD_BLOODED = own('Wildkin', {
+  id: 'cold-blooded',
+  name: 'Cold Blooded',
+  kind: 'ability',
+  wp: 1,
+  summary: 'Advantage on a stealth or sleight of hand check.',
+  /* The card's own printed Willpower, said again as the rider the SKILL CHECK
+     prompt spends. Both halves are the same 1, and they are written twice
+     because the prompt charges its price where the card only prints one. See
+     checks.js. */
+  grants: { checkWp: 1, checkAdvantage: 1 },
+  body:
+    'Whenever you make a skill check related to stealth, or a sleight of hand, ' +
+    'you can use this to give yourself advantage.',
+});
+
+const SHARP_SENSE = own('Wildkin', {
+  id: 'sharp-sense',
+  name: 'Sharp Sense',
+  kind: 'ability',
+  wp: 1,
+  summary: 'Advantage on a check that uses one of your five senses.',
+  /* As COLD BLOODED above. The five senses at 1 Willpower, which is the same
+     ground a Feral Cursed's BESTIAL SENSE covers for nothing: two sources, two
+     prices, and the prompt names both so the player can see which is which. */
+  grants: { checkWp: 1, checkAdvantage: 1 },
+  body:
+    'Whenever you make a skill check that uses one of your five senses, ' +
+    'you can use this to give yourself advantage.',
+});
+
+const HEARTHY = own('Wildkin', {
+  id: 'hearthy',
+  name: 'Hearthy',
+  summary: '12 Health per level instead of 10.',
+  /* A *rate*, not a lump, and the only kind of grant that is: it buys both halves
+     of the Health formula, so 12 is worth two points a level and two more a
+     Physique. See healthRate in characterModel.js. */
+  grants: { healthPerLevel: 12 },
+  body: 'You gain 12 Health per level in Fortitude and {physique} instead of 10.',
+});
+
+const WILD_SWIFTNESS = own('Wildkin', {
+  id: 'wild-swiftness',
+  name: 'Wild Swiftness',
+  summary: 'Movement Speed +1.5 meters.',
+  /* The same 1.5 metres WIND GRACE carries, and it has to be the same rider or
+     the two cards disagree about whether the sheet believes them. */
+  grants: { speed: 1.5 },
+  body: 'Your Movement Speed is permanently increased by **1.5 meters (5 feet)**.',
+});
+
+const STICKY = own('Wildkin', {
+  id: 'sticky',
+  name: 'Sticky',
+  summary: 'You can walk on walls and ceilings.',
+  body: 'You can walk on walls and ceilings.',
+});
+
+/**
+ * What a Wildkin is asked, and the only pool on either tab.
+ *
+ * Every other ancestry hands its cards over as printed. Wildkin hands over the
+ * pool and asks for two of it, which is the whole of what the lineage tab says
+ * about it: "the player creates his own Wildkin based on his animalistic trait,
+ * so he chooses 2 traits that define his character".
+ *
+ * It is a pool rather than a `choice` on a card because it is not a value
+ * inside a card, it is *which cards you have*. A `choice` rewrites one card's
+ * text; this decides what is on the sheet at all.
+ *
+ * The tab lists the eight below. A stray cell on the card tab lists the same
+ * pool without STICKY; the lineage tab's list is the longer of the two and the
+ * one that reads as deliberate, so it is the pool.
+ */
+const WILDKIN_POOL = {
+  id: 'wildkin-traits',
+  label: 'Animalistic traits',
+  prompt: 'Which two traits define your Wildkin?',
+  picks: 2,
   options: [
-    { id: 'wisdom', label: 'Wisdom' },
-    { id: 'mind', label: 'Mind' },
-    { id: 'fortitude', label: 'Fortitude' },
+    AMPHIBIAN,
+    SCALEY,
+    VENOMOUS,
+    COLD_BLOODED,
+    SHARP_SENSE,
+    HEARTHY,
+    WILD_SWIFTNESS,
+    STICKY,
   ],
 };
 
@@ -148,234 +513,85 @@ const SCALE_COLOUR = {
   ],
 };
 
-/** Shorthand for a card only one ancestry hands out. */
-function own(lineage, card) {
-  return {
-    kind: 'passive',
-    ap: null,
-    wp: null,
-    ...card,
-    tags: ['Lineage', lineage, card.kind === 'ability' ? 'Ability' : 'Passive'],
-  };
-}
-
 /* ------------------------------------------------------------- the lineages */
 
-export const LINEAGES = [
+/**
+ * The codex as authored. Nothing outside this file reads it: LINEAGES below is
+ * the same thirteen with every card wearing its picture.
+ */
+const LINEAGE_CODEX = [
   {
     id: 'celestial',
     name: 'Celestial',
     tagline: 'An ancestor’s pact with celestial beings, still shining through.',
-    // No art yet — the chooser prints an empty plate for it either way.
-    art: null,
+    art: 'codex:lineages/celestial.full.jpg',
     tags: ['planar', 'flight', 'spellcasting'],
     blurb:
-      'At some point, your ancestor made a pact with celestial beings, forever altering themselves and their descendants. These changes can manifest in various ways. You could have a radiant aura that glows softly, eyes that shine like stars or skin with a slight, otherworldly luminescence. Some might have hair that seems to shimmer like spun gold or silver, skin marked with faint, glowing runes.',
-    cards: [
-      own('Celestial', {
-        id: 'celestial-wings',
-        name: 'Celestial Wings',
-        summary: 'Wings once a long rest: an hour of flight at your Movement Speed.',
-        kind: 'ability',
-        ap: 2,
-        body:
-          'Once after a long rest, you can manifest Celestial wings for 1 hour.\n\nWhile the wings last, you can fly at a speed equal to your Movement Speed.',
-      }),
-      own('Celestial', {
-        id: 'bolster-blessing',
-        name: 'Bolster Blessing',
-        summary: 'You learn Bolster, and its first multicast is free each long rest.',
-        body:
-          'You learn the Bolster spell.\n\nYour first multicast is free for you and one additional ally after a long rest. You can multicast to one more ally, but must pay the price for each above the first.\n\nThis increases to the first three allies at level 10.',
-      }),
-    ],
-  },
-
-  {
-    id: 'draconic',
-    name: 'Draconic',
-    tagline: 'Dragon blood in the veins, and scales to prove it.',
-    art: null,
-    tags: ['planar', 'resilience'],
-    blurb:
-      'Your ancestors got draconic blood mixed in their veins through rituals or other means, forever altering themselves and their descendants. These changes can manifest in various ways. Your body is covered in scales that match the color of the dragon the blood came from, as well as having potential other draconic features ranging from reptilian eyes to dragon-shaped facial features.',
-    cards: [
-      own('Draconic', {
-        id: 'draconic-hide',
-        name: 'Draconic Hide',
-        summary: 'Defense +1.',
-        body: 'Your Defense increases by +1.',
-      }),
-      own('Draconic', {
-        id: 'chromatic-resistance',
-        name: 'Chromatic Resistance',
-        summary: 'Resistance to one damage type, named by the colour of your scales.',
-        choice: SCALE_COLOUR,
-        body:
-          'You gain resistance to {choice} damage.\n\nYour scales say which: red is {damage:Fire}, white {damage:Cold}, blue {damage:Lightning}, black {damage:Decay}, purple {damage:Psychic} and yellow {damage:Sacred}.',
-      }),
-    ],
-  },
-
-  {
-    id: 'featherborn',
-    name: 'Featherborn',
-    tagline: 'Winged stock: light bones, keen eyes, quick reactions.',
-    art: null,
-    tags: ['beastkin', 'movement'],
-    blurb:
-      'The evolution that guided your lineage has taken an extraordinary path, maintaining characteristics of winged beings not usually found in other races. Your appearance can range widely. Some may retain minor traits such as feathers, keen eyesight and light bones, while others display more striking features like beaks.',
-    cards: [LIGHT_BODY, SHARPSENSE, FERAL_INSTINCT],
-  },
-
-  {
-    id: 'fey',
-    name: 'Fey',
-    tagline: 'Born of enchanted glades: small, winged and always aloft.',
-    art: null,
-    tags: ['fey', 'flight'],
-    blurb:
-      'From living in the heart of enchanted forests and ancient glades, your ancestors have established a deep connection with the realm of the fey. This mystical bond has significantly altered your appearance. You have a smaller stature, delicate wings reminiscent of butterflies or dragonflies. Some might have hair adorned with tiny flowers or leaves, or skin that glows faintly in the dark.',
-    cards: [
-      own('Fey', {
-        id: 'fey-flight',
-        name: 'Fey Flight',
-        summary: 'Permanent flight, paid for with 3 health per point instead of 5.',
-        body:
-          'You permanently gain the ability to fly.\n\nHowever, you gain 3 health per level in Fortitude and {physique} instead of 5.',
-      }),
-    ],
-  },
-
-  {
-    id: 'furborn',
-    name: 'Furborn',
-    tagline: 'Fur-covered stock: hardy, sharp-nosed and quick to answer.',
-    art: null,
-    tags: ['beastkin', 'resilience'],
-    blurb:
-      'The evolution that shaped your lineage has followed a distinctive course, preserving traits of fur-covered creatures not commonly seen in other races. Your appearance can vary significantly. Some may exhibit subtle features such as fur, rounded ears and a heightened sense of smell, while others possess more pronounced characteristics like animalistic facial structures, claws and enhanced physical attributes.',
-    cards: [RESILIENCE, SHARPSENSE, FERAL_INSTINCT],
-  },
-
-  {
-    id: 'gillborn',
-    name: 'Gillborn',
-    tagline: 'Aquatic stock: poisonous, cold-blooded, at home underwater.',
-    art: null,
-    tags: ['beastkin', 'aquatic'],
-    blurb:
-      'The evolution that shaped your lineage has followed a remarkable course, preserving traits of aquatic creatures not commonly seen in other races. Your appearance can vary widely. Some may retain subtle features such as smooth, scaled skin, fins and gills, while others exhibit more pronounced characteristics like a fish-shaped head, webbed limbs and an aquatic-adapted body structure.',
-    cards: [POISONOUS, FERAL_INSTINCT, COLD_BLOODED, AMPHIBIAN],
+      'At some point, your ancestor made a pact with celestial beings, forever altering themselves and their descendants. These changes can manifest in various ways. You could have a radiant aura that glows softly, eyes that shine like stars, or skin with a slight, otherworldly luminescence. Some might have hair that seems to shimmer like spun gold or silver, skin marked with faint, glowing runes.', // text-style-ok: the designer's blurb, transcribed
+    cards: [SPROUT_WINGS, INNATE_LIGHT],
   },
 
   {
     id: 'infernal',
     name: 'Infernal',
     tagline: 'An ancestor’s bargain with infernal entities, still being paid.',
-    art: null,
+    art: 'codex:lineages/infernal.full.jpg',
     tags: ['planar', 'flight', 'spellcasting'],
     blurb:
-      'At some point, your ancestor made a deal with infernal entities, forever changing themselves and their descendants. These changes can manifest in various ways. You could have horns of varying shapes and sizes, unusual skin colors like deep red, ash gray or even black. Others could have tails, pointed ears or hair that seems to smolder like embers.',
+      'At some point, your ancestor made a deal with infernal entities, forever changing themselves and their descendants. These changes can manifest in various ways. You could have horns of varying shapes and sizes, unusual skin colors like deep red, ash gray, or even black. Others could have tails, pointed ears, or hair that seems to smolder like embers.', // text-style-ok: the designer's blurb, transcribed
+    cards: [SPROUT_WINGS, INNATE_SHADOW],
+  },
+
+  {
+    id: 'fey',
+    name: 'Fey',
+    tagline: 'Born of enchanted glades: small, winged and always aloft.',
+    art: 'codex:lineages/fey.full.jpg',
+    tags: ['fey', 'flight'],
+    blurb:
+      'From living in the heart of enchanted forests and ancient glades, your ancestors have established a deep connection with the realm of the fey. This mystical bond has significantly altered your appearance. You have a smaller stature, delicate wings reminiscent of butterflies or dragonflies. Some might have hair adorned with tiny flowers or leaves, or skin that glows faintly in the dark.',
     cards: [
-      own('Infernal', {
-        id: 'infernal-wings',
-        name: 'Infernal Wings',
-        summary: 'Wings once a long rest: an hour of flight at your Movement Speed.',
-        kind: 'ability',
-        ap: 2,
+      own('Fey', {
+        id: 'fey-blood',
+        name: 'Fey Blood',
+        summary: 'Permanent flight, paid for with 7 Health per level instead of 10.',
+        /* The flight is the table's, because nothing on this sheet knows how high
+           anything is. The price is the sheet's: 7 a level rather than 10 is the
+           one grant that moves a *rate*, and a Fey at level 3 with Physique 6
+           reads 42 Health rather than 90. See healthRate in characterModel.js. */
+        grants: { healthPerLevel: 7 },
         body:
-          'Once after a long rest, you can manifest Infernal wings for 1 hour.\n\nWhile the wings last, you can fly at a speed equal to your Movement Speed.',
-      }),
-      own('Infernal', {
-        id: 'dark-bargain',
-        name: 'Dark Bargain',
-        summary: 'You learn Dark Bargain, and its first two overcasts are free each long rest.',
-        choice: CASTING_ABILITY,
-        body:
-          'You learn the Dark Bargain spell, cast with {choice}.\n\nYour first two overcasts of this spell are free after a long rest; this increases to the first four at level 10.',
+          'You permanently gain the ability to fly.\n\n' +
+          'However, you gain 7 Health per level in Fortitude and {physique} instead of 10.',
       }),
     ],
-  },
-
-  {
-    id: 'luminary',
-    name: 'Luminary',
-    /* A card that says "your Mind increases by +1" has to actually raise it.
-       Declared here as well as printed on the card, because the sheet cannot
-       read prose: levelPicks.js adds these on top of base, the level-1 spread
-       and every odd level's point. */
-    attributes: { mind: 1 },
-    tagline: 'A line that prized learning, and bred quicker minds for it.',
-    art: null,
-    tags: ['folk', 'attribute'],
-    blurb:
-      'Hailing from a lineage that prioritizes education, the Luminary lineage boasts individuals with quicker minds than most. These ancestors valued knowledge and intellectual growth, passing down a legacy of sharp wit and keen intellect.',
-    cards: [
-      own('Luminary', {
-        id: 'quick-mind',
-        name: 'Quick Mind',
-        summary: 'Mind +1.',
-        body: 'Your {mind} increases by +1.',
-      }),
-    ],
-  },
-
-  {
-    id: 'muckborn',
-    name: 'Muckborn',
-    tagline: 'Exoskeletal stock: climbs walls, and should not be bitten.',
-    art: null,
-    tags: ['beastkin'],
-    blurb:
-      'The evolution that influenced your lineage has taken an unusual route, maintaining traits of exoskeleton-bearing beings not typically observed in other races. Your appearance can vary extensively. Some may exhibit minor features such as a segmented body, multiple limbs and exoskeletal elements, while others display more prominent characteristics like antennae, chitinous shells and an adaptable, flexible form.',
-    cards: [
-      own('Muckborn', {
-        id: 'sticky',
-        name: 'Sticky',
-        summary: 'You can walk on walls and ceilings.',
-        body: 'You can walk on walls and ceilings.',
-      }),
-      COLD_BLOODED,
-      POISONOUS,
-    ],
-  },
-
-  {
-    id: 'scaleborn',
-    name: 'Scaleborn',
-    tagline: 'Reptilian stock: tough, venomous and slow to anger.',
-    art: null,
-    tags: ['beastkin', 'resilience'],
-    blurb:
-      'The evolution that directed your lineage has carved a unique path, preserving features of scaled creatures not often seen in other races. Your appearance can vary greatly. Some may retain subtle traits such as scales, slit pupils and a cold-blooded nature, while others possess more pronounced characteristics like reptilian head shapes, tails and a robust, scaly physique.',
-    cards: [RESILIENCE, POISONOUS, COLD_BLOODED],
   },
 
   {
     id: 'scorchbound',
     name: 'Scorchbound',
     tagline: 'Raised beside the fire, and carrying some of it.',
-    art: null,
+    art: 'codex:lineages/scorchbound.full.jpg',
     tags: ['elemental', 'spellcasting'],
     blurb:
-      'From living in proximity to a volcano or other natural source of heat, your ancestors have established a deep connection with the element of fire. This elemental bond has significantly altered your appearance. You could have ashen skin, red eyes, fiery hair or even glowing ember-like freckles. Some might have hair that flickers like flames or eyes that smolder with an inner heat.',
+      'From living in proximity to a volcano or other natural source of heat, your ancestors have established a deep connection with the element of fire. This elemental bond has significantly altered your appearance. You could have ashen skin, red eyes, fiery hair, or even glowing ember-like freckles. Some might have hair that flickers like flames or eyes that smolder with an inner heat.', // text-style-ok: the designer's blurb, transcribed
     cards: [
       own('Scorchbound', {
-        id: 'furnace-heart',
-        name: 'Furnace Heart',
-        summary: 'Once a round, burn health for 2 Reaction Points.',
+        id: 'living-furnace',
+        name: 'Living Furnace',
+        kind: 'ability',
+        ap: 2,
+        /* "Once this ability is used you need to take a long rest before you can
+           do it again." One use, filled by the Long Rest. See uses.js. */
+        uses: 1,
+        recharge: 'Long Rest',
+        summary: 'Spend up to your level in Willpower to regain 10, plus 5 for each point.',
         body:
-          'Once per round, you can burn health equal to 5 + your level to gain 2 Reaction Points.',
+          'You let fire rage in your core. Spend up to your level in Willpower.\n\n' +
+          'You regain 10 + 5 for each Willpower spent.\n\n' +
+          'Once this ability is used you need to take a Long Rest before you can do it again.',
       }),
-      own('Scorchbound', {
-        id: 'produce-fire',
-        name: 'Produce Fire',
-        summary: 'You learn Produce Fire, and its first overcast is free each long rest.',
-        choice: CASTING_ABILITY,
-        body:
-          'You learn the Produce Fire spell, cast with {choice}.\n\nYour first overcast of this spell is free after a long rest; this increases to the first two at level 10.',
-      }),
+      INNATE_FIRE,
     ],
   },
 
@@ -383,89 +599,23 @@ export const LINEAGES = [
     id: 'skybound',
     name: 'Skybound',
     tagline: 'Open plains and high peaks. The wind never quite let go.',
-    art: null,
+    art: 'codex:lineages/skybound.full.jpg',
     tags: ['elemental', 'movement', 'spellcasting'],
     blurb:
-      'From living in open plains or atop high mountains, your ancestors have established a deep connection with the element of wind. This elemental bond has significantly altered your appearance. You could have light, almost translucent skin, hair that flows like the wind, piercing sky-blue eyes or even skin that seems to be in constant motion. Some might have eyes that change color with the weather or hair that whispers like the breeze.',
+      'From living in open plains or atop high mountains, your ancestors have established a deep connection with the element of wind. This elemental bond has significantly altered your appearance. You could have light, almost translucent skin, hair that flows like the wind, piercing sky-blue eyes, or even skin that seems to be in constant motion. Some might have eyes that change color with the weather or hair that whispers like the breeze.', // text-style-ok: the designer's blurb, transcribed
     cards: [
-      own('Skybound', {
-        id: 'windborn-stride',
-        name: 'Windborn Stride',
-        summary: 'Movement Speed +2.',
-        body: 'Your Movement Speed is increased by +2.',
-      }),
       own('Skybound', {
         id: 'wind-grace',
         name: 'Wind Grace',
-        summary: 'Once a turn, your next Move Action costs no Action Points.',
-        kind: 'ability',
-        wp: 1,
-        body: 'Once per turn, you can make your next Move Action cost no Action Points.',
+        summary: 'Movement Speed +1.5 meters.',
+        /* And the tile moves. "Permanently increased by 1.5 meters" names a
+           number this sheet holds, so it is declared here as well as printed,
+           which is the same trade STRONG's Physique made. See
+           `lineageGrantSources` below. */
+        grants: { speed: 1.5 },
+        body: 'Your Movement Speed is permanently increased by **1.5 meters (5 feet)**.',
       }),
-      own('Skybound', {
-        id: 'gravity-control',
-        name: 'Gravity Control',
-        summary: 'You learn Gravity Control, and its first two castings are free each long rest.',
-        choice: CASTING_ABILITY,
-        body:
-          'You learn the Gravity Control spell, cast with {choice}.\n\nYour first two castings of this spell are free after a long rest; this increases to the first four at level 10.',
-      }),
-    ],
-  },
-
-  {
-    id: 'slickborn',
-    name: 'Slickborn',
-    tagline: 'Amphibian stock: quick, slick and hard to hold.',
-    art: null,
-    tags: ['beastkin', 'aquatic', 'movement'],
-    blurb:
-      'The evolution that shaped your lineage has taken a unique path, preserving animalistic characteristics not typically found in other races. As descendants of amphibians, your appearance can vary widely. Some may retain subtle traits such as slick skin, large eyes and gills, while others exhibit more pronounced features like a frog-shaped head and distinct morphologies.',
-    cards: [LIGHT_BODY, POISONOUS, COLD_BLOODED, AMPHIBIAN],
-  },
-
-  {
-    id: 'stalwart',
-    name: 'Stalwart',
-    attributes: { physique: 1 },
-    tagline: 'Bred by harsh country into something harder than most.',
-    art: null,
-    tags: ['folk', 'attribute'],
-    blurb:
-      'Descended from ancestors who thrived in harsh environments, the Stalwart lineage embodies physical resilience. Their bodies, tested by the elements, result in individuals more physically imposing than typical for their race.',
-    cards: [
-      own('Stalwart', {
-        id: 'hardened-frame',
-        name: 'Hardened Frame',
-        summary: 'Physique +1.',
-        body: 'Your {physique} increases by +1.',
-      }),
-    ],
-  },
-
-  {
-    id: 'stonebound',
-    name: 'Stonebound',
-    tagline: 'Deep forest and deeper mountain. The earth answers you.',
-    art: null,
-    tags: ['elemental', 'spellcasting'],
-    blurb:
-      'From living in the depths of forests or within the mountains, your ancestors have established a deep connection with the element of earth. This elemental bond has significantly altered your appearance. You could have rugged, stone-like skin, mossy hair, eyes that shimmer like precious gems or even hair resembling gemstones. Some might have bark-like skin patterns or eyes that sparkle like crystals.',
-    cards: [
-      own('Stonebound', {
-        id: 'stoneskin',
-        name: 'Stoneskin',
-        summary: 'Defense +1.',
-        body: 'Your Defense increases by +1.',
-      }),
-      own('Stonebound', {
-        id: 'stone-shape',
-        name: 'Stone Shape',
-        summary: 'You learn Stone Shape, and its first overcast is free each long rest.',
-        choice: CASTING_ABILITY,
-        body:
-          'You learn the Stone Shape spell, cast with {choice}.\n\nYour first overcast of this spell is free after a long rest; this increases to the first two at level 10.',
-      }),
+      INNATE_WIND,
     ],
   },
 
@@ -473,52 +623,112 @@ export const LINEAGES = [
     id: 'tidebound',
     name: 'Tidebound',
     tagline: 'Raised by water, and never entirely out of it.',
-    art: null,
+    art: 'codex:lineages/tidebound.full.jpg',
     tags: ['elemental', 'spellcasting'],
     blurb:
-      'From living near oceans, rivers or other natural sources of water, your ancestors have established a deep connection with the element of water. This elemental bond has significantly altered your appearance. You could have smooth, blue-tinged skin, flowing hair that moves like water, deep sea-green eyes or even hair resembling seaweed. Some might have skin that shimmers or eyes that change color like the ocean.',
+      'From living near oceans, rivers, or other natural sources of water, your ancestors have established a deep connection with the element of water. This elemental bond has significantly altered your appearance. You could have smooth, blue-tinged skin, flowing hair that moves like water, deep sea-green eyes, or even hair resembling seaweed. Some might have skin that shimmers or eyes that change color like the ocean.', // text-style-ok: the designer's blurb, transcribed
     cards: [
       own('Tidebound', {
-        id: 'rising-tide',
-        name: 'Rising Tide',
-        summary: 'Willpower +1 at every odd level.',
-        body: 'Your Willpower increases by +1 at every odd level.',
+        id: 'inner-tide',
+        name: 'Inner Tide',
+        summary: 'Willpower +4.',
+        /* The maximum, which is what "your Willpower" means everywhere else on a
+           card: SPELLED ARMOR MASTERY says the same four the same way. */
+        grants: { willpowerMax: 4 },
+        body: 'Your Willpower is increased by 4.',
       }),
-      own('Tidebound', {
-        id: 'create-water',
-        name: 'Create Water',
-        summary: 'You learn Create Water, and its first two overcasts are free each long rest.',
-        choice: CASTING_ABILITY,
+      INNATE_WATER,
+    ],
+  },
+
+  {
+    id: 'stonebound',
+    name: 'Stonebound',
+    tagline: 'Deep forest and deeper mountain. The earth answers you.',
+    art: 'codex:lineages/stonebound.full.jpg',
+    tags: ['elemental', 'resilience', 'spellcasting'],
+    blurb:
+      'From living in the depths of forests or within the mountains, your ancestors have established a deep connection with the element of earth. This elemental bond has significantly altered your appearance. You could have rugged, stone-like skin, mossy hair, eyes that shimmer like precious gems, or even hair resembling gemstones. Some might have bark-like skin patterns or eyes that sparkle like crystals.', // text-style-ok: the designer's blurb, transcribed
+    cards: [
+      own('Stonebound', {
+        id: 'mineral-skin',
+        name: 'Mineral Skin',
+        summary: 'Defense +1.',
+        /* Defense, which is how hard you are to hit, and not Armor. SCALEY is the
+           identical card in the Wildkin pool and carries the identical rider. */
+        grants: { defense: 1 },
+        body: 'Your Defense is increased by 1.',
+      }),
+      INNATE_EARTH,
+    ],
+  },
+
+  {
+    id: 'draconic',
+    name: 'Draconic',
+    tagline: 'Dragon blood in the veins, and scales to prove it.',
+    art: 'codex:lineages/draconic.full.jpg',
+    tags: ['planar', 'resilience'],
+    blurb:
+      'Your ancestors got draconic blood mixed in their veins through rituals or other means, forever altering themselves and their descendants. These changes can manifest in various ways. Your body is covered in scales that match the color of the dragon the blood came from, as well as having potential other draconic features ranging from reptilian eyes to dragon-shaped facial features.',
+    cards: [
+      own('Draconic', {
+        id: 'draconic-scales',
+        name: 'Draconic Scales',
+        summary: 'Resistance to one damage type, named by the colour of your scales.',
+        choice: SCALE_COLOUR,
+        /* The first grant in the codex whose value is the holder's own answer.
+           Every other one is a constant on the card, and this one cannot be: the
+           type is the colour of the scales, picked at level 1 and stored in
+           `choices`. Resolved by `answered` below, beside the one function that
+           reads a lineage answer. */
+        grants: { resist: 'choice' },
         body:
-          'You learn the Create Water spell, cast with {choice}.\n\nYour first two overcasts of this spell are free after a long rest; this increases to the first four at level 10.',
+          'You gain resistance to {choice} damage.\n\n' +
+          'Your scales say which: red is {damage:Fire}, white {damage:Cold}, blue {damage:Lightning}, black {damage:Decay}, purple {damage:Psychic} and yellow {damage:Sacred}.',
+      }),
+      own('Draconic', {
+        /* Not `dragon-breath`: the Draconic Bond's Adept ability already holds
+           that id, and this card is the same effect rewritten for the player
+           rather than the ally. See "one id had to change" in the header. */
+        id: 'dragon-breath-lineage',
+        name: 'Dragon Breath',
+        kind: 'ability',
+        ap: 4,
+        wp: 2,
+        summary: 'A 6-meter cone: 2d6 + twice your highest Attribute, in your scale colour.',
+        /* "Highest Attribute" twice over in the designer's cell, so this card is
+           written off {stat} like every other and its stat is the rule rather
+           than a key: it prints the attribute its holder actually stands highest
+           in, and the damage that attribute buys. See castStat in cardText.js. */
+        stat: HIGHEST,
+        body:
+          'You breathe a torrent of magical energy in front of you, affecting all in a **6-meter (20-foot)** cone.\n\n' +
+          'You make a {stat} Roll {roll} against the entity’s Reflex.\n\n' +
+          'On a success, it deals [[2d6 + 2*stat]] damage in your {{Draconic Scales}} colour.',
       }),
     ],
   },
 
   {
-    id: 'undead',
-    name: 'Undead',
-    tagline: 'Cursed with undeath: very hard to kill, and slow to mend.',
-    art: null,
-    tags: ['cursed', 'resilience'],
+    id: 'stalwart',
+    name: 'Stalwart',
+    /* A card that says "your Physique is increased by 1" has to actually raise
+       it. Declared here as well as printed on the card, because the sheet cannot
+       read prose: levelPicks.js adds these on top of base, the level-1 spread
+       and every odd level's point. */
+    attributes: { physique: 1 },
+    tagline: 'Bred by harsh country into something harder than most.',
+    art: 'codex:lineages/stalwart.full.jpg',
+    tags: ['folk', 'attribute'],
     blurb:
-      'Regardless of your lineage’s origins, it has been cursed with undeath, bestowing upon you remarkable resilience but at the expense of a slow metabolism. This curse has left its mark on your appearance, which can range from pale skin and a malnourished look to a skeletal visage. The curse of undeath has made you unnaturally hard to kill but has also altered your physical appearance.',
+      'Descended from ancestors who thrived in harsh environments, the Stalwart lineage embodies physical resilience. Their bodies, tested by the elements, result in individuals more physically imposing than typical for their race.',
     cards: [
-      own('Undead', {
-        id: 'undying',
-        name: 'Undying',
-        summary: '8 health per point instead of 5, but reaching 0 kills you outright.',
-        body:
-          'You gain 8 health per point in Fortitude and {physique} instead of 5.\n\nHowever, if your health reaches 0, you instantly die.\n\nLong rests restore only a quarter of your health, and short rests restore none.', // text-style-ok: joins two clauses
-      }),
-      own('Undead', {
-        id: 'corpse-feed',
-        name: 'Feed',
-        summary: 'Once a short rest, feed on a fresh corpse to regain a quarter of your health.',
-        kind: 'ability',
-        ap: 6,
-        body:
-          'You feed on a fresh corpse, regaining a quarter of your health.\n\nThis can be used once per short rest.',
+      own('Stalwart', {
+        id: 'strong',
+        name: 'Strong',
+        summary: 'Physique +1.',
+        body: 'Your {physique} is increased by 1.',
       }),
     ],
   },
@@ -528,30 +738,152 @@ export const LINEAGES = [
     name: 'Wildheart',
     attributes: { instinct: 1 },
     tagline: 'A simple life close to nature, and the instincts it leaves.',
-    art: null,
+    art: 'codex:lineages/wildheart.full.jpg',
     tags: ['folk', 'attribute'],
     blurb:
       'Your ancestors lived a simple life close to nature, allowing you to retain a deep connection to the primal part of yourself. This lineage grants you good instincts and sharp reflexes, honed by generations of living in harmony with the wild.',
     cards: [
       own('Wildheart', {
-        id: 'primal-instincts',
-        name: 'Primal Instincts',
+        id: 'instinctual',
+        name: 'Instinctual',
         summary: 'Instinct +1.',
-        body: 'Your {instinct} increases by +1.',
+        body: 'Your {instinct} is increased by 1.',
       }),
     ],
   },
+
+  {
+    id: 'luminary',
+    name: 'Luminary',
+    attributes: { mind: 1 },
+    tagline: 'A line that prized learning, and bred quicker minds for it.',
+    art: 'codex:lineages/luminary.full.jpg',
+    tags: ['folk', 'attribute'],
+    blurb:
+      'Hailing from a lineage that prioritizes education, the Luminary lineage boasts individuals with quicker minds than most. These ancestors valued knowledge and intellectual growth, passing down a legacy of sharp wit and keen intellect.',
+    cards: [
+      own('Luminary', {
+        id: 'intelligent',
+        name: 'Intelligent',
+        summary: 'Mind +1.',
+        body: 'Your {mind} is increased by 1.',
+      }),
+    ],
+  },
+
+  {
+    id: 'undead',
+    name: 'Undead',
+    tagline: 'Cursed with undeath: very hard to kill, and slow to mend.',
+    art: 'codex:lineages/undead.full.jpg',
+    tags: ['cursed', 'resilience'],
+    blurb:
+      'Regardless of your lineage’s origins, it has been cursed with undeath, bestowing upon you remarkable resilience but at the expense of a slow metabolism. This curse has left its mark on your appearance, which can range from pale skin and a malnourished look to a skeletal visage. The curse of undeath has made you unnaturally hard to kill but has also altered your physical appearance.',
+    cards: [
+      own('Undead', {
+        id: 'undeath-resilience',
+        name: 'Undeath Resilience',
+        summary: '15 Health per level instead of 10, and rests barely mend you.',
+        /* Both halves are riders, and they are the largest pair in the codex. The
+           rate is 15 rather than 10, worth 45 Health to a level-3 Undead with a
+           Physique of 6; `restHealth` is the other half, and it is the only thing
+           in the game that takes a *rest* away rather than a number. See
+           healthRate in characterModel.js and restHealth in rest.js. */
+        grants: { healthPerLevel: 15, restHealth: { short: 'none', long: 'half' } },
+        body:
+          'You gain 15 Health per level in Fortitude and {physique} instead of 10.\n\n' +
+          'However Short Rests no longer restore Health, and Long Rests only let you regain half your maximum Health.', // text-style-ok: joins two clauses
+      }),
+      own('Undead', {
+        id: 'cannibalism',
+        name: 'Cannibalism',
+        kind: 'ability',
+        ap: 6,
+        wp: 6,
+        /* "Once used you need to take a long rest before you can use it again."
+           One use, filled by the Long Rest. See uses.js. */
+        uses: 1,
+        recharge: 'Long Rest',
+        summary: 'Feast on a fresh corpse for half your maximum Health, once a Long Rest.',
+        body:
+          'You can feast on a fresh organic dead body to regain half your maximum Health.\n\n' +
+          'Once used you need to take a Long Rest before you can use it again.',
+      }),
+    ],
+  },
+
+  {
+    id: 'wildkin',
+    name: 'Wildkin',
+    tagline: 'A primal bond with the beasts, and two traits of your choosing.',
+    art: 'codex:lineages/wildkin.full.jpg',
+    tags: ['beastkin'],
+    blurb:
+      'At some point, your ancestors forged a primal bond with the beasts of the wild, forever altering themselves and their descendants. These changes can manifest in various ways. You could have prominent traits like animal ears, a sleek tail, sharp claws, or patches of soft fur, feathers, or fine scales. Some might have striking feline, avian, or reptilian eyes, elongated fangs, or hair that resembles a wild mane or feathered crest.', // text-style-ok: the designer's blurb, transcribed
+    /* The only ancestry that hands over a pool instead of a hand. `cards` stays
+       empty: what a Wildkin holds is the two they kept, which lineageCards
+       reads back out of the character. */
+    pool: WILDKIN_POOL,
+    cards: [],
+  },
 ];
+
+/* ------------------------------------------------------------- wearing the art
+
+   The one step between the codex above and every reader of it, and the reason
+   `npm run art:cards` can finally place a lineage picture at all.
+
+   It has to happen *once*, on objects everybody shares. A lineage hands the same
+   card out twice — on `lineage.cards` and again, flattened, in the registry — and
+   until 2026-08-21 this file wrapped neither: `withArt` spreads, so dressing the
+   flattened copy would have given the picture to `getCard` and left the sheet's
+   own card bare. That is what pull-card-art.mjs meant by "better reported than
+   half-placed", and why every lineage file was skipped.
+
+   So the dressing is done first, on one deduplicated list, and both the registry
+   and the thirteen ancestries are rebuilt to point at *those* objects. A card two
+   ancestries share is still one object, which is what keeps their wording from
+   drifting, and a pool's eight are dressed with the rest: a Wildkin's kept two
+   are cards like any other and their briefs draw the same plate. */
+
+const DRESSED = new Map(
+  withArt([
+    ...new Map(
+      LINEAGE_CODEX.flatMap((lineage) => [
+        ...lineage.cards,
+        ...(lineage.pool?.options ?? []),
+      ]).map((card) => [card.id, card])
+    ).values(),
+  ]).map((card) => [card.id, card])
+);
+
+/** The dressed card for one authored card. Throws rather than losing a picture. */
+function dressed(card) {
+  const worn = DRESSED.get(card.id);
+  if (!worn) throw new Error('lineages.js: ' + card.id + ' was never dressed');
+  return worn;
+}
+
+/** The thirteen ancestries as everything else sees them. */
+export const LINEAGES = LINEAGE_CODEX.map((lineage) => ({
+  ...lineage,
+  cards: lineage.cards.map(dressed),
+  ...(lineage.pool
+    ? { pool: { ...lineage.pool, options: lineage.pool.options.map(dressed) } }
+    : null),
+}));
 
 /* ------------------------------------------------------------------ lookups */
 
 /**
- * Every lineage card, flat and deduplicated — a shared trait is one object
- * referenced by several ancestries, so the registry must not list it twice.
+ * Every lineage card, flat and deduplicated — a shared card is one object
+ * referenced by two ancestries, so the registry must not list it twice.
+ *
+ * A pool's options are cards in their own right and belong here whether or not
+ * anybody picked them, or a Wildkin's two would be the only cards on the sheet
+ * that no link could resolve and no pile could deal.
  */
-export const LINEAGE_CARDS = [
-  ...new Map(LINEAGES.flatMap((lineage) => lineage.cards).map((card) => [card.id, card])).values(),
-];
+export const LINEAGE_CARDS = [...DRESSED.values()];
 
 const BY_ID = new Map(LINEAGES.map((lineage) => [lineage.id, lineage]));
 const BY_NAME = new Map(LINEAGES.map((lineage) => [lineage.name.toLowerCase(), lineage]));
@@ -568,6 +900,205 @@ export function getLineage(key) {
   const word = String(key).trim().toLowerCase();
   if (!word) return null;
   return BY_ID.get(word) ?? BY_NAME.get(word) ?? null;
+}
+
+/**
+ * Which cards of a pool this character kept, in the pool's own order.
+ *
+ * Stored in the `choices` bag under the pool's id, as a list of card ids. That
+ * bag is already "what this lineage left to you", and a list in it needs no new
+ * column: every other reader looks up `choices[card.id]`, and a pool's id is not
+ * a card's.
+ */
+export function poolPicks(lineage, choices) {
+  const pool = lineage?.pool;
+  if (!pool) return [];
+  const kept = new Set(
+    (Array.isArray(choices?.[pool.id]) ? choices[pool.id] : []).map((id) => String(id))
+  );
+  return pool.options.filter((card) => kept.has(card.id)).slice(0, pool.picks);
+}
+
+/** What this character answered on a card that asks, or null while it is open. */
+export function answerOn(card, choices) {
+  if (!card?.choice) return null;
+  return card.choice.options.find((option) => option.id === choices?.[card.id]) ?? null;
+}
+
+/**
+ * The spell an answered card hands over, or null while the question is open.
+ *
+ * Only the Innate cards hand one over, and only once they have been answered.
+ * A card whose choice is a word rather than a card answers nothing here.
+ */
+export function learnedFrom(card, choices) {
+  if (!card?.choice?.learns) return null;
+  return answerOn(card, choices)?.card ?? null;
+}
+
+/**
+ * The cards this character actually holds from their ancestry, each with what
+ * their blood does to it.
+ *
+ * The same as `lineage.cards` for twelve of the thirteen. A Wildkin's hand is
+ * the two they took out of the pool, so every surface that prints "what your
+ * blood carries" goes through here rather than reading `cards` directly.
+ *
+ * And a card that teaches a spell hands the spell over as a card of its own,
+ * right behind the one that taught it. "You permanently learn a Novice Fire
+ * Spell" is a promise until the spell itself is on the sheet: this is where a
+ * Scorchbound's Cloak of Flames becomes something they can read, deal and cast
+ * rather than a sentence about a spell they chose once.
+ *
+ * A `{ card, modifiers }` row rather than a bare card, the same shape the
+ * Abilities tab prints, and the rider is the whole reason for it. A trait whose
+ * question has been answered prints the answer; a spell handed over by INNATE X
+ * is cast with the highest Attribute rather than the Mind the codex printed it
+ * for. Both are things the *source* does to a card, so both are settled here
+ * once rather than by each surface that shows them.
+ */
+export function lineageCards(lineage, choices) {
+  if (!lineage) return [];
+  const held = lineage.pool ? poolPicks(lineage, choices) : lineage.cards;
+  return held.flatMap((card) => {
+    const answer = answerOn(card, choices);
+    const mine = { card, modifiers: answer ? { choice: answer } : null };
+    const learned = learnedFrom(card, choices);
+    return learned ? [mine, { card: learned, modifiers: castModifier(card.choice) }] : [mine];
+  });
+}
+
+/**
+ * What this character's blood does to the sheet's own numbers, one row per card
+ * that does anything, named after the card.
+ *
+ * A lineage card has always said its piece in prose and left the sheet to print
+ * it and nothing else: WIND GRACE read "+1.5 meters" and the Speed tile never
+ * moved. `grants` is that sentence written as a number, carried on the card that
+ * prints it, so the two can never drift apart.
+ *
+ * Named after the card rather than the ancestry, because the card is the thing a
+ * reader can go and look at. A Skybound's Speed hovers to `3 base + 2 half your
+ * Instinct + 1.5 Wind Grace`, not to `1.5 Skybound`.
+ *
+ * The rows come back in the shape `grantTerms` in statMath.js already draws an
+ * enchantment with, which is why that file can hand these to it unchanged.
+ *
+ * **Attributes are not in here.** A lineage's three attribute grants are the
+ * level ledger's, declared on the ancestry as `attributes` and rebuilt by
+ * `reapplyTotals` into the stored columns. A card that raised one from here
+ * would raise it twice.
+ *
+ * A Wildkin's hand is the two they kept, so this reads `lineageCards` rather
+ * than `lineage.cards`: a pool card with a rider is worth nothing until it has
+ * been taken, and worth its rider the moment it is.
+ */
+export function lineageGrantSources(key, choices) {
+  const lineage = getLineage(key);
+  if (!lineage) return [];
+
+  return lineageCards(lineage, choices)
+    .map(({ card }) => card)
+    .filter((card) => card.grants)
+    .map((card) => ({ name: card.name, ...answered(card, choices) }));
+}
+
+/**
+ * One card's grants with its own answer filled in, where the card asked for one.
+ *
+ * DRACONIC SCALES is the whole of it: "You gain resistance to {choice} damage",
+ * and the type is the colour of the scales its holder picked. So its grant is
+ * written `resist: 'choice'` rather than a list, and the answer is looked up
+ * here, beside `answerOn`, which is the one place a lineage answer is read.
+ *
+ * A card that asked and has not been answered grants nothing rather than
+ * guessing a type: an unanswered choice is a blank on the sheet, and every other
+ * reader of one treats it the same way. See levelPicks.js.
+ */
+function answered(card, choices) {
+  if (card.grants?.resist !== 'choice' && card.grants?.vulnerable !== 'choice') return card.grants;
+
+  const type = answerOn(card, choices)?.damage ?? null;
+  const filled = { ...card.grants };
+  for (const field of ['resist', 'vulnerable']) {
+    if (filled[field] === 'choice') filled[field] = type ? [type] : [];
+  }
+  return filled;
+}
+
+/**
+ * The same rows summed per field, which is the shape `deriveStats` reads.
+ *
+ * Whatever a card declares lands in the map whether or not anything reads it
+ * yet, so wiring the next one is a `grants` on the card and, if the stat is not
+ * already summed through `flat`, one word where it is. Six ride it today: WIND
+ * GRACE and WILD SWIFTNESS a Speed each, MINERAL SKIN and SCALEY a Defense,
+ * INNER TIDE a Willpower, and the three rate cards their Health per level.
+ *
+ * **Only the flat fields are summed here.** A rate is not a lump — two cards
+ * saying "instead of 10" do not make 27 — and `restHealth` is not a number at
+ * all. Both come off the *rows* instead, through `healthRate` and `restHealth`,
+ * so the sum this hands back stays what `flat` can add up. Anything that is not
+ * a finite number is skipped rather than coerced to a zero that would read as a
+ * declared nothing.
+ */
+export function lineageGrants(key, choices) {
+  return sumGrants(lineageGrantSources(key, choices));
+}
+
+/**
+ * What this character's blood adds to a weapon attack, one row per card that
+ * adds anything.
+ *
+ * The other half of `lineageGrantSources` above, and the split is riders.js's
+ * own: a `grants` names a number the *sheet* holds and lands in `deriveStats`, a
+ * `swing` names one the *attack* carries and lands in `attackModifiers`. Nothing
+ * in between, and no card carries both.
+ *
+ * One card rides it: VENOMOUS, whose extra 1d4 of Decay is a whole throw of a
+ * type the weapon does not deal. It could never be a `grants` — there is no
+ * column for it — and it could never be an Empower either, because Empowered
+ * adds a die of the kind already being rolled and this one is Decay whatever the
+ * blade is made of.
+ *
+ *   [{ from: 'Venomous', card: 'venomous', dice: '1d4', damage: 'Decay' }]
+ *
+ * `from` is the card a reader can go and look up, which is what every receipt in
+ * attribution.js is named after, and `card` is what opens it.
+ *
+ * Reads `lineageCards` rather than `lineage.cards` for the reason the grants do:
+ * a Wildkin's hand is the two they kept, and a pool card is worth its rider the
+ * moment it is taken and nothing at all before.
+ */
+export function lineageSwing(key, choices) {
+  const lineage = getLineage(key);
+  if (!lineage) return [];
+
+  return lineageCards(lineage, choices)
+    .map(({ card }) => card)
+    .filter((card) => card.swing?.dice)
+    .map((card) => ({ from: card.name, card: card.id, ...card.swing }));
+}
+
+/** How many of a pool's picks are still outstanding. Zero when there is no pool. */
+export function openPicks(lineage, choices) {
+  if (!lineage?.pool) return 0;
+  return Math.max(0, lineage.pool.picks - poolPicks(lineage, choices).length);
+}
+
+/**
+ * Keep or drop one of a pool's cards, and hand back the whole list.
+ *
+ * Taking a third when two are already kept drops the one kept longest, so a
+ * pick never has to be cleared before it can be changed.
+ */
+export function togglePoolPick(lineage, choices, cardId) {
+  const pool = lineage?.pool;
+  if (!pool) return [];
+  const held = (Array.isArray(choices?.[pool.id]) ? choices[pool.id] : []).map((id) => String(id));
+  const known = held.filter((id) => pool.options.some((card) => card.id === id));
+  if (known.includes(cardId)) return known.filter((id) => id !== cardId);
+  return [...known, cardId].slice(-pool.picks);
 }
 
 /** Tag descriptors for the ids a lineage lists, in the codex's own order. */

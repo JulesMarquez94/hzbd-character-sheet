@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import Modal from '../Modal.jsx';
+import { Gated } from './parts.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { feralState, setFeralIdentity } from '../../lib/feral.js';
+import PortraitField from '../images/PortraitField.jsx';
 
 /**
  * Naming the thing a Feral Curse turns you into, and saying what it is.
@@ -38,6 +40,22 @@ export function FeralWindow({ character, form, patch, readOnly = false, onClose 
 
   const write = (body) => patch(setFeralIdentity(character, form.id, body));
 
+  /* What the form is still short of, and what shuts Done until it has it. The
+     same law the creature window keeps, asked for on 2026-09-10: a question the
+     window granted is answered in the window, before it will call itself done.
+
+     Both halves matter here. Without a beast BEAST WITHIN has nothing to say
+     it manifests as, and without a name the block on the Character tab has no
+     heading. The two are what `feralSettled` counts, which is what badges the
+     Advancement tab, so the gate and the badge are the same question. */
+  const wants = [];
+  if (!form.chosen) wants.push('say what carnivore it is');
+  if (!form.named) wants.push('give it a name');
+  const shut =
+    readOnly || wants.length === 0
+      ? null
+      : `Still to do: ${wants.join(' and ')}. Answer that above and this closes.`;
+
   return (
     <Modal
       title={form.named ? form.name : `Your ${spec.label}`}
@@ -45,10 +63,13 @@ export function FeralWindow({ character, form, patch, readOnly = false, onClose 
       accent={PICK_ACCENTS.talent}
       footer={
         <>
+          <span className={`pick-count${wants.length > 0 ? ' is-open' : ''}`}>
+            {wants.length > 0 ? `${wants.length} still open` : 'Nothing left to answer'}
+          </span>
           <span className="spacer" />
-          <button type="button" className="btn btn-take btn-sm" onClick={onClose}>
+          <Gated className="btn btn-take btn-sm" why={shut} onClick={onClose}>
             Done
-          </button>
+          </Gated>
         </>
       }
     >
@@ -57,44 +78,28 @@ export function FeralWindow({ character, form, patch, readOnly = false, onClose 
         block of its own on your Character tab.
       </p>
 
-      <div className="minion-editor">
-        <div className="minion-portrait">
-          {form.portrait_url ? (
-            <img src={form.portrait_url} alt="" />
-          ) : (
-            <span className="muted">No picture</span>
-          )}
-        </div>
+      <label className="form-label" htmlFor="feral-name">
+        Name
+      </label>
+      <input
+        className="form-input"
+        id="feral-name"
+        readOnly={readOnly}
+        value={form.name}
+        placeholder="What do you call it?"
+        maxLength={60}
+        onChange={(event) => write({ name: event.target.value })}
+      />
 
-        <div className="minion-fields">
-          <label className="form-label" htmlFor="feral-name">
-            Name
-          </label>
-          <input
-            className="form-input"
-            id="feral-name"
-            readOnly={readOnly}
-            value={form.name}
-            placeholder="What do you call it?"
-            maxLength={60}
-            onChange={(event) => write({ name: event.target.value })}
-          />
-
-          <label className="form-label" htmlFor="feral-art" style={{ marginTop: '1rem' }}>
-            Picture URL
-          </label>
-          <input
-            className="form-input"
-            id="feral-art"
-            readOnly={readOnly}
-            value={form.portrait_url ?? ''}
-            placeholder="https://…/wolf.png"
-            onChange={(event) => write({ portrait_url: event.target.value })}
-          />
-          <p className="form-hint">
-            Paste a link to any image, the same as a portrait. Its block draws it square.
-          </p>
-        </div>
+      <div style={{ marginTop: '1rem' }}>
+        <PortraitField
+          label="Picture"
+          view="face"
+          value={form.portrait_url}
+          onChange={(url) => write({ portrait_url: url ?? '' })}
+          readOnly={readOnly}
+          hint="Its block draws it square, so the face is the frame that matters here."
+        />
       </div>
 
       <div className="pick-part">

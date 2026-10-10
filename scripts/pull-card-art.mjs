@@ -37,9 +37,11 @@
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import sharp from 'sharp';
+import { writeArtManifest } from './emit-art-manifest.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DATA = path.join(ROOT, 'data');
@@ -50,6 +52,14 @@ const OUT = path.join(ROOT, 'public', 'cards');
 const TALENT_OUT = path.join(ROOT, 'public', 'talents');
 const TALENT_SIZE = 640;
 const TALENT_QUALITY = 82;
+/* An ancestry plate is the same thing for a lineage: 640 square behind
+   `lineage.art`, drawn on the chooser wall and at the head of its page. Its own
+   folder rather than talents/, because a lineage is not a set and an id could
+   collide with one. */
+const LINEAGE_OUT = path.join(ROOT, 'public', 'lineages');
+/* And the same again for a background: 640 square behind `background.art`, drawn
+   on the trade wall and at the head of its page. */
+const BACKGROUND_OUT = path.join(ROOT, 'public', 'backgrounds');
 
 /* The plate on a dealt card is 360x270 CSS pixels and `background-size: cover`.
    720 is that at 2x, which is as much as any screen can show of it. Quality 78
@@ -116,6 +126,135 @@ const ALIASES = {
      later. Both resolve, and the newest wins — see "one card, two files" below.
      Deleting the older file from the folder retires this entry. */
   'Dragon’s Favor': 'Dragon Favor.jpg',
+
+  /* Five from data/Berserker/, 2026-08-23. Four are spellings the sheet does not
+     use — GOING BERSERK, UNSTOPPABLE and AVATAR OF CARNAGE are each a letter or
+     two out, and `Berserker Rage.jpg` is missing the apostrophe the card prints.
+     That last one is the entry that has to be here rather than left to be
+     noticed: without it the file matches no card, and the plate branch below
+     claims any leftover file whose name starts with the set's, so BERSERKER'S
+     RAGE would quietly overwrite the Berserker's overview plate.
+
+     `Master of Rage.jpg` is the fifth and is a different thing: not a misspelling
+     but another name for the card. The sheet prints MASTER OF PAIN on the Ability
+     tab and in the V4 sheet's own rank list, so the sheet is what the codex
+     follows. Worth asking about, since the picture is the newer artifact. */
+  'Going Berserk': 'Going Bersek.jpg',
+  'Berserker’s Rage': 'Berserker Rage.jpg',
+  'Master of Pain': 'Master of Rage.jpg',
+  Unstoppable: 'Instappable.jpg',
+  'Avatar of Carnage': 'Avatarr of Carnage.jpg',
+
+  /* Two from data/Colossus/, 2026-08-23, and both are plain misspellings:
+     `Matrtial Training.jpg` has a letter too many, and `Paracticed Move.jpg` has
+     one too many and a plural too few. The set's other five files match the names
+     the Ability tab prints, punctuation and case aside, which is all `flatten`
+     asks of them. */
+  'Martial Training': 'Matrtial Training.jpg',
+  'Practiced Moves': 'Paracticed Move.jpg',
+
+  /* Three from data/Ethereal/, 2026-08-25, and the drop's Image column is empty
+     so there is nowhere else for them to be named. `Celestail Edict.jpg` is two
+     letters out of the sheet's CELESTIAL EDICT; the other two are a word short
+     of the name the sheet prints, LIGHTSTRIDER GATEWAY and THEON PERFECT
+     REPLICANTS. The school's other ten match, punctuation and case aside, which
+     is all `flatten` asks of them.
+
+     None of the three can quietly land on something else the way BERSERKER'S
+     RAGE could: Ethereal is not a talent set, so the plate branch has no set to
+     claim a leftover file for. Unaliased they would simply be reported. */
+  'Celestial Edict': 'Celestail Edict.jpg',
+  'Lightstrider Gateway': 'Lightstrider Gate.jpg',
+  'Theon Perfect Replicants': 'Theon Perfect replicant.jpg',
+
+  /* One from data/Shadow/, 2026-08-25, and that drop's Image column is empty as
+     well. `Hauting shadows.jpg` is an n short of HAUNTING SHADOWS.
+
+     The other eleven land without help, including the two that looked like they
+     would not. `Jules Absolute Edict.jpg` matches JULES' ABSOLUTE EDICT because
+     `flatten` drops the apostrophe, and `Cognitive Distortion.jpg` matches
+     because the card is COGNITIVE DISTORTION: the sheet prints "Cognite" and the
+     codex reads it as the word the picture was named for. See "one name" in the
+     Shadow section of spells.js. */
+  'Haunting Shadows': 'Hauting shadows.jpg',
+
+  /* One from data/Time/, 2026-08-25, and a third drop with an empty Image column.
+     `Temporall Collapse.jpg` has an l too many for the sheet's TEMPORAL COLLAPSE,
+     and the sheet is what the codex prints. See "one name" in the Time section of
+     spells.js.
+
+     The other eleven land without help, `TIme Skip.jpg` included: `flatten`
+     lowercases before it compares, so the capital I costs nothing. */
+  'Temporal Collapse': 'Temporall Collapse.jpg',
+
+  /* Two from data/Life/, 2026-08-26, and they are the two different reasons a
+     file ends up here rather than one reason twice.
+
+     `Agony.jpg` is not a misspelling of anything. AGONY is what the sheet and the
+     plate both call the card and EXPOSED NERVES is what Jules renamed it to on the
+     day of the drop, so this is the first entry in the table that records a rename
+     rather than a typo. It is also the trade the STAMPED note in spells.js was
+     written to describe, taken for the first time: one line in the codex, one line
+     here, and the picture keeps its old name on disk.
+
+     `Ressurection.jpg` is the ordinary kind. The sheet's cell spells it REssurection
+     and the file spells it Ressurection, which is two different misspellings of one
+     English word, and the codex prints RESURRECTION. See "the readings" in the Life
+     section of spells.js.
+
+     The other six land without help. */
+  'Exposed Nerves': 'Agony.jpg',
+  Resurrection: 'Ressurection.jpg',
+
+  /* Three from data/Earth/, 2026-08-26, and a fourth drop with an empty Image
+     column. All three are one word joined or split the way the sheet does not
+     join or split it: the sheet prints STONEFLESH and the file is `Stone
+     Flesh.jpg`, the sheet prints EARTHQUAKE and the file is `Earth Quake.jpg`.
+
+     `Aegiis of stone.jpg` is the odd one and is the RESURRECTION case again: the
+     Name cell says "Aegis of Stron" and the picture says "Aegiis", which is two
+     different misspellings of one English phrase rather than a name, so the codex
+     prints AEGIS OF STONE and neither side of the drop matches it.
+
+     The other six land without help, `Mountain s Weight.jpg` included: `flatten`
+     turns the sheet's apostrophe into a space and the file already has one there.
+
+     Nothing in this drop can quietly land on something else the way BERSERKER'S
+     RAGE could. Earth is not a talent set, so the plate branch has no set to claim
+     a leftover file for, and unaliased these three would simply be reported. */
+  Stoneflesh: 'Stone Flesh.jpg',
+  Earthquake: 'Earth Quake.jpg',
+  'Aegis of Stone': 'Aegiis of stone.jpg',
+
+  /* One from data/Storm/, 2026-08-27, and the plainest kind of entry in this
+     table. The picture is `Downpou.jpg` and the sheet prints DOWNPOUR: a dropped
+     letter on the file with nothing wrong with the row. The other two land
+     without help, `Eye of the Storm.jpg` included. */
+  Downpour: 'Downpou.jpg',
+
+  /* Seven from data/Potions/, 2026-08-27, out of twenty four, and they are the
+     widest spread of reasons any one drop has brought.
+
+     Three are plain misspellings of the row beside them: `Draguth of
+     cleansing.jpg` for DRAUGHT OF CLEANSING, `Explosive Concotion.jpg` for
+     EXPLOSIVE CONCOCTION, `Shrinking Elixir.jpg` for SHRINK ELIXIR.
+
+     `Healing.jpg` and `Chaos Potion.jpg` are the file naming the *thing* where the
+     sheet names the row: HEALING POTION and ELIXIR OF CHAOS. `Seafarer
+     elixir.jpg` is the same again with an apostrophe missing, which `flatten`
+     cannot bridge because the codex prints SEAFARER’S ELIXIR and the possessive
+     leaves an s behind.
+
+     `Poison (2).jpg` is the one that is not about spelling at all. It is what a
+     browser calls the second download of one file, and there is no `Poison.jpg`
+     beside it. Renaming it retires this entry, which is true of all seven. */
+  'Draught of Cleansing': 'Draguth of cleansing.jpg',
+  'Explosive Concoction': 'Explosive Concotion.jpg',
+  'Shrink Elixir': 'Shrinking Elixir.jpg',
+  'Healing Potion': 'Healing.jpg',
+  'Elixir of Chaos': 'Chaos Potion.jpg',
+  'Seafarer’s Elixir': 'Seafarer elixir.jpg',
+  Poison: 'Poison (2).jpg',
 };
 
 /**
@@ -127,6 +266,11 @@ const ALIASES = {
  */
 const PLATE_ALIASES = {
   'draconic-bond': 'Draonic Bon Overview.png',
+  /* And `Colossal Overview.jpg` in data/Colossus/, which is the set's plate under
+     the adjective rather than under the set's name. Two letters apart is enough:
+     the folder rule claims a plate by the set's own name, and "colossal" does not
+     start with "colossus". */
+  colossus: 'Colossal Overview.jpg',
 };
 
 /* ----------------------------------------------------------------- the sheets */
@@ -230,19 +374,34 @@ async function cardIds() {
      lives in public/talents/ and this script does not own it. */
   const { INGREDIENTS } = await load('src/lib/ingredients.js');
   const { TALENT_CARDS } = await load('src/lib/talents.js');
+  /* The Martial Moves, so a move named in a sheet's Image column is placed by the
+     link pass like anything else. A file in `data/Martial Move/` does not need this
+     — it resolves against `moveNames`, scoped to the folder — but the two are for
+     two different arrivals and the moves had neither until 2026-09-03. */
+  const { MARTIAL_MOVES } = await load('src/lib/martial.js');
 
-  /* Not the whole of `CARDS`. A lineage trait and a background skill are cards in
-     the registry, but their modules hand the same object out twice — once flattened
-     into LINEAGE_CARDS and once on the lineage itself — so attaching art to the
-     flattened copy alone would give a picture to the codex and not to the sheet.
-     Until those two are wrapped the way talents.js wraps its sets, a file named for
-     one is better reported than half-placed. */
+  /* Not the whole of `CARDS`, and the two that are missing are missing for two
+     different reasons now.
+
+     A background skill is the old one: backgrounds.js hands the same object out
+     twice, once flattened into BACKGROUND_CARDS and once on the background, and
+     `withArt` spreads, so dressing the flattened copy would give the picture to the
+     codex and not to the sheet. Until it is wrapped the way talents.js wraps its
+     sets, a file named for one is better reported than half-placed.
+
+     A lineage card is wrapped as of 2026-08-21 and is placed — just not from here.
+     It resolves against `lineageNames` instead, because two cards are printed DRAGON
+     BREATH: the Draconic Bond's, which the ally breathes, and the Draconic
+     lineage’s, which you do. Both have a picture, and both files are called
+     `Dragon Breath`. One flat name map cannot hold both, so each folder answers to
+     its own. */
   return new Map(
     [
       ...SPELLS,
       ...BASIC_ACTIONS,
       ...INGREDIENTS,
       ...TALENT_CARDS,
+      ...MARTIAL_MOVES,
       ...WEAPON_ABILITIES,
       ...ACTION_CARDS,
       ...ENCHANTMENTS,
@@ -263,6 +422,85 @@ async function itemNames() {
     path.join(ROOT, 'src/lib/items.js').replace(/\\/g, '/').replace(/^/, 'file:///')
   );
   return new Set(ITEMS.map((item) => flatten(item.name)));
+}
+
+/**
+ * The lineage folder resolves against lineages and nothing else, and that is the
+ * point of two maps of its own.
+ *
+ * DRAGON BREATH is printed twice in the codex: the Draconic Bond’s Adept ability,
+ * which the ally breathes, and the Draconic lineage’s, which you do. They are two
+ * cards with one name, so a name looked up against the *whole* codex would place
+ * `data/Lineage/Lineage Cards/Dragon Breath.jpg` on whichever of the two the map
+ * happened to keep. Scoped to the folder, there is no question: a file in there is
+ * a lineage card, and a file in `data/Draconic Bond/` is the set’s.
+ */
+async function lineageNames() {
+  const { LINEAGES, LINEAGE_CARDS } = await import(
+    path.join(ROOT, 'src/lib/lineages.js').replace(/\\/g, '/').replace(/^/, 'file:///')
+  );
+  return {
+    plates: new Map(LINEAGES.map((l) => [flatten(l.name), l.id])),
+    cards: new Map(LINEAGE_CARDS.map((c) => [flatten(c.name), c.id])),
+  };
+}
+
+/**
+ * The spells alone, for the same reason the lineage folder and the background
+ * family have their own maps: a school folder holds spells and nothing else, so
+ * a name in one is looked up against the spell codex rather than against all
+ * 355 cards.
+ *
+ * `cardIds` is one flat printed-name map and the last registry spread into it
+ * wins, which is the failure the DRAGON BREATH note above describes. BARRIER is
+ * the case that made it real: the Ethereal spell and a Novice enchantment both
+ * print that name, ENCHANTMENTS is spread after SPELLS, and `Barrier.jpg` from
+ * `data/Ethereal/` duly landed on the enchantment — a picture of a warded dwarf
+ * on a card about maximum Health, and the spell left with no art at all.
+ *
+ * Consulted after the sheet's own Image column and before the codex-wide map, so
+ * nothing that already resolved resolves differently: a school drop that names
+ * its files in the sheet is still placed by the sheet.
+ */
+async function moveNames() {
+  const { MARTIAL_MOVES } = await import(
+    path.join(ROOT, 'src/lib/martial.js').replace(/\\/g, '/').replace(/^/, 'file:///')
+  );
+  return new Map(MARTIAL_MOVES.map((move) => [flatten(move.name), move.id]));
+}
+
+/**
+ * The moves alone, for the reason `spellNames` exists: a folder that holds one
+ * kind of card looks a name up against that kind and never codex-wide.
+ *
+ * REND is the case that makes it worth writing rather than skipping. The Martial
+ * Move prints that name and so does the Ashmaw's own attack in creatures.js, and
+ * `cardIds` is one flat map where the last registry spread into it wins. The
+ * bestiary is not in that map today, so the collision is not live — which is
+ * exactly when to scope it, rather than the day somebody adds the creatures and
+ * `Rend.jpg` quietly lands on a monster. Same lesson BARRIER taught above.
+ */
+async function spellNames() {
+  const { SPELLS } = await import(
+    path.join(ROOT, 'src/lib/spells.js').replace(/\\/g, '/').replace(/^/, 'file:///')
+  );
+  return new Map(SPELLS.map((spell) => [flatten(spell.name), spell.id]));
+}
+
+/**
+ * The background family's two maps, for the same reason the lineage folder has
+ * its own: a name is looked up against backgrounds and skills alone, and never
+ * against the whole codex. `Cunning` is a skill and there is a Trickster ability
+ * a name like that could land on tomorrow; scoped here there is no question.
+ */
+async function backgroundNames() {
+  const { BACKGROUNDS, SKILLS } = await import(
+    path.join(ROOT, 'src/lib/backgrounds.js').replace(/\\/g, '/').replace(/^/, 'file:///')
+  );
+  return {
+    plates: new Map(BACKGROUNDS.map((b) => [flatten(b.name), b.id])),
+    cards: new Map(SKILLS.map((s) => [flatten(s.name), s.id])),
+  };
 }
 
 /** Printed set name -> talent id, for the Overview row of a Talent Set sheet. */
@@ -357,36 +595,420 @@ const ONE_OFF = 'of';
  * in a file called LIGHTNING STRIKE — is placed by the sheet rather than by an
  * alias here, and a file no row names is reported, which is how the stray copy of
  * HURL in `Steam/` announces itself on every run until somebody deletes it.
+ *
+ * A drop with no Image column filled in falls back on the filename, and then a
+ * render whose name is not the card's needs an ALIASES entry after all. That is
+ * how `data/Ethereal/` arrived on 2026-08-25 and why three of its thirteen are
+ * in that table, `data/Shadow/` the same afternoon for one of twelve,
+ * `data/Time/` that evening for one of twelve more and `data/Earth/` on
+ * 2026-08-26 for three of nine. See
+ * PLATE_FOLDERS below for the other thing those drops settled, and FAMILY_FOLDERS
+ * for the folder that is not a school at all.
  */
-const SCHOOL_FOLDERS = new Set(['elemental', 'primal', 'arcane', 'nature']);
+const SCHOOL_FOLDERS = new Set(['elemental', 'primal', 'arcane', 'nature', 'ethereal']);
+
+/**
+ * A spell *family* dropped at the top of `data/` rather than under its school.
+ *
+ * `data/Shadow/` landed 2026-08-25 with the Ethereal school's second family, and
+ * Shadow is a family and not a school: the sheet beside it is `Spells - Ethereal -
+ * Shadow.csv`, and the banner on all twelve cards reads Ethereal third-word
+ * Shadow. So it is claimed on its own rather than added to SCHOOL_FOLDERS, which
+ * would have put a word in that set that the codex does not use that way.
+ *
+ * Everything else about it is a school folder's behaviour, because what the two
+ * sets are really for is the same: a folder whose files are spell art. That is
+ * SPELL_FOLDERS below, and it is what every predicate reads.
+ *
+ * Moving the folder to `data/Ethereal/Shadow/` would retire this entry outright.
+ * A family under its school is the shape `data/Elemental/Fire/` already has and
+ * needs no claim of its own, since a school folder is walked into whatever
+ * subfolders it brings. Left where the drop put it.
+ *
+ * `data/Time/` landed the same day with the school's third family and is the same
+ * shape again: `Spells - Ethereal - Time.csv` beside it, and Ethereal third-word
+ * Time on the banner of all twelve. Two entries make this a pattern rather than
+ * one drop's exception, and the fix for both is the same one folder move.
+ *
+ * `data/Space/` is the fourth family and the one entry here that is not named for
+ * the family it holds. The sheet beside it is `Spells - Ethreal - Spacial.csv` and
+ * the banner on all twelve reads Ethereal third-word **Spacial**, with a c; the
+ * folder is Space. Nothing here compares the folder's name to a tag, so the
+ * mismatch costs nothing: the name is only how the folder is claimed, and the
+ * cards inside it are resolved against the codex by their own filenames. See "the
+ * spelling" in the Spacial section of spells.js.
+ *
+ * `data/Death/` landed 2026-08-26 and is the fourth, the first of them under a
+ * school other than Ethereal: the sheet beside it is `Spells - Primal - Death.csv`
+ * and the banner on all eleven reads Primal third-word Death. Same shape, same one
+ * folder move that would retire it (`data/Primal/Death/`), and the same reason it
+ * was left where the drop put it.
+ *
+ * `data/Flora/` is the fifth, the same day, and the first that names a family the
+ * codex has held since its opening drop: the sheet beside it is `Spells - Primal -
+ * Flora.csv`, all twelve of its rows read Primal third-word Flora, and only the
+ * four Master ones brought a picture. So a folder here is not a new family any
+ * more than it is a new school — it is only where a drop's files happened to land.
+ *
+ * `data/Wild/` is the sixth, later the same day, and it is the Flora drop twice
+ * over: a family the codex has held from the beginning, a sheet of twelve rows
+ * reading Primal third-word Wild, and a picture on the four Master ones alone. Its
+ * sheet sits at the top of `data/` as `Spells - Primal - Wild.csv` rather than
+ * inside the folder, which is the one thing about it that differs and the one thing
+ * nothing here reads.
+ *
+ * `data/Life/` is the seventh, the same day again, and the first whose drop is not
+ * a Master rung: its sheet is twelve rows reading Primal third-word Life and the
+ * pictures cover eight of them, the whole Adept rung as well as the whole Master
+ * one. Nothing here counts them, which is the point of saying so: a folder is
+ * claimed by name and its files are resolved one at a time against the codex, so a
+ * drop of eight costs exactly what a drop of four does.
+ *
+ * `data/Fire/` and `data/Earth/` are the eighth and ninth, 2026-08-26, and they
+ * are the first two under Elemental rather than Ethereal or Primal. Both are
+ * something none of the seven above them were: **a redraw of art this script has
+ * already placed once**. Elemental arrived on 2026-08-20 as whole card renders in
+ * `data/Elemental/<family>/`, and these nineteen files are the paintings those
+ * renders were built out of, dropped as plates. So both folders name a family that
+ * is not new, in a school whose own folder is still claimed and still walked.
+ *
+ * That means every file in them claims a card a file in `data/Elemental/` also
+ * claims, which is exactly what "one card, two files" below is for: the newest
+ * file wins, the older is named in the run's report, and deleting
+ * `data/Elemental/FIRE/` and the two loose renders at the top of that folder is
+ * what makes the report go quiet. Nothing here needs to know which of the two is
+ * the plate — the mtime decides, and the drop is the newer artifact by seven
+ * months.
+ *
+ * `data/Storm/` is the tenth, 2026-08-27, and the third under Elemental. It is the
+ * one that shows what the two above it cost: Storm has no card in the codex before
+ * this drop, so nothing in `data/Elemental/` claims any of its three, no file is
+ * shadowed and the run says nothing about them. The shape is the Space drop’s,
+ * three plates at the top of the folder with the sheet beside them at the top of
+ * `data/`.
+ *
+ * `data/Mud/` is the eleventh, later on 2026-08-27, and Storm's shape exactly:
+ * three plates for a family with no card in the codex before the drop, so nothing
+ * is shadowed and nothing goes in `ALIASES` either, since all three filenames are
+ * already the card names.
+ *
+ * `data/Magma/` is the twelfth, the same day, and it is the Fire and Earth case a
+ * third time: three plates for a family the codex has held since the opening
+ * Elemental drop of 2026-08-20, where all three cards already carry art cut from
+ * the whole renders in `data/Elemental/Magma/`. So all three are shadowed, the
+ * newest wins by seven months of mtime, and the run names the three older files
+ * until somebody deletes that folder. All three filenames are already the card
+ * names, `Magma Slide.jpg` notably not among them: the render is called MAGMA
+ * SLIDE and the card is MAGMA SURGE, and the plate is named for the card.
+ */
+const FAMILY_FOLDERS = new Set([
+  'shadow',
+  'time',
+  'space',
+  'death',
+  'flora',
+  'wild',
+  'life',
+  'fire',
+  'earth',
+  'storm',
+  'mud',
+  'magma',
+]);
+
+
+/** Every folder whose files are spell art, whether it names a school or a family. */
+const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
+
+/**
+ * The spell folders whose files are art plates and must not be cut.
+ *
+ * A spell folder's files are card renders by default, because that is how the
+ * first one arrived. `data/Ethereal/` landed 2026-08-25 as thirteen 2400x1792
+ * plates instead — no white border, no banner, the painting and nothing else,
+ * which is what the lineage and background drops are — and all thirteen sit at
+ * the top of the folder rather than in a family subfolder. `data/Shadow/` is
+ * twelve more of the same, later the same day, and `data/Time/` twelve more after
+ * that. The Time drop is the first to arrive at two sizes, 2400x1792 for two of
+ * them and 1200x896 for the other ten, and neither is cut: the resize below takes
+ * whatever it is handed down to 720. `data/Space/` is twelve more at 1200x896,
+ * which is the size the Time drop settled, `data/Death/` is eleven back at
+ * 2400x1792, `data/Flora/` and `data/Wild/` are four more each at the same, and
+ * `data/Life/` is eight more still. `data/Fire/` and `data/Earth/` are nine each
+ * on 2026-08-26, mixed 2400x1792 and 1200x896 within one folder, which is the Time
+ * drop's shape and costs nothing for the same reason.
+ *
+ * `data/Storm/` is three more at 2400x1792 on 2026-08-27, one a pixel narrow at
+ * 2398, which costs nothing for the same reason: the resize takes whatever it is
+ * handed down to 720. `data/Mud/` is three more the same day, all three square on
+ * 2400x1792.
+ *
+ * Cutting one of these would take the top 45% of a painting that is already
+ * only the painting. So the crop is what the exception turns off, and nothing
+ * else about the folder changes: it is still claimed by name, still walked into
+ * any family folder a later drop brings, and still resolved against the codex
+ * the same way.
+ */
+const PLATE_FOLDERS = new Set([
+  'ethereal',
+  'shadow',
+  'time',
+  'space',
+  'death',
+  'flora',
+  'wild',
+  'life',
+  'fire',
+  'earth',
+  'storm',
+  'mud',
+  'magma',
+]);
+
+/**
+ * The ancestries, which arrive as one folder with a folder inside it.
+ *
+ * `data/Lineage/` landed 2026-08-21 with the two new tabs: thirteen ancestry
+ * plates at the top and twenty-two card plates in `Lineage Cards` under them.
+ * Both are 2400x1792 art plates rather than whole card renders, so neither is
+ * cut — a school folder's files are the only ones this script crops.
+ *
+ * It nests the way a school folder does, and is the only other folder that does.
+ */
+const LINEAGE_FOLDER = 'lineage';
+const LINEAGE_CARD_FOLDER = flatten('Lineage/Lineage Cards');
+
+/**
+ * The backgrounds and their skills, which arrive the way the ancestries do.
+ *
+ * `data/Background/` landed 2026-08-21: ten background plates at the top and the
+ * Skills tab's own pictures in `Skills/` under them. `data/Skills/` arrived in
+ * the same drop holding a copy of that subfolder, so both are claimed and both
+ * resolve against the same two maps — a name is either a background or a skill
+ * and never both, so where the file happens to sit decides nothing. That is what
+ * lets the two stray background plates sitting in the skills folder land
+ * correctly instead of being reported.
+ *
+ * The pictures are 2400x1792 art plates rather than whole card renders, like the
+ * lineage drop, so nothing here is cut.
+ */
+const BACKGROUND_FOLDER = 'background';
+const SKILL_FOLDER = 'skills';
+
+/** A folder in the background family: `data/Background/`, or `data/Skills/`. */
+const isBackgroundFamily = (name) =>
+  flatten(name) === BACKGROUND_FOLDER || flatten(name) === SKILL_FOLDER;
+
+/**
+ * A folder of *item* art whose items also teach a card, claimed by both scripts.
+ *
+ * `data/Potions/` landed 2026-08-27 with the whole potion shelf: twenty four
+ * 1024x1024 art plates and the sheet that names them, one picture for each of the
+ * twenty four rows. A belt item teaches exactly one card, so every file in there
+ * is both an item's picture and a card's, and both scripts have to walk it for
+ * the same reason both walk `data/OF/`: the tile and the card plate are different
+ * crops of one painting. See the note over ONE_OFF above, and SHELF_EXTRAS in
+ * pull-item-art.mjs, which is the same claim from the other side.
+ *
+ * It is not a shelf folder, because the shelf these things stand on is Belt Gear
+ * and a folder called Potions is a *kind* rather than a slot. Claiming it by name
+ * is what keeps `data/Armor/` meaning the Armor shelf.
+ *
+ * Nothing here is cut. The pictures are plates, the way the lineage and school
+ * drops are, and the crop only ever fires for a whole card render.
+ */
+const ITEM_FOLDERS = new Set(['potions']);
+
+/** A folder whose files are item art that also wants a card plate. */
+const isItemFolder = (name) => ITEM_FOLDERS.has(flatten(name));
+
+/**
+ * The Martial Moves, which arrive as a folder of their own.
+ *
+ * `data/Martial Move/` landed over 2026-09-02 and 2026-09-03: eighteen 2400x1792
+ * plates, one for each card in `src/lib/martial.js`, against an Image column that
+ * does not exist — the moves have never had a sheet, only chat.
+ *
+ * It behaves the way a school folder behaves and for the same reason: a folder
+ * whose files are all one kind of card. So it is claimed by name, resolved
+ * against its own map (`moveNames`) rather than codex-wide, and **not cut** —
+ * these are plates, the way the lineage and Ethereal drops are, and the crop only
+ * ever fires for a whole card render.
+ *
+ * Its own claim rather than a spell folder's, because a Martial Move is not a
+ * spell: it has no school, no family and no rung, and adding "martial move" to
+ * SCHOOL_FOLDERS would put it on the shelf order's wall as a school with no
+ * cards. The one thing the two share is the shape of the drop.
+ */
+const MOVE_FOLDER = 'martial move';
+
+/** A folder whose files are Martial Move art. */
+const isMoveFolder = (name) => flatten(name) === MOVE_FOLDER;
+
+/**
+ * Move files whose name is not the name the codex prints, flattened on both
+ * sides. The same record LINEAGE_ALIASES is, for this folder's own map.
+ *
+ * Two, and both are the plainest kind. `Coordinated.jpg` is a word short of
+ * COORDINATED ATTACK, and `WingClip.jpg` is WING CLIP with the space closed up,
+ * which `flatten` cannot bridge: it turns a space into a space and has nothing to
+ * do about a name that never had one. Renaming a file retires its entry.
+ *
+ * Nothing else in the drop needs help. `Drive Back.jpg` and `Stunning Strike.jpg`
+ * both land as they are, and `Momentum.jpg` is *absent* rather than orphaned:
+ * Jules replaced that card with CONCUSS on 2026-09-03 and took its picture out of
+ * the folder in the same pass, so the eighteen files are the eighteen cards.
+ */
+const MOVE_ALIASES = {
+  coordinated: 'coordinated attack',
+  wingclip: 'wing clip',
+};
+
+/**
+ * A duplicate Windows made rather than a picture somebody drew.
+ *
+ * `Heavy Armor Mastery - Copy.jpg` sits beside `Heavy Armor Mastery.jpg` in the
+ * skills drop. Explorer names a copy that way, so a name ending in "copy" is
+ * skipped in silence: reported, it would be two lines of noise on every run
+ * saying only that Windows exists.
+ */
+const isCopy = (name) => /\bcopy$/.test(flatten(name));
 
 function pictures(setIds) {
   if (!existsSync(DATA)) return [];
 
   const mine = (name) => setIds.has(flatten(name)) || flatten(name) === ONE_OFF;
-  const school = (name) => SCHOOL_FOLDERS.has(flatten(name));
+  const spells = (name) => SPELL_FOLDERS.has(flatten(name));
+  /* A spell folder whose files are whole cards, which is every one but the ones
+     in PLATE_FOLDERS. This is the flag the crop reads, not the claim. */
+  const render = (name) => spells(name) && !PLATE_FOLDERS.has(flatten(name));
+  const lineage = (name) => flatten(name) === LINEAGE_FOLDER;
 
-  const walk = (dir, set, card) =>
+  const walk = (dir, set, card, nest) =>
     readdirSync(path.join(DATA, dir), { withFileTypes: true }).flatMap((entry) => {
       if (entry.isDirectory()) {
-        // Only a school folder nests — a set folder's subfolder is not art.
-        return card ? walk(path.join(dir, entry.name), `${set}/${entry.name}`, card) : [];
+        /* A school folder, the lineage folder and the background folder nest —
+           a set folder's subfolder is not art. */
+        return nest ? walk(path.join(dir, entry.name), `${set}/${entry.name}`, card, nest) : [];
       }
       if (!IMAGE_FILE.test(entry.name)) return [];
+      const name = entry.name.replace(IMAGE_FILE, '');
+      if (isCopy(name)) return [];
       return [
         {
           set,
           file: path.join(DATA, dir, entry.name),
-          name: entry.name.replace(IMAGE_FILE, ''),
+          name,
           card,
         },
       ];
     });
 
   return readdirSync(DATA, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && (mine(entry.name) || school(entry.name)))
-    .flatMap((dir) => walk(dir.name, dir.name, school(dir.name)));
+    .filter(
+      (entry) =>
+        entry.isDirectory() &&
+        (mine(entry.name) ||
+          spells(entry.name) ||
+          lineage(entry.name) ||
+          isItemFolder(entry.name) ||
+          isMoveFolder(entry.name) ||
+          isBackgroundFamily(entry.name))
+    )
+    .flatMap((dir) =>
+      walk(
+        dir.name,
+        dir.name,
+        render(dir.name),
+        spells(dir.name) || lineage(dir.name) || isBackgroundFamily(dir.name)
+      )
+    );
 }
+
+/**
+ * A file anywhere in a spell folder, at either depth. `set` is the folder it came
+ * from and carries the family under it when there is one, so the folder that was
+ * claimed is the first word of it: `Elemental/Fire` flattens to "elemental fire",
+ * and `Shadow` to "shadow".
+ */
+const inSpellFolder = (picture) => SPELL_FOLDERS.has(flatten(picture.set).split(' ')[0]);
+
+/** A file in `data/Martial Move/`: art for one of the eighteen moves. */
+const inMoveFolder = (picture) => flatten(picture.set) === MOVE_FOLDER;
+
+/** A file at the top of `data/Lineage/`: one of the thirteen ancestry plates. */
+const isLineagePlate = (picture) => flatten(picture.set) === LINEAGE_FOLDER;
+
+/** A file in `data/Lineage/Lineage Cards/`: art for one of the lineage cards. */
+const isLineageCard = (picture) => flatten(picture.set) === LINEAGE_CARD_FOLDER;
+
+/**
+ * A file anywhere in the background family, at either depth. Which of the two
+ * maps answers for it is decided by its *name* rather than by its folder — see
+ * the note over `BACKGROUND_FOLDER`.
+ */
+const inBackgroundFamily = (picture) =>
+  flatten(picture.set).split(' ').some((word) => word === BACKGROUND_FOLDER || word === SKILL_FOLDER);
+
+/**
+ * Lineage card files whose name is not the name the codex prints, flattened on
+ * both sides. The same record ALIASES is, for the folder with its own map.
+ *
+ * All four are reads the codex already made and wrote down: the tab prints
+ * CANIBALISM, VENEMOUS, UNDEATH RESILLIENCE and DRACONIC SCALE, the pictures were
+ * drawn from the tab, and lineages.js corrected the spelling. Renaming a file
+ * retires its entry here.
+ */
+const LINEAGE_ALIASES = {
+  canibalism: 'cannibalism',
+  venemous: 'venomous',
+  'undeath resillience': 'undeath resilience',
+  'draconic scale': 'draconic scales',
+};
+
+/**
+ * Skill files whose name is not the name the codex prints, flattened on both
+ * sides. The same record LINEAGE_ALIASES is, for the background family's map.
+ *
+ * Five, and every one is a read the codex already made and wrote down. The tab
+ * prints Haggler, Helpful, Inquisitor and three Innate Spell rows; the pictures
+ * were drawn from working names. `Cultist` is Occultist's: it is the only file in
+ * the drop with no row of its own and the only row in the tab with no file, and
+ * the two are one word apart. Renaming a file retires its entry here.
+ */
+const SKILL_ALIASES = {
+  haggle: 'haggler',
+  helper: 'helpful',
+  inquistor: 'inquisitor',
+  cultist: 'occultist',
+  'inate spell novice': 'innate spell novice',
+  'inate spell adept': 'innate spell adept',
+  'inate spell master': 'innate spell master',
+};
+
+/** The same, for a background plate. One so far: `Mercanery.jpg` is Mercenary's. */
+const BACKGROUND_ALIASES = {
+  mercanery: 'mercenary',
+};
+
+/**
+ * One picture, six cards.
+ *
+ * INNATE X is a modular row: the lineage tab names a school for each of six
+ * ancestries and the codex builds six cards from the one row. The designer drew
+ * one picture for it, so it is encoded once per id rather than reported as five
+ * files that were never going to exist.
+ */
+const LINEAGE_MODULAR = {
+  'innate x': [
+    'innate-light',
+    'innate-shadow',
+    'innate-fire',
+    'innate-wind',
+    'innate-water',
+    'innate-earth',
+  ],
+};
 
 /**
  * The art plate cut out of a whole card render.
@@ -425,23 +1047,41 @@ function stale(source, out) {
   return statSync(source).mtimeMs > statSync(out).mtimeMs;
 }
 
-/** One set's overview picture, from bytes already in hand: square, 640px. */
-async function writeTalentPlate(setId, buf) {
+/**
+ * A square 640px plate, from bytes already in hand.
+ *
+ * A set's overview picture and an ancestry's are the same thing drawn in the same
+ * two places, a tile on a chooser wall and the head of a page, so they are cut the
+ * same way into folders of their own.
+ */
+async function writeSquarePlate(dir, id, buf) {
   const out = await sharp(buf)
     .resize({ width: TALENT_SIZE, height: TALENT_SIZE, fit: 'cover', position: 'centre' })
     .jpeg({ quality: TALENT_QUALITY, mozjpeg: true })
     .toBuffer();
-  writeFileSync(path.join(TALENT_OUT, `${setId}.jpg`), out);
+  writeFileSync(path.join(dir, `${id}.jpg`), out);
   return out;
 }
+
+/** One set's overview picture. */
+const writeTalentPlate = (setId, buf) => writeSquarePlate(TALENT_OUT, setId, buf);
 
 /* ---------------------------------------------------------------------- main */
 
 const ids = await cardIds();
 const sets = await talentIds();
 const items = await itemNames();
+const lineages = await lineageNames();
+const backgrounds = await backgroundNames();
+const spells = await spellNames();
+const moves = await moveNames();
 mkdirSync(OUT, { recursive: true });
 mkdirSync(TALENT_OUT, { recursive: true });
+mkdirSync(LINEAGE_OUT, { recursive: true });
+mkdirSync(BACKGROUND_OUT, { recursive: true });
+
+let plateFetched = 0;
+let plateSkipped = 0;
 
 const art = new Map();
 const problems = [];
@@ -483,12 +1123,79 @@ const idByAliasFile = new Map(
    The fix is always to delete the older file; this only stops the wrong one
    being published in the meantime. */
 
-const folder = pictures(setIdByFolder);
+/* A lineage card file resolves against lineage cards and nothing else, and one of
+   them serves six. Both are settled here so every loop below stays
+   one-picture-one-card: `lineageId` is the answer, already found. A background
+   family file is settled here too, against its own two maps: `skillId` when the
+   name is a skill's, `plateId` when it is a background's. */
+const folder = pictures(setIdByFolder).flatMap((picture) => {
+  const flat = flatten(picture.name);
+
+  if (inBackgroundFamily(picture)) {
+    const skillId = backgrounds.cards.get(SKILL_ALIASES[flat] ?? flat);
+    if (skillId) return [{ ...picture, skillId }];
+    const plateId = backgrounds.plates.get(BACKGROUND_ALIASES[flat] ?? flat);
+    // Nothing matched: left whole so the report below names the file.
+    return [plateId ? { ...picture, plateId, into: BACKGROUND_OUT, kind: 'background' } : picture];
+  }
+
+  /* A spell folder holds spells, so it answers to the spell codex. See
+     spellNames: two cards print BARRIER and only one of them is a spell. */
+  if (inSpellFolder(picture)) {
+    const spellId = spells.get(flat);
+    return [spellId ? { ...picture, spellId } : picture];
+  }
+
+  /* And the Martial Move folder holds moves, for the same reason and against its
+     own map. See moveNames: two cards print REND. */
+  if (inMoveFolder(picture)) {
+    const moveId = moves.get(MOVE_ALIASES[flat] ?? flat);
+    return [moveId ? { ...picture, moveId } : picture];
+  }
+
+  if (!isLineageCard(picture)) return [picture];
+  const found =
+    LINEAGE_MODULAR[flat] ??
+    [lineages.cards.get(LINEAGE_ALIASES[flat] ?? flat)].filter(Boolean);
+  return found.length === 0 ? [picture] : found.map((id) => ({ ...picture, lineageId: id }));
+});
+
+/**
+ * Which card a file is for, or null. Family answers first, since those resolve
+ * against their own maps and must never be looked up codex-wide.
+ */
+function cardIdFor(picture) {
+  const flat = flatten(picture.name);
+  return (
+    picture.lineageId ??
+    picture.skillId ??
+    idBySheetFile.get(flat) ??
+    picture.spellId ??
+    picture.moveId ??
+    idByFlatName.get(flat) ??
+    idByAliasFile.get(flat) ??
+    null
+  );
+}
+
+/**
+ * The same picture in two places rather than two pictures.
+ *
+ * `data/Skills/` and `data/Background/Skills/` are a folder and a copy of it, and
+ * both are claimed. A copy is the same bytes at the same moment, so a duplicate
+ * that matches on both size and mtime is one file the drop happens to hold twice
+ * and is settled in silence. Anything that differs is a redraw, and a redraw is
+ * exactly what the report below is for.
+ */
+function sameFile(a, b) {
+  const one = statSync(a.file);
+  const two = statSync(b.file);
+  return one.size === two.size && one.mtimeMs === two.mtimeMs;
+}
 
 const claims = new Map();
 for (const picture of folder) {
-  const flat = flatten(picture.name);
-  const id = idBySheetFile.get(flat) ?? idByFlatName.get(flat) ?? idByAliasFile.get(flat) ?? null;
+  const id = cardIdFor(picture);
   if (!id) continue;
 
   const held = claims.get(id);
@@ -499,12 +1206,13 @@ for (const picture of folder) {
       ? [picture, held]
       : [held, picture];
   claims.set(id, win);
+  if (sameFile(win, lose)) continue;
   console.log(`${id.padEnd(20)} two files claim it — using ${win.set}/${win.name}, not ${lose.name}`);
 }
 
 for (const picture of folder) {
   const flat = flatten(picture.name);
-  const id = idBySheetFile.get(flat) ?? idByFlatName.get(flat) ?? idByAliasFile.get(flat) ?? null;
+  const id = cardIdFor(picture);
 
   // Beaten by a newer file for the same card. Already reported above.
   if (id && claims.get(id) !== picture) continue;
@@ -514,6 +1222,73 @@ for (const picture of folder) {
      Cards are resolved first, so a card that happened to share the set's name
      would still be dealt as a card. */
   if (!id) {
+    /* An ancestry plate: a file at the top of data/Lineage/, named for one of the
+       thirteen. Its cards live one folder down and were resolved before the loop. */
+    if (isLineagePlate(picture)) {
+      const lineageId = lineages.plates.get(flat);
+      if (!lineageId) {
+        problems.push(`${picture.set}/${picture.name}: the codex has no lineage by that name`);
+        continue;
+      }
+      const plate = path.join(LINEAGE_OUT, `${lineageId}.jpg`);
+      if (!stale(picture.file, plate) && !FORCE) {
+        plateSkipped += 1;
+        continue;
+      }
+      try {
+        const out = await writeSquarePlate(LINEAGE_OUT, lineageId, readFileSync(picture.file));
+        plateFetched += 1;
+        console.log(
+          `${lineageId.padEnd(20)} lineage plate ${TALENT_SIZE}x${TALENT_SIZE} jpeg ${(out.length / 1024).toFixed(0)} KB`
+        );
+      } catch (err) {
+        problems.push(`${picture.set}/${picture.name}: ${err.message}`);
+      }
+      continue;
+    }
+
+    /* A file in Lineage Cards/ that no lineage card answers to. Its own message,
+       because that folder resolves against lineage cards alone: "no card by that
+       name" would send a reader looking through the whole codex. */
+    if (isLineageCard(picture)) {
+      problems.push(
+        `${picture.set}/${picture.name}: the codex has no lineage card by that name`
+      );
+      continue;
+    }
+
+    /* A background plate: a file in the background family named for one of the
+       ten. Its skills resolved before the loop, so anything reaching here with a
+       `plateId` is a plate, and anything without is a name neither map answers
+       to. */
+    if (inBackgroundFamily(picture)) {
+      if (!picture.plateId) {
+        problems.push(
+          `${picture.set}/${picture.name}: the codex has no skill and no background by that name`
+        );
+        continue;
+      }
+      const plate = path.join(BACKGROUND_OUT, `${picture.plateId}.jpg`);
+      if (!stale(picture.file, plate) && !FORCE) {
+        plateSkipped += 1;
+        continue;
+      }
+      try {
+        const out = await writeSquarePlate(
+          BACKGROUND_OUT,
+          picture.plateId,
+          readFileSync(picture.file)
+        );
+        plateFetched += 1;
+        console.log(
+          `${picture.plateId.padEnd(20)} background plate ${TALENT_SIZE}x${TALENT_SIZE} jpeg ${(out.length / 1024).toFixed(0)} KB`
+        );
+      } catch (err) {
+        problems.push(`${picture.set}/${picture.name}: ${err.message}`);
+      }
+      continue;
+    }
+
     /* In the shared folder, an item's picture is not this script's to place and not
        this script's to complain about. A name that is neither a card nor an item
        still is: that is a misspelling, and both scripts will say so, which is the
@@ -589,12 +1364,25 @@ for (const picture of folder) {
 
 /* ----------------------------------------------------------------- the links */
 
+/**
+ * A row that says on its own face that it is a spell, off the Tags column the
+ * drop already carries: "Ethereal, Novice Spell, Light".
+ *
+ * The other end of the BARRIER collision spellNames documents. The Ethereal
+ * drop's Barrier row is a spell and `ids` answers with the enchantment, so the
+ * row read as a card with no art and reported a missing link for a picture that
+ * had just been placed. The sheet's own tags settle it rather than the filename
+ * or the fold order.
+ */
+const isSpellRow = (row) => /\bSpells?\b/i.test(row.Tags ?? '');
+
 for (const row of sheets()) {
   const name = row.Name;
   const link = row.Image;
   if (!name) continue;
 
-  const id = ids.get(name.toLowerCase());
+  const id =
+    (isSpellRow(row) ? spells.get(flatten(name)) : null) ?? ids.get(name.toLowerCase());
 
   /* A Talent Set sheet's Overview row names the *set*, not a card, and its picture
      is the square plate behind talent.art. Placed here, then done with. */
@@ -681,70 +1469,46 @@ for (const id of art.keys()) {
   thumbsMade += 1;
 }
 
+/* ------------------------------------------------------ the version on a URL
+
+   A redraw keeps the filename and changes the pixels, which is the one shape of
+   change a cache cannot see. `/cards/blazing-suns.webp` was the same URL before
+   and after the Fire drop of 2026-08-26, so every browser and every Cloudflare
+   edge holding the old painting went on serving it: the drop reached the disk,
+   the lookup and the build, and readers still saw what they already had. Jules
+   reported it the next morning as the spell preview showing the old picture, and
+   it was not the preview. It was every surface that draws card art.
+
+   So the URL carries eight characters of the file's own content hash. Same bytes,
+   same URL, and a run that changes nothing changes nothing in the diff; new bytes,
+   new URL, and every cache in the chain misses on it at once, with no purge to
+   remember and nothing to do by hand.
+
+   A query string rather than a hashed filename, because the file on disk keeps
+   the name a person would look for and Cloudflare's default cache key already
+   includes the query. A hashed *filename* would also work and would leave the old
+   file behind on every redraw, which is a second thing to clean up.
+
+   **The thumbnail rides the full picture's hash rather than carrying its own.**
+   The two are cut from one source in the same pass and are only ever written
+   together, so they cannot disagree, and one token per card keeps the lookup one
+   flat map of one string. */
+const version = (file) =>
+  createHash('sha256').update(readFileSync(file)).digest('hex').slice(0, 8);
+
 /* ------------------------------------------------------------ write the lookup */
-
-const rows = [...art.entries()]
-  .sort((a, b) => a[0].localeCompare(b[0]))
-  .map(([id, src]) => `  '${id}': '${src}',`)
-  .join('\n');
-
-writeFileSync(
-  path.join(ROOT, 'src/lib/cardArt.js'),
-  `/**
- * Card art, keyed by card id.
- *
- * Generated by scripts/pull-card-art.mjs — do not edit by hand. Run \`npm run
- * art\` after changing an Image column in the sheets.
- *
- * The pictures are the designer's, and the sheets point at postimg. They are
- * not served from postimg: the originals are up to 3 MB at 1280x956, arriving
- * at 200-450 KB/s from a host that sometimes stalls for minutes, and the plate
- * that shows them is 360x270. The script resizes each one to ${WIDTH}px of WebP
- * and puts it in public/cards/, so they ship with the site and Cloudflare
- * serves them from the edge.
- *
- * Two sizes, because there are two plates. A dealt card gets the \${WIDTH}px
- * one; a brief's plate is 92 CSS pixels wide and gets the \${THUMB_WIDTH}px cut
- * of it, which matters because a wall of two dozen briefs is the commonest
- * sight on the sheet.
- *
- * ------------------------------------------------------------------ the gate
- * Nothing here decides who *sees* a picture. Card art is a paid capability
- * (see \`showsArt\` in tiers.js), checked at the moment of drawing in
- * useCodexArt.js. This file only says what the picture is.
- */
-
-const CARD_ART = {
-${rows}
-};
-
-/** The art for one card, or null for a card that has none yet. */
-export function artFor(id) {
-  return CARD_ART[id] ?? null;
-}
-
-/** The small cut of it, for the 92px plate a brief draws. */
-export function thumbFor(id) {
-  const full = CARD_ART[id];
-  return full ? full.replace(/\\.webp$/, '-thumb.webp') : null;
-}
-
-/**
- * The same list of cards with their art attached, for the codex modules to
- * wrap their own arrays in. A card that has no picture keeps \`art_url: null\`
- * rather than losing the field, so a reader never has to guess whether the
- * absence is missing art or a missing lookup.
- */
-export function withArt(cards) {
-  return cards.map((card) => ({
-    ...card,
-    art_url: artFor(card.id),
-    art_thumb: thumbFor(card.id),
-  }));
-}
-`,
-  'utf8'
-);
+const written = writeArtManifest({
+  root: ROOT,
+  set: 'cards',
+  ids: [...art.keys()],
+  what: 'Card',
+  noun: 'card',
+  script: 'pull-card-art.mjs',
+  run: 'art',
+  big: `${WIDTH}px, the plate a dealt card draws`,
+  small: `${THUMB_WIDTH}px, the 92px plate a brief draws`,
+  thumbFor: '92px plate a brief draws',
+});
 
 /* ------------------------------------------------------------------ the report */
 
@@ -754,6 +1518,9 @@ console.log(
 );
 if (talentFetched || talentSkipped) {
   console.log(`${talentFetched} talent plate(s) fetched, ${talentSkipped} already on disk`);
+}
+if (plateFetched || plateSkipped) {
+  console.log(`${plateFetched} lineage plate(s) cut, ${plateSkipped} already on disk`);
 }
 console.log(`${thumbsMade} thumbnail(s) cut, ${(thumbBytes / 1024).toFixed(0)} KB across ${art.size}`);
 if (fetched > 0 || encoded > 0) {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import UsePrompt from './UsePrompt.jsx';
-import { ChargeDots, ItemIcon, SlotGlyph } from './itemParts.jsx';
+import { AmmoPips, ChargeDots, ItemIcon, SlotGlyph } from './itemParts.jsx';
 import CostOrbs, { CostOrb } from '../CostOrbs.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import {
@@ -14,8 +14,12 @@ import {
   wieldModifiers,
 } from '../../lib/items.js';
 import { getCard } from '../../lib/weapons.js';
-import { shortName, spendUse } from '../../lib/combatBar.js';
-import { attackModifiers, ridingLine } from '../../lib/moves.js';
+import { cardCost } from '../../lib/cardText.js';
+import { characterSkillGrantSources } from '../../lib/levelPicks.js';
+import { shortName } from '../../lib/combatBar.js';
+import { usePlayCard } from './usePlayCard.js';
+import { attackModifiers } from '../../lib/moves.js';
+import { magazineUse } from '../../lib/uses.js';
 
 /**
  * The Character tab's third block: what you have in your hands and on your
@@ -36,13 +40,50 @@ import { attackModifiers, ridingLine } from '../../lib/moves.js';
  * costs, and what is left of it.
  */
 
-/** Drawing the other weapon is an action of its own. */
+/**
+ * Drawing the other weapon is an action of its own, and it is a card like any
+ * other: SWAP WEAPONS prints its own price in weapons.js and this block reads it
+ * rather than restating it. The number here is only what to charge if the codex
+ * has somehow lost the card.
+ */
 const SWAP_AP = 2;
+
+/**
+ * What the holder does to SWAP WEAPONS.
+ *
+ * QUICK DRAW: "The cost of swapping weapon is reduced by 1." It is the one skill
+ * in the codex that prices an action rather than a roll, and it rides the card
+ * exactly as an Arcanist's PERFECT CASTING rides a spellbook. `apCut` and
+ * `apCutFrom` meet the printed cost in `cardCost`, so the orb on the button,
+ * the orb on the pay button and the card in the prompt all print 1 with the 2
+ * struck out beside it, and none of the three can disagree with the others.
+ *
+ * No floor is passed, because the card names none: "reduced by 1" and nothing
+ * about a minimum. `cardCost` floors at nothing when it is given nothing.
+ *
+ * Read off the named rows rather than a sum so the orb can say what cut it, the
+ * same trade `restCut` in rest.js makes. Here rather than in the codex because
+ * this block is the only place SWAP WEAPONS is ever played; it moves the day the
+ * swap reaches the quick bar.
+ */
+function swapModifiers(character) {
+  const rows = characterSkillGrantSources(character)
+    .map((row) => ({ name: row.name, cut: Math.floor(Number(row.swapAp) || 0) }))
+    .filter((row) => row.cut > 0);
+
+  if (rows.length === 0) return null;
+
+  return {
+    apCut: rows.reduce((sum, row) => sum + row.cut, 0),
+    apCutFrom: rows.map((row) => row.name),
+  };
+}
 
 export default function LoadoutBlock({ character, patch, readOnly = false }) {
   // The use waiting on the action-or-reaction question, or null.
   const [request, setRequest] = useState(null);
   const stack = useCardStack();
+  const play = usePlayCard({ character, patch });
 
   const equipment = normalizeEquipment(character.equipment);
   const belt = normalizeBelt(character.belt);
@@ -56,6 +97,13 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
      Enchanter changed the chip on the Inventory tab and not the one here. */
   const modifiers = wieldModifiers(character, primary);
 
+  /* What the swap costs these hands: off the card, and after whatever the holder
+     takes off it. Read once for the block, so the button prints it, the prompt
+     charges it and the card inside the prompt shows the same revision. */
+  const swapCard = getCard('swap-weapons');
+  const swapRiders = swapModifiers(character);
+  const swapCost = cardCost(swapCard ?? { ap: SWAP_AP }, swapRiders);
+
   /* What the weapon itself does — its own two attacks, printed for whoever is
      holding it. A spell an enchantment carries is not one of them: that is
      something the blade *teaches* its bearer, and it belongs with the rest of
@@ -68,40 +116,51 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
    * card costs the same wherever it was tapped.
    */
   function confirmUse(mode, amount, options) {
-    const body = spendUse(request, character, mode, amount, options);
-    if (Object.keys(body).length > 0) patch(body);
+    // Paid, told and rolled exactly as the quick bar does: one swing, one line.
+    play(request, mode, amount, options);
     setRequest(null);
   }
 
   function askWeaponCard(card) {
     const riders = attackModifiers(character, card, modifiers);
+    // What the use writes to the magazine, on either side of it. See uses.js.
+    const magazine = magazineUse(character, card);
 
     setRequest({
-      name: card.name,
+      name: shortName(card),
       source: `${primary.name} · in hand`,
       ap: card.ap,
       wp: card.wp,
       card,
       /* The attack is printed with this weapon's damage type and Empowering,
-         exactly as it reads on the block behind the prompt — plus whatever is
-         waiting on it, which is the point of paying for an AMBUSH or a Martial
-         Move before the swing rather than after. */
+         exactly as it reads on the block behind the prompt, plus whatever is
+         already standing on it: an AMBUSH paid for, the bargain, the form. The
+         Martial Moves are added inside the prompt itself, which is why nothing
+         here names any. See UsePrompt.jsx. */
       modifiers: riders,
-      /* And named, since the prompt is the last thing between the player and the
-         swing that spends them. */
-      note: ridingLine(riders),
+      note: magazine?.note ?? null,
+      /* And drawn, because a round is the one cost a printed card cannot show: the
+         prompt is where the player last gets to change their mind about firing the
+         only shot they have. */
+      ammo: magazine?.ammo ?? null,
+      ammoMax: magazine?.charges ?? 0,
+      ammoLeft: (magazine?.charges ?? 0) - (magazine?.used ?? 0),
+      extra: magazine?.patch ?? null,
     });
   }
 
   function askSwap() {
-    const card = getCard('swap-weapons');
-
     setRequest({
-      name: card?.name ?? 'Swap Weapons',
+      name: swapCard?.name ?? 'Swap Weapons',
       source: swapLine(primary, secondary),
-      ap: SWAP_AP,
+      ap: swapCost.ap,
       wp: null,
-      card,
+      card: swapCard,
+      /* The cut, named, so the prompt says the number was revised and by what
+         rather than quietly charging less than the card beside it prints. */
+      modifiers: swapRiders,
+      apWas: swapCost.cut > 0 ? swapCost.printed : null,
+      apCutFrom: swapCost.from,
       extra: {
         equipment: { ...equipment, main_hand: equipment.off_hand, off_hand: equipment.main_hand },
       },
@@ -133,18 +192,31 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
       <div className="loadout-head">
         <span className="stat-category-label">Weapons</span>
 
+        {/* A pact-bound weapon swaps like anything else. It holds a weapon slot
+            for as long as its set is held and it cannot be lost, both of which
+            the equip hook enforces in whichever hand it is in. Which hand that
+            is is a thing you do in a fight, and PACT-BOUND WEAPON's own "it
+            returns to your hand at a word" is the sentence that says so. */}
         {!readOnly && (primary || secondary) && (
           <button
             type="button"
             className="swap-btn"
             onClick={askSwap}
-            title={`${swapLine(primary, secondary)}. It costs ${SWAP_AP} Action Points`}
+            title={`${swapLine(primary, secondary)}. It costs ${swapCost.ap} Action ${
+              swapCost.ap === 1 ? 'Point' : 'Points'
+            }${swapCost.cut > 0 ? `, cut from ${swapCost.printed} by ${listOut(swapCost.from)}` : ''}`}
           >
             <span className="swap-glyph" aria-hidden="true">
               ⇄
             </span>
             Swap
-            <CostOrb kind="ap" value={SWAP_AP} size={17} />
+            <CostOrb
+              kind="ap"
+              value={swapCost.ap}
+              size={17}
+              was={swapCost.cut > 0 ? swapCost.printed : null}
+              from={swapCost.from}
+            />
           </button>
         )}
       </div>
@@ -248,35 +320,48 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
 }
 
 /**
- * One of the weapon's attacks, on one line, plus a second line when something is
- * riding it.
+ * One of the weapon's attacks, on one line.
  *
- * That second line is the Duelist's Developpement Notes, honoured where they
- * asked for it: "when possible updating the attack text to say (not on the card)
- * that this attack will MARTIAL MOVE NAME". Not on the card — the card is the
- * codex's and says what the attack always does. This row is the sheet's and says
- * what *this* swing will do, which is the only place the distinction can live.
+ * It carried a second line until 2026-09-02, naming the Martial Moves waiting on
+ * the swing: "updating the attack text to say (not on the card) that this attack
+ * will MARTIAL MOVE NAME", off the Duelist's Developpement Notes. Nothing waits
+ * any more, because a move is added inside the prompt this row opens, so the
+ * sentence moved in there with the choice that earns it. See UsePrompt.jsx.
  */
 function AttackRow({ card, character, modifiers, stack, readOnly, onUse }) {
   const riders = attackModifiers(character, card, modifiers);
-  const riding = ridingLine(riders);
+
+  /* And how much of it is loaded. Jules asked for it here, beside the attack:
+     "on the action next to shoot you see bullet shaped indicator that empty as you
+     use". The rounds are drawn on the Reload beside it as well, because the row
+     that fills a magazine is the row a reader looks at to find out whether it
+     needs filling. See uses.js. */
+  const magazine = magazineUse(character, card);
+  const spent = Boolean(magazine?.spent);
 
   return (
-    <div className={`use-row${riding ? ' use-row-riding' : ''}`}>
+    <div className={`use-row${spent ? ' use-row-spent' : ''}`}>
       <button
         type="button"
         className="use-row-main"
         onClick={onUse}
-        disabled={readOnly}
-        title={readOnly ? card.name : `Use ${card.name}`}
+        disabled={readOnly || spent}
+        title={spent ? magazine.spentNote : readOnly ? card.name : `Use ${shortName(card)}`}
       >
         <span className="use-row-name">{shortName(card)}</span>
-        <CostOrbs ap={card.ap} wp={card.wp} size={19} className="use-row-costs" />
+
+        {spent ? (
+          <span className="use-row-spent-note">{magazine.spentLabel}</span>
+        ) : (
+          <CostOrbs ap={card.ap} wp={card.wp} size={19} className="use-row-costs" />
+        )}
+
+        {magazine && (
+          <AmmoPips ammo={magazine.ammo} charges={magazine.charges} used={magazine.used} />
+        )}
       </button>
 
       <InfoButton onClick={() => stack?.openCard(card, riders)} label={`${card.name} card`} />
-
-      {riding && <span className="use-row-rider">{riding}</span>}
     </div>
   );
 }
@@ -342,8 +427,9 @@ function StowedWeapon({ item, stack }) {
   );
 }
 
-/** The ⓘ that every row carries: the card or the item, dealt onto the pile. */
-function InfoButton({ onClick, label }) {
+/** The ⓘ that every row carries: the card or the item, dealt onto the pile.
+    Exported since 2026-09-08, because the rune block's rows are the same row. */
+export function InfoButton({ onClick, label }) {
   return (
     <button
       type="button"
@@ -355,6 +441,12 @@ function InfoButton({ onClick, label }) {
       i
     </button>
   );
+}
+
+/** "Quick Draw", "Quick Draw and something else". No Oxford comma. */
+function listOut(words) {
+  if (words.length <= 1) return words[0] ?? '';
+  return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
 }
 
 /** What the swap actually does, said plainly — one hand may well be empty. */

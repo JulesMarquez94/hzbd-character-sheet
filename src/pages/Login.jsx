@@ -1,12 +1,18 @@
 import { useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
+import { joinNames, listLocalCharacters } from '../lib/localCharacters.js';
 import './auth.css';
 
 export default function Login() {
   const { signIn, resetPassword, user, isConfigured, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  /* Characters made on this device with nobody signed in, read once. Said
+     above the form so the reader knows they are still here. See
+     src/lib/localCharacters.js. */
+  const [waiting] = useState(() => listLocalCharacters().map((row) => row.name));
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,7 +46,7 @@ export default function Login() {
 
   async function handleForgotPassword() {
     if (!email.trim()) {
-      setError('Enter your email address first, then press "Lost Key?".');
+      setError('Enter your email address first, then press "Forgot password?".');
       return;
     }
     setError('');
@@ -55,8 +61,16 @@ export default function Login() {
         <div className="auth-header">
           <img src="/Hazebound-icon.png" alt="" className="auth-logo" />
           <h1>Hazebound</h1>
-          <p>Aetheric Engine Portal</p>
+          <p>Log in to your account</p>
         </div>
+
+        {waiting.length > 0 && (
+          <p className="auth-note">
+            <b>{joinNames(waiting)}</b> {waiting.length === 1 ? 'is' : 'are'} saved on this device
+            only. Once you are logged in, your Characters page offers to save{' '}
+            {waiting.length === 1 ? 'them' : 'each of them'} to your account.
+          </p>
+        )}
 
         {error && <div className="form-error">{error}</div>}
         {notice && <div className="form-success">{notice}</div>}
@@ -64,14 +78,14 @@ export default function Login() {
         <form onSubmit={handleSubmit} noValidate>
           <div className="form-group">
             <label className="form-label" htmlFor="email">
-              Account Email
+              Email Address
             </label>
             <input
               className="form-input"
               type="email"
               id="email"
               autoComplete="username"
-              placeholder="thalira@aethernet.com"
+              placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -80,7 +94,7 @@ export default function Login() {
 
           <div className="form-group">
             <label className="form-label" htmlFor="password">
-              Secure Access Key
+              Password
             </label>
             <input
               className="form-input"
@@ -96,19 +110,19 @@ export default function Login() {
 
           <div className="auth-options">
             <button type="button" className="link link-button" onClick={handleForgotPassword}>
-              Lost Key?
+              Forgot password?
             </button>
           </div>
 
           <button className="btn btn-copper btn-block" type="submit" disabled={busy || !isConfigured}>
-            {busy ? 'Initializing…' : 'Initialize Link'}
+            {busy ? 'Logging In…' : 'Log In'}
           </button>
         </form>
 
         <div className="auth-footer">
-          New to the Haze?{' '}
-          <Link className="link" to="/register">
-            Enlist a Character
+          New here?{' '}
+          <Link className="link" to="/register" state={location.state}>
+            Create an Account
           </Link>
         </div>
       </div>

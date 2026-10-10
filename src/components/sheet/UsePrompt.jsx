@@ -1,8 +1,45 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Modal from '../Modal.jsx';
 import AbilityCard from '../AbilityCard.jsx';
+import CheckPick from './CheckPick.jsx';
+import RollArrow from '../RollArrow.jsx';
+import TargetChip from '../TargetChip.jsx';
+import { Gated } from './parts.jsx';
 import { CostOrb } from '../CostOrbs.jsx';
+import { AmmoPips } from './itemParts.jsx';
+import { useCardStack } from '../../context/card-stack.js';
+import { useFight } from '../../context/fight.js';
 import { VARIABLE_CAP } from '../../lib/actions.js';
+import { castLine, castPlan } from '../../lib/combatBar.js';
+import { getKeyword } from '../../lib/keywords.js';
+import { characterCheckCards } from '../../lib/levelPicks.js';
+import { normalizeEffects } from '../../lib/combatTurn.js';
+import { rollPlan } from '../../lib/rollPlan.js';
+import { statusOf } from '../../lib/statuses.js';
+import { cardAccent } from '../../lib/tagColors.js';
+import { getCard } from '../../lib/weapons.js';
+import {
+  aimingMoves,
+  effectAdvantage,
+  moveAllowance,
+  clampMoves,
+  moveCost,
+  moveWillpower,
+  offeredMoves,
+  offeredRides,
+  ridingLine,
+  withClaims,
+  withMoves,
+  withPrinted,
+  withTargets,
+} from '../../lib/moves.js';
+import { clampSpells, offeredSpells, strikeAllowance, strikeCost } from '../../lib/spellblade.js';
+import { clampWeaves, offeredWeaves, weaveAllowance, weaveCost } from '../../lib/weaver.js';
+import { effectLine } from '../../lib/riders.js';
+import { mergeSources, sourceRow, sourceWords } from '../../lib/attribution.js';
+import { heldThing, targetPlan } from '../../lib/targeting.js';
+import { triggerLine } from '../../lib/onUse.js';
+import { costWords, halfPrice, halfRoom, secondHalf } from '../../lib/overcast.js';
 
 /**
  * The one question every use on the Character tab has to ask: was that an
@@ -27,9 +64,88 @@ import { VARIABLE_CAP } from '../../lib/actions.js';
  * through exactly as a paid one does, and not one point leaves a pool. Still
  * nothing dragged below zero — a cost forgiven rather than a cost paid.
  *
- * Under all of it sits the card itself, printed for this character — the
+ * ------------------------------------------------------------- two columns
+ * Beside all of it sits the card itself, printed for this character — the
  * rolls it asks for, the numbers it deals. Nobody should have to spend points
  * on something and only afterwards go looking for what it did.
+ *
+ * Beside, and no longer under. Everything you decide is in the left column and
+ * the card is in the right, because the card is what the decisions are *about*:
+ * take a Multicast and the card's second half is right there saying what each
+ * extra target buys. Stacked, that half was 640 pixels below the control that
+ * priced it. Under 760 pixels there is no room for two columns of anything, so
+ * the card drops back under the choices and the old single file returns.
+ *
+ * -------------------------------------------------------- the second half
+ * Most spells carry an optional second half, and until now the sheet printed it
+ * and charged nothing for it. Now it is offered here as a thing you take, with
+ * its price added to the way you tap:
+ *
+ *   Overcast     spend more to do more
+ *   Multicast    spend more to catch more targets, any number of times
+ *   Blood Tithe  pay in Health, which no card prints as a cost
+ *
+ * What each one costs is read off the card's own prose rather than restated
+ * anywhere — see src/lib/overcast.js. Two things about it show up here:
+ *
+ *   any number   a half that may be taken repeatedly gets a dial under it, and
+ *                every step moves the orbs on both ways. The dial goes past
+ *                what the pools hold on purpose, the same way the two ways stay
+ *                clickable when you cannot afford them: the hint says how many
+ *                you can actually pay for, and the notice says what came short.
+ *   instead of   an Overcast written as its own later spend ("You can spend 2
+ *                Action Points and 4 Willpower to hurl the flame") is paid in
+ *                place of the printed cost, not on top of it. The cast it rides
+ *                on was paid for on some earlier turn.
+ *
+ * Upkeep is the fourth name and it is not offered, because it is not a choice
+ * made while casting: it is a toll at every Turn Start. It is printed as a line
+ * so the player knows what they are signing up for, and combatTurn.js goes on
+ * tracking it as the running effect it is.
+ *
+ * And one holder may take the offer away. A Runebearer fires the spell exactly
+ * as printed, so the pool lays `noHalf` on every rune and the control becomes a
+ * line saying which card closed it. Said rather than hidden: the card dealt
+ * beside the prompt still prints its Overcast in full, and a prompt that quietly
+ * skipped it would read as the sheet having missed it.
+ *
+ * ------------------------------------------------------------ who did this to it
+ * And under the two ways, **every source changing this card, and what each one
+ * changed.** Jules, 2026-08-28, testing: "My finesse pact bound weapon as two
+ * adventage and on the action view I dont see the source. It is also empowred and
+ * I dont see the source below the action buttons. Everything that is modified need
+ * to be seen but only what modifies it. So if my spells are empowerd because of
+ * talents I should see on the side below the action buttons. No exceptions."
+ *
+ * The sheet always folded these in correctly and almost never said whose they
+ * were. The arrow in a card's corner carries names and has room for nothing else;
+ * an Empowered die carried not even that. So every fold keeps a receipt now, they
+ * ride on the modifiers object as `sources`, and this is where they are read. See
+ * attribution.js, which is where the shape lives.
+ *
+ * "only what modifies it" is the other half and the harder one. A Duelist's AGILE
+ * grants a point of Defense for the same Finesse weapon DEXTEROUS lends an arrow
+ * for, and a list crediting AGILE on an attack would be pointing at a number that
+ * never moved. So a row is written where a source actually gave something to
+ * *this* card, and nowhere else.
+ *
+ * ------------------------------------------------------- what else is on you
+ * Under that, the rows on the tracker the list above did not account for. "it
+ * should list all the active effect on under the use buttons", the day before.
+ * Half of what the tracker holds changes the thing you are about to do and is
+ * credited above; the other half is a Grappled or a mark somebody laid on you,
+ * which changes no number here and is still worth having in front of you at the
+ * moment you decide. Nothing is printed twice.
+ *
+ * Both lists are reminders and not controls. Nothing here is spent, dropped or
+ * nudged. The block is where a tracker is edited, and a dialog that let you edit
+ * one while paying for something else would be two decisions wearing one Cancel.
+ *
+ * ------------------------------------------------------ and what this one starts
+ * Above them, when the card lasts, the row this use is about to write. A sheet
+ * that quietly starts counting things is a sheet you stop trusting, so it is said
+ * before the tap rather than found on the block afterwards. See `castEffect` in
+ * combatBar.js.
  *
  * Two things on the sheet do not have a printed cost, and both are standard
  * actions (see actions.js):
@@ -41,6 +157,53 @@ import { VARIABLE_CAP } from '../../lib/actions.js';
  *              into the Reaction pool one for one. There is no action-or-
  *              reaction to ask about, so it is offered as the one thing it is,
  *              and the dial cannot be turned past what the pools can hold.
+ *
+ * ------------------------------------------------------- the Martial Moves
+ * And, on a weapon attack, **the moves this character can add to it.** Jules,
+ * 2026-09-02: "When you have marital moves and you make a weapon attack (or later
+ * special weapon attack). Then you should see list of your martial move on the
+ * action preview before you pay the cost so you can add one, or two later on."
+ *
+ * A move used to be its own use: you paid for one at the quick bar, it sat on the
+ * effects tracker and the next swing carried it. It is a thing you add here now,
+ * which puts the decision where the information is. Everything about the offer
+ * follows from that:
+ *
+ *   priced here     the Willpower joins the orbs on both ways, and the one move
+ *                   that cuts the swing's cost (RIPOSTE) takes a point off them.
+ *                   Four of them are priced off *this* swing rather than off
+ *                   their own plate, so the row is also where a RECKLESS first
+ *                   says it costs 3 on the Great Weapon you happen to be
+ *                   holding. See moveWillpower in martial.js.
+ *   folded here     the card in the right-hand column shows the swing with the
+ *                   moves on it, so a RECKLESS ticked on is a d4 that appears in
+ *                   the corner and a die that appears in the damage.
+ *   capped here     one to a swing, or two once a set has bought the second, and
+ *                   the cap says whose rule it is.
+ *
+ * The list is the character's own hand, off `offeredMoves`, which is also where
+ * the two narrowings live: whether this character's moves reach a Special Weapon
+ * Attack at all, and whether this swing is the reaction RIPOSTE and CONCUSS need. A prompt
+ * for anything that is not a weapon attack is handed an empty list and draws
+ * nothing, which is almost every prompt.
+ *
+ * ---------------------------------------------------------------- the targets
+ * On the encounter page the prompt is handed `combat`: everybody in the fight,
+ * as chips. A card whose text lands on other bodies ("against an entity", "up
+ * to 3 targets") then offers them here, *before* the pay buttons, because who
+ * it hits is decided before what it costs is paid (Jules, 2026-09-01). How many
+ * may be picked is the card's own count, read off its prose by targetPlan, and
+ * a Multicast raises it as it is dialled — that is the whole of what "catch
+ * more targets" means. Picking is optional: a use with nobody picked pays and
+ * rolls exactly as it always did, and the Game Master lands the numbers by
+ * hand. What was picked rides out on the confirm as `options.targets`, and the
+ * encounter page is what does something with it — this prompt still spends
+ * points and nothing else.
+ *
+ * A card that reaches for a thing rather than a body offers the same chips and
+ * asks a different question in the head: KINDLE WEAPON's "a weapon you can
+ * touch" is somebody's weapon, so the head reads "Whose weapon" and picking an
+ * ally lights theirs (Jules, 2026-09-04). See heldThing in targeting.js.
  */
 
 /** The two pools a cost can come out of, and what each one is called. */
@@ -69,7 +232,27 @@ const CONFIRM_ONLY = { ...WAYS[0], label: 'Use It' };
 /** Anticipate: the points are not spent, they cross from one pool to the other. */
 const CONVERT = { ...WAYS[0], mode: 'convert', label: 'Hold Back' };
 
-export default function UsePrompt({ request, character, onCancel, onConfirm }) {
+/** Nothing owed, in the shape a price comes in. */
+const NOTHING = { ap: 0, wp: 0, health: 0 };
+
+export default function UsePrompt({
+  request,
+  character,
+  onCancel,
+  onConfirm,
+  combat = null,
+  /* Raised from a reaction window: the one question this prompt normally asks
+     is already answered, so only the Reaction way is offered — a reaction paid
+     out of Action Points would not be a reaction. */
+  reaction = false,
+}) {
+  /* The pile the printed card deals onto. This prompt is a dialog, and the pile
+     sits above every dialog (see the z scale in index.css), so a number tapped
+     here opens its working over the prompt and closes back onto it. Optional
+     because the hook answers null outside a provider, and a card with no pile to
+     deal onto prints its numbers flat rather than as dead buttons. */
+  const cards = useCardStack();
+
   // The way that was asked for and could not be paid, until another is tried.
   const [denied, setDenied] = useState(null);
 
@@ -77,19 +260,638 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
   // How far the dial goes. A conversion is capped by both pools, since moving
   // a point that neither can hold is not a choice, it is a mistake.
   const ceiling = converts ? convertRoom(character) : VARIABLE_CAP;
-  const [dialled, setDialled] = useState(() => Math.min(1, ceiling));
+  /* And where it opens: on what the card printed. Every variable action but one
+     prints no cost at all and opens on 1, which is the smallest thing the Game
+     Master is likely to charge. A SKILL CHECK prints 0, because "most attempts
+     cost nothing" is the rule rather than the exception, and a dial that opened
+     on 1 would charge an Action Point for asking a barman a question. */
+  const [dialled, setDialled] = useState(() =>
+    Math.max(0, Math.min(request.ap == null ? 1 : Number(request.ap) || 0, ceiling))
+  );
 
-  const ap = request.variable ? dialled : Number(request.ap) || 0;
-  const wp = Number(request.wp) || 0;
-  const ways = converts ? [CONVERT] : ap > 0 ? WAYS : [CONFIRM_ONLY];
+  /* The card's second half, and how many times it has been taken. Zero is not
+     taken at all, which is where every use starts: the printed cost is the cost
+     until the player says otherwise. */
+  const half = useMemo(() => secondHalf(request.card), [request.card]);
+  /* And whether whoever handed this card over will let it be taken. One does
+     not: a Runebearer fires the spell as printed, so `noHalf` rides on the pool
+     and the offer becomes a sentence saying who took it away. Refusing it
+     silently would read as a codex that had forgotten the Overcast, which is the
+     one thing the card in the corner would contradict. See loadoutModifiers in
+     loadouts.js. */
+  const barred = Boolean(request.modifiers?.noHalf);
+  const offer = half?.kind === 'option' && !barred ? half : null;
+  const refused = half?.kind === 'option' && barred ? half : null;
+  const toll = half?.kind === 'toll' ? half : null;
+  const [times, setTimes] = useState(0);
+
+  /* Who this lands on, when there is anybody to land it on. The page hands the
+     roster in on the encounter view; on a player's own sheet it is the fight
+     the table log announced, which is how "in a combat encounter I should see
+     all enemies I can target" reaches a sheet that cannot read the encounter
+     row. See FightProvider.jsx. The plan is the card's own text and it moves
+     with the dial: a Multicast taken twice is two more chips allowed. `chosen`
+     is clamped on read rather than trimmed by an effect, so dialling the
+     Multicast back down quietly releases the extra targets without a state
+     write racing the render. */
+  const fight = useFight();
+  /* Held rather than recomputed, because the empty fallback is a fresh array on
+     every render and the target fold downstream is keyed on this list: without
+     the memo a prompt for a card nobody is aiming at would re-derive every
+     rider on every keystroke in the dial. */
+  const roster = useMemo(() => combat?.roster ?? fight?.roster ?? [], [combat?.roster, fight?.roster]);
+  const offered = roster.length > 0;
+
+  /* ---- the Martial Moves on offer, and the ones ticked ----
+     The hand this character could add to this swing, and how many of it they are
+     allowed. Both read off the character rather than off anything the dialog
+     decides, so neither moves while a box is being ticked. `reaction` is the
+     same flag that leaves only the Reaction way on offer: RIPOSTE may only ride a
+     swing made as one, and a set that has not bought the reaction rule may not
+     add a move to one at all. See offeredMoves in moves.js. */
+  const martial = useMemo(
+    () => offeredMoves(character, request.card, { reaction }),
+    [character, request.card, reaction]
+  );
+  const allowance = useMemo(() => moveAllowance(character?.talents), [character?.talents]);
+
+  /* Which ones, **by their place in the list and not by card id**: two sets can
+     teach the same move and both copies were paid for, so two rows can wear one
+     id and ticking either has to tick exactly one.
+
+     Clamped on read rather than trimmed by an effect, exactly as the target list
+     is: a rank lost while the dialog is open quietly releases the second move
+     without a state write racing the render. */
+  const [added, setAdded] = useState([]);
+  const allowed = Math.max(1, Math.floor(Number(allowance.perAttack) || 1));
+  const takenMoves = useMemo(() => clampMoves(added, martial, allowed), [added, allowed, martial]);
+  const moveCards = useMemo(
+    () => takenMoves.map((at) => martial[at].card),
+    [takenMoves, martial]
+  );
+  /* What the allowance has actually spent, which is not how many boxes are
+     ticked: AMBUSH is besides the limit, so a Duelist 1 with an ambush and a
+     wound on one swing has ticked two and spent one. */
+  const spentMoves = takenMoves.filter((at) => !martial[at]?.card?.uncounted).length;
+  const besideMoves = takenMoves.length - spentMoves;
+
+  function toggleMove(at) {
+    setAdded((was) => {
+      const held = clampMoves(was, martial, allowed);
+      if (held.includes(at)) return held.filter((one) => one !== at);
+      /* Asked rather than counted: the clamp is the one rule about what fits, so
+         a tick is legal exactly when it survives being run through it. */
+      const next = clampMoves([...held, at], martial, allowed);
+      return next.includes(at) ? next : held;
+    });
+    setDenied(null);
+  }
+
+  /* ---- and the spells a Spellblade can carry in on it ----
+     The same shape and the same seam as the moves above, because it is the same
+     decision: a thing added to this swing, priced into the same pay button and
+     spent by the same press. What is different is only where the list comes from
+     and what one costs, and both of those are spellblade.js's. Empty for every
+     card that is not a bound weapon's attack, which is almost every prompt. */
+  const carried = useMemo(
+    () => offeredSpells(character, request.card),
+    [character, request.card]
+  );
+  const carriable = useMemo(() => strikeAllowance(character), [character]);
+  const [rode, setRode] = useState([]);
+  const takenSpells = useMemo(
+    () => clampSpells(rode, carried, carriable),
+    [rode, carried, carriable]
+  );
+  const spellRows = useMemo(() => takenSpells.map((at) => carried[at]), [takenSpells, carried]);
+  const spellCards = useMemo(() => spellRows.map((row) => row.card), [spellRows]);
+
+  function toggleSpell(at) {
+    setRode((was) => {
+      const held = clampSpells(was, carried, carriable);
+      if (held.includes(at)) return held.filter((one) => one !== at);
+      const next = clampSpells([...held, at], carried, carriable);
+      return next.includes(at) ? next : held;
+    });
+    setDenied(null);
+  }
+
+  /* ---- and the weaves a Weaver can release through it ----
+     The third thing that can be ticked onto one swing, and the same seam again:
+     chosen here, priced into the same pay button, spent by the same press. What
+     is different from the two above is only what the list is and what one costs,
+     and both of those are weaver.js's.
+
+     No bond and no weapon to check, which is the whole of what the Weaver's own
+     cards promise: any Weapon Attack will do, so this is empty for every card
+     that is not one and for everybody who holds no weaving set. */
+  const released = useMemo(
+    () => offeredWeaves(character, request.card),
+    [character, request.card]
+  );
+  const releasable = useMemo(() => weaveAllowance(character), [character]);
+  const [letGo, setLetGo] = useState([]);
+  const takenWeaves = useMemo(
+    () => clampWeaves(letGo, released, releasable),
+    [letGo, released, releasable]
+  );
+  const weaveRows = useMemo(() => takenWeaves.map((at) => released[at]), [takenWeaves, released]);
+  const weaveCards = useMemo(() => weaveRows.map((row) => row.card), [weaveRows]);
+
+  function toggleWeave(at) {
+    setLetGo((was) => {
+      const held = clampWeaves(was, released, releasable);
+      if (held.includes(at)) return held.filter((one) => one !== at);
+      const next = clampWeaves([...held, at], released, releasable);
+      return next.includes(at) ? next : held;
+    });
+    setDenied(null);
+  }
+
+  const plan = useMemo(
+    () =>
+      offered
+        ? targetPlan(request.card, { times, riders: aimingMoves(moveCards) })
+        : { some: false, count: 0 },
+    [offered, request.card, times, moveCards]
+  );
+  const [chosen, setChosen] = useState([]);
+  const reach = plan.count === null ? roster.length : Math.min(plan.count, roster.length);
+  const picked = chosen.slice(0, reach);
+
+  /* The picked bodies, as the swing needs to see them: a name, and what is
+     running on them. A Wound on the thing you are swinging at is an extra die on
+     the swing, so the fold has to read their tracker as well as yours, and
+     `conditions` is what the fight hands down for it. `heard` says the row came
+     over the log rather than off the body itself, which is the difference
+     between folding it and offering it. See FightProvider.jsx and moves.js. */
+  const bodies = useMemo(
+    () =>
+      chosen
+        .slice(0, reach)
+        .map((id) => roster.find((body) => body.id === id))
+        .filter(Boolean)
+        .map((body) => ({
+          id: body.id,
+          name: body.name,
+          effects: body.conditions ?? [],
+          heard: Boolean(body.heard),
+          /* Down is unconscious, which is the one thing about a body the
+             Healer skill asks. See withMending in moves.js. */
+          down: Boolean(body.down),
+        })),
+    [chosen, reach, roster]
+  );
+
+  /* What this one reaches for, when it is a thing rather than a body: a KINDLE
+     WEAPON picks whose blade catches fire, so the head asks for that instead of
+     for "Targets". See heldThing in targeting.js. */
+  const thing = useMemo(() => heldThing(request.card), [request.card]);
+
+  function toggleTarget(id) {
+    setChosen((was) => {
+      const held = was.slice(0, reach);
+      if (held.includes(id)) return held.filter((entry) => entry !== id);
+      return held.length >= reach ? held : [...held, id];
+    });
+  }
+
+  /* ---- what this one asks before it can be priced ----
+     A SKILL CHECK is rolled off an attribute the player picks, with whatever card
+     they say applies. Both are questions the codex cannot answer: there is no
+     column anywhere saying that this attempt is about a map. So the card carries
+     `picks: 'check'` and the two answers are collected here, above the ways,
+     because what a brought card costs in Willpower is part of what the button
+     below is about to charge. See CheckPick.jsx and actions.js. */
+  const picks = request.card?.picks === 'check';
+
+  /* Whose numbers and whose cards. A creature plays the same basic actions off
+     its own attributes and holds no background, no talent set and no ancestry at
+     all, so its picker offers the three attributes and says so. */
+  const who = request.modifiers?.actor ?? character;
+
+  const [attribute, setAttribute] = useState(() => request.card?.stat ?? 'instinct');
+  const [brought, setBrought] = useState([]);
+
+  /* A skill, a talent set's card or a lineage's, all read the same way and
+     offered together. See characterCheckCards in levelPicks.js. */
+  const checkable = useMemo(
+    () => (picks ? characterCheckCards(who) : []),
+    [picks, who]
+  );
+  /* What is actually riding: ticked, and wired. Read on render rather than
+     trimmed by an effect, exactly as the target list is. */
+  const riding = useMemo(
+    () => checkable.filter((card) => card.advantage > 0 && brought.includes(card.id)),
+    [checkable, brought]
+  );
+  const bringWp = riding.reduce((sum, card) => sum + card.wp, 0);
+  const bringSwing = riding.reduce((sum, card) => sum + card.advantage, 0);
+
+  // What the card rolls with, for a tithe written off an attribute.
+  const stat = picks ? attribute : request.modifiers?.stat ?? request.card?.stat ?? 'instinct';
+
+  /* The card as it stands with every answer this dialog has collected on it, so
+     the printed card beside the ways shows the attribute that is about to be
+     rolled, the advantage the brought cards are lending and the Martial Moves
+     that have been ticked. The same object goes out on the confirm, which is what
+     makes the dice agree with the card the player was looking at.
+
+     The moves are folded last and on top of what the caller handed in, because
+     everything else on the swing was known before this dialog opened and they are
+     the only part of it being decided in here. See withMoves in moves.js. */
+  /* ---- the conditional clauses, and which of them the player claimed ----
+     Everything running on this body, on the card and on the bodies it is aimed
+     at whose rule is conditional on something only the player can see. Jules,
+     2026-09-19: "the player should have an option that allow them to check a box
+     to allow the character to decide if it applies or not."
+
+     Read off the character, the card and the picked targets, so the list moves
+     when a target is picked and never while a half is being dialled. What is
+     ticked is folded into the modifiers below, which is what makes the card
+     beside the ways and the dice on the table agree about it. See offeredRides
+     in moves.js. */
+  const rides = useMemo(
+    () =>
+      offeredRides(who, request.card, {
+        targets: bodies,
+        half: times > 0,
+        /* The ticked moves and the carried spells count as part of this use, so
+           their own conditional clauses are asked here too: EXECUTE's "if the
+           target is below half its maximum Health" is a box on the swing it was
+           added to. Untick the move and the box goes with it. */
+        riders: [...moveCards, ...spellCards, ...weaveCards],
+      }),
+    [who, request.card, bodies, times, moveCards, spellCards, weaveCards]
+  );
+  const [claimed, setClaimed] = useState([]);
+  /* Clamped on read rather than trimmed by an effect, exactly as the targets and
+     the moves are: a box whose row expired while the dialog was open quietly
+     stops counting without a state write racing the render. */
+  const claims = useMemo(
+    () => claimed.filter((key) => rides.some((ride) => ride.key === key)),
+    [claimed, rides]
+  );
+
+  function claim(key) {
+    setClaimed((was) => (was.includes(key) ? was.filter((held) => held !== key) : [...was, key]));
+    setDenied(null);
+  }
+
+  const modifiers = useMemo(() => {
+    const asked = picks
+      ? {
+          ...request.modifiers,
+          stat: attribute,
+          advantage: (Number(request.modifiers?.advantage) || 0) + bringSwing,
+          /* And its receipt. "Everything that is modified need to be seen but
+             only what modifies it": a card brought to a check lends a die exactly
+             as a Martial Move does, so it is named on the arrow and itemised in
+             the list under the ways rather than being an unexplained d4. It was
+             the settled price that named these until 2026-09-04, which said
+             nothing at all about the ones that are free. See attribution.js. */
+          advantageFrom: [
+            ...(request.modifiers?.advantageFrom ?? []),
+            ...riding.map((card) => card.name),
+          ],
+          sources: mergeSources(
+            request.modifiers?.sources ?? [],
+            riding.map((card) => sourceRow(card.name, { advantage: card.advantage }, card.id))
+          ),
+        }
+      : request.modifiers;
+
+    /* What the bodies this is aimed at are worth to it, then the boxes the
+       player ticked, then the moves. All three are folded *on top* of what the
+       caller handed in rather than re-derived, for the reason `withMoves` gives:
+       everything else about this card was settled before the dialog opened, and
+       a second fold of the whole tracker in here would count it twice.
+
+       The targets go first because they are the only one of the three the player
+       does not choose: picking a body is the decision, and a Wound on it is an
+       extra die whether or not anything else is ticked. See moves.js. */
+    const aimed = withTargets(asked, request.card ?? null, bodies);
+    /* And what a taken half does to this card's own dice, before the boxes, so
+       a tithe's Empowered die is on the card the boxes are read beside. */
+    const bought = withPrinted(aimed, request.card ?? null, { half: times > 0 });
+    const held = withClaims(bought, who, request.card ?? null, claims, {
+      targets: bodies,
+      half: times > 0,
+      riders: [...moveCards, ...spellCards, ...weaveCards],
+    });
+    return withMoves(held, moveCards, request.card ?? null);
+  }, [
+    picks,
+    request.modifiers,
+    attribute,
+    bringSwing,
+    riding,
+    moveCards,
+    spellCards,
+    weaveCards,
+    request.card,
+    bodies,
+    who,
+    claims,
+    times,
+  ]);
+
+  /* What is on this character right now, for the list under the ways, and how
+     long this use will itself be on them. Both read off the request and the
+     character rather than off anything the dialog decides, so neither moves while
+     a half is being dialled. */
+  const running = useMemo(
+    () => normalizeEffects(character?.effects).filter((effect) => effect.turns !== 0),
+    [character?.effects]
+  );
+
+  /* Everything changing this card, itemised and named. Read off the *folded*
+     object rather than off the request, so a Martial Move ticked on in here is
+     credited in the same list as the weapon and the bargain: they are all changing
+     the same swing, and a list that named only the ones settled before the dialog
+     opened would be missing the two the player just chose. See attribution.js. */
+  const sources = useMemo(() => modifiers?.sources ?? [], [modifiers]);
+
+  /* And what is running that this list has not already accounted for. A row
+     credited above is a row the reader has read: printing it twice under two
+     headings is the sheet padding itself. */
+  const aside = useMemo(() => {
+    const credited = new Set(sources.map((row) => row.from));
+    return running.filter((effect) => !credited.has(effect.name));
+  }, [running, sources]);
+  const lasts = useMemo(() => castLine(request), [request]);
+
+  /* ---- what this cast leaves behind, and where ----
+     The card's own row, the conditions it inflicts and the body it puts on the
+     table, read once off the card and the ticked moves (see castPlan in
+     combatBar.js) and said here before the tap. A condition the card leaves to
+     a choice ("push it back or knock it prone") is a box, off until ticked;
+     the certain ones are lines. What was ticked rides out on the confirm as
+     `statuses`, and the moves as `riders`, so the chain lays exactly what this
+     dialog said it would. */
+  const [ticked, setTicked] = useState([]);
+  const casting = useMemo(
+    () =>
+      castPlan(request, who, {
+        half: times > 0,
+        /* The ridden spells count as riders here exactly as the moves do: a
+           Fireball carried in on the swing inflicts its Burn on whoever the swing
+           found, and the chain reads that off the card. See castPlan. */
+        riders: [...moveCards, ...spellCards],
+        statuses: ticked,
+        plan: rollPlan(request.card, who, modifiers, { half: times > 0 }),
+      }),
+    [request, who, times, moveCards, spellCards, ticked, modifiers]
+  );
+  const certain = casting.offered.filter((hit) => !hit.optional);
+  const choices = casting.offered.filter((hit) => hit.optional);
+
+  function tick(id) {
+    setTicked((was) => (was.includes(id) ? was.filter((held) => held !== id) : [...was, id]));
+  }
+
+  /* Where the card's own row goes, in words. "Their" only once bodies are
+     picked; a cast at nobody has always laid its row on the caster. */
+  const rowHome =
+    picked.length === 0 || casting.landsOn === 'caster'
+      ? 'your tracker'
+      : casting.landsOn === 'both'
+        ? 'your tracker and theirs'
+        : 'their tracker';
+  /* And what the card writes on its own, for the two that write anything. See
+     useTriggers.js: a sheet that quietly rewrites six columns because you drank
+     something has to say so first. */
+  const writes = useMemo(() => triggerLine(request.card, character), [request.card, character]);
+
+  /* What the Martial Moves add: Willpower, the one point RIPOSTE takes back off
+     the swing, and whether one of them makes the swing free outright. Floored at
+     nothing where it lands, because a 1 Action Point attack with a Riposte on it
+     is free rather than owed. See moveCost.
+
+     `swing` is the attack card itself, because five of the moves are priced off
+     it and the two rates read different things off it: RECKLESS wants its printed
+     Action Points and AMBUSH wants how many Damage Dice it rolls. The card rather
+     than the request, so a discount the holder carries does not quietly make
+     their moves cheaper too — and null when the request arrived without one,
+     which prices every move at what its plate prints. */
+  const cutBy = Math.max(0, Math.floor(Number(allowance.discount) || 0));
+  const swing = request.card ?? null;
+  const paid = moveCost(moveCards, cutBy, swing);
+
+  /* And what the spells add, which is Willpower and nothing else: a ridden spell
+     lays no charge and its Action Points were the attack's. The whole arithmetic
+     is spellblade.js's, worked out per spell when the list was built, so this is
+     only the sum. See strikePrice. */
+  const rideWp = strikeCost(spellRows);
+
+  /* And what the weaves add, which is Willpower and nothing else for the same
+     two reasons: a weave has no Action Points of its own and lays no charge.
+     Worked out per weave when the list was built, so this is only the sum. See
+     weavePrice. */
+  const weaveWp = weaveCost(weaveRows);
+
+  const base = {
+    /* RECKLESS VIOLENCE, and nothing else: a move can say the attack costs no
+       Action Points, and that replaces the price rather than reducing it. It wins
+       over the dial and over RIPOSTE both, because there is nothing left for
+       either to move. See `free` in moveCost. */
+    ap: paid.free
+      ? 0
+      : Math.max(0, (request.variable ? dialled : Number(request.ap) || 0) + paid.ap),
+    /* Plus whatever the cards brought to a check cost, and whatever the moves
+       cost. A skill has no printed price of its own (see the note in
+       backgrounds.js): it spends Willpower conditionally, inside its own sentence,
+       and this is the condition. A Wildkin's SHARP SENSE prints its 1 Willpower
+       and spends it here for the same reason, and a Feral Cursed's BESTIAL SENSE
+       prints nothing and costs nothing. */
+    wp: (Number(request.wp) || 0) + bringWp + paid.wp + rideWp + weaveWp,
+    health: 0,
+  };
+  const taken = Boolean(offer) && times > 0;
+  const step = offer ? halfPrice(offer, character, 1, stat) : NOTHING;
+  const extra = offer ? halfPrice(offer, character, times, stat) : NOTHING;
+
+  /* The price as it stands. An "instead of" half replaces the printed cost
+     rather than adding to it, because the cast it hangs off was paid for on an
+     earlier turn. See the note above. */
+  const price = !taken
+    ? base
+    : offer.instead
+      ? extra
+      : { ap: base.ap + extra.ap, wp: base.wp + extra.wp, health: extra.health };
+
+  /* What the card printed, when something has already cut it. Three things can:
+     an Arcanist at Rank 3 casts everything in their spellbook for one Action Point
+     less, a RIPOSTE added to a reaction attack gives a point back, and a RECKLESS
+     VIOLENCE takes the whole price away. All are named on the one line, because an
+     orb that quietly reads 1 where the card says 2 is the only number on this
+     dialog with no account of itself.
+
+     Shown only while nothing else is being added on top, because an Overcast moves
+     the same number for its own reasons and two revisions on one orb is a sum
+     nobody can read. See cardCost in cardText.js. */
+  const apPrinted =
+    Number(request.apWas) > 0
+      ? Number(request.apWas)
+      : request.variable
+        ? dialled
+        : Number(request.ap) || 0;
+  const apWas = !taken && apPrinted > price.ap ? apPrinted : null;
+
+  /* And the same reading of the other orb. Only one thing in the codex moves a
+     Willpower cost rather than an Action Point one, and it moves it all the way:
+     a Runebearer fires an inscribed spell for nothing, whatever the spell prints.
+     Held to the same rule as the Action Points, so an Overcast being added on top
+     puts both revisions away rather than showing a sum nobody can read. */
+  const wpPrinted = Number(request.wpWas) > 0 ? Number(request.wpWas) : Number(request.wp) || 0;
+  const wpWas = !taken && wpPrinted > price.wp ? wpPrinted : null;
+  const cutFrom = [
+    ...(request.apCutFrom ?? []),
+    /* A move that moved the Action Points, either way it can: a signed delta, or
+       the word that zeroes them. `Number('free')` is NaN and NaN is not less than
+       zero, so the flag has to be tested for itself — without this the orb would
+       strike a 4 through and name nobody for it. */
+    ...moveCards
+      .filter((card) => card.rides?.ap === 'free' || Number(card.rides?.ap) < 0)
+      .map((card) => card.name),
+  ];
+
+  const ways = reaction
+    ? [price.ap > 0 ? WAYS[1] : { ...WAYS[1], label: 'Use It as a Reaction' }]
+    : converts
+      ? [CONVERT]
+      : price.ap > 0
+        ? WAYS
+        : [CONFIRM_ONLY];
+
+  /* How many more steps the pools could actually pay for. An "instead of" half
+     is not stacked on the printed cost, so nothing is committed against it. */
+  const room = halfRoom(offer, character, offer?.instead ? NOTHING : base, stat);
+
+  /* Whole numbers rather than a card and a count: the number printed beside the
+     way you tap is the number that leaves the sheet. See spendUse.
+
+     A card brought to a check settles a price the same way a second half does,
+     and for the same reason: the card printed neither number, so the only
+     honest account of the cost is the one the prompt just added up. Only when
+     one of them charged something: a brought card that is free changes the roll
+     and not the price, and is named on the arrow instead. */
+  const settled = taken
+    ? { ...price, note: `${offer.name}: ${request.name}` }
+    : /* The moves and the spells together, because both are Willpower this swing
+         is charging that the card beside it never printed, and a ledger row
+         naming half of them would be the half that happened to be ticked first. */
+      moveCards.length + spellCards.length > 0
+      ? {
+          ...price,
+          note: `${request.name}: ${listAnd([...moveCards, ...spellCards].map((card) => card.name))}`,
+        }
+      : bringWp > 0
+        ? {
+            ...price,
+            note: `${request.name}: ${listAnd(riding.filter((card) => card.wp > 0).map((card) => card.name))}`,
+          }
+        : null;
+
+  /* Whatever the tap decided, in one place: the price the second half settled
+     on, and whoever was picked to catch it. Targets go out as bodies rather
+     than ids — kind, id and name — because everything downstream of a confirm
+     is building events and event rows carry names, not lookups. Undefined when
+     neither happened, so every caller that never sees a fight sees the calls
+     it always saw. */
+  function decided(extra = {}) {
+    const options = { ...extra };
+    if (settled) options.price = settled;
+    /* The attribute this check is rolled off and the advantage the skills
+       brought to it. Out as modifiers rather than as two loose fields, because
+       that is the shape everything downstream already reads a card with: the
+       roll plan, the printed card and the log all take one `modifiers`. See
+       usePlayCard.js, which folds it onto the request once. */
+    /* **Whenever this dialog changed anything about the card**, which is the one
+       rule that covers all of them: the attribute a check is rolled off, a
+       Martial Move ticked on, a box claimed, a tithe's Empowered die and the
+       Wound on the body that was picked. The swing the dice are thrown for has
+       to be the swing the card in this dialog printed, and a roll plan built off
+       the request alone throws the unmodified one.
+
+       Identity is the test, and it is an honest one: every fold in moves.js
+       hands the same object straight back when it has nothing to add, so a use
+       nobody touched sends nothing and reads exactly as it always did. Until
+       2026-09-19 this was two narrow branches — a Skill Check, and a swing with a
+       move on it — so a claimed box and a wounded target both changed the card in
+       the corner and not the dice. See moves.js. */
+    if (modifiers !== request.modifiers) options.modifiers = modifiers;
+    /* And the names of the moves that were added, beside the numbers. `moves` is
+       what the log prints, since "Strike" and "Strike with Wound and Reckless"
+       are not the same line at a table. */
+    if (moveCards.length > 0) {
+      options.moves = moveCards.map((card) => card.name);
+      /* The cards themselves too, because two of them inflict something on
+         the body they land on (WOUND, REND) and the chain reads that off the
+         card rather than off a name. See castPlan in combatBar.js. */
+      options.riders = moveCards;
+    }
+    /* And the spells a Spellblade carried in on it. `carried` is the rows rather
+       than the names, because two different things downstream read them: the
+       chain rolls each spell's own damage after the swing's (see rollPlan in
+       usePlayCard.js), and `castPlan` reads what each one inflicts. The names go
+       out beside them for the log line, since "Strike" and "Strike carrying
+       Fireball" are not the same line at a table.
+
+       `riders` gathers both kinds, because the one thing castPlan wants is every
+       card standing on this swing whoever put it there. */
+    if (spellCards.length > 0) {
+      options.carried = spellRows.map((row) => ({ card: row.card, modifiers: row.modifiers }));
+      options.spells = spellCards.map((card) => card.name);
+      options.riders = [...moveCards, ...spellCards];
+    }
+    /* And the weaves a Weaver let go through it, down the same two channels for
+       the same two readers: `carried` is what rolls behind the Attack Roll, and
+       it is also what makes UNRAVEL's miss rule true without anything being
+       written for it — a chain stops at a failed check, so a weave on a swing
+       that went wide rolls nothing. `riders` is what castPlan reads for the
+       Burn, the Bleed and the rooted that six of the eighteen inflict.
+
+       Appended rather than assigned, because all three can be on one swing: a
+       Spellblade who is also a Weaver may carry a spell and release a weave in
+       the same motion, and neither list may quietly replace the other. */
+    if (weaveCards.length > 0) {
+      options.carried = [
+        ...(options.carried ?? []),
+        ...weaveRows.map((row) => ({ card: row.card, modifiers: row.modifiers })),
+      ];
+      options.weaves = weaveCards.map((card) => card.name);
+      options.riders = [...moveCards, ...spellCards, ...weaveCards];
+    }
+    /* And the conditions the card left to a choice, as ticked here. */
+    if (ticked.length > 0) options.statuses = ticked;
+    /* An action taken with a fight standing invites reactions: the chain's
+       first roll waits the reaction window before it can be thrown. See
+       REACTION_HOLD in usePlayCard.js. */
+    if (offered) options.react = true;
+    if (picked.length > 0) {
+      options.targets = picked
+        .map((id) => roster.find((body) => body.id === id))
+        .filter(Boolean)
+        .map((body) => ({
+          id: body.id,
+          kind: body.kind,
+          name: body.name,
+          /* What a roll against them is judged by, so an aimed check carries
+             its own DC instead of asking the table. See usePlayCard.js. */
+          defenses: body.defenses ?? null,
+        }));
+    }
+    return Object.keys(options).length > 0 ? options : undefined;
+  }
 
   function attempt(way) {
-    const short = shortfalls(character, { ap, wp }, way);
+    const short = shortfalls(character, price, way);
     if (short.length > 0) {
       setDenied({ way, short });
       return;
     }
-    onConfirm(way.mode, ap);
+    onConfirm(way.mode, price.ap, decided());
   }
 
   /* The table's override. Whatever came up short is left alone rather than
@@ -97,7 +899,7 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
      have: the charge, the effect, the window it opens. See `free` in
      combatBar.js, which is where a use has always been turned into a write. */
   function waveThrough() {
-    if (denied) onConfirm(denied.way.mode, ap, { free: true });
+    if (denied) onConfirm(denied.way.mode, price.ap, decided({ free: true }));
   }
 
   function dial(next) {
@@ -105,10 +907,25 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
     setDenied(null);
   }
 
+  /* Any change to what is being bought clears the last refusal: it was a
+     refusal of a different price. */
+  function take(next) {
+    setTimes(Math.max(0, Math.min(VARIABLE_CAP, next)));
+    setDenied(null);
+  }
+
+  /* A card brought to the check, or put back down. Some of them cost their own
+     Willpower, so this moves the price and clears the refusal with it. */
+  function bring(id) {
+    setBrought((was) => (was.includes(id) ? was.filter((held) => held !== id) : [...was, id]));
+    setDenied(null);
+  }
+
   return (
     <Modal
       title={`Use: ${request.name}`}
       onClose={onCancel}
+      wide
       footer={
         <>
           <span className="spacer" />
@@ -119,121 +936,569 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
       }
     >
       <div className="use-prompt">
-        <p className="use-source">{request.source}</p>
+        <div className="use-choices">
+          <p className="use-source">{request.source}</p>
 
-        <span className="use-question">
-          {converts
-            ? 'How many points do you want waiting on somebody else?'
-            : request.variable
-              ? 'How many Action Points is this worth? Your Game Master decides.'
-              : ap > 0
-                ? 'Is this your action, or are you reacting to something?'
-                : 'Nothing but the cost below leaves your sheet.'}
-        </span>
+          {/* Said in words as well as drawn, because this is the one line that
+              explains why the orbs below disagree with what the card was written
+              with. The card in the right-hand column strikes the old number
+              through in the same breath. */}
+          {(apWas !== null || wpWas !== null) && (
+            <p className="use-cut">
+              {cutFrom.length > 0 && <b>{listAnd(cutFrom)}</b>}
+              {cutFrom.length > 0 ? ' · ' : ''}
+              {cutLine(apWas, price.ap, wpWas, price.wp)}
+            </p>
+          )}
 
-        {/* The dial only appears for the two actions with no printed cost. */}
-        {request.variable && (
-          <Dial
-            value={dialled}
-            ceiling={ceiling}
-            onChange={dial}
-            label={converts ? 'Points held back' : 'Action Points'}
-            hint={converts ? convertHint(character, ceiling) : null}
-          />
-        )}
+          <span className="use-question">
+            {reaction
+              ? 'A reaction is paid out of Reaction Points, so that is the one way offered.'
+              : converts
+                ? 'How many points do you want waiting on somebody else?'
+                : picks
+                  ? 'What are you rolling, and what are you bringing to it?'
+                  : request.variable
+                    ? 'How many Action Points is this worth? Your Game Master decides.'
+                    : price.ap > 0
+                      ? 'Is this your action, or are you reacting to something?'
+                      : 'Nothing but the cost below leaves your sheet.'}
+          </span>
 
-        <div className="use-ways">
-          {ways.map((way) => {
-            const pool = Number(character[way.pool]) || 0;
-            const cap = Number(character[way.max]) || 0;
+          {/* The attribute and the skills, above everything, because they are
+              what this roll *is* and one of them changes what it costs. */}
+          {picks && (
+            <CheckPick
+              who={who}
+              stat={attribute}
+              onStat={(key) => {
+                setAttribute(key);
+                setDenied(null);
+              }}
+              cards={checkable}
+              brought={brought}
+              onBring={bring}
+            />
+          )}
 
-            return (
+          {/* The dial only appears for the actions with no fixed cost. */}
+          {request.variable && (
+            <Dial
+              value={dialled}
+              ceiling={ceiling}
+              onChange={dial}
+              label={converts ? 'Points held back' : 'Action Points'}
+              hint={
+                converts
+                  ? convertHint(character, ceiling)
+                  : picks
+                    ? 'Most attempts cost nothing. Your Game Master says when one does.'
+                    : null
+              }
+            />
+          )}
+
+          {/* What else the card offers, above the ways, so the orbs on a way are
+              already final by the time they are read. */}
+          {offer && (
+            <HalfOffer
+              half={offer}
+              step={step}
+              times={times}
+              room={room}
+              base={base}
+              onTake={take}
+            />
+          )}
+
+          {/* And the same place, saying so, when the card offers one and this way
+              of casting it does not. */}
+          {refused && <HalfRefused half={refused} from={request.modifiers?.noHalfFrom} />}
+
+          {/* What you can add to the swing, above the targets because a move can
+              change who it reaches, and above the ways because the Willpower it
+              costs is on the orbs they print. Only on a weapon attack, and only
+              for somebody who holds one. */}
+          {martial.length > 0 && (
+            <div className="use-moves">
+              <span className="use-targets-head">
+                Martial Moves
+                <span className="use-targets-count">
+                  {spentMoves} of {allowed}
+                  {besideMoves > 0 && ` + ${besideMoves} beside`}
+                </span>
+              </span>
+
+              {martial.map(({ card, talent }, at) => (
+                <MoveRow
+                  key={`${card.id}-${at}`}
+                  card={card}
+                  talent={talent}
+                  on={takenMoves.includes(at)}
+                  full={!takenMoves.includes(at) && !card.uncounted && spentMoves >= allowed}
+                  allowance={allowance}
+                  cut={cutBy}
+                  swing={swing}
+                  onToggle={() => toggleMove(at)}
+                  stack={cards}
+                />
+              ))}
+
+              {/* The one sentence that says what this swing will do, which is the
+                  Duelist's Developpement Notes honoured where they asked for it:
+                  "updating the attack text to say (not on the card) that this
+                  attack will MARTIAL MOVE NAME". Not on the card, because the card
+                  is the codex's and says what the attack always does. */}
+              <span className="use-targets-note">
+                {ridingLine(modifiers) ??
+                  'Nothing added: the attack goes through exactly as the card beside this reads.'}
+              </span>
+            </div>
+          )}
+
+          {/* And what the bound weapon can carry in with it. Under the moves
+              rather than beside them, because they are two different decisions
+              about one swing and the second only exists for one set: a move
+              changes what the attack does and a spell is a second thing arriving
+              where it lands. Same rows, because it is the same tick. */}
+          {carried.length > 0 && (
+            <div className="use-moves">
+              <span className="use-targets-head">
+                Bound Spells
+                <span className="use-targets-count">
+                  {takenSpells.length} of {carriable}
+                </span>
+              </span>
+
+              {carried.map((row, at) => (
+                <RideRow
+                  key={`${row.id}-${at}`}
+                  row={row}
+                  on={takenSpells.includes(at)}
+                  why={
+                    !takenSpells.includes(at) && takenSpells.length >= carriable
+                      ? carriable === 1
+                        ? 'One spell rides a strike. Untick the one you have added first.'
+                        : `A strike carries ${carriable}, and ${carriable} are added. Untick one first.`
+                      : null
+                  }
+                  cutFrom="Twinned Strike"
+                  onToggle={() => toggleSpell(at)}
+                  stack={cards}
+                />
+              ))}
+
+              <span className="use-targets-note">
+                {spellCards.length === 0
+                  ? 'Nothing carried: the attack lands and nothing else does.'
+                  : `${listAnd(spellCards.map((card) => card.name))} ${
+                      spellCards.length === 1 ? 'is' : 'are'
+                    } cast where this lands. The Attack Roll is its Roll, so a miss carries nothing.`}
+              </span>
+            </div>
+          )}
+
+          {/* And the weaves that can be let go through it. Under both of the
+              blocks above, in the order the three decisions were added to the
+              sheet: a move bends the swing, a bound spell arrives on the back of
+              it, and a weave comes out of the wound. Same rows, because it is
+              the same tick, and empty for everybody but a Weaver. */}
+          {released.length > 0 && (
+            <div className="use-moves">
+              <span className="use-targets-head">
+                Weaves
+                <span className="use-targets-count">
+                  {takenWeaves.length} of {releasable}
+                </span>
+              </span>
+
+              {released.map((row, at) => (
+                <RideRow
+                  key={`${row.id}-${at}`}
+                  row={row}
+                  on={takenWeaves.includes(at)}
+                  why={
+                    !takenWeaves.includes(at) && takenWeaves.length >= releasable
+                      ? releasable === 1
+                        ? 'One weave goes out on a hit. Untick the one you have added first.'
+                        : `A hit releases ${releasable}, and ${releasable} are added. Untick one first.`
+                      : null
+                  }
+                  cutFrom="Double Weave"
+                  onToggle={() => toggleWeave(at)}
+                  stack={cards}
+                />
+              ))}
+
+              {/* The one sentence that says what this swing is about to let go,
+                  and it says the miss out loud where the bound-spell line above
+                  only implies it: UNRAVEL prints that rule and this is the same
+                  rule at the moment it is being decided. */}
+              <span className="use-targets-note">
+                {weaveCards.length === 0
+                  ? 'Nothing released: the attack lands and nothing comes out of it.'
+                  : `${listAnd(weaveCards.map((card) => card.name))} ${
+                      weaveCards.length === 1 ? 'goes' : 'go'
+                    } out where this lands. The Attack Roll is the only Roll, so a miss releases nothing.`}
+              </span>
+            </div>
+          )}
+
+          {/* Who it lands on, before what it costs. Only on a page that knows
+              who is in the fight, and only for a card whose own text reaches
+              other bodies. Optional on purpose: nobody picked is the old flow,
+              numbers landed by hand. */}
+          {plan.some && roster.length > 0 && (
+            <div className="use-targets">
+              <span className="use-targets-head">
+                {thing ? `Whose ${thing}` : 'Targets'}
+                <span className="use-targets-count">
+                  {picked.length} of {plan.count === null ? 'any' : reach}
+                </span>
+              </span>
+
+              <div className="tgt-row">
+                {roster.map((body) => {
+                  const on = picked.includes(body.id);
+                  return (
+                    <TargetChip
+                      key={body.id}
+                      body={body}
+                      on={on}
+                      disabled={!on && picked.length >= reach}
+                      onToggle={() => toggleTarget(body.id)}
+                      title={
+                        !on && picked.length >= reach
+                          ? `The card reaches ${reach} ${reach === 1 ? 'target' : 'targets'}. Unpick one first${offer?.name === 'Multicast' ? ', or take the Multicast again' : ''}.`
+                          : undefined
+                      }
+                    />
+                  );
+                })}
+              </div>
+
+              <span className="use-targets-note">
+                {picked.length === 0
+                  ? thing
+                    ? `Nobody picked: the ${thing} is your own, and the spell rides your sheet.`
+                    : 'Nobody picked: the use goes through as written, and the numbers are landed by hand.'
+                  : 'What this lays goes on their trackers, and what it rolls lands on them once the dice settle.'}
+              </span>
+            </div>
+          )}
+
+          {/* What the cast leaves on whoever it lands on, and what it puts on
+              the table. Under the targets because it is about them, and shown
+              whether or not anybody is picked: a Snake poisons whoever it bites
+              whether the sheet knew who that was or not. */}
+          {(casting.offered.length > 0 || casting.conjured) && (
+            <div className="use-lays">
+              <span className="use-targets-head">
+                {casting.conjured && casting.offered.length === 0 ? 'Puts on the table' : 'Leaves on the target'}
+              </span>
+
+              {certain.map((hit) => {
+                const status = statusOf(hit.id);
+                return (
+                  <span className="use-lay" key={hit.id}>
+                    <b>{status?.name ?? hit.id}</b>
+                    <span className="use-lay-line">{status?.line}</span>
+                  </span>
+                );
+              })}
+
+              {choices.map((hit) => {
+                const status = statusOf(hit.id);
+                const on = ticked.includes(hit.id);
+                return (
+                  <button
+                    type="button"
+                    key={hit.id}
+                    className={`use-lay use-lay-take${on ? ' is-on' : ''}`}
+                    onClick={() => tick(hit.id)}
+                    aria-pressed={on}
+                    title="The card leaves this to you. Tick it to lay it."
+                  >
+                    <b>{status?.name ?? hit.id}</b>
+                    <span className="use-lay-line">
+                      {on ? status?.line : 'Your call. Tick it to lay it on them.'}
+                    </span>
+                  </button>
+                );
+              })}
+
+              {casting.conjured && (
+                <span className="use-lay">
+                  <b>{casting.conjured.name}</b>
+                  <span className="use-lay-line">
+                    {casting.conjured.health_max} Health, Defense {casting.conjured.avoid}. It appears
+                    in the fight as a body anyone can aim at.
+                  </span>
+                </span>
+              )}
+
+              {picked.length === 0 && certain.length + choices.length > 0 && (
+                <span className="use-targets-note">
+                  Pick a target above and the condition goes on their tracker. With nobody picked it
+                  is yours to place by hand.
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* And the clauses only the player can answer for. Last of the
+              decisions and directly above the ways, because it is the one that
+              costs nothing: a box here does not move an orb, it moves the dice.
+              Everything in it is off by default, on Jules's ruling of
+              2026-09-19, and nothing is remembered between uses, because where
+              you are standing is not a setting. */}
+          {rides.length > 0 && (
+            <div className="use-lays">
+              <span className="use-targets-head">
+                Does it apply
+                <span className="use-targets-count">
+                  {claims.length} of {rides.length}
+                </span>
+              </span>
+
+              {rides.map((ride) => {
+                const on = claims.includes(ride.key);
+                return (
+                  <button
+                    type="button"
+                    key={ride.key}
+                    className={`use-lay use-lay-take${on ? ' is-on' : ''}`}
+                    onClick={() => claim(ride.key)}
+                    aria-pressed={on}
+                    title="Only you can see whether this applies. Tick it and it rides this use."
+                  >
+                    <b>
+                      {ride.name}
+                      {ride.from !== 'you' && ride.from !== 'card' && (
+                        <span className="use-running-from">{ride.from}</span>
+                      )}
+                    </b>
+                    <span className="use-lay-line">
+                      {on ? ride.line || ride.when : `Your call: ${ride.when}`}
+                    </span>
+                  </button>
+                );
+              })}
+
+              <span className="use-targets-note">
+                The sheet cannot see where anybody is standing. Tick whatever is true right now and
+                it rides this use only.
+              </span>
+            </div>
+          )}
+
+          <div className="use-ways">
+            {ways.map((way) => {
+              const pool = Number(character[way.pool]) || 0;
+              const cap = Number(character[way.max]) || 0;
+
+              return (
+                <button
+                  type="button"
+                  key={way.mode}
+                  className="use-way"
+                  onClick={() => attempt(way)}
+                  disabled={converts && price.ap === 0}
+                  aria-label={`${way.label}: ${costLine(price, way.resource)}`}
+                >
+                  <span className="use-way-costs">
+                    {price.ap > 0 && (
+                      <CostOrb
+                        kind={way.orb}
+                        value={price.ap}
+                        size={30}
+                        was={apWas}
+                        from={cutFrom}
+                      />
+                    )}
+                    {/* A conversion shows both ends of the move, not one cost. */}
+                    {converts && price.ap > 0 && <span className="use-way-arrow">&rarr;</span>}
+                    {converts && price.ap > 0 && <CostOrb kind="rp" value={price.ap} size={30} />}
+                    {price.wp > 0 && (
+                      <CostOrb kind="wp" value={price.wp} size={30} was={wpWas} from={cutFrom} />
+                    )}
+                    {/* A price cut to nothing has no orb to strike through, so the
+                        old number is drawn on its own: a rune that would have cost
+                        4 Willpower and costs none still owes the reader that 4. */}
+                    {price.wp === 0 && wpWas !== null && (
+                      <span
+                        className="cost-orb-was"
+                        style={{ '--orb-cut': 'var(--stat-wp)', fontSize: 16 }}
+                        title={`${wpWas} Willpower, and none of it charged`}
+                      >
+                        {wpWas}
+                      </span>
+                    )}
+                    {price.health > 0 && <CostOrb kind="hp" value={price.health} size={30} />}
+                    {price.ap === 0 && price.wp === 0 && price.health === 0 && (
+                      <span className="use-way-free">{converts ? 'None' : 'Free'}</span>
+                    )}
+                  </span>
+
+                  <span className="use-way-body">
+                    <span className="use-way-label">{way.label}</span>
+                    {converts ? (
+                      <span className="use-way-pool">
+                        {price.ap === 0
+                          ? 'Nothing to move right now'
+                          : `${pool} of ${cap} Action Points left, ${
+                              (Number(character.reaction) || 0) + price.ap
+                            } of ${Number(character.reaction_max) || 0} Reaction Points after`}
+                      </span>
+                    ) : (
+                      price.ap > 0 && (
+                        <span className="use-way-pool">
+                          {pool} of {cap} {way.resource} left
+                        </span>
+                      )
+                    )}
+                    {price.ap === 0 && price.wp > 0 && (
+                      <span className="use-way-pool">
+                        {Number(character.willpower) || 0} of{' '}
+                        {Number(character.willpower_max) || 0} Willpower left
+                      </span>
+                    )}
+                    {/* A tithe is the one cost nothing else on the sheet says
+                        out loud, so the way that charges it names the pool. */}
+                    {price.health > 0 && (
+                      <span className="use-way-pool">
+                        {Number(character.health) || 0} Health now,{' '}
+                        {Math.max(0, (Number(character.health) || 0) - price.health)} after
+                      </span>
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Straight under the two ways, above the card: this is the answer to
+              the tap, and the tap was up here. */}
+          {denied && (
+            <div className="use-denied" role="alert">
+              <span className="use-denied-head">
+                Not done: {denied.way.label.toLowerCase()} is beyond you right now.
+              </span>
+              {denied.short.map((entry) => (
+                <span className="use-denied-line" key={entry.resource}>
+                  <b>{entry.resource}</b> · {entry.need} needed, {entry.have} left
+                </span>
+              ))}
+              <span className="use-denied-foot">Nothing was spent.</span>
+
               <button
                 type="button"
-                key={way.mode}
-                className="use-way"
-                onClick={() => attempt(way)}
-                disabled={converts && ap === 0}
-                aria-label={`${way.label}: ${costLine(ap, wp, way.resource)}`}
+                className="use-denied-anyway"
+                onClick={waveThrough}
+                aria-label="Use it anyway: it goes through and nothing is spent"
               >
-                <span className="use-way-costs">
-                  {ap > 0 && <CostOrb kind={way.orb} value={ap} size={30} />}
-                  {/* A conversion shows both ends of the move, not one cost. */}
-                  {converts && ap > 0 && <span className="use-way-arrow">&rarr;</span>}
-                  {converts && ap > 0 && <CostOrb kind="rp" value={ap} size={30} />}
-                  {wp > 0 && <CostOrb kind="wp" value={wp} size={30} />}
-                  {ap === 0 && wp === 0 && (
-                    <span className="use-way-free">{converts ? 'None' : 'Free'}</span>
-                  )}
-                </span>
-
-                <span className="use-way-body">
-                  <span className="use-way-label">{way.label}</span>
-                  {converts ? (
-                    <span className="use-way-pool">
-                      {ap === 0
-                        ? 'Nothing to move right now'
-                        : `${pool} of ${cap} Action Points left, ${
-                            (Number(character.reaction) || 0) + ap
-                          } of ${Number(character.reaction_max) || 0} Reaction Points after`}
-                    </span>
-                  ) : (
-                    ap > 0 && (
-                      <span className="use-way-pool">
-                        {pool} of {cap} {way.resource} left
-                      </span>
-                    )
-                  )}
-                  {ap === 0 && wp > 0 && (
-                    <span className="use-way-pool">
-                      {Number(character.willpower) || 0} of {Number(character.willpower_max) || 0}{' '}
-                      Willpower left
-                    </span>
-                  )}
+                <span className="use-denied-anyway-label">Use it anyway</span>
+                <span className="use-denied-anyway-note">
+                  Goes through as written. No points leave your sheet.
                 </span>
               </button>
-            );
-          })}
+            </div>
+          )}
+
+          {/* What is loaded, drawn rather than only said. "The preview to use
+              should let you know as well", 2026-08-24: a round is the one cost the
+              printed card cannot show, and this is the last moment before the
+              trigger. The pips are what is in the weapon *now*, and the note under
+              them is what will be in it after. */}
+          {request.ammo && (
+            <div className="use-ammo">
+              <AmmoPips
+                ammo={request.ammo}
+                charges={request.ammoMax}
+                used={request.ammoMax - request.ammoLeft}
+              />
+              <span className="use-ammo-line">
+                {request.ammoLeft} of {request.ammoMax} {request.ammo.unit}
+                {request.ammoMax === 1 ? '' : 's'} loaded
+              </span>
+            </div>
+          )}
+
+          {/* What the item itself loses, on top of the points. */}
+          {request.note && <p className="use-note">{request.note}</p>}
+
+          {/* What the card does to the sheet on its own, for the two cards that
+              do anything. Above the tracking line, because it is the larger of
+              the two writes by a long way. */}
+          {writes && (
+            <p className="use-writes">
+              <b>This one writes your sheet</b> · {writes}
+            </p>
+          )}
+
+          {/* And what this use starts counting, and on whose block. Said here
+              rather than discovered on block 6 afterwards. See the note at the
+              top, and castPlan in combatBar.js for where the row lands. */}
+          {lasts && (
+            <p className="use-lasts">
+              <b>Goes on {rowHome}</b> · {lasts}. Recasting it refreshes the same row.
+            </p>
+          )}
+
+          {/* Everything that is changing this card, named. The first list is the
+              one that matters and it is exhaustive on purpose: an arrow with a 2
+              in it and no account of where it came from is a number the reader has
+              to reconstruct. See the note at the top and attribution.js. */}
+          {sources.length > 0 && (
+            <div className="use-sources">
+              <span className="use-sources-head">Changing this · {sources.length}</span>
+              {sources.map((row, at) => (
+                <SourceRow key={`${row.from}-${at}`} row={row} stack={cards} />
+              ))}
+            </div>
+          )}
+
+          {/* And what else is on you that this card is not being changed by. Only
+              the rows the list above has not already credited, so nothing is said
+              twice: a KINDLE WEAPON is up there lending a die, and a Grappled is
+              down here doing nothing to a spell and still worth knowing about. */}
+          {aside.length > 0 && (
+            <div className="use-running">
+              <span className="use-running-head">
+                Also running · {aside.length}
+              </span>
+              {aside.map((effect) => (
+                <RunningRow key={effect.id} effect={effect} />
+              ))}
+            </div>
+          )}
+
+          {/* And what this one keeps costing once it is running. Not an option,
+              because nobody chooses an Upkeep: they owe it. */}
+          {toll && (
+            <p className="use-toll">
+              <b>Upkeep</b> · {costWords(toll)} at every Turn Start once this is running. Miss one
+              and it ends there.
+            </p>
+          )}
         </div>
 
-        {/* Straight under the two ways, above the card: this is the answer to
-            the tap, and the tap was up here. */}
-        {denied && (
-          <div className="use-denied" role="alert">
-            <span className="use-denied-head">
-              Not done: {denied.way.label.toLowerCase()} is beyond you right now.
-            </span>
-            {denied.short.map((entry) => (
-              <span className="use-denied-line" key={entry.resource}>
-                <b>{entry.resource}</b> · {entry.need} needed, {entry.have} left
-              </span>
-            ))}
-            <span className="use-denied-foot">Nothing was spent.</span>
-
-            <button
-              type="button"
-              className="use-denied-anyway"
-              onClick={waveThrough}
-              aria-label="Use it anyway: it goes through and nothing is spent"
-            >
-              <span className="use-denied-anyway-label">Use it anyway</span>
-              <span className="use-denied-anyway-note">
-                Goes through as written. No points leave your sheet.
-              </span>
-            </button>
-          </div>
-        )}
-
-        {/* What the item itself loses, on top of the points. */}
-        {request.note && <p className="use-note">{request.note}</p>}
-
-        {/* What you are about to do, as the card reads for you. */}
+        {/* What you are about to do, as the card reads for you, and readable the
+            way any dealt card is: every live value on it opens its own working,
+            and every {{link}} deals the card it names. The card printed here used
+            to be the one card on the sheet that could not do either, which made
+            "2d8 + 8" a number you had to take on faith at the exact moment you
+            were being asked to pay for it. */}
         {request.card && (
           <div className="use-card">
             <AbilityCard
               ability={request.card}
               character={character}
-              modifiers={request.modifiers}
+              modifiers={modifiers}
+              onValue={cards?.openValue}
+              /* A linked card is cast as written, so it is dealt without this
+                 one's modifiers — the same as a link on any other card. */
+              onLink={cards ? (name) => cards.openCard(name) : null}
             />
           </div>
         )}
@@ -243,7 +1508,378 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
 }
 
 /**
- * The number an action with no printed cost is being used at.
+ * One source and what it did, with the source itself a way into its card.
+ *
+ * "I want to be able to click on the text block like dexterous to see the
+ * associated card", 2026-08-28. Naming DEXTEROUS is only half an answer if
+ * reading it means closing the prompt, walking to the Abilities tab and finding
+ * the set: the name is the question, so the name is the button.
+ *
+ * The card deals onto the same pile every other card on the sheet deals onto,
+ * which sits above every dialog, so it opens over the prompt and closes back onto
+ * it with nothing spent and nothing lost.
+ *
+ * A row whose source the codex has no card for stays a plain name rather than
+ * becoming a button that does nothing. A Feral Curse's form is the case today:
+ * the source is the set, and a set is not a card.
+ */
+function SourceRow({ row, stack }) {
+  const card = getCard(row.card ?? row.from);
+  const open = card && stack ? () => stack.openCard(card) : null;
+
+  return (
+    <div className="use-source-row">
+      {open ? (
+        <button
+          type="button"
+          className="use-source-from is-card"
+          onClick={open}
+          title={`Read ${card.name}`}
+        >
+          {row.from}
+        </button>
+      ) : (
+        <span className="use-source-from">{row.from}</span>
+      )}
+      <span className="use-source-gives">{sourceWords(row.gives)}</span>
+    </div>
+  );
+}
+
+/**
+ * One thing already running, at the size a reminder is.
+ *
+ * The tracker's own row in miniature and deliberately so: same count on the left,
+ * same school colour down the edge, same sentence about what it is doing to this
+ * sheet, same arrow when it is bending a roll. A reader should recognise it as
+ * the row on block 6 rather than have to work out what it is.
+ *
+ * What it drops is everything that acts: no nudges, no drop, no card to open. See
+ * the note at the top.
+ */
+function RunningRow({ effect }) {
+  const open = effect.turns === null;
+  const accent = cardAccent(getCard(effect.card)?.tags);
+  const arrow = effectAdvantage(effect);
+  const does = effectLine(effect);
+
+  return (
+    <div
+      className={`use-running-row${accent ? ' has-accent' : ''}`}
+      style={accent ? { '--fx-accent': accent } : undefined}
+    >
+      <span className={`use-running-turns${open ? ' is-open' : ''}`}>
+        {open ? '∞' : effect.turns}
+      </span>
+
+      <span className="use-running-body">
+        <span className="use-running-name">
+          {effect.name}
+          {effect.from && <span className="use-running-from">{effect.from}</span>}
+        </span>
+        {/* What it is doing to the numbers on the card beside this. Only the rows
+            that do anything: a note the table applies by hand has nothing to say
+            here that its own row does not already say. */}
+        {does && <span className="use-running-does">{does}</span>}
+      </span>
+
+      {arrow && <RollArrow {...arrow} size={18} />}
+    </div>
+  );
+}
+
+/**
+ * One Martial Move, offered as a thing you add to the swing.
+ *
+ * Shaped like the second half below it, because it is the same kind of question
+ * and is read in the same glance: what it costs on the left, what it is and what
+ * it does on the right, one tap on, one tap off. It wears the amber a talent
+ * wears everywhere else on the sheet, since a move is a thing a talent taught.
+ *
+ * It carries the set that taught it, because two sets can teach the same move and
+ * a hand with WOUND twice in it needs to say which WOUND is which. And it carries
+ * a way into the full card, on the same pile every other card on this dialog deals
+ * onto: the summary is a line, and the rules are on the plate.
+ *
+ * The refusal is arithmetic rather than a sentence. A move that cannot be added
+ * because the allowance is full says whose rule that is in its tooltip and goes
+ * quiet rather than vanishing, which is the same call the belt makes for a flask
+ * with no charges left.
+ */
+/**
+ * One thing on one line that rides this swing without being a Martial Move: a
+ * spell a Spellblade carries in, or a weave a Weaver lets go. What it is, what
+ * putting it on this swing costs here, and whether there is room left for it.
+ *
+ * The same row a Martial Move gets, deliberately. They are the same tick on the
+ * same swing and a reader has just read one list; a second list built to its own
+ * design would be the sheet asking one question two ways. Which is also why one
+ * component draws both of these: what the two callers differ on is only their
+ * words, so the words are props.
+ *
+ *   why      the sentence a full list refuses a tick with, or null. Built by the
+ *            caller, which is the half that knows how many fit and what to call
+ *            them.
+ *   cutFrom  the card to credit under the orb when the price came down. TWINNED
+ *            STRIKE for a spell, DOUBLE WEAVE for a weave.
+ *
+ * The orb strikes the printed number through whenever the two differ, which for a
+ * spell is almost always: its Action Points are converted into Willpower on the
+ * way in (see strikePrice in spellblade.js) and a Master takes a point back off.
+ * A weave has no Action Points to convert, so only the Master's cut moves it. A
+ * row charging 5 beside a card printing 3 is exactly the kind of number the sheet
+ * is not allowed to leave unexplained.
+ */
+function RideRow({ row, on, why, cutFrom, onToggle, stack }) {
+  const { card, price } = row;
+  const from = [
+    /* A weave has no Action Points to convert, so this half of the account is
+       the Spellblade’s alone and is simply absent on the other caller. */
+    ...(price.surcharge > 0 ? ['its Action Points'] : []),
+    ...(price.cut > 0 ? [cutFrom] : []),
+  ];
+
+  return (
+    <div className="use-move">
+      <Gated
+        className={`use-move-take${on ? ' is-on' : ''}`}
+        onClick={onToggle}
+        aria-pressed={on}
+        why={why}
+        title={card.summary}
+      >
+        <span className="use-move-costs">
+          {price.wp > 0 && (
+            <CostOrb
+              kind="wp"
+              value={price.wp}
+              size={26}
+              was={price.wp !== price.printed ? price.printed : null}
+              from={from}
+            />
+          )}
+          {price.wp === 0 && <span className="use-move-cut">Free</span>}
+        </span>
+
+        <span className="use-move-body">
+          <span className="use-move-name">
+            {card.name}
+            <span className="use-move-from">{row.state.talent.name}</span>
+          </span>
+          <span className="use-move-note">{card.summary}</span>
+        </span>
+      </Gated>
+
+      <button
+        type="button"
+        className="use-move-read"
+        onClick={() => stack?.openCard(card, row.modifiers)}
+        disabled={!stack}
+        title={`Read ${card.name}`}
+        aria-label={`Read the ${card.name} card`}
+      >
+        &#9432;
+      </button>
+    </div>
+  );
+}
+
+function MoveRow({ card, talent, on, full, allowance, cut, swing, onToggle, stack }) {
+  /* What it costs on *this* swing, which for the five that `scale` is not what
+     the plate prints: the plate quotes a rate — per 2 Action Points for four of
+     them, per Damage Die for AMBUSH — and this is that rate against the attack in
+     front of you. See moveWillpower in martial.js.
+
+     The orb strikes the plate's number through whenever the two differ, which is
+     the same account it already gave for a set that cut the price: a row charging
+     6 beside a card printing 2 is exactly the kind of number the sheet is not
+     allowed to leave unexplained. The swing is named as what did it, because it
+     is — a Great Weapon is why. */
+  const rate = Math.max(0, Math.floor(Number(card.wp) || 0));
+  const printed = moveWillpower(card, swing);
+  const owed = Math.max(0, printed - cut);
+  const ap = Math.floor(Number(card.rides?.ap) || 0);
+  const from = [
+    ...(printed !== rate ? ['the swing'] : []),
+    ...(cut > 0 ? [allowance.from?.name ?? 'Your set'] : []),
+  ];
+
+  return (
+    <div className="use-move">
+      <Gated
+        className={`use-move-take${on ? ' is-on' : ''}`}
+        onClick={onToggle}
+        aria-pressed={on}
+        /* The refusal has been written since the row was and has never been
+           readable: a disabled button gets no mouse events, so its title never
+           opens. Gated is why it does now. See parts.jsx. */
+        why={
+          full
+            ? allowance.perAttack === 1
+              ? 'One Martial Move rides a swing. Untick the one you have added first.'
+              : `${allowance.from?.name ?? 'Your set'} allows ${allowance.perAttack} on one swing, and ${allowance.perAttack} are added. Untick one first.`
+            : null
+        }
+        title={card.summary}
+      >
+        <span className="use-move-costs">
+          {/* What it costs *this* holder, with the printed number struck through
+              when a set has cut it. MARTIAL SWIFTNESS is the one card that does,
+              and an orb that quietly said 1 where the codex says 2 would be the
+              only place on the sheet a revision was not shown as one. */}
+          {owed > 0 && (
+            <CostOrb
+              kind="wp"
+              value={owed}
+              size={26}
+              was={owed !== rate ? rate : null}
+              from={from}
+            />
+          )}
+          {owed === 0 && <span className="use-move-cut">Free</span>}
+          {/* RIPOSTE, and nothing else: the one move that gives a point back
+              rather than taking one. Drawn as what it does to the swing, since an
+              orb saying 1 beside a cut would read as a cost. */}
+          {ap !== 0 && (
+            <span className="use-move-cut">
+              {ap < 0 ? '−' : '+'}
+              {Math.abs(ap)} AP
+            </span>
+          )}
+        </span>
+
+        <span className="use-move-body">
+          <span className="use-move-name">
+            {card.name}
+            {talent?.name && <span className="use-move-from">{talent.name}</span>}
+          </span>
+          <span className="use-move-note">{card.summary}</span>
+        </span>
+      </Gated>
+
+      <button
+        type="button"
+        className="use-move-read"
+        onClick={() => stack?.openCard(card)}
+        disabled={!stack}
+        title={`Read ${card.name}`}
+        aria-label={`Read the ${card.name} card`}
+      >
+        &#9432;
+      </button>
+    </div>
+  );
+}
+
+/**
+ * The card's second half, offered as a thing you take.
+ *
+ * One tap turns it on, one tap turns it back off, and a half the card lets you
+ * take repeatedly grows a dial once it is on. Two controls rather than one
+ * because they answer two questions: whether, and how many.
+ *
+ * It wears the colour its name wears in card text, straight out of the
+ * glossary — haze violet for an Overcast or a Multicast, blood red for a Blood
+ * Tithe — so the control and the words on the card beside it are visibly the
+ * same thing. The glossary's own sentence is its tooltip for the same reason:
+ * what Multicast means is defined in exactly one place.
+ */
+function HalfOffer({ half, step, times, room, base, onTake }) {
+  const keyword = getKeyword(half.name);
+  const on = times > 0;
+
+  return (
+    <div className="use-half" style={keyword ? { '--half-accent': keyword.color } : undefined}>
+      <button
+        type="button"
+        className={`use-half-take${on ? ' is-on' : ''}`}
+        onClick={() => onTake(on ? 0 : 1)}
+        aria-pressed={on}
+        aria-label={`${half.name}: ${costWords(step)}${half.each ? ' each time' : ''}`}
+        title={keyword?.detail}
+      >
+        <span className="use-half-costs">
+          {step.ap > 0 && <CostOrb kind="ap" value={step.ap} size={26} />}
+          {step.wp > 0 && <CostOrb kind="wp" value={step.wp} size={26} />}
+          {step.health > 0 && <CostOrb kind="hp" value={step.health} size={26} />}
+        </span>
+
+        <span className="use-half-body">
+          <span className="use-half-name">{half.name}</span>
+          <span className="use-half-note">{halfNote(half)}</span>
+        </span>
+      </button>
+
+      {on && half.each && (
+        <Dial
+          value={times}
+          ceiling={VARIABLE_CAP}
+          onChange={onTake}
+          label="Times"
+          hint={roomHint(room, base, half)}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * The same half, in the same place, when the way you are casting the card will
+ * not have it.
+ *
+ * One holder does that, and it is why this exists: a Runebearer fires the spell
+ * as printed, so RUNE ACTIVATION takes the Overcast off every rune. The control
+ * is replaced rather than dropped, because the card dealt beside this prompt is
+ * still printing its second half in full, and a prompt that simply did not
+ * mention it would read as the sheet having missed it.
+ *
+ * It wears the same colour the offer does, off the same glossary entry, so the
+ * refusal is visibly about the words on the card and not about the cast.
+ */
+function HalfRefused({ half, from = [] }) {
+  const keyword = getKeyword(half.name);
+  const who = Array.isArray(from) ? from.filter(Boolean) : [from].filter(Boolean);
+
+  return (
+    <div
+      className="use-half is-refused"
+      style={keyword ? { '--half-accent': keyword.color } : undefined}
+    >
+      <div className="use-half-take is-off" title={keyword?.detail}>
+        <span className="use-half-body">
+          <span className="use-half-name">{half.name}</span>
+          <span className="use-half-note">
+            Not open to you here{who.length > 0 ? `. ${namesOf(who)} casts it as printed` : ''}
+          </span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** "Rune Activation", "Rune Activation and Bound Edge". No Oxford comma. */
+function namesOf(words) {
+  if (words.length <= 1) return words[0] ?? '';
+  return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+}
+
+/** Whether taking it adds to the printed cost or stands in for it. */
+function halfNote(half) {
+  if (half.instead) return 'Instead of the printed cost, not on top of it';
+  return half.each ? 'On top of the cast, as often as you like' : 'On top of the cast';
+}
+
+/** How many steps the pools can really pay for, under a dial that goes further. */
+function roomHint(room, base, half) {
+  if (room > 0) return `${room} is as many as your pools can pay for.`;
+  return half.instead
+    ? 'Your pools cannot cover even one of these.'
+    : `Your pools cannot cover one of these on top of ${costWords(base)}.`;
+}
+
+/**
+ * The number an action with no printed cost is being used at, and how many
+ * times a repeatable second half has been taken.
  *
  * Two steppers rather than a slider or a typed box: the numbers involved are
  * single digits, and this is read at a table with one hand on a die.
@@ -303,18 +1939,26 @@ function convertHint(character, ceiling) {
 }
 
 /** The cost in words, for the readers who never see the orbs. */
-function costLine(ap, wp, resource) {
+function costLine({ ap, wp, health }, resource) {
   const parts = [];
   if (ap > 0) parts.push(`${ap} ${resource}`);
   if (wp > 0) parts.push(`${wp} Willpower`);
-  return parts.length > 0 ? parts.join(' and ') : 'costs nothing';
+  if (health > 0) parts.push(`${health} Health`);
+  if (parts.length === 0) return 'costs nothing';
+  if (parts.length === 1) return parts[0];
+  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
 }
 
 /**
  * Which pools cannot cover this use, paid this way. An empty list means it can
  * be paid; anything in it is what the notice reads out.
+ *
+ * Health is in here for the Blood Tithe halves, and it is checked the same way
+ * the pools are: a tithe you can pay down to nothing is a tithe you may pay,
+ * because how close a character wants to stand to dying is theirs to decide.
+ * One you cannot cover at all is refused, and nothing is taken.
  */
-function shortfalls(character, { ap, wp }, way) {
+function shortfalls(character, { ap, wp, health }, way) {
   const short = [];
 
   const points = Number(character[way.pool]) || 0;
@@ -323,5 +1967,30 @@ function shortfalls(character, { ap, wp }, way) {
   const willpower = Number(character.willpower) || 0;
   if (wp > willpower) short.push({ resource: 'Willpower', need: wp, have: willpower });
 
+  const blood = Number(character.health) || 0;
+  if (health > blood) short.push({ resource: 'Health', need: health, have: blood });
+
   return short;
+}
+
+/** "Perfect Casting", "Perfect Casting and Overload". */
+function listAnd(words) {
+  if (words.length <= 1) return words[0] ?? '';
+  return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+}
+
+/**
+ * The sentence under the source line when something has revised the price: which
+ * orbs moved, and what they moved from.
+ *
+ * Two halves rather than one, because a Runebearer's rune moves both at once and
+ * two sentences saying it would read as two separate revisions. A price cut to
+ * nothing says "none" rather than 0, since the orb it is talking about is not
+ * drawn at all.
+ */
+function cutLine(apWas, ap, wpWas, wp) {
+  const parts = [];
+  if (apWas !== null) parts.push(`${apWas} Action Points cut to ${ap || 'none'}`);
+  if (wpWas !== null) parts.push(`${wpWas} Willpower cut to ${wp || 'none'}`);
+  return `${parts.join(' and ')}.`;
 }

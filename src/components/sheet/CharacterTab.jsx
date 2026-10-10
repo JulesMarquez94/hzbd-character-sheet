@@ -2,28 +2,61 @@ import { useCallback, useMemo, useState } from 'react';
 import ActiveBlock from './ActiveBlock.jsx';
 import FeralBlock from './FeralBlock.jsx';
 import LedgerModal from './LedgerModal.jsx';
+import FightBlock from '../campaign/FightBlock.jsx';
+import LogBlock from '../campaign/LogBlock.jsx';
 import LoadoutBlock from './LoadoutBlock.jsx';
 import { MinionActionsBlock, MinionStatsBlock } from './MinionBlock.jsx';
+import PactBlock from './PactBlock.jsx';
 import PassiveBlock from './PassiveBlock.jsx';
+import BladeBlock from './BladeBlock.jsx';
+import OathBlock from './OathBlock.jsx';
+import OssuaryBlock from './OssuaryBlock.jsx';
+import RuneBlock from './RuneBlock.jsx';
 import TurnBlock from './TurnBlock.jsx';
-import { AttrTile, CoinIcon, CrateIcon, KarmaPill, PipRow, ResourceBar, SkullIcon, StatBox } from './parts.jsx';
+import {
+  AttrTile,
+  BurdenMeter,
+  CoinIcon,
+  CrateIcon,
+  KarmaPill,
+  PointPool,
+  ResourceBar,
+  SkullIcon,
+  StatBox,
+} from './parts.jsx';
 import BlockArrange from './BlockArrange.jsx';
+import BlockTrays from './BlockTrays.jsx';
+import { BLOCK_NAMES } from './blockNames.js';
 import { CardStackProvider } from '../CardStack.jsx';
+import { useAuth } from '../../context/auth-context.js';
+import { useCampaignLog } from '../../context/campaign-log.js';
 import { ATTRIBUTES } from '../../lib/attributes.js';
 import {
+  characterTypes,
   formatNumber,
   healthState,
   initialsOf,
   karmaCap,
-  liveShift,
   metersToFeet,
+  SHEET_BLOCK_IDS,
   normalizeBlockOrder,
+  normalizeGridColumns,
+  normalizeTrays,
   shieldCapFor,
+  trayedIds,
   xpProgress,
 } from '../../lib/characterModel.js';
 import { feralBlockIds, feralState } from '../../lib/feral.js';
+import { listAnd } from '../../lib/scrolls.js';
 import { minionBlockIds, minionState } from '../../lib/minions.js';
+import { pactBlockIds, pactState } from '../../lib/pact.js';
+import { oathBlockIds, oathState } from '../../lib/oathbound.js';
+import { runeBlockIds, runeState } from '../../lib/runes.js';
+import { marrowState, ossuaryBlockIds } from '../../lib/undead.js';
+import { bladeBlockIds, bladeState } from '../../lib/spellblade.js';
+import { statMath } from '../../lib/statMath.js';
 import { normalizeTalents } from '../../lib/talents.js';
+import { viewUrl } from '../../lib/imageViews.js';
 
 /* The three tiles read from the shared codex — label, colour and tooltip alike
    — so this tab and the Advancement tab's chooser can never drift apart on what
@@ -82,27 +115,22 @@ const DEFENSE_LINE = [
   },
 ];
 
+/*
+ * Magic Burden is a readout here and nothing else: what fills it is equipped on
+ * the Inventory tab and what caps it is set on Advancement. So the explanation
+ * goes on hover the way every tile on this tab explains itself, which is also
+ * what keeps the panel down to a head and a bar. Block 1 has no room for a foot.
+ */
+const BURDEN_INFO =
+  'How much worked magic you can carry before it starts to weigh. Worn, held, on a trinket or clipped to your belt, it weighs the same wherever you carry it. Capacity is Level + Mind + 10.';
+
 /** Every block is designed now; the list stays for whatever comes next. */
 const PLACEHOLDERS = [];
 
-/**
- * What each block is, in words. The arranger shows a list of rows rather than
- * the blocks themselves, so it needs a name for each one, and these are the
- * names the block comments above use.
- *
- * The six are every character's. A talent set that puts a creature on the board
- * adds two more that are not in this table, and one that turns its holder into
- * something adds a third, because all three of those are named after the thing
- * rather than after the block — see `describeBlock` below.
- */
-const BLOCK_NAMES = {
-  1: { name: 'Identity & Attributes', note: 'Name, lineage, background, the three attributes' },
-  2: { name: 'Combat Profile', note: 'Defense, Armor, Reflex, Grit, Initiative, Speed' },
-  3: { name: 'Loadout', note: 'What you are holding, and what it lets you do' },
-  4: { name: 'Quick Bar', note: 'Everything you can spend points on, in reaching order' },
-  5: { name: 'Always On', note: 'The passives you never have to play' },
-  6: { name: 'Turn & Effects', note: 'The clock, and what is currently on you' },
-};
+/* What each block is, in words, for the arranger's rows: see blockNames.js,
+   which the Walkthrough reads too. The six are every character's; a creature's
+   two, a form's one and the rest are named after the thing rather than after the
+   block — see `describeBlock` below. */
 
 /**
  * Block 1 is a readout, not a form. Name, lineage, background and the three
@@ -120,10 +148,20 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
   // 'willpower', or null.
   const [ledgerKind, setLedgerKind] = useState(null);
 
+  /* "As an Admin I should be able to clean the log of any character or campaign
+     i view", Jules, 2026-09-03. The campaign page has always offered its Game
+     Master the clear and offers it to an admin with them; this is the other half
+     of the sentence, on the log blocks a sheet carries for the tables it sits
+     at. Nobody else sees the button, and `clear_campaign_log` in the schema is
+     what actually settles it: the check for the Game Master or an admin lives
+     there, where nobody can reach around it. */
+  const { isAdmin } = useAuth();
+
   // XP is the lifetime total; the table decides what level that buys.
   const xp = xpProgress(character.xp);
 
-  // Shield's cap isn't its own field — half of health_max, plus worn gear.
+  // Shield's cap isn't its own field: a share of health_max plus worn gear, and
+  // the share is the whole of it for a Feral Cursed. See shieldCapFor.
   const shieldMax = shieldCapFor(character);
 
   // Every lib treats the talents column as "only ever a hint" (it can arrive
@@ -134,11 +172,16 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
   // damage past it is fatal.
   const hp = healthState(character.health, character.health_max);
 
-  /* What is on this character for the hour and not on their row. This tab is
-     handed the *bent* character (see liveCharacter), so the tiles below already
-     show the raised number; this is the sentence that accounts for it. Empty for
-     everyone with nothing running, which is nearly everyone. */
-  const shift = useMemo(() => liveShift(character), [character]);
+  /* And where every number on the tab came from, so a hovered tile can print its
+     own arithmetic with each source named. Worked out once for the whole tab
+     rather than inside each tile: the enchantments standing on this character,
+     what is worn and the level ledger are one read each here and a dozen reads
+     each if every tile asks for itself. See statMath.js. */
+  const math = useMemo(() => statMath(character), [character]);
+  /* What lands on this body differently, by damage type. Not a stat and not on
+     a tile: half of a Cold hit is a thing that happens on the way in, so it is
+     read here and said in words under the defenses. */
+  const types = useMemo(() => characterTypes(character), [character]);
 
   /* The creatures on the board, if any. Two blocks each, and both of them
      movable like the six: "this block can also be moved around, both the 1 and
@@ -152,16 +195,82 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
      needs is a picture, a difficulty and three presses. See feral.js. */
   const forms = useMemo(() => feralState(character), [character]);
 
+  /* And the bargains struck. One block each: the pact's bar, its boons and its
+     missions, there for as long as the set is held. See pact.js. */
+  const pacts = useMemo(() => pactState(character), [character]);
+
+  /* And the vows. One block each: which Oath was sworn, where the Faith bar
+     stands, the three tenets with a press on either side and everything that has
+     moved it. There for as long as the set is held, whether or not anything has
+     been sworn. See oathbound.js. */
+  const vows = useMemo(() => oathState(character), [character]);
+
+  /* And the slates. One block each: every rune cut into this character, what
+     firing one costs and which of them have been fired since the last Long
+     Rest. There for as long as the set is held. See runes.js. */
+  const slates = useMemo(() => runeState(character), [character]);
+
+  /* And the graveyards. One block each: the Marrow, every body it is holding and
+     the press that wakes them. The bodies themselves are creatures and get their
+     own two blocks apiece through `minions` above, which is why this tab is now
+     the first thing on the sheet whose block count moves inside a session: a
+     Necromancer who raises a ghoul tonight has two more blocks in the morning.
+     See undead.js. */
+  const graves = useMemo(() => marrowState(character), [character]);
+
+  /* And the bindings. One block each: what weapon a set has been put on, what it
+     now deals, and which spells a strike with it can carry in. There for as long
+     as the set is held, whether or not anything is bound. See spellblade.js. */
+  const edges = useMemo(() => bladeState(character), [character]);
+
+  /* And the tables this character sits at. One log block each, there for as
+     long as the membership is: a sheet linked to no campaign has none of them
+     and is exactly the sheet it always was. Read by the page rather than here,
+     because everything on this tab that spends something posts to the same
+     list. See LogProvider.jsx. */
+  const { tables } = useCampaignLog();
+
   const grown = useMemo(
-    () => [...minionBlockIds(character), ...feralBlockIds(character)],
-    [character]
+    () => [
+      ...minionBlockIds(character),
+      ...feralBlockIds(character),
+      ...pactBlockIds(character),
+      ...runeBlockIds(character),
+      ...ossuaryBlockIds(character),
+      ...oathBlockIds(character),
+      ...bladeBlockIds(character),
+      ...tables.map((table) => `log:${table.id}`),
+      /* And the fight at each of those tables, beside its log: the same order
+         the Game Master's runner draws, read off the announcements. There
+         whenever the membership is, so the arrangement never reshuffles
+         because a fight started. See FightBlock.jsx. */
+      ...tables.map((table) => `fight:${table.id}`),
+    ],
+    [character, tables]
   );
 
-  const order = useMemo(() => normalizeBlockOrder(character.block_order, grown), [
-    character.block_order,
-    grown,
-  ]);
+  /* And which of them were taken off the grid and pinned to a tray. Read first,
+     because the grid is every block this character has *minus* those: a block in
+     a tray is not in the flow, and the hole it left behind is kept where it was.
+     See normalizeTrays and BlockTrays.jsx. */
+  const trays = useMemo(
+    () => normalizeTrays(character.block_trays, [...SHEET_BLOCK_IDS, ...grown]),
+    [character.block_trays, grown]
+  );
+  const saveTrays = useCallback((next) => patch({ block_trays: next }), [patch]);
+
+  const order = useMemo(
+    () => normalizeBlockOrder(character.block_order, grown, trayedIds(trays)),
+    [character.block_order, grown, trays]
+  );
   const saveOrder = useCallback((next) => patch({ block_order: next }), [patch]);
+
+  /* And how wide the grid they are laid out on is. Stored per tab rather than
+     per sheet: six blocks and three ability blocks rarely want the same canvas.
+     See normalizeGridColumns, and `--sheet-fit` in sheet.css for the clamp that
+     keeps a nine-column choice from reaching a phone. */
+  const columns = normalizeGridColumns(character.block_columns);
+  const saveColumns = useCallback((next) => patch({ block_columns: next }), [patch]);
 
   /* A row in the arranger. The six have fixed names; a creature's two are named
      after the creature, so an arrangement holding them can still be read at a
@@ -181,6 +290,77 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           : { name: String(id), note: null };
       }
 
+      const table = /^log:(.+)$/.exec(String(id));
+      if (table) {
+        const camp = tables.find((row) => row.id === table[1]);
+        return camp
+          ? { name: camp.name, note: 'What has happened at this table' }
+          : { name: String(id), note: null };
+      }
+
+      const running = /^fight:(.+)$/.exec(String(id));
+      if (running) {
+        const camp = tables.find((row) => row.id === running[1]);
+        return camp
+          ? { name: `${camp.name} · the fight`, note: 'The order, and whose turn it is' }
+          : { name: String(id), note: null };
+      }
+
+      const inked = /^rune:(.+)$/.exec(String(id));
+      if (inked) {
+        const slate = slates.find((row) => row.id === inked[1]);
+        return slate
+          ? {
+              name: slate.pool.label,
+              note: `${slate.talent.name}: what is cut into you, and what is left in it`,
+            }
+          : { name: String(id), note: null };
+      }
+
+      const edged = /^blade:(.+)$/.exec(String(id));
+      if (edged) {
+        const edge = edges.find((row) => row.id === edged[1]);
+        return edge
+          ? {
+              name: edge.spec.label,
+              note: `${edge.talent.name}: the weapon you have bound, and what it carries`,
+            }
+          : { name: String(id), note: null };
+      }
+
+      const struck = /^pact:(.+)$/.exec(String(id));
+      if (struck) {
+        const pact = pacts.find((row) => row.id === struck[1]);
+        return pact
+          ? {
+              name: pact.kind ? pact.kind.label : pact.spec.label,
+              note: `${pact.talent.name}: the bar, the boons and the missions`,
+            }
+          : { name: String(id), note: null };
+      }
+
+      const bound = /^oath:(.+)$/.exec(String(id));
+      if (bound) {
+        const vow = vows.find((one) => one.id === bound[1]);
+        return vow
+          ? {
+              name: vow.title,
+              note: `${vow.talent.name}: the ${vow.label} bar, the tenets and what moved it`,
+            }
+          : { name: String(id), note: null };
+      }
+
+      const buried = /^ossuary:(.+)$/.exec(String(id));
+      if (buried) {
+        const grave = graves.find((row) => row.id === buried[1]);
+        return grave
+          ? {
+              name: grave.spec.label,
+              note: `${grave.talent.name}: the ${(grave.spec.resource ?? 'Marrow').toLowerCase()}, the risen and the Command`,
+            }
+          : { name: String(id), note: null };
+      }
+
       const match = /^minion:([^:]+)(?::(bar))?$/.exec(String(id));
       const minion = match ? minions.find((row) => row.id === match[1]) : null;
       if (!minion) return { name: String(id), note: null };
@@ -188,14 +368,14 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
       return match[2]
         ? {
             name: `${minion.title} · Actions`,
-            note: 'Its Action Points, its Reaction Points and its quick bar',
+            note: 'Its Action Points, its Reaction Points and its Quick Bar',
           }
         : {
             name: minion.title,
             note: `${minion.spec.label}: attributes, defenses, Health and Shield`,
           };
     },
-    [minions, forms]
+    [minions, forms, pacts, slates, edges, graves, vows, tables]
   );
 
   /* Arranging happens in a modal rather than on the tab itself. Dragging a
@@ -211,7 +391,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
   const blocks = {
     /* ============ BLOCK 1 — IDENTITY & ATTRIBUTES ============ */
     1: (
-      <div className="cell-scroll">
+      <div className="cell-scroll id-block">
         <div className="id-head">
           <span className="id-name">
             {hp.dead && (
@@ -221,26 +401,38 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             )}
             {character.name}
           </span>
-          <span className="id-level">
+          {/* The level is the Experience ledger's other door. It is the number
+              the ledger moves, so reaching for it and finding nothing there was
+              the wrong answer — the meter further down is a long way from the
+              thing you were looking at. */}
+          <button
+            type="button"
+            className="id-level"
+            onClick={() => setLedgerKind('xp')}
+            title={readOnly ? 'View the Experience log' : 'Open the Experience ledger'}
+          >
             Lvl {String(xp.level).padStart(2, '0')}
             {xp.isMax && <span className="id-level-cap">MAX</span>}
-          </span>
+          </button>
         </div>
 
         <div className="id-portrait">
           {character.portrait_url ? (
-            <img src={character.portrait_url} alt="" />
+            <img src={viewUrl(character.portrait_url, 'plate')} alt="" />
           ) : (
             <span className="id-initials">{initialsOf(character.name)}</span>
           )}
         </div>
+
+        {/* ---------- MAGIC BURDEN ---------- */}
+        <BurdenMeter character={character} info={BURDEN_INFO} math={math.burden_used} />
 
         {/* ---------- XP ---------- */}
         <button
           type="button"
           className="meter meter-xp"
           onClick={() => setLedgerKind('xp')}
-          title={readOnly ? 'View the experience log' : 'Open the experience ledger'}
+          title={readOnly ? 'View the Experience log' : 'Open the Experience ledger'}
         >
           <span className="meter-head">
             <span className="meter-label">Experience</span>
@@ -253,11 +445,6 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           <span className="bar-track">
             <span className="bar-fill bar-fill-xp" style={{ width: `${xp.percent}%` }} />
           </span>
-          <span className="meter-foot">
-            {xp.isMax
-              ? 'Level cap reached'
-              : `${formatNumber(xp.toNext)} XP to level ${xp.level + 1}`}
-          </span>
         </button>
 
         {/* ---------- COINS & SUPPLIES ----------
@@ -269,7 +456,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             type="button"
             className="meter meter-tight"
             onClick={() => setLedgerKind('wealth')}
-            title={readOnly ? 'View the wealth log' : 'Open the wealth ledger'}
+            title={readOnly ? 'View the Wealth log' : 'Open the Wealth ledger'}
           >
             <span className="meter-label">
               <CoinIcon />
@@ -284,7 +471,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             type="button"
             className="meter meter-tight"
             onClick={() => setLedgerKind('supplies')}
-            title={readOnly ? 'View the supply log' : 'Open the supply ledger'}
+            title={readOnly ? 'View the Supply log' : 'Open the Supply ledger'}
           >
             <span className="meter-label">
               <CrateIcon />
@@ -315,19 +502,16 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
         <div className="stat-category-label">Attributes</div>
         <div className="attr-row">
           {ATTRIBUTE_TILES.map(({ key, label, color, info }) => (
-            <AttrTile key={key} label={label} color={color} info={info} value={character[key]} />
+            <AttrTile
+              key={key}
+              label={label}
+              color={color}
+              info={info}
+              math={math[key]}
+              value={character[key]}
+            />
           ))}
         </div>
-
-        {/* An Ephemeral Enchantment raises an attribute for an hour and is not
-            written on the row, so these three tiles are showing a number the
-            Advancement tab does not agree with. Said out loud, because a stat
-            nobody can account for is worse than a stat that is merely bent. */}
-        {shift.length > 0 && (
-          <p className="attr-shift">
-            <b>Running:</b> {shift.join(', ')}. On you for the hour, and not on your sheet.
-          </p>
-        )}
       </div>
     ),
 
@@ -350,7 +534,15 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             const suffix = isSpeed ? (isImperial ? 'ft' : 'm') : '';
 
             return (
-              <StatBox key={key} label={label} color={color} info={info} value={value} suffix={suffix} />
+              <StatBox
+                key={key}
+                label={label}
+                color={color}
+                info={info}
+                math={math[key]}
+                value={value}
+                suffix={suffix}
+              />
             );
           })}
         </div>
@@ -364,14 +556,40 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
               label={label}
               color={color}
               info={info}
+              math={math[key]}
               value={Math.floor(Number(character[key]) || 0)}
             />
           ))}
         </div>
 
+        {/* ---------- WHAT LANDS DIFFERENTLY ----------
+            Only where there is something to say, which is most sheets saying
+            nothing. A resistance is not a stat and has no tile: it is a thing
+            that happens to damage on its way in, so it reads as the sentence it
+            is, under the numbers it modifies. Both halves come off the blood and
+            off the tracker together. See characterTypes in characterModel.js. */}
+        {(types.resist.length > 0 || types.vulnerable.length > 0) && (
+          <div className="stat-types">
+            {types.resist.length > 0 && (
+              <span className="stat-type is-resist">
+                <b>Resistant</b> {listAnd(types.resist)} · half damage
+              </span>
+            )}
+            {types.vulnerable.length > 0 && (
+              <span className="stat-type is-vulnerable">
+                <b>Vulnerable</b> {listAnd(types.vulnerable)} · double damage
+              </span>
+            )}
+          </div>
+        )}
+
         {/* ---------- RESOURCES ---------- */}
         <div className="stat-category-label">Resources</div>
 
+        {/* Each bar's hover carries its *ceiling's* arithmetic. What is in a bar
+            right now is whatever the last hit left there and is nobody's sum; the
+            number it is read against is bought by a level, an attribute and
+            whatever is worked into what you wear. */}
         <ResourceBar
           label={hp.dead ? 'Health · Dead' : 'Health'}
           current={hp.hp}
@@ -379,7 +597,8 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           color="var(--stat-health)"
           poison={hp.poison}
           onClick={() => setLedgerKind('health')}
-          title={readOnly ? 'View the health log' : 'Open the health ledger'}
+          title={readOnly ? 'View the Health log' : 'Open the Health ledger'}
+          math={math.health_max}
         />
 
         <ResourceBar
@@ -388,7 +607,8 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           max={shieldMax}
           color="var(--stat-shield)"
           onClick={() => setLedgerKind('shield')}
-          title={readOnly ? 'View the shield log' : 'Open the shield ledger'}
+          title={readOnly ? 'View the Shield log' : 'Open the Shield ledger'}
+          math={math.shield_cap}
         />
 
         <ResourceBar
@@ -397,49 +617,35 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           max={character.willpower_max}
           color="var(--stat-wp)"
           onClick={() => setLedgerKind('willpower')}
-          title={readOnly ? 'View the willpower log' : 'Open the willpower ledger'}
+          title={readOnly ? 'View the Willpower log' : 'Open the Willpower ledger'}
+          math={math.willpower_max}
         />
 
-        <div className="pool-row">
-          <div className="pool-head">
-            <span className="pool-label">
-              Action Points
-              <span className="pool-count">
-                {character.ap}/{character.ap_max}
-              </span>
-            </span>
-          </div>
-          <PipRow
-            current={character.ap}
-            max={character.ap_max}
-            variant="ap"
-            readOnly={readOnly}
-            onChange={(v) => patch({ ap: v })}
-          />
-        </div>
+        <PointPool
+          label="Action Points"
+          current={character.ap}
+          max={character.ap_max}
+          variant="ap"
+          readOnly={readOnly}
+          math={math.ap_max}
+          onChange={(v) => patch({ ap: v })}
+        />
 
-        <div className="pool-row">
-          <div className="pool-head">
-            <span className="pool-label">
-              Reaction Points
-              <span className="pool-count">
-                {character.reaction}/{character.reaction_max}
-              </span>
-            </span>
-          </div>
-          <PipRow
-            current={character.reaction}
-            max={character.reaction_max}
-            variant="reaction"
-            readOnly={readOnly}
-            onChange={(v) => patch({ reaction: v })}
-          />
-        </div>
+        <PointPool
+          label="Reaction Points"
+          current={character.reaction}
+          max={character.reaction_max}
+          variant="reaction"
+          readOnly={readOnly}
+          math={math.reaction_max}
+          onChange={(v) => patch({ reaction: v })}
+        />
 
         <KarmaPill
           karma={character.karma}
           max={karmaCap(character)}
           readOnly={readOnly}
+          math={math.karma}
           onChange={(v) => patch({ karma: v })}
         />
       </div>
@@ -455,9 +661,12 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
     4: <ActiveBlock character={character} patch={patch} readOnly={readOnly} />,
 
     /* ============ BLOCK 5 — ALWAYS ON ============
-       The other half: traits, skills and the workings on your gear. Nothing
-       here is ever played, so nothing here is ever spent — a tap reads it. */
-    5: <PassiveBlock character={character} readOnly={readOnly} />,
+       The other half: traits, skills and the workings on your gear. A tap reads
+       a row, and almost nothing here is ever spent. The exception is a working
+       that fires once and needs a rest before it fires again, which is why this
+       block takes `patch` at all: the firing is the table's to notice, and the
+       mark it leaves is the character's. */
+    5: <PassiveBlock character={character} patch={patch} readOnly={readOnly} />,
 
     /* ============ BLOCK 6 — TURN & EFFECTS ============
        The only block about the moment rather than the character: whose turn it
@@ -503,6 +712,78 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
       ])
     ),
 
+    /* ============ A BARGAIN'S ONE ============
+       Only there when a set has struck one. The rank and the chosen pact, the
+       bar that buys the boons, and the mission tracker under it. */
+    ...Object.fromEntries(
+      pacts.map((pact) => [
+        `pact:${pact.id}`,
+        <PactBlock character={character} pact={pact} patch={patch} readOnly={readOnly} />,
+      ])
+    ),
+
+    /* ============ A SLATE'S ONE ============
+       Only there when a set cuts its spells into its holder. The runes, what
+       each costs to fire here, and what a rest gives back. */
+    ...Object.fromEntries(
+      slates.map((slate) => [
+        `rune:${slate.id}`,
+        <RuneBlock character={character} slate={slate} patch={patch} readOnly={readOnly} />,
+      ])
+    ),
+
+    /* ============ A BINDING'S ONE ============
+       Only there when a set puts its magic into a weapon. What is bound, what it
+       deals, and the spells a strike with it carries in. */
+    ...Object.fromEntries(
+      edges.map((edge) => [
+        `blade:${edge.id}`,
+        <BladeBlock character={character} state={edge} patch={patch} readOnly={readOnly} />,
+      ])
+    ),
+
+    /* ============ A GRAVEYARD'S ONE ============
+       Only there when a set keeps one. The Marrow, every body it is holding, and
+       the two Action Points that wake them. The bodies get their own two blocks
+       apiece above, the same as any other creature. */
+    ...Object.fromEntries(
+      graves.map((grave) => [
+        `ossuary:${grave.id}`,
+        <OssuaryBlock character={character} state={grave} patch={patch} readOnly={readOnly} />,
+      ])
+    ),
+
+    /* ============ A VOW'S ONE ============
+       Only there when a set binds its holder to one. What was sworn, where the
+       bar stands, the three tenets and the ledger of every deed that moved it. */
+    ...Object.fromEntries(
+      vows.map((vow) => [
+        `oath:${vow.id}`,
+        <OathBlock character={character} row={vow} patch={patch} readOnly={readOnly} />,
+      ])
+    ),
+
+    /* ============ A TABLE'S TWO ============
+       Only there when this character is linked to a campaign, one pair per
+       campaign: what the whole party has been doing, and the fight the runner
+       is running. Both are about somebody else, and nothing in either writes.
+
+       One exception, and it is an admin's: the log's own Clear. See `isAdmin`
+       above. */
+    ...Object.fromEntries(
+      tables.map((table) => [
+        `log:${table.id}`,
+        <LogBlock campaignId={table.id} title={table.name} canClear={isAdmin} />,
+      ])
+    ),
+
+    ...Object.fromEntries(
+      tables.map((table) => [
+        `fight:${table.id}`,
+        <FightBlock campaignId={table.id} title={table.name} characterId={character.id} />,
+      ])
+    ),
+
     ...Object.fromEntries(
       PLACEHOLDERS.map((n) => [
         n,
@@ -529,23 +810,51 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
         </div>
       )}
 
+      {/* The two side trays, pinned to the window rather than laid on the tab:
+          whatever is on one is a tap away whatever the tab is scrolled to. Only
+          drawn when something is actually on one. See BlockTrays.jsx. */}
+      <BlockTrays
+        trays={trays}
+        render={(id) => blocks[id]}
+        describe={describeBlock}
+        scope={`character:${character?.id ?? 'anon'}`}
+      />
+
       <div className="sheet-grid-6">
-        {order.map((id) => (
-          <section
-            key={id}
-            className={`sheet-cell${PLACEHOLDERS.includes(id) ? ' cell-empty' : ''}${
-              String(id).startsWith('minion:') ? ' cell-minion' : ''
-            }${String(id).startsWith('feral:') ? ' cell-feral' : ''}`}
-          >
-            {blocks[id]}
-          </section>
-        ))}
+        {order.map((id, at) =>
+          /* A hole somebody left on purpose. It keeps its track, because blank
+             space in the middle of an arrangement is the arrangement. */
+          id === null ? (
+            <div key={`gap-${at}`} className="cell-gap" aria-hidden="true" />
+          ) : (
+            <section
+              key={id}
+              className={`sheet-cell${PLACEHOLDERS.includes(id) ? ' cell-empty' : ''}${
+                String(id).startsWith('minion:') ? ' cell-minion' : ''
+              }${String(id).startsWith('feral:') ? ' cell-feral' : ''}${
+                String(id).startsWith('pact:') ? ' cell-pact' : ''
+              }${
+                String(id).startsWith('rune:') ? ' cell-rune' : ''
+              }${String(id).startsWith('blade:') ? ' cell-blade' : ''}${
+                String(id).startsWith('ossuary:') ? ' cell-ossuary' : ''
+              }${
+                String(id).startsWith('oath:') ? ' cell-oath' : ''
+              }`}
+            >
+              {blocks[id]}
+            </section>
+          )
+        )}
 
         {arranging && (
           <BlockArrange
             order={order}
             describe={describeBlock}
             onChange={saveOrder}
+            columns={columns}
+            onColumns={saveColumns}
+            trays={trays}
+            onTrays={saveTrays}
             onClose={() => setArranging(false)}
           />
         )}

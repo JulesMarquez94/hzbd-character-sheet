@@ -1,14 +1,14 @@
 import { Fragment, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { attributeOf, damageStyle, resolveValue } from '../lib/cardText.js';
+import { attributeOf, castArticles, castStat, damageStyle, resolveValue } from '../lib/cardText.js';
 import { getKeyword, keywordPattern } from '../lib/keywords.js';
+import { valuePurpose } from '../lib/rollPlan.js';
 
 /**
  * Card and item rules text, rendered the way the printed cards read.
  *
- *   **bold**            emphasis. Still understood, for cards a player types
- *                       into their own Abilities tab, but no card in the codex
- *                       uses it any more — see the note in keywords.js
+ *   **bold**            a parameter: how far, at whom, for how long. Only those
+ *                       three, and the rule is in keywords.js
  *   {stat} {mind} …     an attribute by name, in that attribute's colour
  *   {damage}            the card's damage type as a coloured chip — already
  *                       swapped for whatever an enchantment turned it into
@@ -20,12 +20,16 @@ import { getKeyword, keywordPattern } from '../lib/keywords.js';
  *                       this weapon, and a button that shows the working
  *   {{Cold Infusion}}   a link to another card
  *
- * `context` is what the holder brings: `{ damage, empower, elevate, bonus }`. Text
+ * `context` is what the holder brings: `{ damage, empower, elevate, bonus,
+ * healElevate }`, the last of them growing healing dice and nothing else. Text
  * with none of these markers renders as plain paragraphs, so cards typed into
  * the Abilities tab keep working untouched.
  */
 
-const TOKEN = /(\*\*[^*]+\*\*|\[\[[^\]]+\]\]|\{\{[^}]+\}\}|\{[a-zA-Z]+(?::[A-Za-z]+)?\})/g;
+/* The bold run reads to the next `**` rather than to the next `*`, because a
+   live value is allowed inside one: "**[[2*stat]] meters**" is a distance, and
+   `[^*]+` would have stopped at the multiplication sign and printed the marker. */
+const TOKEN = /(\*\*(?:[^*]|\*(?!\*))+\*\*|\[\[[^\]]+\]\]|\{\{[^}]+\}\}|\{[a-zA-Z]+(?::[A-Za-z]+)?\})/g;
 
 /** A damage type written in its own colour, lit like the stat names are. */
 function DamageChip({ type }) {
@@ -147,21 +151,37 @@ function renderPlain(text, keyPrefix) {
 }
 
 
-function renderInline(text, ctx, keyPrefix) {
-  const { character, stat, damage, empower, elevate, bonus, choice, onValue, onLink } = ctx;
+/* `place` is where this stretch sits in the paragraph it came from, so a value
+   inside a bold run can still be asked what it is for by its whole sentence. */
+function renderInline(text, ctx, keyPrefix, place = { prose: text, at: 0 }) {
+  const { character, stat, damage, empower, elevate, bonus, healElevate, choice, onValue, onLink } = ctx;
+  let pos = place.at;
 
   return text.split(TOKEN).map((chunk, index) => {
     const key = `${keyPrefix}-${index}`;
+    const at = pos;
+    pos += chunk.length;
     if (!chunk) return null;
 
     if (chunk.startsWith('**') && chunk.endsWith('**')) {
-      return <strong key={key}>{renderInline(chunk.slice(2, -2), ctx, key)}</strong>;
+      return (
+        <strong key={key}>
+          {renderInline(chunk.slice(2, -2), ctx, key, { prose: place.prose, at: at + 2 })}
+        </strong>
+      );
     }
 
     /* ---- live value: [[2d6 + 2*stat]] ---- */
     if (chunk.startsWith('[[') && chunk.endsWith(']]')) {
       const expression = chunk.slice(2, -2).trim();
-      const resolved = resolveValue(expression, character, stat, { empower, elevate, bonus });
+      /* The Healer's step lands on dice that restore Health and nowhere else,
+         read the way the dice will be thrown. See rollPlan.js. */
+      const mends = healElevate > 0 && valuePurpose(place.prose, at, chunk.length) === 'healing';
+      const resolved = resolveValue(expression, character, stat, {
+        empower,
+        elevate: elevate + (mends ? healElevate : 0),
+        bonus,
+      });
 
       if (!onValue) {
         return (
@@ -279,6 +299,7 @@ export default function CardText({
   empower = 0,
   elevate = 0,
   bonus = 0,
+  healElevate = 0,
   choice = null,
   choicePrompt = null,
   onValue,
@@ -286,17 +307,43 @@ export default function CardText({
 }) {
   if (!text) return null;
 
-  const ctx = { character, stat, damage, empower, elevate, bonus, choice, choicePrompt, onValue, onLink };
+  /* "Your highest Attribute" is a rule and not an attribute, so it is settled
+     against the character before a single token is rendered: the name printed by
+     {stat} and the number printed by [[…]] are then the same attribute by
+     construction. See castStat in cardText.js. */
+  const cast = castStat(stat, character);
+  const ctx = {
+    character,
+    stat: cast,
+    damage,
+    empower,
+    elevate,
+    bonus,
+    healElevate,
+    choice,
+    choicePrompt,
+    onValue,
+    onLink,
+  };
 
-  return text.split(/\n\s*\n/).map((paragraph, index) => (
+  /* And the article before every {stat} made to agree with it, at the same
+     moment and for the same reason. See castArticles in cardText.js. */
+  return castArticles(text, cast).split(/\n\s*\n/).map((paragraph, index) => (
     <p key={index}>{renderInline(paragraph, ctx, `p${index}`)}</p>
   ));
 }
 
 /** The same renderer without the paragraph wrapper — for one-line item text. */
-export function CardLine({ text, character, stat = 'instinct', damage = [], empower = 0, elevate = 0, bonus = 0, choice = null, onValue, onLink }) {
+export function CardLine({ text, character, stat = 'instinct', damage = [], empower = 0, elevate = 0, bonus = 0, healElevate = 0, choice = null, onValue, onLink }) {
   if (!text) return null;
+  const cast = castStat(stat, character);
   return (
-    <>{renderInline(text, { character, stat, damage, empower, elevate, bonus, choice, onValue, onLink }, 'line')}</>
+    <>
+      {renderInline(
+        castArticles(text, cast),
+        { character, stat: cast, damage, empower, elevate, bonus, healElevate, choice, onValue, onLink },
+        'line'
+      )}
+    </>
   );
 }

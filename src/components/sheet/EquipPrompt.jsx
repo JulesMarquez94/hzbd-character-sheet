@@ -1,8 +1,9 @@
 import Modal from '../Modal.jsx';
 import ShareCode from './ShareCode.jsx';
-import { ItemIcon, ItemTags, ItemValues, SlotGlyph, StatText } from './itemParts.jsx';
+import { ItemCarry, ItemIcon, ItemStats, ItemTags, SlotGlyph, StatText } from './itemParts.jsx';
 import {
   ARMOR_SLOTS,
+  BAG_SLOT_KEY,
   BELT_SLOT_KEY,
   EQUIPMENT_SLOTS,
   TRINKET_SLOT_KEY,
@@ -37,6 +38,13 @@ import { forgedRecord } from '../../lib/forged.js';
  * inventory opens this window, so this is the answer to "click on it to get the
  * code" — no extra control anywhere, and the code sits next to the thing it
  * describes.
+ *
+ * ------------------------------------------------------------ and the party
+ * `onGive` is the fourth place a thing can go, and it is not a slot: **into
+ * somebody else's pack.** It sits at the foot beside "Read the item" rather than
+ * in the list of places, because the list is places on *this* character and this
+ * is the one answer that takes it off them entirely. Drawn only for a sheet that
+ * actually sits at a table with somebody else at it. See GiveWindow.jsx.
  */
 export default function EquipPrompt({
   item,
@@ -50,6 +58,7 @@ export default function EquipPrompt({
   onClip,
   onWear,
   onDetails,
+  onGive = null,
   onClose,
 }) {
   const targets = targetsFor(item, {
@@ -80,6 +89,16 @@ export default function EquipPrompt({
           <button type="button" className="btn btn-minimal btn-sm" onClick={onDetails}>
             Read the item
           </button>
+          {onGive && (
+            <button
+              type="button"
+              className="btn btn-minimal btn-sm"
+              onClick={onGive}
+              title="Hand it to somebody at your table"
+            >
+              Hand it over
+            </button>
+          )}
           <span className="spacer" />
           <button type="button" className="btn btn-minimal btn-sm" onClick={onClose}>
             Close
@@ -96,7 +115,8 @@ export default function EquipPrompt({
               {carried > 1 && <span className="pack-count-chip">×{carried}</span>}
             </span>
             <ItemTags item={item} />
-            <ItemValues item={item} />
+            <ItemStats item={item} />
+            <ItemCarry item={item} />
           </div>
         </div>
 
@@ -210,13 +230,16 @@ function targetsFor(piece, { character, equipment, belt, beltSlots, trinkets, on
   for (const slot of EQUIPMENT_SLOTS) {
     if (!slots.includes(slot.key)) continue;
     const armor = ARMOR_SLOTS.some((entry) => entry.key === slot.key);
+    // A bag is neither worn as armor nor held in a hand, and "Hold it here" for
+    // the thing on your back was the one label the two-way test got wrong.
+    const bag = slot.key === BAG_SLOT_KEY;
 
     targets.push({
       id: `slot-${slot.key}`,
       label: slot.label,
       glyph: slot.key,
-      verb: armor ? 'Wear it here' : 'Hold it here',
-      hereLabel: armor ? 'Worn' : 'In hand',
+      verb: bag ? 'Sling it on' : armor ? 'Wear it here' : 'Hold it here',
+      hereLabel: bag ? 'On your back' : armor ? 'Worn' : 'In hand',
       holding: heldItem(character, equipment[slot.key]),
       commit: () => onEquip(slot.key, piece),
     });
@@ -249,7 +272,7 @@ function targetsFor(piece, { character, equipment, belt, beltSlots, trinkets, on
 
       targets.push({
         id: `belt-${index}`,
-        label: `Belt Slot ${index + 1}`,
+        label: `Belt Loop ${index + 1}`,
         glyph: 'belt',
         verb: refresh ? 'Clip a fresh one' : 'Clip it here',
         hereLabel: 'On belt',

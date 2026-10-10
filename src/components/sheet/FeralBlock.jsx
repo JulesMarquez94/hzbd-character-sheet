@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FeralWindow } from './FeralPick.jsx';
-import { ResourceBar } from './parts.jsx';
+import { Gated, ResourceBar } from './parts.jsx';
 import { ATTRIBUTES } from '../../lib/attributes.js';
 import { shieldCapFor } from '../../lib/characterModel.js';
 import { enterFormBody, leaveFormBody } from '../../lib/combatBar.js';
 import { canEnterForm, enterForm, setFeralDifficulty, settleForm } from '../../lib/feral.js';
+import { statMath } from '../../lib/statMath.js';
+import { viewUrl } from '../../lib/imageViews.js';
 
 /**
  * The Feral Form block: the one a talent set adds when it can turn you into
@@ -41,21 +43,35 @@ import { canEnterForm, enterForm, setFeralDifficulty, settleForm } from '../../l
  * it is drawn without the click that opens the ledger.
  *
  * -------------------------------------------------------- and the difficulty
- * "On a failure the difficulty increases by 1 for your next roll. It resets to 8
- * on a transformation." The roll itself is never asked for here, for the reason
- * every other die on this sheet is the table's: the sheet is told that Health
- * moved and never what moved it, so a sheet that asked for a Feral Rage roll
- * would ask on every scratch. It holds the number and offers the presses.
+ * "On a success the difficulty increases by 1 for your next roll. It resets to 8
+ * on a transformation." This block holds the number and offers the two presses
+ * that move it by hand.
+ *
+ * The roll is thrown to *hold the beast in*, so the number is what restraint
+ * costs: pass and it climbs, fail and you are the beast and it is back at 8.
+ *
+ * The roll itself used to be nobody's but the table's, because the sheet was told
+ * that Health moved and never what moved it. It is asked for now, and it is asked
+ * for where it happens rather than here: losing Health and spending Willpower both
+ * write a ledger row naming what did it, so the prompt goes up the moment one
+ * lands. See FeralCall.jsx. The presses below stay, for a roll made at the table
+ * and for a difficulty that needs correcting.
  *
  * The note asks for a button that increments the difficulty "as you succed your
- * roll", and the card says the increase is on a *failure*. The card wins, and the
- * button is labelled in the card's own terms. Flagged in data/README.md.
+ * roll", and the card as transcribed says the increase is on a *failure*. That
+ * stood open for a fortnight and Jules ruled it on 2026-09-03: "with the feral
+ * curse you transform when you fail not when you succeed." The note was right,
+ * the card's sentence flipped to match, and the button had been labelled in the
+ * note's terms all along — "Held it in" is what a passed roll means here.
  */
 export default function FeralBlock({ character, form, patch, readOnly = false }) {
   const [editing, setEditing] = useState(false);
 
   const { spec } = form;
   const cap = shieldCapFor(character);
+  /* Where that cap came from, for the bar's hover. Worked out once: the map is
+     the whole tab's and this block reads one entry out of it. */
+  const capMath = useMemo(() => statMath(character).shield_cap, [character]);
   const can = canEnterForm(character, form);
   /* What transforming would cost, worked out before it is pressed rather than
      reported after: "you lose half your current Health" is not a sum anybody
@@ -92,7 +108,7 @@ export default function FeralBlock({ character, form, patch, readOnly = false })
       <div className="minion-id">
         <span className="minion-plate">
           {form.portrait_url ? (
-            <img src={form.portrait_url} alt="" />
+            <img src={viewUrl(form.portrait_url, 'face')} alt="" />
           ) : (
             <span className="minion-plate-empty" aria-hidden="true" />
           )}
@@ -121,12 +137,17 @@ export default function FeralBlock({ character, form, patch, readOnly = false })
       {(form.inForm || form.over) && (
         <>
           <div className="stat-category-label">The hide</div>
+          {/* The ceiling's own arithmetic on hover, because this is the block
+              where it matters most: BESTIAL SENSE is what makes the pool the
+              whole of maximum Health rather than half, and this is the bar that
+              whole is holding the form up. */}
           <ResourceBar
             label="Shield"
             current={form.shield}
             max={cap}
             color="var(--stat-shield)"
             title="The form ends when this is gone"
+            math={capMath}
           />
           <p className="feral-line">
             {form.inForm
@@ -145,7 +166,7 @@ export default function FeralBlock({ character, form, patch, readOnly = false })
           <span className="feral-dc-note">
             {form.difficulty > form.base
               ? `${form.difficulty - form.base} above the ${form.base} it starts at.`
-              : `Lose Health or spend Willpower, and roll ${rolls} against it.`}
+              : `Lose Health or spend Willpower and the sheet asks for the ${rolls} roll.`}
           </span>
         </span>
       </div>
@@ -156,7 +177,7 @@ export default function FeralBlock({ character, form, patch, readOnly = false })
             type="button"
             className="btn btn-sub btn-sm"
             onClick={() => patch(setFeralDifficulty(character, form, form.difficulty + form.step))}
-            title="On a failure the difficulty increases by 1 for your next roll"
+            title="On a success the difficulty increases by 1 for your next roll"
           >
             Held it in, +{form.step}
           </button>
@@ -234,24 +255,24 @@ export default function FeralBlock({ character, form, patch, readOnly = false })
                 Shake it off
               </button>
             ) : (
-              <button
-                type="button"
+              <Gated
                 className="btn btn-sub btn-sm feral-wide feral-transform"
-                disabled={!can.ok}
-                title="The Feral Rage roll passed. Apply it."
+                why={can.ok ? null : can.reason ?? 'You cannot turn right now.'}
+                title="The Feral Rage roll failed, or you chose to fail it. Apply it."
                 onClick={() => patch(enterFormBody(character, form, 'Feral Rage'))}
               >
                 Transform
-              </button>
+              </Gated>
             ))}
 
-          {/* At Rank 1 the beast cannot be *called*, only rolled for: FERAL RAGE
-              lets a Feral Cursed choose to fail and never to pass. So a rank that
-              has CALL THE BEAST is told where to find it rather than given a
-              second button here that charges nothing. */}
+          {/* At Rank 1 the beast can be called, since choosing to fail the roll
+              is choosing to transform, but only once something has provoked the
+              roll. CALL THE BEAST is the one that needs no trigger, so a rank
+              that has it is told where to find it rather than given a second
+              button here that charges nothing. */}
           {form.willing && !form.over && (
             <p className="feral-line feral-line-quiet">
-              Or play Call the Beast off your quick bar to force it with no roll.
+              Or play Call the Beast off your Quick Bar to force it with no roll.
             </p>
           )}
         </>

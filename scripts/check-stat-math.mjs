@@ -1,0 +1,824 @@
+/**
+ * Stat-math round trip. Proves the two promises src/lib/statMath.js makes.
+ *
+ * **Every math line adds up to the number the sheet is showing above it.** That
+ * promise is the whole risk of the file. It mirrors `deriveStats`, `shieldCapFor`,
+ * `attributeTotals`, `magicBurdenMax` and `minionDerived` term for term, so the
+ * day one of those formulas changes and this does not, the tooltips start quietly
+ * lying about where a number came from. A wrong explanation is worse than no
+ * explanation, so the mirror is checked rather than trusted.
+ *
+ * **And no line names a piece or a level.** What the loadout lends is named after
+ * the place it sits in and the level ledger is one term, because a reader wants
+ * the sum and not its parts: see "a term is as coarse as the answer" in
+ * statMath.js. A new source added the obvious way, one term per thing, passes the
+ * first check and breaks the second, which is exactly when somebody should be told.
+ *
+ *   node scripts/check-stat-math.mjs        report and exit 1 on any drift
+ *   node scripts/check-stat-math.mjs --list print every line, then exit 0
+ *
+ * Each fixture below is a *kind* of source, not a character anybody would play:
+ * gear, a full-set replacement, a lineage rider, five enchantments at once, a
+ * raised point ceiling, a form's hide, a creature and a card running on the
+ * tracker. Adding a new source of any stat means adding a sheet here that carries
+ * it.
+ *
+ * Two notes on the fixtures, both learned the hard way:
+ *
+ * - `reapplyTotals` before `syncDerived`. The three attribute columns are the
+ *   level ledger's and `syncDerived` does not touch them, so a fixture that only
+ *   syncs derives its stats off three untouched 4s.
+ * - Seven talent slots is the whole ladder. Four rank-3 sets need twelve, and
+ *   `repairSlots` silently drops whatever does not fit, which reads here as a
+ *   set's bonus mysteriously not appearing.
+ */
+
+import {
+  BLANK_CHARACTER,
+  karmaCap,
+  liveCharacter,
+  shieldCapFor,
+  syncDerived,
+} from '../src/lib/characterModel.js';
+import {
+  ITEMS,
+  carriedWeight,
+  carryCapacity,
+  magicBurdenMax,
+  magicBurdenUsed,
+} from '../src/lib/items.js';
+import { reapplyTotals } from '../src/lib/levelPicks.js';
+import { minionState } from '../src/lib/minions.js';
+import { marrowState } from '../src/lib/undead.js';
+import { mathLine, minionMath, statMath } from '../src/lib/statMath.js';
+
+const LIST = process.argv.includes('--list');
+
+/** Every name in the codex, so a term that is a piece rather than a place shows. */
+const PIECE_NAMES = new Set(ITEMS.map((item) => item.name));
+
+/**
+ * The lines whose terms come from walking the loadout, and which therefore have
+ * to name the place a thing sits in rather than the thing.
+ *
+ * `shield_cap` and `carry_max` are walks of nothing and are deliberately out of
+ * it. Each names one identified piece with a power of its own, the Supreme Runed
+ * hood at the bell and the bag that raises the ceiling, and there is exactly one
+ * of either on a character. `5kg Bag` would be a worse answer than the bag's own
+ * name, and `7 Trinkets` on a Shield ceiling would be a wrong one.
+ */
+const WALKS = new Set(['defense', 'avoid', 'burden_used', 'carry_used']);
+
+/** What the ledger used to print, one per level. It is `Advancement` now. */
+const PER_LEVEL = /^Level [0-9]+$/;
+
+/**
+ * The level-1 spread, and the two points every odd level after hands out.
+ *
+ * Level 9 is deliberately written the *older* way, as a single `attribute`. That
+ * shape is what every saved sheet holds and it reads back as one point taken and
+ * one still open, so the ladder proves both readings add up rather than only the
+ * new one. See "two, not one" in levelPicks.js.
+ */
+const LADDER = {
+  1: { major: 'instinct', minor: 'physique' },
+  3: { raised: ['instinct', 'mind'] },
+  5: { raised: ['mind', 'physique'] },
+  7: { raised: ['physique', 'instinct'] },
+  9: { attribute: 'instinct' },
+  11: { raised: ['mind', 'instinct'] },
+};
+
+const SHEETS = [
+  {
+    name: 'a fresh level 1, nothing laid on anybody',
+    row: {},
+  },
+  {
+    name: 'gear, a lineage, five workings, a form and a raised ceiling',
+    row: {
+      xp: 75000,
+      lineage: 'Wildheart',
+      level_picks: LADDER,
+      trinkets: ['silver-ring'],
+      shield: 40,
+      equipment: {
+        head: 'leather-helm',
+        torso: 'leather-vest',
+        legs: 'leather-pants',
+        main_hand: null,
+        off_hand: null,
+      },
+      talents: [
+        {
+          id: 'enchanter',
+          rank: 3,
+          taken: [1, 2, 4],
+          worn: [
+            'primal-sense',
+            'vitality',
+            'celerity',
+            'arcane-battery',
+            'resilience-enchantment',
+          ],
+          laid: { 'silver-ring': ['bodily-vigor'] },
+        },
+        { id: 'trickster', rank: 2, taken: [6, 8] },
+        { id: 'feral-curse', rank: 2, taken: [10, 12] },
+      ],
+      feral: { 'feral-curse': { beast: 'wolf', name: 'The Wolf', on: true, dc: 8 } },
+    },
+  },
+  {
+    /* The one lineage card that moves a stat rather than an attribute. WIND
+       GRACE is +1.5 metres of Movement Speed, and the Speed line has to name it:
+       a rider `deriveStats` adds and `statMath` does not know about reads as
+       `unaccounted` on the tile, which is the exact drift this script exists to
+       catch. The half metre is the other half of it. Every other term on this
+       sheet is a whole number, and a line that floored this one would be a metre
+       short of the tile above it. */
+    name: 'a Skybound, whose blood is worth a metre and a half',
+    row: {
+      xp: 7500,
+      level_picks: LADDER,
+      lineage: 'Skybound',
+    },
+    expect: (math, fail) => {
+      const named = math.speed_m.terms.find((t) => t.label === 'Wind Grace');
+      if (named?.value !== 1.5) fail(`Wind Grace is worth ${named?.value ?? 0}, want 1.5`);
+
+      const line = mathLine(math.speed_m);
+      if (line !== '3m base + 5m half your Instinct + 1.5m Wind Grace = 9.5m') {
+        fail(`Speed reads "${line}"`);
+      }
+    },
+  },
+  {
+    /* The other five lineage riders, wired 2026-09-11 and every one of them a
+       different line. MINERAL SKIN is the one that started it: a Stonebound's
+       Defense tile read their bare Instinct while the card in their hand said
+       +1. The rest were the same bug on four other tiles. */
+    name: 'a Stonebound, whose skin is worth a point of Defense',
+    row: { xp: 7500, level_picks: LADDER, lineage: 'Stonebound' },
+    expect: (math, fail) => {
+      const named = math.avoid.terms.find((t) => t.label === 'Mineral Skin');
+      if (named?.value !== 1) fail(`Mineral Skin is worth ${named?.value ?? 0}, want 1`);
+    },
+  },
+  {
+    name: 'a Tidebound, whose blood is worth four Willpower',
+    row: { xp: 7500, level_picks: LADDER, lineage: 'Tidebound' },
+    expect: (math, fail) => {
+      const named = math.willpower_max.terms.find((t) => t.label === 'Inner Tide');
+      if (named?.value !== 4) fail(`Inner Tide is worth ${named?.value ?? 0}, want 4`);
+    },
+  },
+  {
+    /* The rate, which is the one grant that is not a lump: it replaces the 10 in
+       *both* halves of the Health formula rather than adding a term beside them,
+       so a term named after the card is the only way the line can explain a
+       number nobody else's arithmetic produces. Three cards carry one and this is
+       the largest of the three. */
+    name: 'an Undead, who buys Health at 15 a point rather than 10',
+    row: { xp: 7500, level_picks: LADDER, lineage: 'Undead' },
+    expect: (math, fail) => {
+      for (const half of ['your level', 'Physique']) {
+        const named = math.health_max.terms.find((t) => t.label === `${half} (Undeath Resilience)`);
+        if (!named) fail(`the Health line does not name Undeath Resilience beside ${half}`);
+      }
+      if (math.health_max.total % 15 !== 0) {
+        fail(`a Health of ${math.health_max.total} is not bought at 15 a point`);
+      }
+    },
+  },
+  {
+    /* And the pool, which is the case a fixture on an ancestry cannot catch: a
+       Wildkin's riders are the two cards they kept, so a card worth nothing until
+       it is taken has to be worth its rider the moment it is. Two at once, on two
+       different lines. */
+    name: 'a Wildkin who kept Scaley and Wild Swiftness',
+    row: {
+      xp: 7500,
+      level_picks: LADDER,
+      lineage: 'Wildkin',
+      choices: { 'wildkin-traits': ['scaley', 'wild-swiftness'] },
+    },
+    expect: (math, fail) => {
+      const point = math.avoid.terms.find((t) => t.label === 'Scaley');
+      if (point?.value !== 1) fail(`Scaley is worth ${point?.value ?? 0}, want 1`);
+      const stride = math.speed_m.terms.find((t) => t.label === 'Wild Swiftness');
+      if (stride?.value !== 1.5) fail(`Wild Swiftness is worth ${stride?.value ?? 0}, want 1.5`);
+    },
+  },
+  {
+    /* The first flat rider a *talent* card ever carried, and the first conditional
+       rider a *skill* ever carried, on one sheet because they land on the same
+       tile. JUST IN TIME is a metre a rank-2 Guardian keeps wherever they are
+       standing; LIGHT ARMOR MASTERY is a metre and a half that has to come off the
+       moment a piece of the set is stowed, which is the half a flat `grants`
+       could never have said. */
+    name: 'a Guardian in a full light set, with both kinds of new rider',
+    row: {
+      xp: 24000,
+      lineage: 'Wildheart',
+      level_picks: { ...LADDER, 5: { raised: ['mind', 'physique'], skill: 'light-armor-mastery' } },
+      talents: [{ id: 'guardian', rank: 2, taken: [2, 4] }],
+      equipment: {
+        head: 'leather-helm',
+        torso: 'leather-vest',
+        legs: 'leather-pants',
+        main_hand: null,
+        off_hand: null,
+      },
+    },
+    expect: (math, fail) => {
+      const card = math.speed_m.terms.find((t) => t.label === 'Just In Time');
+      if (card?.value !== 1) fail(`Just In Time is worth ${card?.value ?? 0}, want 1`);
+      const skill = math.speed_m.terms.find((t) => t.label === 'Light Armor Mastery');
+      if (skill?.value !== 1.5) fail(`Light Armor Mastery is worth ${skill?.value ?? 0}, want 1.5`);
+    },
+  },
+  {
+    /* And the same skill's condition proved from the other side: the identical
+       sheet with one piece of the set swapped for a heavy one grants nothing, and
+       the Speed line must not name the card at all. A bonus that stayed on when
+       the set came off would be the sheet telling a lie nobody could see. */
+    name: 'the same Guardian with the set broken, and the metre and a half gone',
+    row: {
+      xp: 24000,
+      lineage: 'Wildheart',
+      level_picks: { ...LADDER, 5: { raised: ['mind', 'physique'], skill: 'light-armor-mastery' } },
+      talents: [{ id: 'guardian', rank: 2, taken: [2, 4] }],
+      equipment: {
+        head: 'leather-helm',
+        torso: 'chainmail-hauberk',
+        legs: 'leather-pants',
+        main_hand: null,
+        off_hand: null,
+      },
+    },
+    expect: (math, fail) => {
+      if (math.speed_m.terms.some((t) => t.label === 'Light Armor Mastery')) {
+        fail('Light Armor Mastery is still on the Speed line with the set broken');
+      }
+    },
+  },
+  {
+    /* SHIELD EXPERTISE, which is neither of the two above: it hangs on the weapon
+       in hand, so it rides the move system the way a Duelist's AGILE does and the
+       Defense line names the card rather than the set. The shielded weapon's own
+       printed point is the term beside it, and the two are different sources. */
+    name: 'a Guardian with a shield up, worth a point of Defense over the weapon',
+    row: {
+      xp: 7500,
+      lineage: 'Wildheart',
+      level_picks: LADDER,
+      talents: [{ id: 'guardian', rank: 1, taken: [2] }],
+      equipment: {
+        head: null,
+        torso: null,
+        legs: null,
+        main_hand: 'melee-light-shield',
+        off_hand: null,
+      },
+    },
+    expect: (math, fail) => {
+      const named = math.avoid.terms.find((t) => t.label === 'Shield Expertise');
+      if (named?.value !== 1) fail(`Shield Expertise is worth ${named?.value ?? 0}, want 1`);
+    },
+  },
+  {
+    /* The one rider on the tracker whose number is read against the character
+       wearing it rather than printed in the table. A Rank 3 Berserker raging is
+       +3 Physique, and the Physique line has to name the card: the point is worth
+       10 Health and 1 Reflex besides itself, so a tile that showed the Physique
+       and could not say where the third point came from would be the worst kind
+       of unexplained number. See `measure` in riders.js. */
+    name: 'a Rank 3 Berserker mid-rage, whose rider is measured and not printed',
+    row: {
+      xp: 24000,
+      lineage: 'Stalwart',
+      level_picks: LADDER,
+      talents: [{ id: 'berserker', rank: 3, taken: [2, 4, 6] }],
+      effects: [{ id: 'rage', name: 'Berserker’s Rage', card: 'berserkers-rage', turns: 10 }],
+    },
+    expect: (math, fail) => {
+      const named = math.physique.terms.find((t) => t.label === 'Berserker’s Rage');
+      if (named?.value !== 3) fail(`the Rage is worth ${named?.value ?? 0} Physique, want 3`);
+    },
+  },
+  {
+    name: 'a Master Trickster with a creature on the board',
+    row: {
+      xp: 44000,
+      level_picks: LADDER,
+      talents: [
+        { id: 'trickster', rank: 3, taken: [1, 2, 4] },
+        { id: 'draconic-bond', rank: 3, taken: [6, 8, 10] },
+      ],
+      minions: { 'draconic-bond': { name: 'Cinder', scale: 'red' } },
+    },
+  },
+  {
+    /* The second single body in the codex, and the first whose Defense is its
+       Reflex and whose Health is 10 a level: both lines have to name what they
+       are made of, and a kind that is not a damage type has to leave the chip
+       and the line alone. */
+    name: 'an Adept Beastbond with a companion at heel',
+    row: {
+      xp: 24000,
+      level_picks: LADDER,
+      talents: [{ id: 'beastbond', rank: 2, taken: [1, 4] }],
+      minions: { beastbond: { name: 'Sable', scale: 'mammal' } },
+    },
+  },
+  {
+    /* Three pieces of plate in three slots, which is the case the coarseness rule
+       was written for: what a reader wants from an Armor of 15 is the word
+       "Armor", not the helm and the cuirass and the greaves added up by hand. */
+    name: 'a full Heavy Armor set and a Duelist holding a Melee Light',
+    row: {
+      xp: 44000,
+      level_picks: LADDER,
+      equipment: {
+        head: 'full-plate-helm',
+        torso: 'full-plate-cuirass',
+        legs: 'full-plate-pants',
+        main_hand: 'melee-light',
+        off_hand: null,
+      },
+      talents: [{ id: 'duelist', rank: 3, taken: [1, 2, 4] }],
+    },
+    expect: (math, fail) => {
+      const armor = math.defense.terms;
+      if (armor.length !== 1) fail(`Armor is ${armor.length} terms, want 1`);
+      if (armor[0]?.label !== 'Armor') fail(`Armor term is "${armor[0]?.label}", want "Armor"`);
+      if (armor[0]?.value !== 15) fail(`Armor term is worth ${armor[0]?.value}, want 15`);
+
+      /* And the same three pieces on the weight meter, with the sword beside
+         them: two places, in the order the equipment map stores them. */
+      const load = math.carry_used.terms.map((t) => `${t.value}kg ${t.label}`).join(' + ');
+      if (load !== '32kg Armor + 1.5kg Weapons') fail(`the load reads "${load}"`);
+    },
+  },
+  {
+    /* A shield in each slot, which is the case the *stowed* rule was written for.
+       A shielded weapon is worth 3 Armor and 1 Defense while it is in your hand
+       (2026-08-24), and a second one on your back is worth neither: only the
+       primary counts, so this reads 3 and 1 rather than 6 and 2.
+
+       Both hands still weigh, because weight is what a thing costs to carry and
+       carrying is what you are doing with the stowed one. That split is the whole
+       finding here: three lines walk the same loadout and one of them stops at the
+       main hand. See `heldItems` in items.js and `placesOf` in statMath.js. */
+    name: 'a shield in hand and a second one stowed',
+    row: {
+      xp: 7500,
+      level_picks: LADDER,
+      equipment: {
+        head: null,
+        torso: null,
+        legs: null,
+        main_hand: 'melee-light-shield',
+        off_hand: 'melee-heavy-shield',
+      },
+    },
+    expect: (math, fail) => {
+      if (math.defense.total !== 3) fail(`Armor is ${math.defense.total}, want 3`);
+      const armor = math.defense.terms;
+      if (armor.length !== 1 || armor[0]?.label !== 'Weapons') {
+        fail(`Armor reads "${armor.map((t) => `${t.value} ${t.label}`).join(' + ')}"`);
+      }
+
+      const point = math.avoid.terms.find((t) => t.label === 'Weapons');
+      if (point?.value !== 1) fail(`Defense gets ${point?.value ?? 0} from the hand, want 1`);
+
+      /* And both of them on the weight meter, 6 kg and 8. */
+      const load = math.carry_used.terms.map((t) => `${t.value}kg ${t.label}`).join(' + ');
+      if (load !== '14kg Weapons') fail(`the load reads "${load}"`);
+    },
+  },
+  {
+    name: 'a full Supreme Runed set, which replaces the Defense base',
+    row: {
+      xp: 44000,
+      level_picks: LADDER,
+      equipment: {
+        head: 'supreme-runed-hood',
+        torso: 'supreme-runed-robes',
+        legs: 'supreme-runed-leggings',
+        main_hand: null,
+        off_hand: null,
+      },
+    },
+  },
+  {
+    /* One working in two places. The same-source law says that is one point, so
+       it must be one *term*: a line crediting Primal Sense twice for a point it
+       granted once is the law broken where a reader can see it. */
+    name: 'the same working on a person and on a ring',
+    row: {
+      xp: 7500,
+      level_picks: LADDER,
+      trinkets: ['silver-ring'],
+      talents: [
+        {
+          id: 'enchanter',
+          rank: 3,
+          taken: [1, 2, 4],
+          worn: ['primal-sense'],
+          laid: { 'silver-ring': ['primal-sense'] },
+        },
+      ],
+    },
+    expect: (math, fail) => {
+      const named = math.instinct.terms.filter((t) => t.label === 'Primal Sense');
+      if (named.length !== 1) fail(`Primal Sense named ${named.length} times, want 1`);
+      if (named[0]?.value !== 1) fail(`Primal Sense worth ${named[0]?.value}, want 1`);
+
+      /* This ladder spends six points on Instinct across five levels, and they
+         are one term. A named source stays named beside it, which is the line the
+         coarseness rule draws: a working is one thing you can go and take off. */
+      const line = mathLine(math.instinct);
+      if (line !== '4 base + 6 Advancement + 1 Primal Sense = 11') fail(`Instinct reads "${line}"`);
+    },
+  },
+  {
+    /* The one thing on the sheet that takes a stat away. This ladder stands at a
+       Physique of 7, so at 5 kg a point the ceiling is 40 kg with the satchel on,
+       and the plate, the greatsword and one spare hauberk come to 46.9: over, and
+       not yet the 52 that stops them. The sheet below is the same load with eight
+       cuirasses in the pack, which is well past it. */
+    name: 'a load past the carry ceiling, which halves Speed',
+    row: {
+      xp: 7500,
+      level_picks: LADDER,
+      equipment: {
+        head: 'full-plate-helm',
+        torso: 'full-plate-cuirass',
+        legs: 'full-plate-pants',
+        main_hand: 'melee-heavy',
+        off_hand: null,
+        bag: 'canvas-satchel',
+      },
+      pack: ['chainmail-hauberk'],
+    },
+    expect: (math, fail) => {
+      const hit = math.speed_m.terms.find((t) => t.label === 'overloaded');
+      if (!hit) fail('over the ceiling and the Speed line does not say so');
+      if (hit && hit.value >= 0) fail(`overloaded is worth ${hit.value}, want a penalty`);
+      /* Halved, not stopped. Without this the fixture below is the only one of
+         the two doing any work: a load heavy enough to stop them dead also
+         carries a negative `overloaded` term, so the assertion above passes on
+         both and the line between them goes untested. */
+      if (math.speed_m.total <= 0) fail('halved to a standstill, want a Speed left to move on');
+    },
+  },
+  {
+    name: 'a load 30% past it, which stops them moving at all',
+    row: {
+      xp: 7500,
+      level_picks: LADDER,
+      equipment: {
+        head: 'full-plate-helm',
+        torso: 'full-plate-cuirass',
+        legs: 'full-plate-pants',
+        main_hand: 'melee-heavy',
+        off_hand: null,
+        bag: 'canvas-satchel',
+      },
+      pack: Array.from({ length: 8 }, () => 'full-plate-cuirass'),
+    },
+    expect: (math, fail) => {
+      if (math.speed_m.total !== 0) fail(`Speed is ${math.speed_m.total}, want 0`);
+    },
+  },
+  {
+    /* A working worth a point of Physique is worth five kilos of capacity, and
+       the *ceiling Speed is judged against* has to know it. The attribute column
+       is the level ledger's and carries no enchantment, so `deriveStats` has to
+       weigh the load against its own bent Physique rather than against the
+       number it was handed. This load sits between the two: 37.5 kg, over the 35
+       a stored Physique of 7 allows and inside the 40 the worn one does. A sheet
+       that read the column would halve a Speed that should not be halved. */
+    name: 'a load under the bent Physique and over the stored one',
+    row: {
+      xp: 7500,
+      level_picks: LADDER,
+      equipment: {
+        head: 'full-plate-helm',
+        torso: 'full-plate-cuirass',
+        legs: 'full-plate-pants',
+        main_hand: 'melee-heavy',
+        off_hand: null,
+        bag: null,
+      },
+      pack: ['healing-potion', 'healing-potion', 'healing-potion', 'healing-potion'],
+      talents: [{ id: 'enchanter', rank: 3, taken: [1, 2, 4], worn: ['bodily-vigor'] }],
+    },
+    expect: (math, fail) => {
+      const hit = math.speed_m.terms.find((t) => t.label === 'overloaded');
+      if (hit) fail(`Speed penalised by ${hit.value} on a load that is inside capacity`);
+      if (math.carry_max.total !== 40) fail(`capacity is ${math.carry_max.total}, want 40`);
+      if (math.carry_used.total !== 37.5) fail(`load is ${math.carry_used.total}, want 37.5`);
+    },
+  },
+  {
+    /* A card on the tracker, which is the third thing that bends a tile without
+       storing it. Somebody else's Giant Growth: nothing was spent on this sheet
+       and no source of theirs has heard of the spell. This ladder walks 8, so
+       the doubling is worth 8 more and the line has to name it. */
+    name: 'somebody else Giant Growth on you, which doubles the Speed',
+    row: {
+      xp: 7500,
+      level_picks: LADDER,
+      effects: [{ id: 'e1', name: 'Giant Growth', card: 'giant-growth', turns: 10 }],
+    },
+    expect: (math, fail) => {
+      if (math.speed_m.total !== 16) fail(`Speed is ${math.speed_m.total}, want 16`);
+      const hit = math.speed_m.terms.find((t) => t.label === 'Giant Growth');
+      if (!hit) fail('the Speed doubled and the line does not say what doubled it');
+      if (hit && hit.value !== 8) fail(`Giant Growth worth ${hit.value}, want 8`);
+    },
+  },
+  {
+    /* Two factors, which multiply rather than add: a doubling and a half again is
+       threefold. Both terms are off the Speed as it stood when each was applied,
+       which is the only way they can add up to the tile. And Barkskin's point of
+       Defense, on the same sheet, because a rider that moved two different tiles
+       at once is the case a single-tile fixture cannot catch. */
+    name: 'a doubling, a half again and a point of Defense, all off the tracker',
+    row: {
+      xp: 7500,
+      level_picks: LADDER,
+      effects: [
+        { id: 'e1', name: 'Giant Growth', card: 'giant-growth', turns: 10 },
+        { id: 'e2', name: 'Hasted Brew', card: 'wisp-of-mist', turns: null },
+        { id: 'e3', name: 'Barkskin', card: 'barkskin', turns: null },
+      ],
+    },
+    expect: (math, fail) => {
+      if (math.speed_m.total !== 24) fail(`Speed is ${math.speed_m.total}, want 24`);
+      const grown = math.speed_m.terms.find((t) => t.label === 'Giant Growth');
+      const hasted = math.speed_m.terms.find((t) => t.label === 'Hasted Brew');
+      if (grown?.value !== 8) fail(`Giant Growth worth ${grown?.value}, want 8`);
+      if (hasted?.value !== 8) fail(`Hasted Brew worth ${hasted?.value}, want 8`);
+
+      const bark = math.avoid.terms.find((t) => t.label === 'Barkskin');
+      if (!bark) fail('Barkskin raised the Defense and the line does not name it');
+      if (bark && bark.value !== 1) fail(`Barkskin worth ${bark.value}, want 1`);
+    },
+  },
+  {
+    /* The only source of Willpower on the sheet that is neither worn nor running:
+       an Arcanist's SPELLBOOK is worth 4 a rank for holding the rank, and nothing
+       has to be laid, cast or transformed into for it. Which makes it the exact
+       shape this file exists to catch, because it lands in two files at once and
+       a rider that reached `deriveStats` without reaching `statMath` would leave
+       the tooltip quietly short by twelve.
+
+       Rank 3 rather than 1, so a wrong reading that dropped the multiplication
+       still fails: 4 and 12 are different numbers, where 4 and 4 would not be. */
+    name: 'a Master Arcanist, whose spellbook is worth Willpower for the rank alone',
+    row: {
+      xp: 44000,
+      level_picks: LADDER,
+      talents: [
+        {
+          id: 'arcanist',
+          rank: 3,
+          taken: [1, 2, 4],
+          picks: ['bramble-whip', 'barkskin', 'entangling-roots'],
+        },
+      ],
+    },
+    expect: (math, fail) => {
+      const book = math.willpower_max.terms.find((t) => t.label === 'Arcanist');
+      if (!book) fail('the spellbook raised the Willpower and the line does not name the set');
+      if (book && book.value !== 12) fail(`Arcanist worth ${book.value}, want 12`);
+    },
+  },
+  {
+    /* And the same shape read off an *attribute* rather than off a rank, which is
+       the wrinkle a Runebearer adds: RUNIC NETWORK raises the maximum by the
+       holder’s Physique, so the two files have to agree not only that the rider
+       lands but on which Physique it lands off. `deriveStats` works its own out
+       of the column plus what is worn; `statMath` reads the bent one off the
+       shown row. A ring lending a point of Physique lends a point of Willpower
+       with it, and a reading that took the unbent attribute would be short by
+       exactly that.
+
+       So the sheet wears one: BODILY VIGOR is +1 Physique, laid by an Enchanter
+       who is also the Runebearer. Rank 2 rather than 1, because the grant opens
+       at Rank 2 and a wrong reading that ignored the rank would still pass at 1. */
+    name: 'a Runebearer wearing a point of Physique, whose runes are worth the whole of it',
+    row: {
+      xp: 44000,
+      level_picks: LADDER,
+      talents: [
+        {
+          id: 'enchanter',
+          rank: 3,
+          taken: [1, 2, 4],
+          worn: ['bodily-vigor'],
+        },
+        {
+          id: 'runebearer',
+          rank: 2,
+          taken: [3, 6],
+          picks: ['barkskin', 'heal'],
+        },
+      ],
+    },
+    expect: (math, fail) => {
+      const slate = math.willpower_max.terms.find((t) => t.label === 'Runebearer');
+      if (!slate) fail('the runes raised the Willpower and the line does not name the set');
+
+      /* Whatever the ladder and the ring come to, the two have to be the same
+         number: the tile prints the Physique and the runes are worth it. */
+      const held = math.physique.total;
+      if (slate && slate.value !== held) {
+        fail(`Runebearer worth ${slate.value}, want ${held}, which is the Physique on the tile`);
+      }
+
+      /* And the ring is actually on, so the line above is not agreeing with itself
+         about an unbent attribute. */
+      const worn = math.physique.terms.find((t) => t.label === 'Bodily Vigor');
+      if (!worn) fail('the worn Physique never landed, so the rune line proves nothing');
+
+      /* And the other half, which is the only term on this sheet that comes *off*
+         a maximum: Barkskin at 2 and Heal at 4 are inscribed, so 6 of the
+         Willpower is in them until they are removed. */
+      const owed = math.willpower_max.terms.find((t) => t.label === 'runes inscribed');
+      if (!owed) fail('two inscribed runes cost nothing off the maximum');
+      if (owed && owed.value !== -6) {
+        fail(`runes inscribed worth ${owed.value}, want -6 (Barkskin 2 and Heal 4)`);
+      }
+    },
+  },
+
+  {
+    /* The second thing in the codex that comes *off* a derived maximum, and the
+       reason this sheet exists beside the one above it: a Necromancer holding
+       three bodies pays for all three, and `deriveStats` and `statMath` have to
+       floor the same debt against the same room in the same order.
+
+       **One Willpower per Marrow since 2026-09-09**, which is what makes the
+       three bodies chosen here worth checking rather than a count: a ghoul at 3,
+       a skeleton at 3 and an undead knight at 6 is 12, and a reading that had
+       gone back to counting rows would come out at 3 or at 6 and never at 12.
+       Rank 2 because the knight needs it. */
+    name: 'a Necromancer holding three bodies, each one worth its own Marrow',
+    row: {
+      xp: 44000,
+      level_picks: LADDER,
+      talents: [{ id: 'necromancer', rank: 2, taken: [3, 6] }],
+      minions: {
+        'body-1': { set: 'necromancer', kind: 'ghoul', name: 'Bite' },
+        'body-2': { set: 'necromancer', kind: 'skeleton-archer', name: 'Quiver' },
+        'body-3': { set: 'necromancer', kind: 'undead-knight', name: 'The Oath' },
+      },
+    },
+    expect: (math, fail) => {
+      const owed = math.willpower_max.terms.find((t) => t.label === '3 bodies raised');
+      if (!owed) fail('three raised bodies cost nothing off the maximum');
+      if (owed && owed.value !== -12) {
+        fail(`3 bodies raised worth ${owed.value}, want -12 (3 + 3 + 6 Marrow, at 1 apiece)`);
+      }
+
+      /* And the pool they were paid out of, which is the Mind on the tile. A
+         reading that took the stored column rather than the effective one would
+         agree here by accident, so this is the cheap half; the point of the sheet
+         is the line above. */
+      const mind = math.mind.total;
+      const ossuary = marrowState({ ...BLANK_CHARACTER, talents: [{ id: 'necromancer', rank: 2 }], mind });
+      if (ossuary[0] && ossuary[0].total !== mind) {
+        fail(`the Ossuary holds ${ossuary[0].total} Marrow, want ${mind}, which is the Mind on the tile`);
+      }
+    },
+  },
+];
+
+/** A row the sheet has brought into line with its own ledger, then bent. */
+function shownSheet(row) {
+  const full = { ...BLANK_CHARACTER, ...row };
+  const totals = reapplyTotals(full);
+  const withAttrs = totals ? { ...full, ...totals } : full;
+  const derived = syncDerived(withAttrs);
+  return liveCharacter(derived ? { ...withAttrs, ...derived } : withAttrs);
+}
+
+/** What each tile on the Character tab actually prints, keyed as statMath keys it. */
+function faceOf(shown) {
+  return {
+    physique: shown.physique,
+    instinct: shown.instinct,
+    mind: shown.mind,
+    initiative: Math.floor(shown.initiative),
+    speed_m: Math.round((Number(shown.speed_m) || 0) * 100) / 100,
+    defense: Math.floor(shown.defense),
+    avoid: Math.floor(shown.avoid),
+    reflex: Math.floor(shown.reflex),
+    grit: Math.floor(shown.grit),
+    health_max: shown.health_max,
+    shield_cap: shieldCapFor(shown),
+    willpower_max: shown.willpower_max,
+    ap_max: shown.ap_max,
+    reaction_max: shown.reaction_max,
+    karma: karmaCap(shown),
+    burden_max: magicBurdenMax(shown),
+    burden_used: magicBurdenUsed(shown),
+    carry_max: carryCapacity(shown),
+    carry_used: carriedWeight(shown),
+  };
+}
+
+const findings = [];
+
+for (const sheet of SHEETS) {
+  const shown = shownSheet(sheet.row);
+  const math = statMath(shown);
+  const fail = (says) => findings.push({ sheet: sheet.name, says });
+
+  if (LIST) console.log(`\n===== ${sheet.name} =====`);
+
+  for (const [key, value] of Object.entries(faceOf(shown))) {
+    const sum = math[key];
+    if (!sum) {
+      fail(`${key}: no breakdown at all`);
+      continue;
+    }
+    const line = mathLine(sum);
+    if (LIST) console.log(`  ${key.padEnd(13)} ${String(value).padEnd(7)} ${line ?? '(no line)'}`);
+
+    if (Math.abs(sum.total - Number(value)) > 0.001) {
+      fail(`${key}: line comes to ${sum.total}, tile shows ${value}`);
+    }
+    /* On a sheet the app has just synced, every point has a name. An
+       `unaccounted` term here means a source exists that statMath cannot see. */
+    const ghost = sum.terms.find((t) => t.label === 'unaccounted');
+    if (ghost) fail(`${key}: ${ghost.value} unaccounted for (${line})`);
+
+    /* And the second promise. A term named after a helm is a loadout walk that
+       forgot to group, and a term named after a level is the attribute ledger
+       printing itself out again. Both add up and both are still wrong. */
+    for (const { label } of sum.terms) {
+      if (WALKS.has(key) && PIECE_NAMES.has(label)) {
+        fail(`${key}: names the piece "${label}" (${line})`);
+      }
+      if (PER_LEVEL.test(label)) fail(`${key}: names "${label}" (${line})`);
+    }
+  }
+
+  for (const minion of minionState(shown)) {
+    if (LIST) console.log(`  -- ${minion.title}`);
+    for (const [key, sum] of Object.entries(minionMath(minion))) {
+      const truth = minion.stats[key];
+      if (LIST) {
+        console.log(
+          `     ${key.padEnd(13)} ${String(truth).padEnd(7)} ${mathLine(sum) ?? '(no line)'}`
+        );
+      }
+      if (Math.abs(sum.total - Number(truth)) > 0.001) {
+        fail(`${minion.title} ${key}: line comes to ${sum.total}, tile shows ${truth}`);
+      }
+    }
+  }
+
+  sheet.expect?.(math, fail);
+}
+
+/* And the one case `unaccounted` exists for: a row whose attribute columns
+   disagree with the ledger stored beside them, opened by somebody who cannot
+   write it, so nothing ever brings the two back together. The line must still
+   add up to the tile, and it must say the difference is unexplained. */
+{
+  const drifted = liveCharacter({
+    ...BLANK_CHARACTER,
+    xp: 7500,
+    physique: 9,
+    level_picks: { 1: { major: 'instinct', minor: 'physique' } },
+  });
+  const math = statMath(drifted);
+
+  if (LIST) console.log('\n===== a drifted row nobody may repair =====');
+  for (const key of ['physique', 'instinct', 'mind']) {
+    const sum = math[key];
+    if (LIST) console.log(`  ${key.padEnd(9)} ${String(drifted[key]).padEnd(4)} ${mathLine(sum)}`);
+    if (sum.total !== drifted[key]) {
+      findings.push({ sheet: 'drifted row', says: `${key}: line comes to ${sum.total}, tile shows ${drifted[key]}` });
+    }
+  }
+  if (!math.physique.terms.some((t) => t.label === 'unaccounted')) {
+    findings.push({ sheet: 'drifted row', says: 'physique: 4 points unexplained and not flagged' });
+  }
+}
+
+if (findings.length === 0) {
+  console.log(`stat math: every line adds up across ${SHEETS.length} sheets`);
+  process.exit(0);
+}
+
+console.log(`\nstat math: ${findings.length} ${findings.length === 1 ? 'line does' : 'lines do'} not add up\n`);
+for (const { sheet, says } of findings) console.log(`  ${sheet}\n    ${says}`);
+process.exit(LIST ? 0 : 1);

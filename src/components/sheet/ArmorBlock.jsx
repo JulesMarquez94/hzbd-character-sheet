@@ -1,16 +1,25 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import ItemBrowser from './ItemBrowser.jsx';
-import { ItemIcon, ItemTags, ItemValues, SlotGlyph, SlotTools, StatText } from './itemParts.jsx';
+import {
+  ItemFoot,
+  ItemIcon,
+  ItemStats,
+  ItemTags,
+  ROW_ICON,
+  SlotGlyph,
+  SlotTools,
+  StatText,
+} from './itemParts.jsx';
+import { BurdenMeter } from './parts.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import {
   ARMOR_SETS,
   ARMOR_SLOTS,
   armorSetName,
   heldItem,
-  magicBurdenMax,
-  magicBurdenUsed,
   rarityColor,
 } from '../../lib/items.js';
+import { statMath } from '../../lib/statMath.js';
 
 /**
  * The Inventory tab's armor block: what the character wears, one slot each
@@ -19,7 +28,9 @@ import {
  * cap on the Character tab move in the same beat.
  *
  * The Magic Burden meter here counts the whole loadout, weapons included —
- * an enchanted blade weighs on it exactly like an enchanted helm.
+ * an enchanted blade weighs on it exactly like an enchanted helm. It is the
+ * same component block 1 of the Character tab prints, and it keeps the capacity
+ * line under the bar because this tab has the room for it.
  */
 export default function ArmorBlock({
   character,
@@ -29,19 +40,17 @@ export default function ArmorBlock({
   unequip,
   addToPack,
   onForge,
+  onScribe,
   readOnly = false,
 }) {
   const [browseSlot, setBrowseSlot] = useState(null);
   const stack = useCardStack();
 
-  const burdenMax = magicBurdenMax(character);
-  const burdenUsed = magicBurdenUsed(character);
-  const overBurden = burdenUsed > burdenMax;
-  const burdenColor = overBurden ? 'var(--danger-red)' : 'var(--haze-glow)';
-
   const fullSet = armorSetName(character);
   const setInfo = fullSet ? ARMOR_SETS[fullSet] : null;
   const worn = ARMOR_SLOTS.filter((slot) => equipment[slot.key]).length;
+  /* What is filling the meter, named per place, for its hover. */
+  const burdenMath = useMemo(() => statMath(character).burden_used, [character]);
 
   function equipItem(slotKey, item) {
     equip(slotKey, item);
@@ -63,32 +72,16 @@ export default function ArmorBlock({
       </div>
 
       {/* ---------- MAGIC BURDEN ---------- */}
-      <div className="burden-panel">
-        <div className="meter-head">
-          <span className="meter-label">Magic Burden</span>
-          <span className="meter-value" style={{ color: burdenColor }}>
-            {burdenUsed} / {burdenMax}
-          </span>
-        </div>
-        <span
-          className="bar-track"
-          style={{ backgroundColor: `color-mix(in srgb, ${burdenColor} 18%, var(--bg-black))` }}
-        >
-          <span
-            className="bar-fill"
-            style={{
-              width: `${burdenMax > 0 ? Math.min(100, (burdenUsed / burdenMax) * 100) : 0}%`,
-              background: burdenColor,
-              boxShadow: `0 0 8px ${burdenColor}`,
-            }}
-          />
-        </span>
-        <span className="meter-foot">
-          {overBurden
-            ? `Overburdened by ${burdenUsed - burdenMax}. Shed some worn magic.`
-            : 'Capacity is Level + Mind + 10.'}
-        </span>
-      </div>
+      {/* The breakdown on hover, which matters more on this tab than anywhere:
+          this is where a loadout is chosen, and "what is eating my capacity" is
+          the question somebody standing over the armor slots is asking. It answers
+          with the places rather than the pieces, because the piece is already on
+          the row underneath. See statMath.js. */}
+      <BurdenMeter
+        character={character}
+        foot="Capacity is Level + Mind + 10."
+        math={burdenMath}
+      />
 
       {ARMOR_SLOTS.map((slot) => {
         const item = heldItem(character, equipment[slot.key]);
@@ -114,35 +107,41 @@ export default function ArmorBlock({
         }
 
         return (
-          <div key={slot.key} className="equip-slot" style={{ borderLeftColor: rarityColor(item) }}>
+          <div key={slot.key} className="item-row" style={{ borderLeftColor: rarityColor(item) }}>
             <button
               type="button"
-              className="equip-slot-main"
+              className="item-row-tap"
               onClick={() => setBrowseSlot(slot)}
               title={readOnly ? item.name : `${item.name} · tap to swap or send to inventory`}
             >
-              <ItemIcon item={item} />
-              <span className="equip-item-body">
-                <span className="equip-item-head">
-                  <span className="equip-item-name">{item.name}</span>
-                  <span className="equip-slot-label">{slot.label}</span>
-                </span>
-                <ItemTags item={item} />
-                <ItemValues item={item} />
-                {item.effect && (
-                  <span className="equip-item-effect">
-                    <StatText text={item.effect} />
+              <span className="item-row-top">
+                <ItemIcon item={item} size={ROW_ICON} />
+                <span className="item-row-ident">
+                  <span className="item-row-line">
+                    <span className="item-row-name">{item.name}</span>
+                    <span className="equip-slot-label">{slot.label}</span>
                   </span>
-                )}
+                  <ItemTags item={item} />
+                </span>
               </span>
+
+              <ItemStats item={item} />
+
+              {item.effect && (
+                <span className="item-row-text">
+                  <StatText text={item.effect} />
+                </span>
+              )}
             </button>
 
-            <SlotTools
-              item={item}
-              onInfo={() => stack?.openItem(item)}
-              onRemove={readOnly ? null : () => unequip(slot.key)}
-              removeTitle={`Take off ${item.name}. It goes to your inventory.`}
-            />
+            <ItemFoot item={item}>
+              <SlotTools
+                item={item}
+                onInfo={() => stack?.openItem(item)}
+                onRemove={readOnly ? null : () => unequip(slot.key)}
+                removeTitle={`Take off ${item.name}. It goes to your inventory.`}
+              />
+            </ItemFoot>
           </div>
         );
       })}
@@ -167,6 +166,7 @@ export default function ArmorBlock({
           onUnequip={unequipItem}
           onAdd={addToPack}
           onForge={onForge}
+          onScribe={onScribe}
           onClose={() => setBrowseSlot(null)}
           readOnly={readOnly}
         />

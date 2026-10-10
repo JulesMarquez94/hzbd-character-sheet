@@ -7,7 +7,7 @@
  * on the value can show where every part of it came from.
  */
 
-import { ATTRIBUTES as ATTRIBUTE_INFO } from './attributes.js';
+import { ATTRIBUTES as ATTRIBUTE_INFO, HIGHEST, highestAttribute } from './attributes.js';
 
 /* The three attributes plus the `level` pseudo-attribute, keyed for token
    lookup. Labels and colours come from attributes.js so a rename or recolour
@@ -37,12 +37,90 @@ const ALIASES = {
  * Which attribute a token names. `stat` is the card's own attribute — the one
  * the weapon attacks with — so one body can be shared by weapons that key off
  * different attributes.
+ *
+ * It is handed a *key*, never HIGHEST: this function has no character to measure
+ * one against, and the fallback it would take is Instinct, which is a wrong
+ * answer rather than a missing one. Everything that renders resolves the stat
+ * first (see castStat), so a HIGHEST arriving here is a call site that forgot,
+ * and it says so rather than quietly printing somebody else's attribute.
  */
 export function attributeOf(word, defaultStat = 'instinct') {
+  if (import.meta.env?.DEV && defaultStat === HIGHEST) {
+    console.error(
+      '[hazebound] attributeOf was handed the highest-Attribute rule instead of an attribute, ' +
+        'so this card is about to print Instinct. Resolve it with castStat first.'
+    );
+  }
   const key = String(word || '').toLowerCase();
   if (key === 'stat' || key === '') return ATTRIBUTES[defaultStat] ?? ATTRIBUTES.instinct;
   const resolved = ALIASES[key] ?? key;
   return ATTRIBUTES[resolved] ?? null;
+}
+
+/* ---------------------------------------------------- what a card rolls with
+ * Three answers, in the order they win. The card's own `stat` is the bottom of
+ * the pile, whatever the codex printed it with; a source that casts off another
+ * attribute overrides it with a rider; and a source that casts off "your
+ * highest Attribute" overrides it with a *rule* rather than a key.
+ */
+
+/**
+ * The rider a source imposes on the cards it hands out: `{ cast: 'instinct' }`
+ * becomes `{ stat: 'instinct' }`, and the card prints that attribute's numbers
+ * instead of the ones it was written with.
+ *
+ * A Mycomancer's loadout carries one (see loadouts.js), and so does the choice
+ * on every card that teaches a spell "cast with your highest Attribute" — INNATE
+ * X in lineages.js and INNATE SPELL X in backgrounds.js, where the cast is
+ * HIGHEST.
+ */
+export function castModifier(spec) {
+  return spec?.cast ? { stat: spec.cast } : null;
+}
+
+/**
+ * A stat resolved against whoever is about to roll it.
+ *
+ * Every stat but one is already a key and comes straight back out. HIGHEST is
+ * the exception: it is an instruction, and this is the one place it becomes an
+ * attribute. Called wherever a stat first meets its character — `resolveValue`
+ * for every number, `CardText` and `cardGist` for every printed name — so
+ * nothing downstream of those ever sees the word.
+ */
+export function castStat(stat, character) {
+  return stat === HIGHEST ? highestAttribute(character) : stat;
+}
+
+/**
+ * "a {stat}" and "an {stat}", made to agree with the attribute actually being
+ * printed.
+ *
+ * The article is baked into a card's body and has to match the card's own stat:
+ * "an {stat}" is Instinct's and "a {stat}" is everyone else's, a rule that
+ * scripts/lint-cards.mjs holds the whole codex to. It works for as long as the
+ * attribute a card prints is the one it was written with, and three things break
+ * that: a set that casts its hand off another attribute, a card taught with
+ * "cast with your highest Attribute", and since 2026-09-03 every ability a
+ * bestiary creature holds, which rides the creature's best attribute rather than
+ * the one its page printed. See `foeModifiers` in encounters.js.
+ *
+ * So the article is settled here, at the same moment the stat is, rather than
+ * left as a baked-in guess about a value that may since have changed. Instinct
+ * is the only one of the three that takes "an", which is the whole of the rule.
+ * The case of what was written is kept, because the article opens a sentence as
+ * often as it sits inside one.
+ *
+ * The codex still writes the right article for the card's own stat and the lint
+ * rule still holds it to that: a card read with no rider on it has to read
+ * correctly from its source, and this is a repair rather than a licence.
+ */
+export function castArticles(text, stat) {
+  const want = stat === 'instinct' ? 'an' : 'a';
+  return String(text ?? '').replace(/\b(an?)(\s+\{stat\})/gi, (whole, article, rest) =>
+    article[0] === article[0].toUpperCase()
+      ? `${want[0].toUpperCase()}${want.slice(1)}${rest}`
+      : `${want}${rest}`
+  );
 }
 
 /* ------------------------------------------------------------ damage types */
@@ -77,6 +155,83 @@ export function damageStyle(type) {
   return DAMAGE_TYPES[type] ?? null;
 }
 
+/**
+ * The three families, straight off the rulebook's own table (5.8).
+ *
+ * A card grants resistance by type ("resistance to {damage:Cold} damage"), by
+ * family ("resistance to Elemental and Physical damage", the Elixir of Slime)
+ * or to everything at once (UMBRAL FORM's "resistance to all damage"). So the
+ * thing a resistance names is one of three widths, and `coversType` below is
+ * where the three are read as one question.
+ *
+ * Frost rides in the Elemental row beside Cold because `DAMAGE_TYPES` above
+ * carries both spellings for the same cold: the weapon cards print one and the
+ * spells print the other, and a draught that answers to one has to answer to
+ * the other or the resistance would depend on which page the damage came off.
+ * Poison and Necrotic sit with Decay for the same reason, and Necrotic is Decay
+ * by the note on its own token. Poison is its own type on the designer's list
+ * and rots the same way, which is the reading DRACONIC SCALE flagged: it grants
+ * one without the other, and no family is what settles that, the type is.
+ */
+export const DAMAGE_FAMILIES = {
+  Physical: ['Sharp', 'Blunt', 'Force'],
+  Elemental: ['Fire', 'Cold', 'Frost', 'Lightning'],
+  Metaphysical: ['Sacred', 'Decay', 'Necrotic', 'Poison', 'Psychic'],
+};
+
+/** Everything, which is what UMBRAL FORM and ETHEREALNESS both name. */
+export const ALL_DAMAGE = 'All';
+
+/**
+ * The types this codex spells two ways, as one word each.
+ *
+ * Cold and Frost are the same cold: the weapon cards and the potions print one,
+ * the Elemental spells print the other, and a draught that answered to only one
+ * of them would halve a Hailstorm and not an Ice Shard. Necrotic and Decay are
+ * the same rot, which the token on `DAMAGE_TYPES` has said since it was written.
+ *
+ * **Poison is not in here, and that is the point of the pair above.** It is its
+ * own type on the designer's own list and DRACONIC SCALE grants resistance to
+ * one without the other, so folding it into Decay would hand out a resistance
+ * nobody bought. A spelling and a type are different things.
+ */
+const SPELLED_TWICE = [
+  ['cold', 'frost'],
+  ['decay', 'necrotic'],
+];
+
+/** One word for a type, so two spellings of one thing compare equal. */
+function oneWord(type) {
+  const said = String(type ?? '').trim().toLowerCase();
+  const pair = SPELLED_TWICE.find((names) => names.includes(said));
+  return pair ? pair[0] : said;
+}
+
+/**
+ * Whether a resistance or a weakness written as `named` answers to `type`.
+ *
+ * Three widths, asked in order of how much they cover: everything, a family, or
+ * the type itself. Case is ignored, because the word arrives from a card, from a
+ * tracker row a Game Master typed and from a creature's own passive, and only
+ * the first of those three is proofread.
+ *
+ * An unnamed type answers to nothing. Four Primal Masters deal damage with no
+ * type at all and a resistance cannot halve what it cannot name, which is the
+ * table's call to make rather than this file's to guess.
+ */
+export function coversType(named, type) {
+  const want = oneWord(type);
+  const said = oneWord(named);
+  if (!want || !said) return false;
+  if (said === ALL_DAMAGE.toLowerCase()) return true;
+
+  for (const [family, types] of Object.entries(DAMAGE_FAMILIES)) {
+    if (said !== family.toLowerCase()) continue;
+    return types.some((one) => oneWord(one) === want);
+  }
+  return said === want;
+}
+
 /* ------------------------------------------------- empowering and elevating
  * Two different things, and the designer's General Rules · Status & Terms sheet
  * is what tells them apart:
@@ -106,7 +261,16 @@ export function empowerCount(count, steps = 0) {
 }
 
 const DICE_TERM = /^(\d*)d(\d+)$/i;
-const STAT_TERM = /^(?:(\d+)\s*[x*×]\s*)?([a-z]+)$/i;
+/**
+ * `stat`, `2*stat`, and `0.5*stat`.
+ *
+ * The decimal is the creature codex's, and it is the printed stat block's own
+ * idiom rather than a new one: the Blightgeist deals "1d4 + Half WIT" and the
+ * Ghoul "1d6 + Half Power". A whole multiplier is what every player card in the
+ * codex uses and none of them moved; a half is written `0.5*stat` and floors,
+ * so half of a Mind of 5 is 2 and not 2.5. See the `mult` arithmetic below.
+ */
+const STAT_TERM = /^(?:(\d+(?:\.\d+)?)\s*[x*×]\s*)?([a-z]+)$/i;
 
 /**
  * "2d6 + 2*stat" against a character with Instinct 4 becomes:
@@ -121,7 +285,11 @@ const STAT_TERM = /^(?:(\d+)\s*[x*×]\s*)?([a-z]+)$/i;
  * Dice are left as dice; they are rolled at the table, not by the sheet.
  * Everything else is summed into the single flat number that follows them.
  */
-export function resolveValue(expression, character, defaultStat = 'instinct', options = {}) {
+export function resolveValue(expression, character, printedStat = 'instinct', options = {}) {
+  /* "Your highest Attribute" is worked out here rather than by every caller:
+     this is the one function that turns a stat into a number, so a card cast off
+     the highest can never print one attribute's name over another's value. */
+  const defaultStat = castStat(printedStat, character);
   const empower = Math.max(0, Number(options.empower) || 0);
   const elevate = Math.max(0, Number(options.elevate) || 0);
   /* And a flat number added to the total — damage something else on the sheet is
@@ -179,7 +347,12 @@ export function resolveValue(expression, character, defaultStat = 'instinct', op
         const mult = Number(statMatch[1] || 1);
         const raw = Number(character?.[attribute.key]) || 0;
         const value = attribute.exact ? raw : Math.floor(raw);
-        const total = mult * value;
+        /* Floored after the multiply rather than before it, which is the only
+           thing a fractional multiplier needed: half of a Mind of 5 is 2, not
+           2.5, and every whole multiplier lands on the same number it always
+           did. Speed is the one attribute that keeps its half, and it keeps it
+           here too. */
+        const total = attribute.exact ? mult * value : Math.floor(mult * value);
         flat += total;
         parts.push({
           kind: 'stat',
@@ -188,7 +361,9 @@ export function resolveValue(expression, character, defaultStat = 'instinct', op
           detail:
             mult === 1
               ? `your ${attribute.label} (${value})`
-              : `${mult} × your ${attribute.label} (${value})`,
+              : mult === 0.5
+                ? `half your ${attribute.label} (${value})`
+                : `${mult} × your ${attribute.label} (${value})`,
         });
         continue;
       }
@@ -213,10 +388,171 @@ export function resolveValue(expression, character, defaultStat = 'instinct', op
   return { text: pieces.join(' + '), dice, flat, parts };
 }
 
-/** The printed banner across a card's art: "MELEE - WEAPON ATTACK". */
+/* ------------------------------------------------- the title and the banner
+ * A weapon card is the one kind that belongs to something. Every other card in
+ * the codex is called what it is; `Short Bow - Shoot` is called what it is and
+ * *whose* it is, and printing both in the title made the title mostly the
+ * weapon: a reader holding a Short Bow already knows they are holding one.
+ *
+ * So on Jules's instruction of 2026-08-24 — "the weapon name should be in the
+ * banner not the title, so Short bow shoot should just be called Shoot, and in
+ * the banner above read Ranged - Weapon Attack - Shortbow" — the two are split:
+ *
+ *   title    Shoot
+ *   banner   RANGED - WEAPON ATTACK - SHORT BOW
+ *
+ * `name` is untouched and stays the whole of it, because the name is the card's
+ * *identity* rather than its heading: it is what every {{link}} resolves against,
+ * what the art work list names its files for, and what a saved row that mentions
+ * a card mentions. Only what is drawn changed.
+ *
+ * The split is read off the card's own `weapon`, never off the punctuation in its
+ * name. A name is prose and a codex is full of cards with a dash in them; the
+ * field is data, and scripts/check-weapons.mjs holds it in step with the name.
+ */
+
+/* --------------------------------------------------------- prose to read from
+ * A card's text is read by more than the renderer. `effectDuration` reads how
+ * long it lasts off it, `secondHalf` reads what its optional half costs, and the
+ * search box looks inside it. All of those match on the words, and the words
+ * carry emphasis markers: since 2026-08-25 every range, target and duration in
+ * the codex is written **bold** (see the note in keywords.js), so "for **10
+ * turns**" and "**an entity**" is the normal shape of a sentence rather than the
+ * exception.
+ *
+ * A marker in the middle of a phrase is invisible to a reader and fatal to a
+ * regex — GIANT GROWTH's "for each additional entity" is what a Multicast says to
+ * mean it repeats, and "for **each additional entity**" said it to nobody. So
+ * every parser takes the markers off first, in one place, rather than each of
+ * them growing its own `\*\*` in the middle of every pattern.
+ */
+
+/** Card prose with its emphasis markers off, for anything matching on words. */
+export function cardProse(text) {
+  return String(text ?? '').replace(/\*\*/g, '');
+}
+
+/* ------------------------------------------------------------- what it costs
+ * A card prints its own Action Points and the codex never changes them. What a
+ * *holder* costs it is another matter, and this is where the two meet.
+ */
+
+/**
+ * What a card costs in the hands that are holding it: the printed cost, less
+ * whatever the holder's own riders take off it.
+ *
+ * The Arcanist's PERFECT CASTING is the first: "Spells from your spellbook cost 1
+ * less Action Point to cast, to a minimum of 1." The cut is the holder's, so it
+ * cannot be written into fifty spells, and it cannot be resolved on the spec
+ * either, because every spell in the book prints a different number for it to come
+ * off. See `loadoutModifiers` in loadouts.js, which lays `apCut`, `apFloor` and
+ * `apCutFrom` on the cards a pool hands out.
+ *
+ * Everything a reader needs comes back, not just the number:
+ *
+ *   ap        what is actually paid, and what every orb and every pool draws on
+ *   printed   what the card was written with, so a cut can be shown as one
+ *   cut       how much came off, and 0 for every card nobody is discounting
+ *   from      what is lending the cut, named, the way `advantageFrom` is
+ *
+ * Both card shapes, the same way the card face reads them: a row typed into the
+ * Abilities tab states `ap_cost`, a codex card states `ap`.
+ *
+ * A cost that is not a number is handed straight back. A passive prints no cost at
+ * all, and an Interact costs whatever the table says it costs: there is nothing
+ * there for a discount to come off, and `0 - 1` floored at 1 would invent a price
+ * for a card that has none.
+ */
+export function cardCost(card, modifiers = null) {
+  const printed = card?.ap_cost ?? card?.ap;
+  const wpPrinted = card?.wp_cost ?? card?.wp;
+  const flat = { ap: printed, wp: wpPrinted, printed, cut: 0, from: [], wpPrinted, wpCut: 0 };
+
+  /* ---- a price set outright, before any cut is considered ----
+     A pool may charge its own price for everything in it. RUNE ACTIVATION is the
+     one that does: "fire one of your inscribed spells for 1 Action Point and no
+     Willpower", across a slate whose printed costs run from 1 to 5 and whose
+     printed Willpower runs to 12.
+
+     A cut cannot say that. `apCut` takes a constant off, so thirty printed costs
+     come out as thirty different numbers, and nothing in a cut reaches the
+     Willpower at all. So this is an assignment rather than a subtraction, and it
+     is read first: a price that replaces the printed one has nothing left for a
+     discount to come off. See `price` in loadouts.js.
+
+     Both halves are optional and each only bites on a card that printed
+     something. A passive prints no Action Points, and a rider that gave it some
+     would be inventing a cost rather than replacing one. */
+  const set = costSet(modifiers, printed, wpPrinted);
+  if (set) return set;
+
+  const cut = Math.max(0, Math.floor(Number(modifiers?.apCut) || 0));
+  if (cut === 0 || !Number.isFinite(Number(printed))) return flat;
+
+  /* The floor is the card's own word and not a house rule: "to a minimum of 1".
+     A card that printed 0 or 1 keeps what it printed, since a floor is a floor
+     and not a raise. */
+  const floor = Math.max(0, Math.floor(Number(modifiers?.apFloor) || 0));
+  const ap = Math.max(Math.min(Number(printed), floor), Number(printed) - cut);
+  if (ap === Number(printed)) return flat;
+
+  return {
+    ap,
+    wp: wpPrinted,
+    printed: Number(printed),
+    cut: Number(printed) - ap,
+    from: modifiers?.apCutFrom ?? [],
+    wpPrinted,
+    wpCut: 0,
+  };
+}
+
+/**
+ * The price a pool imposes on its own cards, or null when no pool imposes one.
+ *
+ * Written as its own reading rather than inline, because "was it set" and "what
+ * did it come down from" are two questions and both of them have to survive a
+ * card that printed nothing for the half being set.
+ */
+function costSet(modifiers, printed, wpPrinted) {
+  const apSet = Number(modifiers?.apSet);
+  const wpSet = Number(modifiers?.wpSet);
+  const onAp = Number.isFinite(apSet) && Number.isFinite(Number(printed));
+  const onWp = Number.isFinite(wpSet) && Number.isFinite(Number(wpPrinted));
+  if (!onAp && !onWp) return null;
+
+  const ap = onAp ? Math.max(0, Math.floor(apSet)) : printed;
+  const wp = onWp ? Math.max(0, Math.floor(wpSet)) : wpPrinted;
+
+  return {
+    ap,
+    wp,
+    printed,
+    cut: onAp ? Number(printed) - ap : 0,
+    from: modifiers?.costFrom ?? [],
+    wpPrinted,
+    wpCut: onWp ? Number(wpPrinted) - wp : 0,
+  };
+}
+
+/** What a card prints as its heading: its name, less the weapon it belongs to. */
+export function cardTitle(card) {
+  const name = card?.name ?? '';
+  const weapon = card?.weapon;
+  if (!weapon) return name;
+
+  const prefix = `${weapon} - `;
+  return name.startsWith(prefix) ? name.slice(prefix.length) : name;
+}
+
+/**
+ * The printed banner across a card's art: "MELEE - WEAPON ATTACK", and on a
+ * weapon card the weapon it belongs to after them.
+ */
 export function cardBanner(card) {
   if (card?.type_line) return card.type_line;
-  return (card?.tags ?? []).join(' - ').toUpperCase();
+  const parts = [...(card?.tags ?? []), ...(card?.weapon ? [card.weapon] : [])];
+  return parts.join(' - ').toUpperCase();
 }
 
 /* ------------------------------------------------------------- the gist */
@@ -233,11 +569,17 @@ export function cardBanner(card) {
  * The numbers are still this character's. "1d6 + 8" is worth reading at a
  * glance in a way "1d6 + 2*stat" never is, which is the whole point of the
  * line.
+ *
+ * `part: 'sub'` reads the card's second half instead of its main text, resolved
+ * the same way. The brief never asks for it. The turn prompt does, because every
+ * Upkeep in the codex is written down there and an Upkeep is the one thing on a
+ * card that comes due while you are looking at something else. See
+ * turnTriggers.js.
  */
-export function cardGist(card, { character = null, modifiers = null } = {}) {
+export function cardGist(card, { character = null, modifiers = null, part = 'body' } = {}) {
   // A set that casts off another attribute overrides what the card is printed
-  // with; see castModifier in loadouts.js.
-  const stat = modifiers?.stat ?? card?.stat ?? 'instinct';
+  // with; see castModifier above.
+  const printedStat = modifiers?.stat ?? card?.stat ?? 'instinct';
   /* And a card somebody *else* on your sheet plays resolves against them. A
      draconic ally's Wyrm Bolt is "2d4 + Mind", and the Mind it means is the
      ally's, not its bonded's — see minionModifiers in minions.js. Nothing but
@@ -249,10 +591,12 @@ export function cardGist(card, { character = null, modifiers = null } = {}) {
   const elevate = Number(modifiers?.elevate) || 0;
   const bonus = Number(modifiers?.bonus) || 0;
   const choice = modifiers?.choice ?? null;
+  /* And "your highest" is whoever's card this is: an ally's Wyrm Bolt reads the
+     ally's best attribute, the same way its numbers are the ally's. */
+  const stat = castStat(printedStat, who);
   const context = { character: who, stat, damage, choice };
 
-  return String(card?.body ?? '')
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
+  return castArticles(cardProse(part === 'sub' ? card?.sub_body : card?.body), stat)
     .replace(/\{\{([^}]+)\}\}/g, '$1')
     .replace(/\[\[([^\]]+)\]\]/g, (_, expression) =>
       resolveValue(expression, who, stat, { empower, elevate, bonus }).text

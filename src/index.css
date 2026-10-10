@@ -48,6 +48,87 @@
     --dmg-poison: #A8E063;
     --dmg-sacred: #FFF59D;
 
+    /* Spell schools, and the families under them.
+
+       One law: **the school owns a hue and a family is a shade of it.** A wall
+       of spells is read school by school, so the school has to be the thing you
+       see first and the family the thing you see second. Every family below sits
+       inside about thirty degrees of its school's hue and separates from its
+       siblings on lightness and saturation instead.
+
+       The exception is written into the law rather than around it: **where the
+       codex already knows what colour a family is, that colour is what its shade
+       leans to.** Fire, Water, Lightning, Blood and Death have damage and stat
+       tokens above; Light and Shadow are their own names; Storm is taken between
+       the two families it is made of and Mud off the one of its two that it can
+       be taken off. Nine leans, and each one is marked. Nothing
+       here is a second copy of those tokens — a chip at 0.56rem on a dark panel
+       needs more light than a body-text colour does, so these are their own values
+       and say which token they answer to.
+
+       Nature and Arcane have no spell in the codex. They are coloured anyway, so
+       the day a sheet arrives it lands somewhere rather than falling to grey. */
+
+    /* Primal: things that grow, hunt and bleed. */
+    --school-primal: #5FC46B;
+    --family-flora: #7BD165;
+    --family-wild: #AFC94A;
+    --family-life: #4FD9A6;
+    /* Leans to --stat-health, lifted far enough to read as type. */
+    --family-blood: #D2685A;
+    /* Leans to --dmg-decay, which is what every damaging card in the family
+       deals. Decay's own #4CAF50 is within five degrees of the school hue, so
+       the lean is taken on hue and the separation on saturation: this is the one
+       grey green on a shelf of four bright ones, which is what rot looks like
+       beside things that grow. */
+    --family-death: #6FA271;
+
+    /* Nature: the cooler green beside Primal. */
+    --school-nature: #3FB394;
+
+    /* Arcane: magic with no element under it. Magenta rather than the haze violet,
+       which the first chip on every spell brief already wears. */
+    --school-arcane: #C56BE8;
+    --family-energy: #D89BF2;
+
+    /* Elemental: ember amber, and the eight elements around it. */
+    --school-elemental: #EE9448;
+    /* Leans to --dmg-fire. */
+    --family-fire: #FF7A4D;
+    --family-magma: #E8593C;
+    --family-earth: #C79663;
+    /* Leans to --family-earth, because Mud is what water does to earth and the
+       compound-midpoint trick Storm used does not work here: Wind and Water are
+       32 degrees apart on hue so their midpoint is a colour, Water and Earth are
+       174 degrees apart so theirs is green or purple. So Mud takes Earth's hue
+       and the whole separation on lightness and saturation, which is the law's
+       own axis: darker and duller than Earth, the way wet ground is darker and
+       duller than dry. Measured rather than eyeballed, in CIE76 against every
+       school and family token: 21 from Earth and 28 from its next neighbour,
+       where the palette's own tightest pairs sit at 11 to 18. */
+    --family-mud: #9C8E70;
+    /* Leans to --dmg-lightning, dropped out of pure yellow so it holds an edge. */
+    --family-lightning: #E8CD4A;
+    --family-wind: #8FD3CB;
+    /* Leans to both of the families it is made of: taken between Wind's teal and
+       Water's blue on hue, then pulled down on saturation toward --dmg-blunt so
+       it reads as neither of them. A storm sky is the one grey thing in a school
+       of embers, and Storm deals Blunt and Cold. */
+    --family-storm: #7E9CB8;
+    /* Leans to --dmg-frost, deepened so it is not mistaken for the Ethereal sky. */
+    --family-water: #4AA6E8;
+
+    /* Ethereal: sky, and the four things a sky can be. Light is the palest thing
+       on the shelf and Shadow the deepest, which is the whole of that pair. */
+    --school-ethereal: #86B6EE;
+    --family-light: #B7D6FA;
+    --family-time: #4FBFD9;
+    --family-spacial: #6C86F0;
+    --family-shadow: #9080D8;
+
+    /* Nightmare: the school that is none of them. */
+    --school-nightmare: #DE5F93;
+
     /* Defense Types */
     --def-healing: #2ECC71;
     --def-shield: #00E5FF;
@@ -78,6 +159,17 @@
     --rarity-rare: #2979FF;
     --rarity-epic: #FF4FA3;
     --rarity-legendary: #FF7A1A;
+
+    /* The three kinds of enemy, as a danger ladder.
+       Teal, amber, crimson: three hues as far from each other as the palette
+       has room for, because these three chips are read at 0.58rem and the only
+       thing that has to survive that size is which of the three it is. Not a
+       school and not a family, so it is not in tagColors.js and never colours a
+       tag: it colours the rank chip on an enemy block and the filter that sorts
+       them. See RANKS in src/lib/creatures.js. */
+    --rank-minion: #4DB6AC;
+    --rank-general: #FFA726;
+    --rank-overlord: #EF4E5B;
 
     /* Talent rank pips */
     --rank-1-blue: #4A90E2;
@@ -240,8 +332,33 @@ h1, h2, h3, h4, h5, h6 {
     transform: translateY(-2px);
 }
 
-.btn:disabled {
+.btn:disabled,
+.btn[aria-disabled='true'] {
     opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ---------- A GATED BUTTON ----------
+ * What `:disabled` used to look like, on a button that is not disabled.
+ *
+ * A `disabled` button is out of the tab order and its `title` is the platform's to
+ * draw or not, so a reason written into one has never reached a reader. Every
+ * button on the sheet that has something to say about why it is shut is
+ * `aria-disabled` instead, and this is the greying that used to come free. See
+ * `Gated` in src/components/sheet/parts.jsx.
+ *
+ * Only opacity and the cursor, which is all every `:disabled` rule in this
+ * codebase ever set. A button's own hover tint can still land under the opacity,
+ * and that is wanted: something has to say the bubble is there to be opened.
+ *
+ * `!important` on the opacity because these buttons wear a dozen different
+ * classes, several of which set their own — this has to win from one rule
+ * wherever it is used, and a utility that loses to its host is worse than none.
+ */
+.is-gated,
+[aria-disabled='true'] {
+    opacity: 0.45 !important;
     cursor: not-allowed;
     transform: none;
 }
@@ -527,7 +644,20 @@ h1, h2, h3, h4, h5, h6 {
     max-width: 900px;
 }
 
-/* Wide enough for three cards at their real 360px footprint, side by side. */
+/* THE THREE-BLOCK MEASURE — as wide as the sheet's own grid, so a dialog opened
+   over the sheet ends about where the blocks behind it do.
+
+   Three kinds of dialog want it. One lays cards out at their real 360px
+   footprint, three side by side, which is what it was added for. The second is a
+   *shelf* — a browsing menu whose list is one column on a phone and three
+   block-wide columns here, instead of a 360px ribbon down the middle of a metre
+   of nothing. The width is only half of that: the list inside has to flow into
+   it, which is what `.browser-group` and `.fx-prompt` in sheet.css do.
+
+   The third is a *canvas*. The block arranger draws the tab's own grid at a
+   small scale and lets you move the blocks around on it, and a grid the player
+   has set to nine columns has nowhere to go at 560. See `.mini-canvas` in
+   sheet.css, which sizes its tiles to whatever this leaves. */
 .modal-window-page {
     max-width: 1180px;
 }
@@ -701,7 +831,56 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-pick:disabled,
 .btn-sub:disabled,
-.btn-take:disabled {
+.btn-take:disabled,
+.btn-pick[aria-disabled='true'],
+.btn-sub[aria-disabled='true'],
+.btn-take[aria-disabled='true'] {
     opacity: 0.45;
     cursor: not-allowed;
+}
+
+/* ---------- THE ONE LINE THAT MENTIONS MONEY ----------
+   Rendered by src/components/PremiumNote.jsx, and only where a ceiling has just
+   been reached. Global rather than in Premium.css because that file is lazy
+   with the Premium page, and this line appears on pages that never load it. */
+.premium-note {
+  margin: 0.85rem 0 0;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  border-left: 2px solid var(--level-amber);
+  padding-left: 0.7rem;
+  max-width: 62ch;
+}
+
+.premium-note a {
+  color: var(--level-amber);
+  white-space: nowrap;
+}
+
+/* =========================================================
+   WHAT A START ABOVE LEVEL 1 HANDS OVER
+   One row a grant: coins, potions, the armor tier, the ring. Drawn in the
+   enlist box under the level and again on the creation page, so it is global.
+   See src/lib/startingLevel.js.
+   ========================================================= */
+.start-grants {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid rgba(148, 167, 176, 0.14);
+    border-radius: 4px;
+    background-color: rgba(9, 17, 21, 0.32);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.start-grants b {
+    margin-right: 0.4rem;
+    font-weight: 600;
+    color: var(--text-silver);
 }

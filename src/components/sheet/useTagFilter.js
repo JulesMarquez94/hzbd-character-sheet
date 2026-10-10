@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { compareTags } from '../../lib/cardOrder.js';
 
 /**
  * The row of chips that narrows a wall of choices.
@@ -66,4 +67,33 @@ export function useTagFilter(tags, { searchable = false } = {}) {
       return words.every((word) => hay.includes(word));
     },
   };
+}
+
+/**
+ * Every tag the pool carries, as the filter row wants them.
+ *
+ * Minus the ones every card in it carries. A chip that selects the whole pool
+ * narrows nothing, and there is always at least one: a Mycomancer's pool is all
+ * Primal, and a Duelist's is fourteen cards all tagged Martial Move. The pool has
+ * to hold more than one card for the test to mean anything, and a pool whose every
+ * tag is universal keeps them all rather than showing a filter row with nothing
+ * in it.
+ */
+export function poolTags(options) {
+  const tally = new Map();
+  for (const option of options) {
+    for (const tag of new Set(option.card.tags ?? [])) {
+      tally.set(tag, (tally.get(tag) ?? 0) + 1);
+    }
+  }
+
+  // Novice, Adept, Master and then the schools, never the alphabet. See cardOrder.js.
+  const all = [...tally.keys()].sort(compareTags);
+  const narrowing = options.length > 1 ? all.filter((tag) => tally.get(tag) < options.length) : all;
+
+  return (narrowing.length > 0 ? narrowing : all).map((tag) => ({
+    id: tag,
+    label: tag,
+    kind: 'card',
+  }));
 }

@@ -14,7 +14,8 @@
  *   WIELDER OF WONDER      "Enchantments apply to your person. Choose one when
  *                          becoming an enchanter, you can change it during a Long
  *                          Rest. The amount of such enchantments you can have is
- *                          equal to your rank in enchanter."
+ *                          equal to your rank in enchanter. These do not count
+ *                          toward your Magic Burden."
  *                          -> `worn: ['primal-sense']` on the talent entry.
  *
  *   ENCHANTING             "Whenever you take a Long Rest, you can use your Long
@@ -39,11 +40,17 @@
  *
  *   worn and laid   are permanent. They are gear: `deriveStats` reads them, so
  *                   `syncDerived` bakes them into the stored columns exactly the
- *                   way a worn breastplate is baked in. They cost Magic Burden.
+ *                   way a worn breastplate is baked in. Only `laid` costs Magic
+ *                   Burden, and the *thing* carries it: a body slot is free, by
+ *                   its own card.
  *   ephemeral       is an hour long. It bends what the sheet *shows* and never
  *                   what the sheet *stores*, because a stored bonus is one that
  *                   has no way of ever coming back off. Its own card says it
  *                   costs no Magic Burden.
+ *
+ * So **nothing this file can see weighs on the Magic Burden meter.** What is laid
+ * on a thing is counted by `itemBurden` where the thing is, and the other two are
+ * free by their own cards. That is why no total here carries a burden any more.
  *
  * ------------------------------------------------------------------- the leaf
  * This file imports the enchantment codex and the talent codex and nothing else.
@@ -51,6 +58,7 @@
  * see what is worn.
  */
 
+import { sortCards } from './cardOrder.js';
 import { ENCHANTMENTS, getEnchantment, enchantBurden, enchantSupplies } from './enchantments.js';
 import { getTalent, normalizeTalents, serializeTalents } from './talents.js';
 
@@ -373,7 +381,6 @@ function noGrants() {
        roll, and PREPARED is the only thing that grants one. */
     reactionAtCombat: 0,
     spells: [],
-    burden: 0,
     any: false,
   };
 }
@@ -392,9 +399,12 @@ function noGrants() {
  *
  * So the list is deduplicated on the way in, and every caller hands its ids in
  * *with* their duplicates so this is the only place that has to know the rule.
- * Where the same working is on two rings the player is still charged Magic Burden
- * for both, because burden is what a thing weighs rather than what it does — see
- * `itemBurden`, which never comes through here.
+ *
+ * **What a working weighs is not summed here and never was the same sum.** Where
+ * the same enchantment is on two rings the player is charged Magic Burden for
+ * both, because burden is what a thing weighs rather than what it does. That is
+ * `itemBurden`'s to count, on the item, and nothing laid on a person weighs at
+ * all — see the note at the top of this file.
  */
 export function grantsFrom(ids) {
   const total = noGrants();
@@ -404,7 +414,6 @@ export function grantsFrom(ids) {
     if (!entry) continue;
 
     total.any = true;
-    total.burden += enchantBurden(entry);
 
     for (const [key, value] of Object.entries(entry.attributes ?? {})) {
       if (key in total.attributes) total.attributes[key] += Math.floor(Number(value) || 0);
@@ -421,33 +430,61 @@ export function grantsFrom(ids) {
   return total;
 }
 
+/**
+ * The same list, deduplicated by the same law, handed back as the enchantments
+ * themselves rather than as a sum.
+ *
+ * `grantsFrom` above answers "how much", which is what the stat columns need. A
+ * tile that shows a number has a second question to answer — *which working lent
+ * it* — and a total cannot say. So this is the sum's own reading of the list,
+ * sharing its `dedupe` rather than repeating it: two rings carrying Primal Sense
+ * are one row here for the same reason they are one point there, and a math line
+ * built off this can never credit a source the stat did not actually take.
+ *
+ * Every id that resolves comes back, riders or none. Whoever is naming sources
+ * knows which rider it is looking for, and an enchantment carrying nothing it
+ * cares about is one it simply does not print.
+ */
+export function grantRows(ids) {
+  return dedupe(ids).map((id) => getEnchantment(id)).filter(Boolean);
+}
+
+/**
+ * Every enchantment standing on this character, from all three places one can
+ * sit, as rows. The naming counterpart of `allGrants`.
+ *
+ * Worn on their own person, worked into what they carry and running on them for
+ * the hour, in that order, with the hour-long half last because it is the half
+ * that will be gone. The `dedupe` inside `grantRows` is what makes the same-source
+ * law bite across the three: an hour of borrowed Primal Sense on somebody already
+ * wearing one is not a second row any more than it is a second point.
+ *
+ * `gear` is handed in for the reason `allGrants` needs it handed in: this file is
+ * a leaf and has no idea what a codex item is. Call `characterGrantSources` in
+ * items.js, which is the composed reading.
+ */
+export function grantSources(character, gear = []) {
+  return grantRows([
+    ...wornIds(character?.talents),
+    ...gear,
+    ...runningEnchants(character?.effects).map((row) => row.enchantment.id),
+  ]);
+}
+
 /** The enchantments on the Enchanter's own person, by id. */
 export function wornIds(talents) {
   const entry = normalizeTalents(talents).find((row) => row.id === ENCHANTER_ID);
   return entry ? normalizeWorn(entry.worn) : [];
 }
 
-/**
- * What WIELDER OF WONDER has put on this character's own person, and nothing
- * else.
- *
- * **Not the whole permanent half any more** — that is `allGrants(...).worn`, which
- * folds in what is worked into their gear. This is the body slots alone, and the
- * one thing that still needs them alone is the Magic Burden meter: an item's own
- * burden is already counted by `itemBurden`, so a sum that included gear here
- * would charge every enchanted ring twice.
- *
- * Takes the talents column rather than the whole character, because
- * characterModel.js may not hand this file a character it is halfway through
- * computing.
- */
-export function wornGrants(talents) {
-  return grantsFrom(wornIds(talents));
-}
+/* The body slots used to have a reading of their own here, `wornGrants`, and it
+   existed for one caller: the Magic Burden meter, which had to see them apart
+   from the gear so an enchanted ring was not charged twice. They weigh nothing
+   now (see the top of this file), the meter asks nothing of this file, and the
+   body slots are only ever read folded in with the gear by `allGrants`. */
 
 /**
- * What is on them for the next hour. Ephemeral enchantments carry no Magic
- * Burden by their own card, so the burden this reports is zeroed.
+ * What is on them for the next hour.
  *
  * `already` is what is *permanently* on them, so the same-source law can bite
  * across the two halves as well as inside each: an hour of borrowed Primal Sense
@@ -458,7 +495,6 @@ export function ephemeralGrants(effects, already = []) {
   const running = runningEnchants(effects).filter((row) => !standing.has(row.enchantment.id));
   const total = grantsFrom(running.map((row) => row.enchantment.id));
 
-  total.burden = 0;
   total.spells = running.map((row) => row.effect.spell).filter(Boolean);
   return total;
 }
@@ -497,11 +533,9 @@ export function allGrants(character, gear = []) {
     reactionAtCombat: worn.reactionAtCombat + ephemeral.reactionAtCombat,
     shieldRolls: [...worn.shieldRolls, ...ephemeral.shieldRolls],
     spells: ephemeral.spells,
-    /* What is worked into a *person*. An item's own burden is counted by
-       `itemBurden` where the item is, so folding the gear ids in here as well
-       would charge every enchanted ring twice — the meter reads `wornGrants`
-       for exactly that reason. See magicBurdenUsed. */
-    burden: grantsFrom(wornIds(character?.talents)).burden,
+    /* No burden. Nothing in here weighs: what is laid on a thing is counted by
+       `itemBurden` where the thing is, and the body slots and the hour-long half
+       are free by their own cards. See magicBurdenUsed. */
     any: worn.any || ephemeral.any,
     worn,
     ephemeral,
@@ -554,11 +588,16 @@ export function restSupplyCut(character, gear = []) {
  */
 
 /*
- * A `unique` enchantment is dropped rather than refused. Every other row a rank
- * cannot reach comes back marked "Adept needs a higher rank", which is true and
- * useful; a Unique Imbuement is not waiting on a rank and never will be, so
- * offering it dead would be a promise the shelf cannot keep. It comes on the
- * item and nowhere else.
+ * A `unique` enchantment is dropped rather than refused. A Unique Imbuement is
+ * not waiting on a rank and never will be, so offering it dead would be a
+ * promise the shelf cannot keep. It comes on the item and nowhere else.
+ *
+ * Every other row a rank cannot reach comes back marked `gated`, and the shelf
+ * drops those too: "Adept needs a higher rank" is true, but it is not an answer
+ * anybody can act on tonight, and thirty of them is a wall you scroll past. How
+ * many were held back is said in one line instead. What the shelf does keep is
+ * everything refused for a reason the enchanter can change: one already on you,
+ * or a slot that is full.
  */
 export function enchantOptions(character, { held = [], room = Infinity } = {}) {
   const state = enchanterState(character);
@@ -566,11 +605,15 @@ export function enchantOptions(character, { held = [], room = Infinity } = {}) {
 
   const taken = new Set(held);
 
-  return ENCHANTMENTS.filter((entry) => !entry.unique).map((entry) => {
+  /* Up the ladder and then by kind, which is what enchantments.js is already
+     written in, so nothing moves today. Through cardOrder.js anyway, so that a
+     working written in beside its cousins rather than at the foot of its tier
+     still lands on the right rung of the shelf. */
+  return sortCards(ENCHANTMENTS.filter((entry) => !entry.unique)).map((entry) => {
     const row = { enchantment: entry, held: taken.has(entry.id) };
 
     if (!state.tiers.includes(entry.tier)) {
-      return { ...row, ok: false, reason: `${entry.tier} needs a higher rank` };
+      return { ...row, ok: false, gated: true, reason: `${entry.tier} needs a higher rank` };
     }
     if (row.held) return { ...row, ok: false, reason: 'On you already' };
     if (taken.size >= room) {

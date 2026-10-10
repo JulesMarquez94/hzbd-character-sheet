@@ -71,8 +71,8 @@ export default function SiteMenu() {
           <NavLink to="/" className="dropdown-link" end>
             Home
           </NavLink>
-          <NavLink to="/codex" className="dropdown-link">
-            Codex
+          <NavLink to="/rules" className="dropdown-link">
+            Rules
           </NavLink>
 
           {user ? (
@@ -80,8 +80,17 @@ export default function SiteMenu() {
               <NavLink to="/dashboard" className="dropdown-link">
                 My Characters
               </NavLink>
+              <NavLink to="/campaigns" className="dropdown-link">
+                My Campaigns
+              </NavLink>
+              <NavLink to="/pictures" className="dropdown-link">
+                My Pictures
+              </NavLink>
               <NavLink to="/account" className="dropdown-link">
                 Account Settings
+              </NavLink>
+              <NavLink to="/premium" className="dropdown-link">
+                Premium
               </NavLink>
               <div className="dropdown-divider" />
               <button type="button" className="dropdown-link logout" onClick={handleSignOut}>
@@ -90,6 +99,12 @@ export default function SiteMenu() {
             </>
           ) : (
             <>
+              <NavLink to="/dashboard" className="dropdown-link">
+                Characters
+              </NavLink>
+              <NavLink to="/premium" className="dropdown-link">
+                Premium
+              </NavLink>
               <div className="dropdown-divider" />
               <Link to="/login" className="dropdown-link">
                 Log In

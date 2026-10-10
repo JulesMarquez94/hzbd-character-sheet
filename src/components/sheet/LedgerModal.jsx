@@ -27,7 +27,7 @@ const KINDS = {
   wealth: {
     field: 'wealth',
     title: 'Wealth Ledger',
-    noun: 'coins',
+    noun: 'Coins',
     unit: '¢',
     color: 'var(--stat-coin)',
     placeholder: 'Sold the brass astrolabe',
@@ -38,7 +38,7 @@ const KINDS = {
   supplies: {
     field: 'supplies',
     title: 'Supply Ledger',
-    noun: 'supplies',
+    noun: 'Supplies',
     unit: 'Supplies',
     color: 'var(--stat-supply)',
     placeholder: 'Restocked at the waystation',
@@ -50,17 +50,18 @@ const KINDS = {
     // zero is the floor, and reaching it kills the character.
     getMin: (c) => -(Number(c.health_max) || 0),
     title: 'Health Ledger',
-    noun: 'health',
+    noun: 'Health',
     unit: 'HP',
     color: 'var(--stat-health)',
     placeholder: 'Took a hit from the boiler golem',
   },
   shield: {
     field: 'shield',
-    // Shield's cap isn't its own field — half of health_max, plus worn gear.
+    // Shield's cap isn't its own field: a share of health_max plus worn gear, and
+    // the share is the whole of it for a Feral Cursed. See shieldCapFor.
     getMax: (c) => shieldCapFor(c),
     title: 'Shield Ledger',
-    noun: 'shield',
+    noun: 'Shield',
     unit: 'SP',
     color: 'var(--stat-shield)',
     placeholder: 'Shield spell absorbed the blast',
@@ -72,7 +73,7 @@ const KINDS = {
     // transaction with a warning instead of quietly clamping to zero.
     blockOverdraw: true,
     title: 'Willpower Ledger',
-    noun: 'willpower',
+    noun: 'Willpower',
     unit: 'WP',
     color: 'var(--stat-wp)',
     placeholder: 'Cast Blood Spear',
@@ -106,6 +107,7 @@ export default function LedgerModal({ kind, character, patch, onClose, readOnly 
   const [alert, setAlert] = useState('');
   const [showTable, setShowTable] = useState(false);
   const [levelWanted, setLevelWanted] = useState('');
+  const [balanceWanted, setBalanceWanted] = useState('');
 
   // The alert sits on top of the ledger, so it swallows Escape on the way down
   // rather than letting the whole modal close behind it.
@@ -128,6 +130,13 @@ export default function LedgerModal({ kind, character, patch, onClose, readOnly 
   // Everything bottoms out at 0 except health, which can be driven negative.
   const minValue = config.getMin ? config.getMin(character) : 0;
 
+  // What a set is allowed to be. Health is the only pool with a floor under
+  // zero, and coins and supplies are the two with no ceiling at all.
+  const rangeHint =
+    maxValue !== null
+      ? `Enter a number between ${formatNumber(minValue)} and ${formatNumber(maxValue)}.`
+      : `Enter a number of ${formatNumber(minValue)} or more.`;
+
   /**
    * Damage doesn't stop at an empty shield. Whatever the shield can't soak
    * carries straight into health, so 40 through a 30-point shield leaves the
@@ -143,7 +152,7 @@ export default function LedgerModal({ kind, character, patch, onClose, readOnly 
     const healthDelta = healthAfter - healthBefore;
 
     if (soaked === 0 && healthDelta === 0) {
-      setError('Shield is empty and health is already at the floor.');
+      setError('Shield is empty and Health is already at the floor.');
       setFlash('');
       return;
     }
@@ -170,7 +179,7 @@ export default function LedgerModal({ kind, character, patch, onClose, readOnly 
           ts,
           kind: 'health',
           delta: healthDelta,
-          note: reason ? `${reason} · past shield`.slice(0, LEDGER_NOTE_MAX) : 'Damage past shield',
+          note: reason ? `${reason} · past Shield`.slice(0, LEDGER_NOTE_MAX) : 'Damage past Shield',
           balance: healthAfter,
         }
       );
@@ -186,7 +195,7 @@ export default function LedgerModal({ kind, character, patch, onClose, readOnly 
     const dead = healthFloor < 0 && healthAfter <= healthFloor;
     setFlash(
       `−${formatNumber(soaked)} SP logged · ${
-        spilled ? `−${formatNumber(spilled)} HP through the shield` : 'health already at the floor'
+        spilled ? `−${formatNumber(spilled)} HP through the Shield` : 'Health already at the floor'
       }${dead ? ' · dead.' : ''}`
     );
   }
@@ -335,6 +344,73 @@ export default function LedgerModal({ kind, character, patch, onClose, readOnly 
     );
   }
 
+  /**
+   * Put the pool on an exact number. The same bargain as XP's level box: the
+   * balance is still never editable by hand, so this works out the difference
+   * between where the pool is and where it was told to be and logs that as an
+   * ordinary entry. A table that says "you are on 4 Willpower" is obeyed in one
+   * move, and the history still adds up to the balance.
+   *
+   * Deliberately neither a spend nor damage. A set states what the pool reads,
+   * so an overdraw can't happen inside its own range and shield never spills
+   * into health from here. Both of those belong to Subtract.
+   */
+  function applySet() {
+    const raw = String(balanceWanted).trim();
+    const wanted = Math.floor(Number(raw));
+
+    /* Zero is a legal balance for every one of these pools, so a blank box may
+       not be read as one: Number('') is 0 and would empty the pool by
+       accident. */
+    if (!raw || !Number.isFinite(wanted)) {
+      setError(rangeHint);
+      setFlash('');
+      return;
+    }
+
+    // A set is an exact statement, so an out-of-range one is a typo rather than
+    // something to quietly clamp the way Add and Subtract do.
+    if (wanted < minValue || (maxValue !== null && wanted > maxValue)) {
+      setError(rangeHint);
+      setFlash('');
+      return;
+    }
+
+    const delta = wanted - balance;
+
+    if (delta === 0) {
+      setError(`Already on ${formatNumber(balance)} ${config.unit}.`);
+      setFlash('');
+      return;
+    }
+
+    const reason =
+      note.trim().slice(0, LEDGER_NOTE_MAX) ||
+      `Set to ${formatNumber(wanted)} ${config.unit}`;
+
+    patch({
+      [config.field]: wanted,
+      ledger: appendLedger(character, {
+        id: newLedgerId(),
+        ts: new Date().toISOString(),
+        kind,
+        delta,
+        note: reason,
+        balance: wanted,
+      }),
+    });
+
+    setBalanceWanted('');
+    setAmount('');
+    setNote('');
+    setError('');
+    setFlash(
+      `${formatNumber(wanted)} ${config.unit}. ${
+        delta > 0 ? '+' : '−'
+      }${formatNumber(Math.abs(delta))} ${config.unit} logged.`
+    );
+  }
+
   return (
     <Modal title={config.title} onClose={onClose}>
       <div className="ledger">
@@ -428,6 +504,43 @@ export default function LedgerModal({ kind, character, patch, onClose, readOnly 
                 Got it
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Every pool but XP can be stated outright. XP's version of this box
+            sets the level instead, because XP owns the level and a second way to
+            move the number would be a second answer to what level it is. */}
+        {kind !== 'xp' && !readOnly && (
+          <div className="ledger-level-set">
+            <span className="ledger-field-label">Or set the balance directly</span>
+            <div className="ledger-level-row">
+              <input
+                className="form-input"
+                type="number"
+                min={minValue}
+                {...(maxValue !== null ? { max: maxValue } : {})}
+                step="1"
+                /* Health is the one box a minus sign has to reach, and a numeric
+                   inputMode is the keypad that doesn't carry one. */
+                inputMode={minValue < 0 ? undefined : 'numeric'}
+                value={balanceWanted}
+                placeholder={String(balance)}
+                onChange={(e) => setBalanceWanted(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && applySet()}
+              />
+              <button
+                type="button"
+                className="ledger-btn ledger-btn-set"
+                style={{ '--set-accent': config.color }}
+                onClick={applySet}
+              >
+                Set balance
+              </button>
+            </div>
+            <p className="ledger-level-note">
+              Moves the pool to exactly that number, and logs the difference. Anything typed in
+              Reason is used as the entry.
+            </p>
           </div>
         )}
 

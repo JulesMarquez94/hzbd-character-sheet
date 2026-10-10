@@ -7,9 +7,10 @@ import { lockScroll } from '../lib/scrollLock.js';
 import { formatNumber } from '../lib/characterModel.js';
 import { ARMOR_SETS } from '../lib/items.js';
 import { forgedRecord } from '../lib/forged.js';
+import { cardTitle } from '../lib/cardText.js';
 import { getCard, itemEnchantments } from '../lib/weapons.js';
 import { wieldModifiers } from '../lib/items.js';
-import { ItemIcon, ItemTags, ItemValues, StatText } from './sheet/itemParts.jsx';
+import { ItemCarry, ItemIcon, ItemStats, ItemTags, StatText } from './sheet/itemParts.jsx';
 import ShareCode from './sheet/ShareCode.jsx';
 import useCodexArt from './useCodexArt.js';
 
@@ -24,9 +25,28 @@ import useCodexArt from './useCodexArt.js';
  *
  * A card opened from a weapon is dealt with that weapon's `modifiers`, so the
  * one shared card prints this weapon's damage type and empowered dice.
+ *
+ * The working behind a number is the one thing that never piles up. See
+ * `dropValue`.
  */
 
 let nextKey = 0;
+
+/**
+ * The pile with any working-behind-a-number panel taken off it.
+ *
+ * A value card is a leaf: it explains one number on the card under it and has
+ * nothing on it to open, so it is a panel rather than another card in the
+ * pile. Every number on a card stays tappable while it is out — the pile only
+ * steps 18px a card, so most of the card below is still there under the
+ * pointer — and tapping one thirteen times used to deal thirteen identical
+ * panels, each with its own × to clear. So dealing anything at all clears the
+ * panel already out: a second number replaces it, and a card opened from the
+ * sheet below takes its place rather than burying it mid-pile.
+ */
+function dropValue(entries) {
+  return entries.at(-1)?.type === 'value' ? entries.slice(0, -1) : entries;
+}
 
 export function CardStackProvider({ character, children }) {
   const [stack, setStack] = useState([]);
@@ -39,7 +59,10 @@ export function CardStackProvider({ character, children }) {
 
   const push = useCallback((entry) => {
     nextKey += 1;
-    setStack((entries) => [...entries, { ...entry, key: nextKey }]);
+    /* Held here rather than read inside the updater: two cards dealt in one
+       batch would both see the number the second one landed on, and collide. */
+    const key = nextKey;
+    setStack((entries) => [...dropValue(entries), { ...entry, key }]);
   }, []);
 
   const openCard = useCallback(
@@ -206,7 +229,8 @@ function ItemCard({ item, character, onCard, onValue }) {
       <div className="item-card-scroll">
         {item.blurb && <p className="item-card-blurb">{item.blurb}</p>}
 
-        <ItemValues item={item} />
+        <ItemStats item={item} />
+        <ItemCarry item={item} />
 
         {item.effect && (
           <p className="item-card-effect">
@@ -264,7 +288,10 @@ function ItemCard({ item, character, onCard, onValue }) {
                     className="item-card-link item-card-link-card"
                     onClick={() => onCard(card, cardModifiers)}
                   >
-                    {card.name}
+                    {/* The item is the heading of the card this list is on, so a
+                        weapon card is named by its move here the way it is
+                        everywhere else. See cardTitle in cardText.js. */}
+                    {cardTitle(card)}
                   </button>
                   <CostOrbs ap={card.ap} wp={card.wp} size={20} className="item-card-costs" />
                 </li>

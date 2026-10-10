@@ -1,20 +1,46 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
-import { getCharacter, updateCharacter } from '../lib/api.js';
-import { levelForXp, liveCharacter, syncDerived } from '../lib/characterModel.js';
+import { adoptCharacter, getCharacter, updateCharacter } from '../lib/api.js';
+import { isLocalId } from '../lib/localCharacters.js';
+import {
+  levelForXp,
+  liveCharacter,
+  normalizeGridColumns,
+  syncDerived,
+} from '../lib/characterModel.js';
 import { openChoices, pruneToLevel } from '../lib/levelPicks.js';
 import { subscribeToTable } from '../lib/realtime.js';
+import { UnitContext } from '../context/units.js';
 import SiteMenu from '../components/SiteMenu.jsx';
 import CharacterTab from '../components/sheet/CharacterTab.jsx';
+import FightProvider from '../components/campaign/FightProvider.jsx';
+import HandoverCall from '../components/campaign/HandoverCall.jsx';
+import LogCall from '../components/campaign/LogCall.jsx';
+import LogProvider from '../components/campaign/LogProvider.jsx';
+import ReactionCall from '../components/campaign/ReactionCall.jsx';
+import ReactionWindow from '../components/campaign/ReactionWindow.jsx';
+import TurnCall from '../components/campaign/TurnCall.jsx';
+import DiceSheet from '../components/sheet/DiceSheet.jsx';
+import FeralCall from '../components/sheet/FeralCall.jsx';
 import AbilitiesTab from '../components/sheet/AbilitiesTab.jsx';
 import InventoryTab from '../components/sheet/InventoryTab.jsx';
 import LoreTab from '../components/sheet/LoreTab.jsx';
 import AdvancementTab from '../components/sheet/AdvancementTab.jsx';
 import CreationWizard from '../components/sheet/CreationWizard.jsx';
+import KeepCharacter from '../components/KeepCharacter.jsx';
 import '../components/sheet/sheet.css';
 
 const TABS = ['Character', 'Abilities', 'Inventory', 'Lore', 'Advancement'];
+
+/* Which column holds the canvas width of each tab that has a grid. Lore and
+   Advancement are not grids, so they are not in the table and fall back to the
+   three columns everything on the site was drawn for. */
+const GRID_COLUMNS = {
+  Character: 'block_columns',
+  Abilities: 'ability_columns',
+  Inventory: 'inventory_columns',
+};
 
 /* The two ways a distance can be written, and what each one writes it in. The
    note is there because the switch is nowhere near the numbers it changes:
@@ -36,14 +62,27 @@ function readStoredUnit() {
 
 /**
  * `creating` is the same sheet with the tabs taken off: a row made a moment ago
- * on the dashboard, walked through its level-1 choices and then its lore. It is
- * this component rather than a page of its own so that loading, autosave and
- * the permission rules are the ones already written here.
+ * on the dashboard, being walked through its level-1 choices by whichever of
+ * the four ways in it was started on. It is this component rather than a page
+ * of its own so that loading, autosave and the permission rules are the ones
+ * already written here. See CreationWizard.jsx for the ways in.
  */
 export default function CharacterSheet({ creating = false }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAdmin, loading: authLoading } = useAuth();
+  /* Which of the four ways in this creation screen is. It rides in the URL
+     rather than on the row because it is how you got here and not something the
+     character is, and because a path swapped part-way through must not be a
+     write. See src/lib/creationPaths.js. */
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const { user, isAdmin, tier, loading: authLoading } = useAuth();
+
+  /* A character kept in this browser rather than in an account. The id says so,
+     and it changes three things here: whoever holds the device may edit it, it
+     sits at no table, and the sheet carries the offer to keep it. Everything
+     else is the same sheet. See src/lib/localCharacters.js. */
+  const local = isLocalId(id);
 
   const [character, setCharacter] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -53,7 +92,14 @@ export default function CharacterSheet({ creating = false }) {
   const [unit, setUnit] = useState(readStoredUnit);
   const [saveState, setSaveState] = useState('idle'); // idle | saving | saved | error
   const [copied, setCopied] = useState(false);
+  /* The action being reacted to, while this sheet's reaction window is up.
+     Opening the window is the hold on the actor's roll: see ReactionWindow.jsx. */
+  const [reacting, setReacting] = useState(null);
   const [unitMenuOpen, setUnitMenuOpen] = useState(false);
+  /* Whether the reader opened the offer to keep a device-only character, from
+     the badge or the Share button. The offer is also up when the creation
+     screen just handed over: see `keeping` below and KeepCharacter.jsx. */
+  const [keepOpened, setKeepOpened] = useState(false);
   const tabMenuRef = useRef(null);
   const unitMenuRef = useRef(null);
 
@@ -87,7 +133,7 @@ export default function CharacterSheet({ creating = false }) {
         // attributes moved elsewhere — is brought back in line on open. Only
         // the owner or an admin may write it, so a viewer just reads the row
         // as stored.
-        const editable = Boolean(userId && (userId === data.user_id || isAdmin));
+        const editable = local || Boolean(userId && (userId === data.user_id || isAdmin));
 
         /* A row still holding choices above the level it now stands at:
            experience lost before this rule existed, or a level typed straight
@@ -116,7 +162,7 @@ export default function CharacterSheet({ creating = false }) {
     return () => {
       active = false;
     };
-  }, [id, userId, isAdmin, authLoading]);
+  }, [id, local, userId, isAdmin, authLoading]);
 
   useEffect(() => {
     try {
@@ -199,8 +245,11 @@ export default function CharacterSheet({ creating = false }) {
   }, [flush]);
 
   // Owner or admin. RLS enforces the same rule server-side; this only decides
-  // which controls are rendered.
-  const canEdit = Boolean(character && user && (user.id === character.user_id || isAdmin));
+  // which controls are rendered. A device-only character has no owner but the
+  // device, so whoever is holding it edits it, signed in or not.
+  const canEdit = Boolean(
+    character && (local || (user && (user.id === character.user_id || isAdmin)))
+  );
 
   /** Optimistic local update + debounced persistence. No-op for viewers. */
   const patch = useCallback(
@@ -284,6 +333,31 @@ export default function CharacterSheet({ creating = false }) {
      closes over the stored row, never this one. */
   const shown = useMemo(() => liveCharacter(character), [character]);
 
+  /* The creation screen hands over to the sheet with a note in the navigation
+     state, and the note is the offer: a character just finished on this device
+     is asked whether it should be kept. The offer is read straight off the
+     state rather than copied into one of our own, and closing it rewrites the
+     history entry without the note, so a back-press does not ask twice. */
+  const keepAsked = Boolean(local && location.state?.keep);
+  const keeping = keepOpened || keepAsked;
+
+  function closeKeep() {
+    setKeepOpened(false);
+    if (keepAsked) navigate(location.pathname, { replace: true, state: null });
+  }
+
+  /**
+   * The move into the account, from this sheet. The last edits go first, so
+   * the row that crosses is the one on screen, and the new id is a new sheet:
+   * the route is keyed on it and mounts fresh against the database row.
+   */
+  async function keepToAccount() {
+    clearTimeout(timerRef.current);
+    await flush();
+    const kept = await adoptCharacter(id, user?.id, tier);
+    navigate(`/characters/${kept.id}`, { replace: true });
+  }
+
   if (loading) return <div className="loading-veil">Unrolling the sheet…</div>;
 
   if (error && !character) {
@@ -315,29 +389,148 @@ export default function CharacterSheet({ creating = false }) {
      sheet, not a set of choosers that would refuse to write anything. */
   if (creating && canEdit) {
     return (
+      <UnitContext.Provider value={unit}>
       <div className="sheet">
         <main className="sheet-canvas">
           {error && <div className="form-error">{error}</div>}
           <CreationWizard
+            path={searchParams.get('path')}
             character={character}
             patch={patch}
             unit={unit}
             onDone={async () => {
+              /* Whichever way in this was, finishing it closes the bookmark a
+                 resumable path left on the row: see `creation` in
+                 characterModel.js and src/lib/walkthrough.js. Through `patch`,
+                 so it rides the same flush as the last choice. */
+              if (character.creation) patch({ creation: null });
               /* The sheet route remounts this component and refetches the row,
                  so the last edits must be on the server before we go — a
                  fire-and-forget flush can lose the race against that fetch. */
               clearTimeout(timerRef.current);
               await flush();
-              navigate(`/characters/${id}`);
+              /* A character finished on this device is offered a home on the
+                 way out. See KeepCharacter.jsx. */
+              navigate(`/characters/${id}`, { state: local ? { keep: true } : null });
             }}
           />
         </main>
       </div>
+      </UnitContext.Provider>
     );
   }
 
+  /* How many columns the tab on screen lays its blocks out in. It is set up
+     here rather than inside the tab because more than the grid is measured
+     against it: the canvas the grid sits in, the bar of tabs above that, and
+     every overview line that has to begin and end on a block edge. A tab with
+     no grid leaves it at three, which is what all of those were before any of
+     it was a choice. See normalizeGridColumns, and `--sheet-fit` in sheet.css
+     for the clamp that keeps a nine-column canvas off a phone.
+
+     The attribute is the same number again, for the one rule that cannot be
+     written as arithmetic: a row-wide block has nothing to span when the canvas
+     is a single column. */
+  const canvasColumns = normalizeGridColumns(character[GRID_COLUMNS[tab]]);
+
+  /* And the widest any tab on this sheet is set to, which is what the bar of tabs
+     above the canvas is measured against rather than the tab on screen. Three
+     tabs keep three separate counts, so a bar measured against the current one
+     changed width every time you switched — see .sheet-tabbar-inner in sheet.css.
+     A tab with no grid counts as the three all of them were before any of it was
+     a choice. */
+  const barColumns = Math.max(
+    ...Object.values(GRID_COLUMNS).map((column) => normalizeGridColumns(character[column]))
+  );
+
   return (
-    <div className="sheet">
+    <UnitContext.Provider value={unit}>
+    {/* Which campaigns this sheet sits at, read once for the whole page: the
+        Character tab grows a log block per table, and everything that spends
+        something posts what it did to all of them. See LogProvider.jsx. */}
+    {/* A device-only character sits at no table and has no row a table could
+        seat, so the provider is handed nothing: the fight, the calls, the dice
+        watch and the log blocks below all read their tables from it and stay
+        quiet. That is what "cannot join a campaign" means on the sheet. */}
+    <LogProvider characterId={local ? null : character.id} canWrite={canEdit}>
+    {/* And the fight this sheet is standing in, when the Game Master is running
+        one: who is in the order, as targets a use can be aimed at. Read off the
+        table log, because the encounter row itself is the Game Master's alone.
+        See FightProvider.jsx. */}
+    <FightProvider characterId={character.id}>
+    {/* And who the dice tray is rolling for, so a Skill Check thrown from the
+        corner of the screen adds the right attribute. Only when the sheet is
+        yours: a reader on somebody else's public sheet must not be handed their
+        Instinct to roll with. Renders nothing. See DiceTray.jsx. */}
+    {canEdit && <DiceSheet character={shown} patch={patch} />}
+    {/* And the fight, when the Game Master is running one. Renders nothing until
+        the order reaches this sheet, and then a panel stands at the side of the
+        screen. The turn is started here by this sheet, off an announcement on
+        the table log, because nobody else may write to it. See TurnCall.jsx. */}
+    {/* The Initiative rides in beside the sheet because the panel rolls with
+        it and the stored column is a bake of the same number: an Enchanter
+        wearing 1 Instinct for the hour rolls the Initiative they are actually
+        wearing. Everything else the panel does reads the stored row. */}
+    <TurnCall
+      character={character}
+      patch={patch}
+      canEdit={canEdit}
+      initiative={shown.initiative}
+    />
+    {/* And the Feral Curse's own question, whenever this sheet loses Health or
+        spends Willpower. Renders nothing for everybody who holds no set that
+        turns them into anything, which is nearly everybody. Handed the sheet as
+        it is *read*, because the roll is an Instinct roll and an Enchanter's
+        worked attributes are the ones they actually roll. See FeralCall.jsx. */}
+    {canEdit && <FeralCall character={shown} patch={patch} />}
+    {/* And everything else the table did, said in the corner of whatever tab
+        you are on: the log block is on the Character tab and a fight is not
+        somewhere you can afford to have missed a reaction. Only on your own
+        sheet, and never about your own rows. See LogCall.jsx. */}
+    {canEdit && <LogCall mine={character.id} />}
+    {/* And the one row on the log that is addressed *to* this sheet rather than
+        about it: somebody at the table is holding an item out. It stands in its
+        own panel for the same reason a turn call does — nobody may write to your
+        sheet, so taking it is your own client's write — and the same component
+        quietly puts back anything this sheet offered and nobody took. Renders
+        nothing at a table where neither has happened. See HandoverCall.jsx. */}
+    <HandoverCall character={character} patch={patch} canEdit={canEdit} />
+    {/* The reaction window's knock: somebody at the table acted, their roll is
+        gated, and this sheet has Reaction Points to answer with. Tapping the
+        banner opens the window below, which is itself the hold on their roll.
+        See ReactionCall.jsx and ReactionWindow.jsx. */}
+    <ReactionCall
+      needFight
+      ready={canEdit && (Number(shown.reaction) || 0) > 0}
+      ignore={(row) => row.character_id === character.id}
+      onReact={setReacting}
+      line={`You have ${Number(shown.reaction) || 0} Reaction ${
+        (Number(shown.reaction) || 0) === 1 ? 'Point' : 'Points'
+      }.`}
+    />
+    {reacting && (
+      <ReactionWindow
+        call={reacting}
+        character={shown}
+        patch={patch}
+        onClose={() => setReacting(null)}
+      />
+    )}
+    {/* The offer to keep a device-only character: opened by the badge and the
+        Share button on the bar, and once on the way in from the creation screen. */}
+    {keeping && (
+      <KeepCharacter
+        character={character}
+        onClose={closeKeep}
+        onAdopt={keepToAccount}
+        from={location.pathname}
+      />
+    )}
+    <div
+      className="sheet"
+      style={{ '--sheet-cols': canvasColumns, '--sheet-bars': barColumns }}
+      data-columns={canvasColumns}
+    >
       <div className="sheet-tabbar">
         <div className="sheet-tabbar-inner">
           <nav className="sheet-tabs">
@@ -407,12 +600,17 @@ export default function CharacterSheet({ creating = false }) {
                   type="button"
                   className="dropdown-link"
                   onClick={() => {
+                    setTabMenuOpen(false);
+                    if (local) {
+                      setKeepOpened(true);
+                      return;
+                    }
                     navigator.clipboard?.writeText(window.location.href);
                     setCopied(true);
                     setTimeout(() => setCopied(false), 1800);
                   }}
                 >
-                  {copied ? 'Link copied' : 'Share sheet'}
+                  {local ? 'Keep this character' : copied ? 'Link copied' : 'Share sheet'}
                 </button>
 
                 <button
@@ -427,13 +625,26 @@ export default function CharacterSheet({ creating = false }) {
           </div>
 
           <div className="sheet-tabbar-right">
+            {/* Where this sheet lives, when it is not in an account. A button
+                dressed as a badge, because the news and the way to change it
+                are the same tap: it opens the offer to keep the character. */}
+            {local && (
+              <button
+                type="button"
+                className="view-badge device"
+                title="Saved in this browser only · tap to keep this character"
+                onClick={() => setKeepOpened(true)}
+              >
+                On this device
+              </button>
+            )}
             {!canEdit && (
               <span className="view-badge live" title="Viewing live · changes appear without reloading">
                 <span className="live-dot" />
                 Live View
               </span>
             )}
-            {isAdmin && character.user_id !== user?.id && (
+            {!local && isAdmin && character.user_id !== user?.id && (
               <span className="admin-badge">Admin Edit</span>
             )}
             {/* The light and nothing else. "All changes saved" spelled out was
@@ -454,10 +665,17 @@ export default function CharacterSheet({ creating = false }) {
               </span>
             )}
 
+            {/* A device-only sheet has no link worth copying: it opens in this
+                browser and nowhere else. Pressing Share there opens the offer,
+                which says what sharing needs. */}
             <button
               type="button"
               className="btn btn-minimal btn-sm"
               onClick={() => {
+                if (local) {
+                  setKeepOpened(true);
+                  return;
+                }
                 navigator.clipboard?.writeText(window.location.href);
                 setCopied(true);
                 setTimeout(() => setCopied(false), 1800);
@@ -533,5 +751,8 @@ export default function CharacterSheet({ creating = false }) {
         )}
       </main>
     </div>
+    </FightProvider>
+    </LogProvider>
+    </UnitContext.Provider>
   );
 }

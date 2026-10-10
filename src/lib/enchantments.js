@@ -10,12 +10,13 @@
  * a card needs a sentence. A round trip checks the `effect` strings, the tags and
  * the burdens, never the bodies.
  *
- * **Four rows here are not off that sheet**, and each is marked where it sits:
+ * **Six rows here are not off that sheet**, and each is marked where it sits:
  * PREPARED, which Jules handed over in as many words on 2026-08-20; UNIQUE
  * IMBUEMENT, which is what a Unique spell needs in order to reach an item at all;
- * and NIGHTMARE'S CURSE and SHROUDING, handed over the same day as card renders,
- * each the working its own trinket comes wearing (see trinkets.js). A round trip
- * against the sheet skips all four rather than failing on them.
+ * NIGHTMARE'S CURSE and SHROUDING, handed over the same day as card renders,
+ * each the working its own trinket comes wearing (see trinkets.js); and
+ * UNBURDENED and ACCOLADE, handed over on 2026-08-27 the same way. A round trip
+ * against the sheet skips all six rather than failing on them.
  *
  * **The tiers are real now**, which is what the Enchanter's ranks 2 and 3 were
  * waiting on: ENCHANTING opens Novice at Rank 1, Adept at 2 and Master at 3, and
@@ -60,6 +61,10 @@
  *                 `spellTier` is the tier it may bind. What spell is chosen when
  *                 it is laid, not here.
  *   light         it can be turned on, and does nothing else.
+ *   burdenFree    the odd one out: it carries no number of its own and instead
+ *                 takes every *other* working in the same item down to 0 Magic
+ *                 Burden. Read by `itemBurden` in items.js, off the item, never
+ *                 summed into a character.
  *
  * A field that is absent is a rider the enchantment does not carry. Nothing here
  * is computed: `cost` and `supplies` are written out per row rather than derived
@@ -113,9 +118,9 @@ export const ENCHANTMENTS = withArt([
     cost: 3000,
     supplies: 280,
     shieldAtCombat: '2d6',
-    effect: 'Gain 2d6 in Shield at combat start.',
+    effect: 'Gain 2d6 Shield at combat start.',
     body:
-      'When the wielder enters combat, they start it with [[2d6]] in Shield.\n\n' +
+      'When the wielder enters combat, they start it with [[2d6]] Shield.\n\n' +
       'It stacks with everything else that grants Shield at the start of a fight, and is held to the same cap.',
   },
 
@@ -221,7 +226,7 @@ export const ENCHANTMENTS = withArt([
     effect: 'Can be turned on or off to illuminate a 15 meters (50 feet) area.',
     body:
       'The item can be turned on or off at will.\n\n' +
-      'While lit, it illuminates an area of 15 meters (50 feet) around it.',
+      'While lit, it illuminates an area of **15 meters (50 feet)** around it.',
   },
 
   {
@@ -332,12 +337,16 @@ export const ENCHANTMENTS = withArt([
     burden: 6,
     cost: 4500,
     supplies: 420,
-    /* No rider, and not for want of trying: nothing on this sheet knows that a
-       character *went down*, and nothing tracks "has triggered since your last
-       long rest". Both halves are the table's to play, which is how every other
-       printed conditional on this sheet works. */
+    /* Half a rider now. Nothing on this sheet knows that a character *went
+       down*, so the trigger is still the table's to notice, the way every other
+       printed conditional on this sheet is. But "has triggered since your last
+       Long Rest" is a fact about the character rather than about the moment, and
+       that half is tracked: one use, filled by a Long Rest, marked on the Always
+       On row by the hand that noticed it fire. See uses.js. */
+    uses: 1,
+    recharge: 'Long Rest',
     effect:
-      'When you go down, you stabilize to 0 health points instead of going into negative. Once this effect has triggered you need to take a long rest before you can use it again.',
+      'When you go down, you stabilize to 0 health points instead of going into negative. Once this effect has triggered you need to take a Long Rest before you can use it again.',
     body:
       'When the wielder would drop below 0 Health, they stop at 0 instead of bleeding out.\n\n' +
       'Once it has fired it is spent, and comes back after a Long Rest.',
@@ -415,9 +424,12 @@ export const ENCHANTMENTS = withArt([
     burden: 8,
     cost: 6000,
     supplies: 560,
-    /* Printed, for the same two reasons as Defibrillation. */
+    /* Printed and tracked the same way Defibrillation is: the trigger is the
+       table's, the one use and the Long Rest that fills it are the sheet's. */
+    uses: 1,
+    recharge: 'Long Rest',
     effect:
-      'When you go down, you spring back up to 1 Health instead. Once the effect has triggered you need to take a long rest before you can use it again.',
+      'When you go down, you spring back up to 1 Health instead. Once the effect has triggered you need to take a Long Rest before you can use it again.',
     body:
       'When the wielder would drop below 0 Health, they come back up on 1 instead.\n\n' +
       'Once it has fired it is spent, and comes back after a Long Rest.',
@@ -436,7 +448,7 @@ export const ENCHANTMENTS = withArt([
        the cell names both, and floored at nothing by rest.js rather than here. */
     restSupplies: 2,
     effect:
-      'You need less to sustain yourself, the cost in supplies of short and long rest are reduced by 2.',
+      'You need less to sustain yourself, the cost in supplies of short and Long Rest are reduced by 2.',
     body:
       'The wielder needs less to keep going.\n\n' +
       'A Short Rest and a Long Rest each cost 2 fewer Supplies out of the crate.',
@@ -576,7 +588,77 @@ export const ENCHANTMENTS = withArt([
       'You cannot be targeted by any scrying effects or magical means of remote observation. The ring glows a faint red if an entity is currently spying on you or your immediate area through any means.',
     body:
       'The wielder cannot be targeted by any scrying effects or magical means of remote observation.\n\n' +
-      'The ring glows a faint red if an entity is currently spying on the wielder or their immediate area through any means.',
+      'The ring glows a faint red if **an entity** is currently spying on the wielder or their immediate area through any means.',
+  },
+
+  {
+    /* Jules's, 2026-08-27, and it is a mechanic rather than a rule the table
+       plays: "to fix the no burden thing just add a special enchant that make
+       the cost of en enchant go down to 0 in burden."
+
+       **This is the first working that reads another working.** Every other row
+       on the shelf carries its own number and `itemBurden` sums them; this one
+       carries no number and *silences* the sum, so the flag is read there
+       (`burdenFree`, in items.js) rather than added up in enchanting.js. It is
+       laid on the Deep Sea Trident and the Cloak of Nightmare, both of which the
+       designer called out by name as costing none.
+
+       **Burden 0 and coin 0 on itself, and the piece keeps its price.** What a
+       working is worth is a different question from what its wielder carries:
+       `itemCost` still reads every enchantment's own `burden` at 1000 a point,
+       so a trident that weighs nothing on the meter is still worth what thirteen
+       points of working are worth. Only the carrying is free.
+
+       `unique` keeps it off the Enchanter's shelf the way it keeps the two above
+       it off: no rank opens a Unique tier, so `enchantOptions` drops the row
+       outright. It comes on the item. */
+    id: 'unburdened',
+    name: 'Unburdened',
+    kind: 'passive',
+    tags: ['Unique Enchantment', 'Utility'],
+    tier: 'Unique',
+    unique: true,
+    burden: 0,
+    cost: 0,
+    supplies: 0,
+    /* The one field on this shelf read off the *item* rather than summed into a
+       character. See itemBurden in items.js. */
+    burdenFree: true,
+    effect: 'Every enchantment on this item costs 0 Magic Burden.',
+    body:
+      'The item carries its own workings, and whoever holds it carries none of them.\n\n' +
+      'Every enchantment laid on this item costs **0 Magic Burden**, whatever it would weigh anywhere else.',
+  },
+
+  {
+    /* Handed over in chat on 2026-08-27 with the ring it comes on: "Create a
+       Ring called First Place: that increases your Willpower by +2 ... 4
+       burden." The working is named rather than the ring, the way SHROUDING is
+       named beside the Ring of Shrouding: an item's power has to be an
+       enchantment for the rider to reach the wielder at all.
+
+       **The burden is the designer's, not the shelf's rate.** ARCANE BATTERY
+       buys 8 Willpower for 6, which makes 2 for 4 a much worse trade. Burden on
+       this sheet tracks what a working is *worth* rather than what it does, and
+       a token from the Liche of Bones is worth carrying for reasons the sheet
+       does not measure. Flagged in data/README.md as Jules's to reprice.
+
+       Coin and Supplies are the shelf's own two rates for a burden-4 row, which
+       is what PREPARED already charges. */
+    id: 'accolade',
+    name: 'Accolade',
+    kind: 'passive',
+    tags: ['Unique Enchantment', 'Body'],
+    tier: 'Unique',
+    unique: true,
+    burden: 4,
+    cost: 3000,
+    supplies: 280,
+    willpowerMax: 2,
+    effect: 'Willpower is increased by 2.',
+    body:
+      'The wielder carries 2 more maximum Willpower than they otherwise would.\n\n' +
+      'It is capacity rather than restoration: the points are there to be filled, and a rest is what fills them.',
   },
 ]);
 

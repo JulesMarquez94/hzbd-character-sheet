@@ -1,0 +1,30 @@
+id,Name,Tags,AP,WP,Main Effect,Source,Image
+going-berserk,GOING BERSERK,"Berserker, Novice Talent, Passive",,,"You can channel your willpower into your body, enhancing your strength while entering an altered state of mind driven by a vicious bloodlust for violence.
+
+While in this state, you gain access to Rampage Skills: powerful moves that shorten the duration of your rage.",sheet,Going Bersek.jpg
+berserkers-rage,BERSERKER’S RAGE,"Berserker, Novice Talent, Ability",1,4,"You enter a Berserker’s Rage for 10 turns.
+
+While in this state, you gain additional Physique equal to your Berserker Rank. Your Damage Dice are Elevated by 1.
+
+While raging, you are compelled to make at least one melee attack per turn, prioritizing it over any other action. If no enemies are within reach, you must attack the nearest target, even if it is an ally.
+
+If no valid targets are within reach, you must use your Action Points to move toward the nearest target.",sheet,Berserker Rage.jpg
+raging-blow,RAGING BLOW,"Berserker, Novice Talent, Ability, Rampage",0,1,"Using this ability reduces the remaining turns of your Berserker’s Rage by 1.
+
+Your next melee Weapon Attack is made with advantage, and it becomes a Critical Hit if the Attack Roll exceeds the target’s Defense by 4 or more.",sheet,Raging Blow.jpg
+master-of-pain,MASTER OF PAIN,"Berserker, Adept Talent, Passive",,,"Raging Blow can now be used with a Special Weapon Attack.
+
+Rolls you make against a target’s Reflex or Grit as part of a Special Weapon Attack are made with advantage.",sheet,Master of Rage.jpg
+ignore-pain,IGNORE PAIN,"Berserker, Adept Talent, Ability, Rampage",1,2,"Using this ability reduces the remaining turns of your Berserker’s Rage by 2.
+
+As a reaction to taking damage, you can reduce that damage by 4d6 + 4 x your Physique.",sheet,Ignore Pain.jpg
+unstoppable,UNSTOPPABLE,"Berserker, Master Talent, Passive",,,"While raging, you can move through difficult terrain without penalty.",sheet,Instappable.jpg
+rage-through,RAGE THROUGH,"Berserker, Master Talent, Ability, Rampage",0,2,"Using this ability reduces the remaining turns of your Berserker’s Rage by 2.
+
+The next roll contested against your Reflex or Grit automatically fails.",sheet,Rage Through.jpg
+avatar-of-carnage,AVATAR OF CARNAGE,"Berserker, Master Talent, Passive",,,"Once per combat, you can Sacrifice Health equal to 5 x level to regain 6 Action Points.",sheet,Avatarr of Carnage.jpg
+reckless-violence,RECKLESS VIOLENCE,"Berserker, Master Talent, Ability, Rampage",0,1,"Using this ability reduces the remaining turns of your Berserker’s Rage by 2.
+
+Your next attack costs no Action Points. However, if the attack fails to deal damage, the target may take a free action of its choice.
+
+This ability can only be used once per round.",sheet,Reckless Violence.jpg

@@ -2,9 +2,11 @@ import { useMemo, useState } from 'react';
 import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import UsePrompt from './UsePrompt.jsx';
+import { Gated } from './parts.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useCardStack } from '../../context/card-stack.js';
-import { spendUse } from '../../lib/combatBar.js';
+import { sortCards } from '../../lib/cardOrder.js';
+import { usePlayCard } from './usePlayCard.js';
 import { addEffect } from '../../lib/combatTurn.js';
 import { ENCHANT_KINDS, enchantKind } from '../../lib/enchantments.js';
 import { enchantOptions, enchanterState, ephemeralCost, ephemeralEffect } from '../../lib/enchanting.js';
@@ -25,9 +27,12 @@ import { SPELLS } from '../../lib/spells.js';
  *
  * ------------------------------------------------------------------- the shelf
  * "You choose an enchantment you know", so the shelf is what the rank knows and
- * nothing else, grouped by what an enchantment is *for* — a body, a weapon, a
- * carried spell — because that is the question being asked. Thirteen briefs in a
- * flat wall is thirteen things to read; four groups of a few is a glance.
+ * nothing else. Not what it will know at Rank 3: an enchantment above the rank
+ * is left off rather than printed dead, and how many went is one clause on the
+ * lead. What is left is grouped by what an enchantment is *for* — a body, a
+ * weapon, a carried spell — because that is the question being asked. Thirteen
+ * briefs in a flat wall is thirteen things to read; four groups of a few is a
+ * glance.
  *
  * Each one is the same card brief every other pool on the sheet prints, so an
  * enchantment reads like the card it is and its own words are one tap away.
@@ -53,6 +58,7 @@ import { SPELLS } from '../../lib/spells.js';
 export default function EnchantWindow({ character, patch, readOnly = false, onClose }) {
   const state = enchanterState(character);
   const stack = useCardStack();
+  const play = usePlayCard({ character, patch });
 
   /** The enchantment being laid, or null while the shelf is being read. */
   const [chosen, setChosen] = useState(null);
@@ -64,6 +70,8 @@ export default function EnchantWindow({ character, patch, readOnly = false, onCl
   const [paying, setPaying] = useState(null);
 
   const options = useMemo(() => enchantOptions(character), [character]);
+  const offered = options.filter((option) => !option.gated);
+  const later = options.length - offered.length;
 
   /* The spells the chosen Imbuement could bind, or none for everything that binds
      no spell. Above the early return, because a hook below one runs in a different
@@ -90,17 +98,24 @@ export default function EnchantWindow({ character, patch, readOnly = false, onCl
 
   /** The one write a confirmed enchantment makes: the points, and the effect. */
   function confirm(mode, amount, options) {
-    const body = spendUse(paying, character, mode, amount, options);
-
-    body.effects = addEffect(
-      character?.effects,
-      ephemeralEffect(chosen, {
-        spell: spell?.name ?? null,
-        target: target.trim() || null,
-      })
-    );
-
-    patch(body);
+    /* `roll: false` for the same reason brewing does not roll: this lays an
+       enchantment, and an enchantment's dice belong to the moment it goes off.
+       SPELLED SHIELD reads "when the wielder enters combat, they start it with
+       [[2d6]] Shield", and rolling that here would roll a Shield nobody is
+       wearing yet. See the note in usePlayCard.js. */
+    play(paying, mode, amount, options, {
+      roll: false,
+      write: (body) => ({
+        ...body,
+        effects: addEffect(
+          character?.effects,
+          ephemeralEffect(chosen, {
+            spell: spell?.name ?? null,
+            target: target.trim() || null,
+          })
+        ),
+      }),
+    });
     setPaying(null);
     onClose();
   }
@@ -153,12 +168,17 @@ export default function EnchantWindow({ character, patch, readOnly = false, onCl
           At rank {state.rank} you know the {listAnd(state.tiers)}{' '}
           {state.tiers.length === 1 ? 'enchantment' : 'enchantments'}. An ephemeral one lasts an
           hour, costs Willpower equal to its Magic Burden and weighs nothing on whoever carries it.
+          {later > 0 &&
+            ` ${later} more ${later === 1 ? 'enchantment is' : 'enchantments are'} held back for higher ranks.`}
         </p>
 
         <div className="ench-window">
           <div className="ench-shelf">
             {ENCHANT_KINDS.map((kind) => {
-              const rows = options.filter((option) => enchantKind(option.enchantment) === kind.id);
+              /* What the rank reaches, and nothing above it. A kind this rank
+                 cannot reach at all drops its whole section rather than standing
+                 there empty, and how many went is said once under the lead. */
+              const rows = offered.filter((option) => enchantKind(option.enchantment) === kind.id);
               if (rows.length === 0) return null;
 
               return (
@@ -283,22 +303,35 @@ function EnchantRow({ option, character, chosen, readOnly, onChoose, onOpen }) {
         {enchantment.burden} Burden · {enchantment.burden} WP
       </span>
 
-      <button
-        type="button"
+      <Gated
         className={`btn btn-sm card-brief-btn ${ok && !chosen ? 'btn-take' : 'btn-minimal'}`}
-        disabled={!ok || readOnly}
-        title={ok ? undefined : reason}
+        why={ok ? null : reason}
+        disabled={readOnly && ok}
         onClick={onChoose}
       >
         {chosen ? 'Chosen' : ok ? 'Lay this one' : reason}
-      </button>
+      </Gated>
     </CardBrief>
   );
 }
 
-/** Every spell of a tier the codex actually holds. Empty is a real answer. */
+/**
+ * Every spell of a tier the codex actually holds. Empty is a real answer.
+ *
+ * Bar the stand-ins. UNWRITTEN LIGHT and UNWRITTEN SHADOW hold a lineage's slot
+ * open until the school is written (see spells.js); laying one on somebody's
+ * sword would be binding an Imbuement to a spell that does not exist yet.
+ */
 function spellsAt(tier) {
-  return SPELLS.filter((spell) => (spell.tags ?? []).some((tag) => tag.startsWith(tier)));
+  /* One rung, so what the law in cardOrder.js does here is hold the schools
+     together: every Primal chip, then Arcane, then Elemental, then Ethereal,
+     rather than the codex's own school-by-school-and-rung interleave. Forty
+     Novice chips in a row is exactly the list that needed it. */
+  return sortCards(
+    SPELLS.filter(
+      (spell) => !spell.placeholder && (spell.tags ?? []).some((tag) => tag.startsWith(tier))
+    )
+  );
 }
 
 /**

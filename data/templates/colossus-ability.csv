@@ -1,0 +1,14 @@
+id,Name,Tags,AP,WP,Main Effect,Source,Image
+martial-training,MARTIAL TRAINING,"Colossus, Novice Talent, Passive",,,"You learn a number of Novice Martial Moves equal to 2 + your Rank in Colossus, and you can use them with Two-Handed Weapons.
+
+Whenever you take a long rest, you can use your long rest action to change any number of learned Martial Moves.
+
+At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.",sheet,Matrtial Training.jpg
+giant-slayer,GIANT SLAYER,"Colossus, Novice Talent, Passive",,,"When you attack with a Colosal Weapon, the attack is made with advantage.",sheet,Giant Slayer.jpg
+colossal-force,COLOSSAL FORCE,"Colossus, Adept Talent, Passive",,,Your Two-Handed Weapon Attacks are Elevated by 1.,house,Colossal Force.jpg
+practiced-moves,PRACTICED MOVES,"Colossus, Adept Talent, Passive",,,"When you make a Weapon Attack as a reaction, you can use a Martial Move with it, and that Martial Move costs no Action Points.",sheet,Paracticed Move.jpg
+perfect-technique,PERFECT TECHNIQUE,"Colossus, Master Talent, Passive",,,"You can now use two Martial Moves on the same Two-Handed Weapon Attack.
+
+Each Martial Move on the attack Empowers its damage by 1.",sheet,Perfect Technique.jpg
+martial-swiftness,MARTIAL SWIFTNESS,"Colossus, Master Talent, Passive",,,Your Martial Moves no longer cost Action Points.,sheet,Martial swiftness.jpg
+colossal-grip,COLOSSAL GRIP,"Colossus, Master Talent, Passive",,,"You can now equped Pair Two-handed  colosall weapon, and your Colosall weapon attack cost 1 lest Aciton Points",house,Colossal Grip.jpg

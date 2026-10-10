@@ -37,7 +37,7 @@
  * ------------------------------------------------------------- the recap
  * Grouped by what a thing *is* rather than by where it came from, because the
  * blocks on the Abilities tab already answer the second one. Provenance is not
- * lost: it rides on each row as a note, so "Sharpsense · Draconic" still says
+ * lost: it rides on each row as a note, so "Sharp Sense · Wildkin" still says
  * where it came from in the width a chip has.
  *
  * This file reads the character and the codex. It writes nothing.
@@ -57,8 +57,14 @@ import {
   normalizeBelt,
   normalizeEquipment,
 } from './items.js';
+import { foeModifiers } from './encounters.js';
 import { getCard, itemEnchantments } from './weapons.js';
-import { isWeaponAttack, spendTricks } from './tricks.js';
+import {
+  hideOpening,
+  isWeaponAttack,
+  spendOpening,
+  spendTricks,
+} from './tricks.js';
 import {
   canEnterForm,
   enterForm,
@@ -68,30 +74,36 @@ import {
   passesForm,
   sourceSet,
 } from './feral.js';
-import { addEffect } from './combatTurn.js';
+import { clauseClock, layEffect, stirEffects, trackedDuration } from './combatTurn.js';
+import { fireTrigger } from './onUse.js';
+import { cardCost, cardProse, cardTitle, castStat, resolveValue } from './cardText.js';
+import { inflictedStatuses, movedEffects, statusOf } from './statuses.js';
+import { cardUse, magazineUse, spendCardUse, spentNote, usageNote } from './uses.js';
 import {
   LEDGER_NOTE_MAX,
   appendLedger,
   newLedgerId,
   shieldCapFor,
 } from './characterModel.js';
-import {
-  attackModifiers,
-  canLayMove,
-  isMartialMove,
-  moveEffect,
-  moveSetFor,
-  ridingLine,
-  spendMoves,
-} from './moves.js';
+import { attackModifiers, isMartialMove } from './moves.js';
+import { ridesStrike } from './spellblade.js';
+import { ridesHit } from './weaver.js';
+import { answersFrom, cardHasRider } from './riders.js';
+import { heldThing } from './targeting.js';
 
 /* ------------------------------------------------------------------- parts */
 
 /**
- * "Daggers - Triple Strike" is the printed name, and the row above already
- * says which weapon it belongs to. A chip has room for one of the two.
+ * "Short Bow - Shoot" is the printed name, and the row above already says which
+ * weapon it belongs to. A chip has room for one of the two.
+ *
+ * The same cut the dealt card makes, and made the same way: off the card's own
+ * `weapon` field rather than off the dash in its name. See cardTitle in
+ * cardText.js. The split is kept underneath it for the one shape that has no
+ * field to read — a row somebody typed into the Abilities tab themselves.
  */
 export function shortName(card, fallback = '') {
+  if (card?.weapon) return cardTitle(card);
   const name = card?.name ?? fallback;
   return String(name).split(' - ').pop();
 }
@@ -123,6 +135,14 @@ function rowsOf(source) {
  * so that the block only has to spend points and apply what it is handed.
  */
 function move(key, card, { name, source, modifiers = null, note = null, extra = null, ...rest }) {
+  /* What it costs in *these* hands rather than what it printed. An Arcanist at
+     Rank 3 casts everything in their spellbook for one Action Point less, so the
+     chip, the prompt's pay button and the pools all have to draw on the cut number
+     and not on the card's. `apWas` rides along so the two places that have room
+     for it can print the cost being revised rather than a number that dropped for
+     no stated reason. See cardCost in cardText.js. */
+  const cost = cardCost(card, modifiers);
+
   return {
     key,
     card,
@@ -131,8 +151,15 @@ function move(key, card, { name, source, modifiers = null, note = null, extra = 
     modifiers,
     note,
     extra,
-    ap: card?.ap ?? null,
-    wp: card?.wp ?? null,
+    ap: cost.ap ?? null,
+    apWas: cost.cut > 0 ? cost.printed : null,
+    apCutFrom: cost.from,
+    /* Off the reading rather than off the card, since 2026-09-08: a Runebearer's
+       rune is the first thing on the sheet whose *Willpower* a source moves, and
+       a chip that charged the printed 4 for a spell that costs nothing to fire
+       would take the pool apart. See `price` in loadouts.js. */
+    wp: cost.wp ?? null,
+    wpWas: cost.wpCut > 0 ? cost.wpPrinted : null,
     variable: Boolean(card?.variable),
     converts: card?.converts ?? null,
     /* What using this opens once it is paid for. BREW opens the brewing window,
@@ -164,18 +191,26 @@ function handGroup(character) {
     .map(getCard)
     .filter(Boolean)
     .map((card) => {
-      /* Whatever is waiting on the next swing: an AMBUSH already paid for, a
-         Martial Move riding, and the advantage a Duelist has for holding this kind
-         of weapon at all. All of it has to show on the chip and on the card
-         *before* the attack is made — which is the whole of what both sets'
-         Developpement Notes asked for. See attackModifiers in moves.js. */
+      /* Whatever is already standing on the next swing: an AMBUSH paid for, and
+         the advantage a Duelist has for holding this kind of weapon at all. It
+         has to show on the chip and on the card *before* the attack is made,
+         which is the whole of what both sets' Developpement Notes asked for. The
+         Martial Moves are not in it: those are chosen inside the prompt, priced
+         there and folded there. See attackModifiers and withMoves in moves.js. */
       const riders = attackModifiers(character, card, modifiers);
 
-      return move(`hand:${card.id}`, card, {
+      const base = {
         source: `${primary.name} · in hand`,
         modifiers: riders,
-        /* And named, so the prompt that is about to spend them says which. */
-        note: ridingLine(riders),
+      };
+
+      /* And what is left in it. A firearm and a crossbow count rounds, and the
+         Reload beside them fills the count rather than spending one, so both
+         sides of the magazine are answered here and the chip draws whichever it
+         was handed. See uses.js. */
+      return move(`hand:${card.id}`, card, {
+        ...base,
+        ...(loaded(magazineUse(character, card), base) ?? limitedUse(character, card, base)),
       });
     });
 
@@ -215,6 +250,11 @@ function beltGroup(character, locks) {
       return move(`belt:${index}`, card, {
         name: card?.name ?? item.name,
         source: `${item.name} · loop ${index + 1}`,
+        /* And whatever is running on the drinker. A flask is a card like any
+           other and a Bolstered hand throws a Fire Bomb with the same arrow as
+           a Bolstered sword: this group folded nothing at all until 2026-09-19,
+           so a whole shelf of the codex was rolling flat. See attackModifiers. */
+        modifiers: attackModifiers(character, card, null),
         note: charges > 0 ? chargeNote(remaining, consumable, item) : null,
         extra: shut.ok && nextBelt ? { belt: nextBelt } : null,
         spent: spent || !shut.ok,
@@ -241,12 +281,6 @@ function chargeNote(remaining, consumable, item) {
 
 /** One group per source that holds something playable, in the codex's order. */
 function knownGroups(character, locks) {
-  /* Whether there is room for another Martial Move on the next swing. Asked once
-     for the whole bar rather than once per chip: the answer is about the
-     character, not the card, and working it out means reading every set that
-     teaches moves. */
-  const room = canLayMove(character);
-
   return abilitySources(character)
     /* A source can hold cards that are neither played nor standing. A Cauldron
        Keeper's Ingredients are the case: you never use one, you put it in a Brew,
@@ -264,17 +298,58 @@ function knownGroups(character, locks) {
         /* And a card somebody else on your sheet plays is not on your bar. A
            draconic ally's Wyrm Bolt costs *its* Action Points, so offering it
            here would pay for it out of the wrong pool. It is on the creature's
-           own bar instead — see minionBar below. */
+           own bar instead: see minionBar below. */
         .filter(({ card }) => !isStanding(card) && !isMinionCard(card))
-        .map(({ card, modifiers }) =>
-          move(`${source.id}:${card.id}`, card, {
-            source: `${card.name} · ${source.title}`,
-            modifiers,
-            ...martialUse(character, card, room),
+        /* **And a Martial Move is not something you play.** Since 2026-09-02 it is
+           an add-on to a weapon attack, chosen inside that attack's own prompt
+           (see "added, not laid" in moves.js), so a chip here would be a way to
+           spend Willpower on nothing. The Abilities tab is where the hand is read
+           and the prompt is where it is used. */
+        .filter(({ card }) => !isMartialMove(card))
+        /* **And neither is a Spellblade's spell.** It is cast through the weapon
+           they have bound and no other way (see the readings in talents.js), so a
+           chip here would be a second way to spend Willpower on it and a way that
+           does not exist. Same shape as the line above and for the same reason:
+           the Abilities tab is where the hand is read, and the attack's own
+           prompt is where one is used. Asked with the block's id, because what is
+           refused is the copy that came out of *this* pool: a caster who knows the
+           same spell from somewhere else keeps that chip. */
+        .filter(({ card }) => !ridesStrike(character, card, source.id))
+        /* **And neither is a weave.** It is released through a Weapon Attack and
+           no other way, so a chip here would be a third way to spend Willpower on
+           nothing. Asked of the card alone, where the line above has to be asked
+           of the character: a bound spell is an ordinary spell somebody else can
+           cast the ordinary way, and a weave is a card nobody can hold by any
+           other route. See ridesHit in weaver.js. */
+        .filter(({ card }) => !ridesHit(card))
+        .map(({ card, modifiers }) => {
+          /* Composed rather than spread straight into the row, because the last
+             of these has to *read* the ones before it: a card that lays a rider
+             and counts its own uses has to write both in one call, and one that
+             is already refused keeps the refusal it earned. */
+          const riders = {
             ...feralUse(character, card, set),
             ...formRefusal(card, locks, { set }),
-          })
-        );
+          };
+
+          /* And whatever is on the tracker, which used to reach a weapon attack
+             and nothing else. `attackModifiers` has always folded running riders
+             onto every card and said why in as many words ("a spell attack is an
+             attack and granting it Empowered names no weapon"), and the hand was
+             the only group that ever called it: a GIANT GROWTH Empowered your
+             sword and left your Fireball alone. Nothing else in the fold reaches a
+             card that is not a weapon attack, so a spell picks up the tracker and
+             nothing more. It also picks up its own sources list, which is what the
+             use prompt credits. See attribution.js. */
+          const folded = attackModifiers(character, card, modifiers);
+
+          return move(`${source.id}:${card.id}`, card, {
+            source: `${card.name} · ${source.title}`,
+            modifiers: folded,
+            ...riders,
+            ...limitedUse(character, card, riders),
+          });
+        });
 
       return moves.length > 0
         ? { id: source.id, label: source.title, note: source.note, moves }
@@ -283,49 +358,30 @@ function knownGroups(character, locks) {
     .filter(Boolean);
 }
 
-/**
- * The extra a Martial Move carries, or nothing at all for every other card.
+/* ------------------------------------------------------------------- gone
  *
- * A move is not resolved when it is used: paying for it lays a rider on the
- * tracker and the next weapon attack carries it. So the whole of what using one
- * does is an `extra` on the row, and it is written here rather than in the block
- * for the same reason a flask's spent charge is — the block spends points and
- * applies what it was handed.
+ * `ambushUse` stood here until 2026-09-03. It priced AMBUSH off the weapon in
+ * hand, wrote the rider onto the tracker and refused the chip when there was
+ * nothing to swing with, and it was the last of the pay-now-spend-later
+ * machinery on this file. AMBUSH is a granted Martial Move now — see "the
+ * granted three" in talents.js — so it has no chip at all: the filter two
+ * screens up already drops every Martial Move, and the offer is in the swing's
+ * own prompt.
  *
- * The allowance rides in rather than being asked for per card. One move rides a
- * swing, or two for a Master Duelist, and a chip offered when there is no room is
- * a chip that takes your Willpower and lays nothing. It is shown refused instead,
- * wearing the reason, which is what the belt already does for a flask with no
- * charges left.
+ * Nothing replaced it. The price moved to `moveWillpower` in martial.js as a
+ * rate on the card, the refusal moved to `offeredMoves`, and the sentence about
+ * what it would do moved to the printed plate the prompt draws beside the pay
+ * button. AmbushWindow.jsx went the same way on 2026-08-28 and this is the rest
+ * of it.
  */
-function martialUse(character, card, room) {
-  if (!isMartialMove(card)) return {};
-
-  return {
-    note: 'It waits on the tracker until you swing, and is spent the moment you do.',
-    extra: room.ok
-      ? {
-          effects: addEffect(
-            character?.effects,
-            moveEffect(card, moveSetFor(character?.talents, card.id))
-          ),
-        }
-      : null,
-    spent: !room.ok,
-    spentLabel: 'No room',
-    spentNote: room.reason,
-  };
-}
 
 /**
  * What a Feral Form does to a chip it will not let you play, or nothing at all
  * for everybody who is not in one.
  *
- * Refused and not hidden, which is the same call the belt and the Martial Move
- * allowance both make: a card that has quietly vanished reads as a bug, while one
- * wearing the reason reads as a rule. It is spread *after* `martialUse`, so a
- * move the form forbids says so rather than saying there is no room for it —
- * being unable to hold the card at all is the truer refusal of the two.
+ * Refused and not hidden, which is the same call the belt makes for an empty
+ * flask: a card that has quietly vanished reads as a bug, while one wearing the
+ * reason reads as a rule.
  *
  * `extra` is cleared with it. Nothing here is ever confirmed, since the chip is
  * dead, but a refused row carrying a written-out effects list is a loaded gun.
@@ -378,6 +434,77 @@ function leadIn(character, form) {
   return `${result.spend} Health for ${result.granted} Shield.`;
 }
 
+/**
+ * What a card that may only be used so many times before a rest carries, or
+ * nothing at all for everything with no limit.
+ *
+ * The belt has drawn this since it existed: `charges` and `used` on the row are
+ * what puts the small "×2" beside a chip's name and what greys it out when there
+ * is nothing left. So a lineage ability whose card says "you must take a long
+ * rest before you can use this ability again" needs no new chip and no new
+ * drawing. It needs the same two numbers, off the card's own `uses` rider
+ * instead of off a flask. See uses.js.
+ *
+ * `riders` is everything the rules above already decided, because two of their
+ * answers have to be respected rather than overwritten:
+ *
+ *   spent    a card refused for another reason keeps that reason. Having no room
+ *            on the tracker or being unable to hold the card at all is the truer
+ *            refusal, and a chip that said "Spent" over either would be lying
+ *            about which rule stopped it.
+ *   extra    a rider is *merged*, never replaced. A move that lays an effect and
+ *            spends a use writes both in one patch, or the use would come off a
+ *            card that never landed.
+ *
+ * Spread last for exactly that reason.
+ */
+/**
+ * A magazine's reading, in the shape a chip takes: what it writes folded into
+ * whatever the swing was already going to write, and what it costs said after the
+ * riders rather than instead of them.
+ *
+ * Null straight through for a card with no magazine, so the caller can offer this
+ * and the ordinary use tracker as two readings of the same row.
+ */
+function loaded(magazine, riders = {}) {
+  if (!magazine) return null;
+
+  const { patch, note, ...rest } = magazine;
+  if (rest.spent) return { ...rest, extra: null };
+
+  return {
+    ...rest,
+    note: [riders.note, note].filter(Boolean).join(' ') || null,
+    extra: { ...(riders.extra ?? {}), ...(patch ?? {}) },
+  };
+}
+function limitedUse(character, card, riders = {}) {
+  const state = cardUse(character, card);
+  if (!state) return {};
+
+  // What is left, drawn on every chip whatever else is true of it.
+  const counted = { charges: state.max, used: state.used };
+
+  // Already refused, and by a rule that outranks this one. Say nothing more.
+  if (riders.spent) return counted;
+
+  if (state.spent) {
+    return {
+      ...counted,
+      extra: null,
+      spent: true,
+      spentLabel: 'Spent',
+      spentNote: spentNote(card, state),
+    };
+  }
+
+  return {
+    ...counted,
+    note: [riders.note, usageNote(state)].filter(Boolean).join(' '),
+    extra: { ...(riders.extra ?? {}), ...spendCardUse(character, card) },
+  };
+}
+
 /* ---------------------------------------------------- entering and leaving */
 
 /**
@@ -422,6 +549,27 @@ export function leaveFormBody(character, form) {
       { kind: 'shield', delta: -result.dropped, balance: 0, note: `${form.spec.label} ended` },
     ]),
   };
+}
+
+/**
+ * What the ledger says a spend was for: the card, and where the card came from.
+ *
+ * "the source and effect" (Jules, 2026-09-03). The effect is the card's own name
+ * — what the Willpower bought — and the source is the line the chip already
+ * carries under it, which is the one thing a card name alone does not say: two
+ * sets can teach the same spell, and a flask is not a spellbook.
+ *
+ * Most chips print the card's own name at the head of their source ("Fireball ·
+ * Arcanist"), and a note that said it twice would be the ledger stuttering. The
+ * hand group is the one that does not: its source names the weapon ("Longsword ·
+ * in hand"), which is exactly the half a swing's note would otherwise be
+ * missing. Capped where every other note is, in `ledgerRows`.
+ */
+function spendNote(request) {
+  const name = String(request?.name ?? '').trim() || 'Something';
+  const source = String(request?.source ?? '').trim();
+  if (!source) return name;
+  return source.startsWith(name) ? source : `${name} · ${source}`;
 }
 
 /** Several movements, one write, in the order they happened. */
@@ -469,6 +617,10 @@ function imbuedGroup(character, locks) {
       move(`imbued:${effect.id}:${card.id}`, card, {
         source: `${card.name} · bound in by ${effect.name}`,
         note: effect.note || null,
+        /* The same fold every other group takes. A casting bound into a ring is
+           still cast by the person wearing it, so what is running on them rides
+           it. See beltGroup above, which was blind for the same reason. */
+        modifiers: attackModifiers(character, card, null),
         /* A casting bound into a thing you are holding is both halves of what a
            form forbids: somebody else's spell, out of an item. Refused on either
            lock, with no `set` to appeal to. */
@@ -519,7 +671,13 @@ export function minionBar(character, minion) {
     .map((card) =>
       move(`minion:${minion.id}:${card.id}`, card, {
         source: `${card.name} · ${minion.title}`,
-        modifiers,
+        /* Folded against the creature rather than its bonded, because the rows
+           that bend its swing are on its own tracker: a Poisoned skeleton rolls
+           with disadvantage and its necromancer does not. `modifiers.actor` is
+           already that creature, so the fold reads the same body the card is
+           printed against. Everything else in `attackModifiers` answers nothing
+           for a creature, which has no talents, no blood and no hands. */
+        modifiers: attackModifiers(modifiers.actor, card, modifiers),
       })
     );
 
@@ -535,16 +693,106 @@ export function minionBar(character, minion) {
   return [...own, basicGroup()];
 }
 
+/**
+ * An enemy's quick bar, on the other side of the table.
+ *
+ * The same shape `minionBar` hands back and for the same reason: a chip is a
+ * chip, so the Game Master's block behaves exactly like a player's and neither
+ * of them needed a second component. Two differences, and both are what an enemy
+ * is rather than what this file thinks of one:
+ *
+ *   its own numbers   `actor` is the enemy dressed as a character, so Withering
+ *                     Word prints its own attributes and is refused when it is
+ *                     out of Willpower. Nothing is borrowed from anybody. And
+ *                     since 2026-09-03 the attribute it rolls is its *best* one
+ *                     rather than the one the page printed — see
+ *                     `foeModifiers` in encounters.js, which is where that rule
+ *                     and the argument for it live.
+ *   its own damage    the card's own type, which is already on the card, so
+ *                     there is nothing for a holder to lend it.
+ *
+ * The basic actions ride along unchanged. A creature that could not Move or
+ * Shove was not on the board, which is the same argument that put them on a
+ * minion's bar.
+ */
+export function foeBar(foe) {
+  /* Its own cards only. The basic actions below ride at their printed attribute
+     like everybody else's: a Shove is a Physique roll for a goblin the same as
+     for a knight, and it is nobody's ability. */
+  const modifiers = foeModifiers(foe.actor);
+
+  const moves = (foe.moves ?? [])
+    .filter((card) => !isStanding(card))
+    .map((card) =>
+      move(`foe:${foe.key}:${card.id}`, card, {
+        source: `${card.name} · ${foe.title}`,
+        /* And whatever the party has put on it. An enemy's tracker is the same
+           tracker, so a Poisoned goblin swings with disadvantage and a Bolstered
+           one does not exist but would. Folded against the foe's own actor, the
+           way a creature's bar is. */
+        modifiers: attackModifiers(modifiers.actor, card, modifiers),
+      })
+    );
+
+  const own =
+    moves.length > 0
+      ? [{ id: `foe:${foe.key}`, label: foe.creature.name, note: foe.rank.label, moves }]
+      : [];
+
+  return [...own, basicGroup()];
+}
+
 /** What everybody has. Last, because it is the half nobody has to look up. */
-function basicGroup() {
+function basicGroup(character = null) {
   return {
     id: 'basic',
     label: 'Basic Actions',
     note: 'Everyone, always',
     moves: BASIC_ACTIONS.map((card) =>
-      move(`basic:${card.id}`, card, { source: `${card.name} · a basic action` })
+      move(`basic:${card.id}`, card, {
+        source: `${card.name} · a basic action`,
+        modifiers: basicModifiers(character, card),
+      })
     ),
   };
+}
+
+/**
+ * What a standing SKULK opening does to HIDE, or null for everybody else.
+ *
+ * "it remove[s] the cost of hide whenever you land a critical hit", so the whole
+ * printed cost comes off and not a point of it: `apCut` is whatever the card
+ * printed, which is how the cut survives HIDE ever being repriced. `apCutFrom`
+ * is what the chip and the pay button credit, so the orb shows 0 with the 2
+ * struck out beside it and says which card did it. Same shape `swapModifiers` in
+ * LoadoutBlock.jsx hands QUICK DRAW's cut over in, and read the same way by
+ * `cardCost`.
+ *
+ * `character` is null on a creature's bar and on an enemy's. Neither has a
+ * Trickster set, and both get the basic actions at their printed price.
+ */
+function hideModifiers(character, card) {
+  if (card.id !== 'hide' || !character || !hideOpening(character.effects)) return null;
+
+  const cut = Math.max(0, Math.floor(Number(card.ap) || 0));
+  return cut > 0 ? { apCut: cut, apCutFrom: ['Skulk'] } : null;
+}
+
+/**
+ * A basic action as this character takes it.
+ *
+ * SKULK's cut on a HIDE, and then the tracker over the top of it. The second is
+ * new on 2026-09-19 and it is the reason a whole group needed a fold at all: a
+ * SKILL CHECK is a basic action, a Bolstered character rolls one with advantage
+ * and a Poisoned one with disadvantage, and this group handed the card over
+ * untouched. Jules: "all card effect need to be reflected when using stuff."
+ *
+ * `character` is null on a creature's bar and on an enemy's, and both get the
+ * basic actions exactly as printed.
+ */
+function basicModifiers(character, card) {
+  const cut = hideModifiers(character, card);
+  return character ? attackModifiers(character, card, cut) : cut;
 }
 
 /**
@@ -570,8 +818,12 @@ export function quickBar(character) {
     imbuedGroup(character, locks),
     ...knownGroups(character, locks),
     /* And the basic actions, never refused. A wolf still moves, hides and shoves,
-       and a form that could not walk would be a bug rather than a rule. */
-    basicGroup(),
+       and a form that could not walk would be a bug rather than a rule.
+
+       Handed the character now, for the one basic action a card can reprice: a
+       Trickster with a crit standing behind them hides for nothing. See
+       `hideModifiers`. */
+    basicGroup(character),
   ].filter(Boolean);
 }
 
@@ -589,7 +841,10 @@ export function moveCount(groups) {
  */
 function standing(card, modifiers, from) {
   return {
-    key: `${from}:${card.id}`,
+    /* Keyed by where it came from as well as what it is, because one card can
+       stand in a recap twice from two places. A group whose rows carry no
+       provenance keys on the card alone rather than on the word "null". */
+    key: from ? `${from}:${card.id}` : card.id,
     card,
     modifiers,
     name: card.name,
@@ -632,9 +887,12 @@ function workings(character) {
  * card that put them there and is the only true answer to "where did this come
  * from", so it is the heading rather than the provenance on each row.
  *
- * The provenance a row would otherwise carry is what it *is* instead: how much
- * Magic Burden it costs to keep, which is the number this block exists to stop
- * anyone forgetting.
+ * **And the rows carry no provenance at all.** They spent it on the Magic Burden
+ * each one cost to keep, until Jules ruled (2026-08-21) that a body slot costs
+ * none. There is nothing left there to forget, the heading has already said where
+ * these came from, and a row repeating "no Burden" under every one of them would
+ * be the same sentence three times. `from` is optional and the row prints its
+ * name and what it does.
  */
 function wielderOfWonder(character) {
   const state = enchanterState(character);
@@ -643,7 +901,7 @@ function wielderOfWonder(character) {
   const rows = state.worn
     .map(getEnchantment)
     .filter(Boolean)
-    .map((enchantment) => standing(enchantment, null, `${enchantment.burden} Burden`));
+    .map((enchantment) => standing(enchantment, null, null));
 
   return {
     id: 'wielder-of-wonder',
@@ -711,61 +969,498 @@ export function recapCount(groups) {
  * printed cost for an ordinary card, and wherever the dial was left for the
  * ones that have none.
  *
+ * `price` is what the prompt settled on once the card's second half has had its
+ * say: an Overcast or a Multicast that costs more than the card prints, and a
+ * Blood Tithe that costs Health the card never printed at all. It arrives as
+ * whole numbers rather than as a card and a count, because the number the player
+ * was shown beside the way they tapped must be the number that leaves the sheet
+ * and nothing here should be able to work out a different one. See
+ * src/lib/overcast.js, which reads those prices off the card, and UsePrompt.jsx,
+ * which is where they are chosen. A request with no second half sends no price
+ * and is charged its printed cost exactly as it always was.
+ *
+ * Health goes through the ledger, because every other movement of Health on this
+ * sheet is logged and a tithe is one a player chose to pay. **And Willpower does
+ * now too**, on Jules's ask of 2026-09-03: "the cost in willpower need to be
+ * logged with the source and effect. Same when healed or damaged." A Health
+ * ledger has always answered "why am I on 12"; the Willpower column was the one
+ * pool that moved without leaving a word behind, so a player who cast four
+ * things and came back to a bar at 3 had nothing to read. The row names the card
+ * and where the card came from — see `spendNote` — and the two pools are written
+ * in one call so a use that costs both is one write.
+ *
  * `free` is the one way past that refusal: the prompt's own "Use it anyway",
  * for a table that rules a use through regardless. The use happens exactly as it
  * would have: the charge off the flask, the effect it lays, the window it opens.
- * Not one point leaves a pool. That is the whole difference, and it lives here
- * rather than in the prompt so a waved-through use is the same write wherever it
- * was tapped.
+ * Not one point leaves a pool, and no Health either. That is the whole
+ * difference, and it lives here rather than in the prompt so a waved-through use
+ * is the same write wherever it was tapped.
  */
-export function spendUse(request, character, mode, amount, { free = false } = {}) {
-  const ap = Number(amount ?? request.ap) || 0;
-  const wp = Number(request.wp) || 0;
+export function spendUse(request, character, mode, amount, { free = false, price = null } = {}) {
+  const ap = Number(price?.ap ?? amount ?? request.ap) || 0;
+  const wp = Number(price?.wp ?? request.wp) || 0;
+  const health = Math.max(0, Number(price?.health) || 0);
   const body = { ...(request.extra ?? {}) };
 
-  /* A weapon attack is what both kinds of rider were waiting for, and paying for
+  /* A weapon attack is what a Trickster's rider was waiting for, and paying for
      one is the moment the sheet can be sure the swing happened. "Lost on use",
-     from the Trickster's Developpement Notes, and "remove on the tracker on the
-     attack" from the Duelist's.
+     from the Trickster's Developpement Notes. Nothing here asks about the
+     outcome, so nothing here can be wrong about it: what an ambush buys is the
+     attempt, and the roll has happened.
 
-     Both are cleared off the same list in turn, so a Duelist who ambushed and
-     then laid a Wound loses both to one swing rather than whichever ran last.
      Started from whatever the request already put there, on the off chance a card
      ever carries an effects patch of its own.
 
+     **A Martial Move used to be cleared here too and no longer is.** Since
+     2026-09-02 a move is chosen inside the attack's own prompt and never lands on
+     the tracker at all, so there is nothing to take off: the Willpower is on the
+     pay button beside the swing's Action Points, and both leave together. That is
+     the same instant this used to fire in, with the round trip through a tracker
+     row taken out of the middle. See "added, not laid" in moves.js.
+
      Guarded on the card rather than on the character, because a creature's block
-     pays through here too and hands its own row in as `character`. No minion
-     card is tagged Weapon Attack, so nothing there is touched. */
+     pays through here too and hands its own row in as `character`. Several minion
+     cards *are* tagged Weapon Attack — an abomination's sweep since it was
+     written, and a skeleton's two swings and a ghoul's two since 2026-09-09,
+     because that tag is what lets a Martial Move ride one. Nothing there is
+     touched anyway: what this takes off is a Trickster's rider, and no creature
+     on the board has a Trickster's tracker. `spendTricks` finding nothing hands
+     back null and the row is left exactly as it was. */
   if (isWeaponAttack(request.card)) {
-    let effects = body.effects ?? character?.effects;
-    let cleared = false;
+    const withoutTricks = spendTricks(body.effects ?? character?.effects, request.card);
+    if (withoutTricks) body.effects = withoutTricks;
+  }
 
-    for (const spend of [spendTricks, spendMoves]) {
-      const kept = spend(effects);
-      if (kept) {
-        effects = kept;
-        cleared = true;
+  /* ---- and the free Hide, spent ----
+     A Trickster's SKULK opening is a row on the tracker and this is the moment
+     it is taken off: HIDE has been paid for, at whatever the chip said, and the
+     opening bought exactly that. Before the stir below, because the row it
+     spends is not a row acting breaks and the two never touch the same one. See
+     "the opening" in tricks.js. */
+  const spent = spendOpening(body.effects ?? character?.effects, request.card);
+  if (spent) body.effects = spent;
+
+  /* ---- and what moving cost you ----
+     A row its card says acting breaks is marked here, at the one moment the
+     sheet can be sure an action happened: when one is paid for. Nothing comes
+     off yet. The mark is read at your Turn End, which is the boundary the rule
+     is written about. See `stirEffects` in combatTurn.js.
+
+     **Before the cast below, and that ordering is the rule.** A Hide made while
+     already hidden marks the row that is standing and then lays a fresh one over
+     it, so hiding again is hiding again. Were it after, the Hide would stir the
+     row it had just written and reveal you at the end of your own turn. */
+  const stirred = stirEffects(body.effects ?? character?.effects);
+  if (stirred) body.effects = stirred;
+
+  /* ---- and what moving shakes off ----
+     "When the entity uses a move action the prone condition ends." A Move paid
+     for is a Move taken, so Prone comes off here, at the same moment the Hide
+     row is stirred and for the same reason. Read off the glossary in
+     statuses.js, so a second condition a Move ends is one line there. */
+  if (request.card?.id === 'move') {
+    const stood = movedEffects(body.effects ?? character?.effects);
+    if (stood) body.effects = stood;
+  }
+
+  /* ---- and what the use leaves running ----
+     "anytime an action is used that should tracker turn duration of something it
+     is auto added to the trackers", 2026-08-28. Until now the tracker was
+     entirely a thing you remembered to fill in: you cast a 10-turn spell, you
+     paid for it, and then you went back to the block and picked the same card out
+     of a list of a hundred and forty to say so. Nobody did it twice in a fight.
+
+     So a card that says how long it lasts lays its own row the moment it is paid
+     for. What lands is what the picker would have offered: the card's own printed
+     duration, or the fact that this sheet already knows how to bend a number for
+     it. See `trackedDuration` in combatTurn.js.
+
+     Laid rather than added, so recasting is a fresh count on one row and not two
+     rows of the same card. See `layEffect`, and the same-source law it quotes.
+
+     `request.extra` carrying an effects list of its own is the one thing that
+     stops it: an AMBUSH *is* a row on the tracker, laid deliberately with a rider
+     in it, and a second row read off the same card's prose would be the sheet
+     tracking one use twice. */
+  const cast = request.extra?.effects ? null : castEffect(request, character);
+  if (cast) body.effects = layEffect(body.effects ?? character?.effects, cast);
+
+  /* Waved through. The points are what an override withholds, and nothing else
+     about the use changes: everything below this guard is a pool moving, and
+     everything after it happens either way. */
+  if (!free) {
+    if (request.converts === 'reaction') {
+      // Anticipate spends nothing. The points cross from one pool to the other,
+      // and the dial has already been held inside what both can hold.
+      body.ap = character.ap - ap;
+      body.reaction = Math.min(character.reaction_max, character.reaction + ap);
+    } else {
+      if (ap > 0) {
+        if (mode === 'reaction') body.reaction = character.reaction - ap;
+        else body.ap = character.ap - ap;
       }
+      if (wp > 0) body.willpower = character.willpower - wp;
     }
-    if (cleared) body.effects = effects;
+
+    /* ---- and what moved, written down ----
+       One ledger row per pool that has one, in one write. Willpower first
+       because it is the common half: nearly every card that charges Willpower
+       charges nothing else, and a tithe is the rare one.
+
+       Floored at nothing for the reading rather than for the column: the prompt
+       has already refused a spend the pools cannot cover, so this only ever
+       agrees with the number written above it.
+
+       Action Points are deliberately not here. They are not a balance, they are
+       a turn's worth of points that come back at the bell, and a ledger of them
+       would be a hundred rows a session that nobody reads. */
+    const rows = [];
+
+    if (wp > 0) {
+      rows.push({
+        kind: 'willpower',
+        delta: -wp,
+        balance: Math.max(0, (Number(character?.willpower) || 0) - wp),
+        note: spendNote(request),
+      });
+    }
+
+    /* And the tithe, if one was taken. Written through the ledger rather than
+       straight onto the column, so "why am I on 12 Health" has an answer with the
+       spell's name in it. */
+    if (health > 0) {
+      const left = Math.max(0, (Number(character?.health) || 0) - health);
+      body.health = left;
+      rows.push({
+        kind: 'health',
+        delta: -health,
+        balance: left,
+        note: price?.note ?? `${request.name}: the tithe`,
+      });
+    }
+
+    if (rows.length > 0) body.ledger = ledgerRows(character, rows);
   }
 
-  /* Waved through. Everything the use *does* is already in the body; the points
-     are what an override withholds, so this is where it stops. */
-  if (free) return body;
+  /* ---- and what the card writes on its own ----
+     Two cards do. A DRAUGHT OF CLEANSING clears rows off the tracker and a LIFE
+     TREE TEA does everything a Long Rest does, and both of them printed the
+     promise long before anything kept it. "If there is trigger like long rest or
+     clean potion that do something do it", 2026-08-28. See onUse.js.
 
-  if (request.converts === 'reaction') {
-    // Anticipate spends nothing. The points cross from one pool to the other,
-    // and the dial has already been held inside what both can hold.
-    body.ap = character.ap - ap;
-    body.reaction = Math.min(character.reaction_max, character.reaction + ap);
-  } else {
-    if (ap > 0) {
-      if (mode === 'reaction') body.reaction = character.reaction - ap;
-      else body.ap = character.ap - ap;
-    }
-    if (wp > 0) body.willpower = character.willpower - wp;
-  }
+     **Last, and after the pools have been paid.** A trigger is handed the
+     character as this use has already left them, so it reads spent points, a
+     belt with the flask's charge gone and whatever row the cast above laid. That
+     is also the order the card describes: you pay six Action Points for the tea
+     and *then* you have the benefit of a Long Rest, so what the rest gives back
+     is what stands. Fired the same way for a use that was waved through, because
+     an override withholds the price and never the effect. */
+  const wrote = fireTrigger(request.card, { ...character, ...body });
+  if (wrote) Object.assign(body, wrote);
 
   return body;
+}
+
+/**
+ * The row a use leaves on the tracker, or null for a use that leaves nothing.
+ *
+ * Most of what a character plays leaves nothing. A sword swing resolves and is
+ * over, a Healing Potion moves a pool once, an Interact opens a door. What is
+ * left is the small set whose printed text says how long it runs, and that is
+ * exactly the set `trackedDuration` answers for.
+ *
+ * The row is named after the card and credited to whatever handed the card over,
+ * which is the same pair the picker writes: "Rain of Fire" under "Mycomancer -
+ * Rank 2", or under "Healing Potion - loop 1" when it came off the belt. The
+ * source is what a reader needs to find the thing again.
+ *
+ * No note. A row with a card behind it prints "Read the card" and opens it,
+ * which is better than any sentence this could copy out of it.
+ *
+ * -------------------------------------------------- what the picker may guess at
+ * **A vague duration is offered and never written.** `effectDuration` answers at
+ * two levels of confidence: a clause that says *how long* ("10 turns", "until a
+ * Long Rest", an Upkeep, "for 1 hour"), and a clause that only says the thing
+ * lasts at all ("lasts until", "while it is active"). The picker takes both,
+ * because a player reading a shelf can look at the label and decide. Writing a
+ * row nobody asked for cannot decide, and the second level is a guess about
+ * English rather than a reading of a rule.
+ *
+ * Three cards proved it inside an hour of this being wired. Every Reload in the
+ * codex "stays loaded until you Shoot them", which is the magazine the pips
+ * already draw. STABILIZE leaves somebody else "unconscious until healed", on
+ * somebody else's sheet. DISCORD opens "You bend the note until it is wrong",
+ * which is a sentence.
+ *
+ * A card carrying a rider is the exception, and it is not really one: it has no
+ * printed clock at all, and the reason to lay its row is that the sheet knows a
+ * number to bend for it. A WISP OF MIST that laid no row is a WISP OF MIST whose
+ * Movement Speed never moved. See `riderDuration` in combatTurn.js.
+ */
+export function castEffect(request, actor = null) {
+  const card = request?.card;
+  const duration = trackedDuration(card);
+  if (!duration || duration.vague) return null;
+
+  /* And the numbers the row is going to be measured against, where the *caster*
+     is the one who knows them. VIGOR raises a maximum Health by three times the
+     caster's Mind, and the sheet it lands on is the one sheet that cannot work
+     that out, so it is filled in here on the way over and confirmed at the far
+     end rather than asked for. A card that asks nothing gets no field at all.
+     See `answersFrom` in riders.js and AnswerWindow.jsx. */
+  const values = answersFrom(card, actor);
+
+  return {
+    name: shortName(card, request.name),
+    card: card.id,
+    turns: duration.turns,
+    until: duration.until,
+    from: request.source ?? '',
+    ...(values ? { values } : {}),
+  };
+}
+
+/**
+ * What that row will say, for the prompt that is about to write it.
+ *
+ * Said before the tap rather than discovered on the block afterwards, because a
+ * sheet that quietly starts counting things is a sheet you stop trusting. The
+ * duration is the card's own label, which is the same words the picker's dial
+ * shows: "10 turns", "Until a long rest", "Upkeep, each turn".
+ */
+export function castLine(request) {
+  const duration = trackedDuration(request?.card);
+  // The same test the write is made on, so the promise and the row cannot come
+  // apart: a vague duration is offered in the picker and never written here.
+  return duration && !duration.vague ? duration.label : null;
+}
+
+/* ------------------------------------------------------------ what a cast lays
+ *
+ * Jules, 2026-09-04: "if I use renew it applies the effect to the target. Or
+ * snake it create the poison status ... If something is created like with hard
+ * light in the target it should appear, become a target with proper health."
+ *
+ * Three things a cast can leave behind, and until now only the first was read:
+ *
+ *   its own row     what `castEffect` lays: the card, for as long as it says
+ *   conditions      what the card inflicts on the body it lands on, read off
+ *                   its prose by statuses.js: Poisoned, Rooted, a stack of
+ *                   Bleed. Each is a row of its own, with the glossary's clock
+ *                   where the card states none
+ *   a body          what it puts on the table with Health of its own
+ *
+ * `castPlan` reads all three at once, so the prompt that says what is about to
+ * happen and the chain that makes it happen read the same answer.
+ *
+ * --------------------------------------------------------------- whose tracker
+ * The card's own row used to go to the targets whenever any were picked, and
+ * that was right for RENEW and wrong for a wall: THORN RAMPART aimed at the
+ * one it roots would have moved the wall's ten turns onto the goblin. So the
+ * plan says where the row lands:
+ *
+ *   targets   a card whose whole effect is on the body it touches, with no
+ *             condition to carry it: RENEW, GIANT GROWTH, CELESTIAL EDICT
+ *   caster    a card that inflicts a condition (the target gets the condition
+ *             and the caster keeps the spell), one that puts a thing on the
+ *             table (the row is the thing's clock), and one anchored on the
+ *             caster or a place: "around you", "at a point you can see"
+ *   both      a card the caster keeps paying for. An Upkeep is the caster's
+ *             toll and the target's affliction at once
+ *
+ * A card that names no body at all is the caster's, with one exception, and it
+ * is the same exception the picker makes: a card that reaches for a thing
+ * somebody is holding lands on the one holding it. KINDLE WEAPON aimed at an
+ * ally is a row on the ally's sheet, which is what makes *their* swing come out
+ * Fire, and an Upkeep on the caster's, which is who pays the Willpower to keep
+ * it lit. See `heldThing` in targeting.js.
+ */
+
+/** The nouns a card lands on, as targeting.js reads them. */
+const BODY_WORD = /\b(?:entit(?:y|ies)|targets?|creatures?|enem(?:y|ies)|all(?:y|ies)|beings?)\b/i;
+
+/** A card anchored on its caster or on a place, so its row is the caster's. */
+const ANCHORED =
+  /\b(?:(?:at|on) a (?:location|point|spot)|around (?:you|yourself|a point)|centered on (?:a point|yourself)|drinking this|create a trail|you (?:conjure|create|raise|manifest|summon|call up|envelop yourself|enter|gain|sense|extend your senses|embody|feel|fold|propel yourself|turn yourself|may attempt to hide|attempt to hide|stay out of sight))\b/i;
+
+/** "binding you together": the caster is in it too. */
+const SHARED = /\b(?:you and|binding you|you together|yourself and)\b/i;
+
+/**
+ * Everything a confirmed use lays, and where.
+ *
+ *   own        the card's own row, or null (see castEffect)
+ *   laid       the condition rows for the targets, stacks already counted
+ *   offered    every condition the card names, certain and optional alike,
+ *              for the prompt to print and let the player tick
+ *   landsOn    'targets' | 'caster' | 'both', for `own`
+ *   conjured   the body the card puts on the table, or null
+ *
+ * `half` is whether the second half was paid for (its conditions count then),
+ * `riders` are the Martial Moves added to a swing (WOUND and REND inflict
+ * theirs), `statuses` are the optional condition ids the prompt ticked on, and
+ * `plan` is the roll plan, which is where a Bleed counts its stacks from.
+ */
+export function castPlan(request, actor, { half = false, riders = [], statuses = [], plan = [] } = {}) {
+  const card = request?.card ?? null;
+  const own = request?.extra?.effects ? null : castEffect(request, actor);
+
+  /* Every condition named, deduplicated with a certain reading winning over an
+     optional one, off the card and off whatever rides the swing. */
+  const named = new Map();
+  for (const source of [card, ...(riders ?? [])]) {
+    for (const hit of inflictedStatuses(source, { half })) {
+      const held = named.get(hit.id);
+      if (!held || (held.optional && !hit.optional)) named.set(hit.id, hit);
+    }
+  }
+  const offered = [...named.values()];
+  const ticked = new Set(statuses ?? []);
+  const laid = offered
+    .filter((hit) => !hit.optional || ticked.has(hit.id))
+    .flatMap((hit) => statusRows(hit, request, plan));
+
+  const conjured = conjuredBody(card, actor, request?.modifiers);
+
+  /* And the rows the *riders* leave behind, which nothing laid until
+     2026-09-20. A Martial Move is not only a die on the swing: BREACH takes 2
+     off the target's Defense until its next Turn End and GUARDED puts 1 on
+     yours until your next Turn Start, and both were printed and forgotten.
+     A move that leaves something running is a card with a duration and a rider,
+     exactly like a spell, so it lays exactly as a spell does.
+
+     Where each one lands is read off its own prose by `landing`, the same
+     function that places the request's own row: BREACH says "the target's" and
+     GUARDED says "your", which is the whole of the difference. A rider with no
+     rider or no duration lays nothing, which is most of them. */
+  const rode = [];
+  for (const one of riders ?? []) {
+    if (!cardHasRider(one?.id)) continue;
+    const row = castEffect({ card: one, name: one.name, source: request?.source }, actor);
+    if (!row) continue;
+    rode.push({ row, mine: landing(one, row, [], null) === 'caster' });
+  }
+
+  return {
+    own,
+    laid: [...laid, ...rode.filter((entry) => !entry.mine).map((entry) => entry.row)],
+    /* The ones that stay with whoever swung. Kept apart from `own` because a
+       use has exactly one card of its own and may carry several riders. */
+    mine: rode.filter((entry) => entry.mine).map((entry) => entry.row),
+    offered,
+    landsOn: landing(card, own, laid, conjured),
+    conjured,
+  };
+}
+
+/**
+ * The rows one inflicted condition becomes: the glossary's clock unless the
+ * card's own sentence states one, and one row per stack for the condition
+ * that stacks.
+ *
+ * "the target gains one stack of Bleed for each Damage Die this attack rolls"
+ * counts the dice the swing actually throws, Empowered and all, off the plan's
+ * first damage link. Any other stacking clause is one stack.
+ */
+function statusRows(hit, request, plan) {
+  const status = statusOf(hit.id);
+  if (!status) return [];
+
+  const clock = clauseClock(hit.clause);
+  const said = clock && !clock.vague ? clock : null;
+  const row = {
+    name: status.name,
+    card: request?.card?.id ?? null,
+    status: status.id,
+    turns: said ? said.turns : null,
+    until: said ? said.until : (status.until ?? null),
+    from: request?.source ?? '',
+  };
+
+  if (!status.stacks) return [row];
+
+  let count = 1;
+  if (/for each Damage Die/i.test(hit.clause)) {
+    const damage = (plan ?? []).find((link) => link.shape === 'value' && link.kind === 'damage');
+    const dice = (damage?.dice ?? []).reduce((sum, term) => sum + (Number(String(term).split('d')[0]) || 1), 0);
+    count = Math.max(1, dice);
+  }
+  return Array.from({ length: count }, () => ({ ...row }));
+}
+
+/** Where the card's own row goes when bodies were picked. See the note above. */
+function landing(card, own, laid, conjured) {
+  if (!own) return 'caster';
+  if (conjured) return 'caster';
+  if (laid.length > 0) return 'caster';
+
+  const prose = cardProse(card?.body);
+  const upkeep = card?.sub_name === 'Upkeep';
+
+  /* A card with no body in its text keeps its row, unless what it reached for
+     was a thing in somebody's hand. Then the hand is the target and the row is
+     theirs, an Upkeep the caster's as well. See the note above. */
+  if (!BODY_WORD.test(prose) && !heldThing(card)) return 'caster';
+  if (ANCHORED.test(prose)) return 'caster';
+  if (upkeep || SHARED.test(prose)) return 'both';
+  return 'targets';
+}
+
+/**
+ * The body a card puts on the table, with its numbers worked out for the
+ * caster, or null for the nearly every card that puts nothing there.
+ *
+ * Read off the card's own sentence: "has Health equal to [[10*stat]] and
+ * Defense equal to [[2*stat]]". A sentence that says *sacrifice* is a cost and
+ * not a body (GORE ARMOR, BLIGHT POLLEN's tithe), so it is skipped. Reflex and
+ * Grit fall back to the Defense, because a roll "against its Reflex" at a wall
+ * is judged by the one number it has.
+ */
+const HEALTH_OF = /\bHealth equal to \[\[([^\]]+)\]\]/i;
+const DEFENSE_OF = /\bDefense equal to \[\[([^\]]+)\]\]/i;
+
+export function conjuredBody(card, actor, modifiers = null) {
+  if (!card?.body) return null;
+
+  const stat = castStat(modifiers?.stat ?? card.stat ?? 'instinct', actor);
+  const worth = (expression) => resolveValue(expression, actor, stat, {}).flat;
+
+  for (const sentence of cardProse(card.body).split(/(?<=[.!?])\s+/)) {
+    if (/\bsacrific/i.test(sentence)) continue;
+    const health = HEALTH_OF.exec(sentence);
+    if (!health) continue;
+
+    const defense = DEFENSE_OF.exec(sentence);
+    const avoid = defense ? Math.max(0, Math.floor(worth(defense[1]))) : 0;
+    return {
+      name: card.name,
+      card: card.id,
+      health_max: Math.max(1, Math.floor(worth(health[1]))),
+      avoid,
+      reflex: avoid,
+      grit: avoid,
+      armor: 0,
+      owner: actor?.name ?? '',
+    };
+  }
+
+  return null;
+}
+
+/**
+ * The spend, minus the row it laid on the caster.
+ *
+ * A cast whose row goes to the bodies it was aimed at comes back off the
+ * caster's own tracker before the patch: filtered by the card rather than
+ * deleted wholesale, because on a weapon swing `body.effects` is also where a
+ * spent AMBUSH was just cleared and a wholesale delete would un-spend it. A
+ * standing row of the same card goes with it, since a redirected recast is the
+ * spell moving, and it must not run in two places off one source.
+ */
+export function withoutCast(body, own) {
+  if (!own || !Array.isArray(body?.effects)) return body;
+  return {
+    ...body,
+    effects: body.effects.filter((row) => !(row.card === own.card && !row.status)),
+  };
 }

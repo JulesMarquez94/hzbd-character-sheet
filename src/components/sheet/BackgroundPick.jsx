@@ -3,8 +3,11 @@ import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import TagFilter from './TagFilter.jsx';
 import useCodexArt from '../useCodexArt.js';
+import { Gated } from './parts.jsx';
 import { useTagFilter } from './useTagFilter.js';
 import PickBlock from './PickBlock.jsx';
+import { LearnSection } from './LineagePick.jsx';
+import { castModifier } from '../../lib/cardText.js';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useCardStack } from '../../context/card-stack.js';
 import {
@@ -12,22 +15,16 @@ import {
   backgroundState,
   backgroundTags,
   dropSkill,
+  skillAnswer,
   skillPicks,
   takeSkill,
   usedBackgroundTags,
 } from '../../lib/backgrounds.js';
-import {
-  armorSetOptions,
-  armorSetPieces,
-  beltSlotCount,
-  getItem,
-  newCustomId,
-  normalizeBelt,
-  normalizeEquipment,
-  normalizePack,
-  startingWeapons,
-} from '../../lib/items.js';
-import { appendLedger, formatNumber, newLedgerId } from '../../lib/characterModel.js';
+import { armorSetOptions, getItem, startingWeapons, weaponShelves } from '../../lib/items.js';
+import { getAttribute } from '../../lib/attributes.js';
+import { formatNumber, levelForXp } from '../../lib/characterModel.js';
+import { ARMOR_ORDER, buildKitPatch, buildReturnPatch } from '../../lib/kit.js';
+import { startingArmorRarity } from '../../lib/startingLevel.js';
 
 /**
  * Background — the life your character led before any of this started.
@@ -39,7 +36,7 @@ import { appendLedger, formatNumber, newLedgerId } from '../../lib/characterMode
  *
  * Choosing the background is only the first of three steps, so the block is
  * built as three, each one plainly unfinished until it is done: pick the trade,
- * keep your skills, take your kit. Taking a trade walks you straight through
+ * learn your skills, take your kit. Taking a trade walks you straight through
  * the other two rather than dropping you back on the sheet to find them: the
  * skill pool opens the moment the trade is yours, and the outfitter opens when
  * the skills are settled. Both are still buttons on the block afterwards, so
@@ -54,14 +51,34 @@ import { appendLedger, formatNumber, newLedgerId } from '../../lib/characterMode
  * Supplies through their ledgers. All of it lands in a single patch, and where
  * every piece went is written down so that handing it back undoes exactly that
  * and nothing else.
+ *
+ * ----------------------------------------------------------- the skill's ask
+ * A skill can leave a question behind it. Innate Spell Novice promises a spell
+ * from any school and names none, so the pool that taught it is where that gets
+ * answered: learn the skill and its own shelf opens underneath, in the same
+ * window, and the spell you name joins your hand behind it. Same shape the
+ * lineage chooser uses, and the same picker.
  */
-export default function BackgroundPick({ character, patch, step = null, readOnly = false }) {
+export default function BackgroundPick({
+  character,
+  patch,
+  step = null,
+  readOnly = false,
+  /* Whether a finished panel folds itself away. The ledger wants it to; the
+     Walkthrough, where this panel stands alone beside the lesson about it, does
+     not. See PickBlock.jsx. */
+  foldable = true,
+}) {
   /* Which window is open: the wall of trades, the skill pool, the outfitter, or
      nothing. The walking flag says whether we got here by taking a trade a moment
      ago, which is what decides whether closing one window opens the next. Opening
      the skill pool from the block on its own closes back to the block. */
   const [open, setOpen] = useState(null);
   const [walking, setWalking] = useState(false);
+  /* Which skill's own question the pool opens on, if it opens on one. A skill
+     that promises a spell and has not named one is reached in one tap from the
+     block rather than by scrolling a wall of skills you have already read. */
+  const [askOn, setAskOn] = useState(null);
   const codexArt = useCodexArt();
 
   const state = backgroundState(character);
@@ -80,6 +97,7 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
        here — a held kit pins the background, see the pin above — so the walk
        is always skills first, then the outfitter. */
     setWalking(true);
+    setAskOn(null);
     setOpen(skillPicks(next) > 0 ? 'skills' : 'kit');
   }
 
@@ -112,11 +130,18 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
             ? 'Chosen'
             : 'Half done'
       }
+      foldable={foldable}
+      summary={
+        background
+          ? `${background.name} · ${state.skills.map((skill) => skill.name).join(', ') || 'no skills'}`
+          : 'No background chosen yet.'
+      }
     >
       <p className="pick-lead">
         Your <b>background</b> is what you did before the adventure: the trade or the life you
-        came out of. It teaches you a few <b>skills</b>, and it decides what you walk in carrying:
-        a weapon, a set of armor and whatever coin and supplies that life left you.
+        came out of. It teaches you one, two or three <b>skills</b>, and it decides what you walk
+        in carrying. The two trade against each other, so a life that taught you more left you
+        less to spend.
       </p>
 
       {background ? (
@@ -143,11 +168,12 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
             character={character}
             patch={patch}
             readOnly={readOnly}
-            onOpen={() => {
+            onOpen={(skillId = null) => {
               setWalking(false);
+              setAskOn(skillId ?? null);
               setOpen('skills');
             }}
-            onCard={(skill) => stack?.openCard(skill)}
+            onCard={(card, modifiers = null) => stack?.openCard(card, modifiers)}
           />
 
           <KitSection
@@ -228,12 +254,22 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
 
       {open === 'skills' && background && (
         <SkillChooser
+          /* Keyed on where it opens, so the block's "answer what they left open"
+             lands on the question rather than on the view the window was last
+             left in. */
+          key={askOn ?? 'wall'}
+          startOn={askOn}
           state={state}
           character={character}
           readOnly={readOnly}
           walking={walking && !taken}
           onTake={(id) => patch({ background_skills: takeSkill(background, state.skillIds, id) })}
           onDrop={(id) => patch({ background_skills: dropSkill(background, state.skillIds, id) })}
+          /* A skill's own follow-up, written where every other card's choice is
+             written: one bag, keyed by the card that asked. */
+          onAnswer={(cardId, optionId) =>
+            patch({ choices: { ...(character?.choices ?? {}), [cardId]: optionId } })
+          }
           onClose={closeSkills}
         />
       )}
@@ -256,49 +292,88 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
  * What the trade taught you. The count is the whole point of the section, so
  * it sits in the heading rather than being inferred from how many rows are
  * showing — "1 of 3" reads as unfinished in a way three rows never will.
+ *
+ * A skill that taught a spell shows the spell under it, because that is what is
+ * actually on the sheet, and one that has not been asked yet says so in the
+ * place the spell would be. Neither is a card you can give back on its own: the
+ * spell leaves when the skill does.
  */
 function SkillSection({ state, character, patch, readOnly, onOpen, onCard }) {
-  const { background, skills, skillIds, picks, remaining } = state;
+  const { background, skills, skillIds, picks, remaining, asks, unanswered } = state;
+  const choices = character?.choices ?? {};
+  // The first skill still owing an answer, which is where the button below goes.
+  const owing = asks.find((skill) => !skillAnswer(skill, choices)) ?? null;
 
   return (
     <div className="pick-part">
       <span className="talent-summary-label">
         Skills
-        <span className={`pick-count${remaining ? ' is-open' : ''}`}>
+        <span className={`pick-count${remaining || unanswered ? ' is-open' : ''}`}>
           {skillIds.length} of {picks} chosen
         </span>
       </span>
 
       {skills.length > 0 ? (
         <div className="talent-rung-cards">
-          {skills.map((skill) => (
-            <div className="card-choice-row" key={skill.id}>
-              <CardBrief card={skill} character={character} onOpen={() => onCard(skill)} />
-              {!readOnly && (
-                <button
-                  type="button"
-                  className="btn btn-minimal btn-sm talent-drop pick-drop"
-                  onClick={() =>
-                    patch({ background_skills: dropSkill(background, skillIds, skill.id) })
-                  }
-                >
-                  Give {skill.name} back
-                </button>
-              )}
-            </div>
-          ))}
+          {skills.map((skill) => {
+            const picked = skillAnswer(skill, choices);
+            const modifiers = picked ? { choice: picked } : null;
+            // What the spell behind it is cast with. See SkillPick, same skill.
+            const taught = castModifier(skill.choice);
+
+            return (
+              <div className="card-choice-row" key={skill.id}>
+                <CardBrief
+                  card={skill}
+                  character={character}
+                  modifiers={modifiers}
+                  onOpen={() => onCard(skill, modifiers)}
+                />
+
+                {picked?.card && (
+                  <CardBrief
+                    card={picked.card}
+                    character={character}
+                    modifiers={taught}
+                    onOpen={() => onCard(picked.card, taught)}
+                  />
+                )}
+                {skill.choice && !picked && (
+                  <p className="pick-line">
+                    {skill.name} has not named {skill.choice.placeholder} yet.
+                  </p>
+                )}
+
+                {!readOnly && (
+                  <button
+                    type="button"
+                    className="btn btn-minimal btn-sm talent-drop pick-drop"
+                    onClick={() =>
+                      patch({ background_skills: dropSkill(background, skillIds, skill.id) })
+                    }
+                  >
+                    Give {skill.name} back
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       ) : (
         <p className="pick-line">
-          Nothing kept yet. {background.name} offers {background.skills.length} skills and lets you
-          keep {picks}.
+          Nothing learned yet. {background.name} offers {background.skills.length} skills and lets
+          you learn {picks === 1 ? 'one of them' : picks}.
         </p>
       )}
 
       {!readOnly && (
         <div className="pick-tools pick-tools-tight">
-          <button type="button" className="btn btn-sub btn-sm" onClick={onOpen}>
-            {remaining ? `Choose ${remaining} more` : 'Change your skills'}
+          <button type="button" className="btn btn-sub btn-sm" onClick={() => onOpen(owing?.id)}>
+            {remaining
+              ? `Choose ${remaining} more`
+              : unanswered
+                ? 'Answer what they left open'
+                : 'Change your skills'}
           </button>
         </div>
       )}
@@ -434,215 +509,9 @@ function KitLine({ label, value, note = null, onPeek = null }) {
 }
 
 /* --------------------------------------------------- handing the kit over *
- * The kit stocks your **inventory**; it never dresses you. Armor, weapons and
- * the odds and ends all land in the pack, and you equip what you want from the
- * Inventory tab — which is where equipping belongs, and which means the kit can
- * never argue with gear you are already holding.
- *
- * Both directions are plain functions over the character row: one builds the
- * patch that stocks it, the other the patch that undoes it. Neither touches the
- * component, and each returns a single patch so the pack and both purses move
- * together or not at all.
+ * Both directions live in src/lib/kit.js since 2026-09-08, because the
+ * Crossroads hands a kit over too and one receipt has to hand back either.
  */
-
-const ARMOR_ORDER = ['head', 'torso', 'legs'];
-const HANDS = ['main_hand', 'off_hand'];
-
-/**
- * The single patch that dresses a character and stocks the rest, and the record
- * of what went where.
- *
- * The kit puts everything where it belongs: the armor set on your body, the
- * weapon in your hand, the odds and ends on your belt, and whatever is left in
- * your pack. You chose these pieces a moment ago, so making you go and equip
- * them one at a time was busywork.
- *
- * Nothing is ever displaced. A slot or a loop that is already holding something
- * is left exactly as it is and the kit's piece goes to the pack instead, which
- * is what makes this safe to run on a character who is already carrying gear.
- */
-function buildKitPatch({ character, background, armorSet, weapons }) {
-  const kit = background.kit;
-  const equipment = normalizeEquipment(character.equipment);
-  const belt = normalizeBelt(character.belt);
-  const pack = normalizePack(character.pack);
-  const loops = beltSlotCount(character);
-
-  const granted = { equipment: {}, belt: [], pack: [] };
-
-  /** Somewhere to put it, or the pack. */
-  function wear(slot, id) {
-    if (equipment[slot]) {
-      pack.push(id);
-      granted.pack.push(id);
-      return;
-    }
-    equipment[slot] = id;
-    granted.equipment[slot] = id;
-  }
-
-  const pieces = armorSetPieces(armorSet);
-  for (const slot of ARMOR_ORDER) {
-    if (pieces[slot]) wear(slot, pieces[slot]);
-  }
-
-  // First weapon to the main hand, a second to the off hand.
-  for (const id of weapons) {
-    const free = HANDS.find((hand) => !equipment[hand]);
-    if (free) wear(free, id);
-    else {
-      pack.push(id);
-      granted.pack.push(id);
-    }
-  }
-
-  for (const id of kit.belt) {
-    const loop = belt.findIndex((entry, index) => index < loops && !entry);
-    if (loop === -1) {
-      pack.push(id);
-      granted.pack.push(id);
-      continue;
-    }
-    belt[loop] = { id, used: 0 };
-    granted.belt.push({ index: loop, id });
-  }
-
-  /* Written entries are minted with their own ids, so handing them back finds
-     exactly the ones this kit added and never a duplicate someone else wrote.
-     They are never anything the codex knows, so they can only go in the pack. */
-  for (const entry of kit.pack) {
-    const id = newCustomId();
-    pack.push({ id, name: entry.name, note: entry.note });
-    granted.pack.push(id);
-  }
-
-  const ts = new Date().toISOString();
-  const note = `${background.name} starting kit`;
-  const wealth = Math.max(0, Math.floor(Number(character.wealth) || 0)) + kit.coins;
-  const supplies = Math.max(0, Math.floor(Number(character.supplies) || 0)) + kit.supplies;
-
-  // A fresh row may have no ledger at all; both movements append onto whatever
-  // is there, so it has to start as a list.
-  let ledger = Array.isArray(character.ledger) ? character.ledger : [];
-  if (kit.coins > 0) {
-    ledger = appendLedger(
-      { ledger },
-      { id: newLedgerId(), ts, kind: 'wealth', delta: kit.coins, note, balance: wealth }
-    );
-  }
-  if (kit.supplies > 0) {
-    ledger = appendLedger(
-      { ledger },
-      { id: newLedgerId(), ts, kind: 'supplies', delta: kit.supplies, note, balance: supplies }
-    );
-  }
-
-  return {
-    equipment,
-    belt,
-    pack,
-    wealth,
-    supplies,
-    ledger,
-    background_kit: {
-      background: background.id,
-      armorSet,
-      weapons: [...weapons],
-      equipment: granted.equipment,
-      belt: granted.belt,
-      pack: granted.pack,
-      coins: kit.coins,
-      supplies: kit.supplies,
-      ts,
-    },
-  };
-}
-
-/**
- * The patch that gives a kit back, and a line saying what actually moved.
- *
- * Only what is still where the kit put it comes back: a slot the kit filled and
- * nobody has changed since, a loop still holding the flask it clipped there, an
- * id still sitting in the pack. Gear swapped out, a potion drunk, a note thrown
- * away: all left alone. The purse is the exception, since coins and supplies
- * are fungible, so the amounts issued are simply subtracted and neither is
- * dragged below zero to make the sum work.
- */
-function buildReturnPatch({ character, kit }) {
-  const wanted = [...kit.pack];
-  const pack = normalizePack(character.pack).filter((entry) => {
-    const id = typeof entry === 'string' ? entry : entry.id;
-    const at = wanted.indexOf(id);
-    if (at === -1) return true;
-    wanted.splice(at, 1);
-    return false;
-  });
-
-  // A slot is only stripped when it still holds the very piece the kit put
-  // there. Anything worn since is somebody's decision, not the kit's.
-  const equipment = normalizeEquipment(character.equipment);
-  let stripped = 0;
-  for (const [slot, id] of Object.entries(kit.equipment ?? {})) {
-    if (equipment[slot] === id) {
-      equipment[slot] = null;
-      stripped += 1;
-    }
-  }
-
-  const belt = normalizeBelt(character.belt);
-  let unclipped = 0;
-  for (const { index, id } of kit.belt ?? []) {
-    if (belt[index]?.id === id) {
-      belt[index] = null;
-      unclipped += 1;
-    }
-  }
-
-  const issued = kit.pack.length + Object.keys(kit.equipment ?? {}).length + (kit.belt ?? []).length;
-  const returned = kit.pack.length - wanted.length + stripped + unclipped;
-
-  const ts = new Date().toISOString();
-  const note = 'Starting kit handed back';
-  const wealthBefore = Math.max(0, Math.floor(Number(character.wealth) || 0));
-  const suppliesBefore = Math.max(0, Math.floor(Number(character.supplies) || 0));
-  const wealth = Math.max(0, wealthBefore - kit.coins);
-  const supplies = Math.max(0, suppliesBefore - kit.supplies);
-
-  let ledger = Array.isArray(character.ledger) ? character.ledger : [];
-  if (wealth !== wealthBefore) {
-    ledger = appendLedger(
-      { ledger },
-      { id: newLedgerId(), ts, kind: 'wealth', delta: wealth - wealthBefore, note, balance: wealth }
-    );
-  }
-  if (supplies !== suppliesBefore) {
-    ledger = appendLedger(
-      { ledger },
-      {
-        id: newLedgerId(),
-        ts,
-        kind: 'supplies',
-        delta: supplies - suppliesBefore,
-        note,
-        balance: supplies,
-      }
-    );
-  }
-
-  const kept = issued - returned;
-  return {
-    patch: { equipment, belt, pack, wealth, supplies, ledger, background_kit: null },
-    summary:
-      `Kit handed back. ${returned} of ${issued} pieces returned, ` +
-      `${formatNumber(wealthBefore - wealth)} ¢ and ${formatNumber(
-        suppliesBefore - supplies
-      )} Supplies taken back.` +
-      (kept > 0
-        ? ` ${kept} had already moved on and ${kept === 1 ? 'was' : 'were'} left alone.`
-        : ''),
-  };
-}
-
 
 /* ----------------------------------------------------------- the outfitter */
 
@@ -655,8 +524,19 @@ function buildReturnPatch({ character, kit }) {
  * the read**. Nobody should have to pick a weapon by its name alone.
  */
 function KitOutfitter({ background, character, patch, onClose }) {
-  const sets = armorSetOptions();
+  /* The tier the kit dresses you in follows the level the kit is taken at:
+     Common at level 1, Rare from 6, Epic from 10. A character made above level 1
+     takes the kit at that level, which is the whole point of the rule. See
+     startingArmorRarity in startingLevel.js. */
+  const level = levelForXp(character.xp);
+  const rarity = startingArmorRarity(level);
+  const sets = armorSetOptions(rarity);
   const guns = startingWeapons();
+  /* The rack, cut on the attribute each weapon is swung on. Every Common weapon
+     in the codex answers with one of the three, so this is three shelves today;
+     a rack that ever came out as one draws as one unheaded wall of chips, the
+     way it always did. See `weaponShelves` in items.js. */
+  const racks = weaponShelves(guns) ?? [{ shelf: { id: 'all', label: '' }, items: guns }];
   const stack = useCardStack();
 
   // Deliberately unchosen to begin with: pre-selecting the first set would
@@ -693,31 +573,34 @@ function KitOutfitter({ background, character, patch, onClose }) {
       footer={
         <>
           <span className="spacer" />
-          <button
-            type="button"
+          <Gated
             className="btn btn-take btn-sm"
-            disabled={!ready}
-            title={ready ? undefined : reason}
+            why={ready ? null : reason}
             onClick={() => {
-              patch(buildKitPatch({ character, background, armorSet, weapons }));
+              patch(buildKitPatch({ character, background, armorSet, weapons, rarity }));
               onClose();
             }}
           >
             {ready ? 'Take the kit' : reason}
-          </button>
+          </Gated>
         </>
       }
     >
       <p className="frame-foot" style={{ marginTop: 0 }}>
-        Taken once, at level 1. The set you choose goes <b>on</b>, the weapon goes in your hand and
+        Taken once. The set you choose goes <b>on</b>, the weapon goes in your hand and
         the trade&rsquo;s odds and ends go on your <b>belt</b>; anything that has nowhere to go waits
         in your pack, and a slot you have already filled is never disturbed. Coins and Supplies go
         through their ledgers, and you can hand the whole thing back afterwards.
       </p>
+      {rarity !== 'Common' && (
+        <p className="frame-foot" style={{ marginTop: 0 }}>
+          At level {level} every set is offered at its <b>{rarity}</b> tier rather than Common.
+        </p>
+      )}
 
       <section className="kit-step">
         <h4 className="kit-step-head">
-          Armor <span className="kit-step-note">one full Common set, all three pieces</span>
+          Armor <span className="kit-step-note">one full {rarity} set, all three pieces</span>
         </h4>
         <div className="kit-options">
           {sets.map((set) => (
@@ -757,35 +640,50 @@ function KitOutfitter({ background, character, patch, onClose }) {
           {needed > 1 ? 'Weapons' : 'Weapon'}{' '}
           <span className="kit-step-note">
             {needed > 1
-              ? 'two: tap to choose, ⓘ to read'
-              : 'one Common and unenchanted: tap to choose, ⓘ to read'}
+              ? 'two, shelved by the attribute they are swung on: tap to choose, ⓘ to read'
+              : 'one Common and unenchanted, shelved by the attribute it is swung on: tap to choose, ⓘ to read'}
           </span>
         </h4>
-        <div className="kit-chips">
-          {guns.map((weapon) => (
-            <span
-              className={`kit-chip${weapons.includes(weapon.id) ? ' is-picked' : ''}`}
-              key={weapon.id}
-            >
-              <button
-                type="button"
-                className="kit-chip-take"
-                onClick={() => toggleWeapon(weapon.id)}
-              >
-                {weapon.name}
-              </button>
-              <button
-                type="button"
-                className="kit-chip-peek"
-                onClick={() => peek(weapon.id)}
-                aria-label={`Read the ${weapon.name} card`}
-                title={`Read the ${weapon.name} card`}
-              >
-                ⓘ
-              </button>
-            </span>
-          ))}
-        </div>
+
+        {/* Cut in three, on the attribute each one is swung on. This is the
+            first weapon anybody in the game ever picks, and it was a wall of
+            twenty names: the one thing that decides whether a weapon is any use
+            to this character was behind the ⓘ on every one of them. The chip
+            wall itself is unchanged, it is drawn three times. */}
+        {racks.map(({ shelf, items }) => (
+          <div className="kit-shelf" key={shelf.id}>
+            {shelf.label && (
+              <span className="kit-shelf-label" style={{ color: getAttribute(shelf.id)?.color }}>
+                {shelf.label}
+              </span>
+            )}
+            <div className="kit-chips">
+              {items.map((weapon) => (
+                <span
+                  className={`kit-chip${weapons.includes(weapon.id) ? ' is-picked' : ''}`}
+                  key={weapon.id}
+                >
+                  <button
+                    type="button"
+                    className="kit-chip-take"
+                    onClick={() => toggleWeapon(weapon.id)}
+                  >
+                    {weapon.name}
+                  </button>
+                  <button
+                    type="button"
+                    className="kit-chip-peek"
+                    onClick={() => peek(weapon.id)}
+                    aria-label={`Read the ${weapon.name} card`}
+                    title={`Read the ${weapon.name} card`}
+                  >
+                    ⓘ
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
       </section>
 
       <section className="kit-step">
@@ -889,7 +787,7 @@ function BackgroundChooser({ current, character, readOnly, onTake, onClose }) {
           <section className="talent-page-rank">
             <div className="talent-page-rank-head">
               <span className="talent-page-rank-label">
-                {shown.name} · Skills, keep {skillPicks(shown)} of {shown.skills.length}
+                {shown.name} · Skills, learn {skillPicks(shown)} of {shown.skills.length}
               </span>
               {/* Which page this is, rather than when the cards arrived. A
                   trade nobody has taken yet is being read, not held: the pool
@@ -953,7 +851,8 @@ function BackgroundChooser({ current, character, readOnly, onTake, onClose }) {
                   <span className="talent-tile-line">{background.tagline}</span>
                   <TagRow background={background} />
                   <span className="talent-tile-buy">
-                    {skillPicks(background)} skills · {formatNumber(background.kit.coins)} ¢ ·{' '}
+                    {skillPicks(background)} {skillPicks(background) === 1 ? 'skill' : 'skills'} ·{' '}
+                    {formatNumber(background.kit.coins)} ¢ ·{' '}
                     {formatNumber(background.kit.supplies)} Supplies
                     {background.kit.weapons > 1 ? ' · 2 weapons' : ''}
                   </span>
@@ -974,7 +873,7 @@ function KitPreview({ background }) {
   return (
     <section className="kit-strip">
       <span className="kit-strip-cell">
-        <b>{skillPicks(background)}</b> skills
+        <b>{skillPicks(background)}</b> {skillPicks(background) === 1 ? 'skill' : 'skills'}
       </span>
       <span className="kit-strip-cell">
         <b>{kit.weapons}</b> weapon{kit.weapons === 1 ? '' : 's'}
@@ -1001,65 +900,177 @@ function KitPreview({ background }) {
  * The pool, printed as cards, with the take button under each. A skill is a
  * paragraph of rules text — it has to be readable in full before it is chosen,
  * which is why these are cards at their real footprint and not a list of names.
+ *
+ * Two views. Taking a skill that leaves a question open hands the *window* to
+ * that question: Innate Spell Novice promises a spell and names none, so naming
+ * one is the rest of the same decision and the pool steps aside for it. It used
+ * to wait in a section under the wall, where a player who had stopped reading at
+ * the skill they wanted never saw it, and Done stays shut until it is answered.
  */
-function SkillChooser({ state, character, readOnly, walking = false, onTake, onDrop, onClose }) {
+export function SkillChooser({
+  state,
+  character,
+  readOnly,
+  walking = false,
+  startOn = null,
+  onTake,
+  onDrop,
+  onAnswer,
+  onClose,
+}) {
   const stack = useCardStack();
-  const { background, skillIds, picks, remaining } = state;
+  const { background, skillIds, picks, remaining, asks, unanswered } = state;
+  const choices = character?.choices ?? {};
+
+  /* Which question has the window, or null for the pool. Read back out of `asks`
+     rather than trusted: a skill given back takes its question with it, and the
+     view falls to the pool rather than to a card nobody holds. */
+  const [asking, setAsking] = useState(startOn);
+  const open = asks.find((skill) => skill.id === asking) ?? null;
+  const picked = open ? skillAnswer(open, choices) : null;
+
+  /* A skill you hold that has not named its spell is not a finished pick, so the
+     window will not call itself done. Named on the button, since a disabled Done
+     with no reason on it is the window refusing without saying why.
+
+     **And a trade short of its skills is the same kind of unfinished** (Jules,
+     2026-09-10). One of two chosen closed clean and walked you on to the kit,
+     which left a background holding half of what it teaches and nothing on the
+     screen making you go back for the other half. The count in the footer had
+     been saying so in red the whole time. A reader is gated by neither. */
+  const owing = asks.find((skill) => !skillAnswer(skill, choices)) ?? null;
+  const shut = readOnly
+    ? null
+    : owing
+      ? `${owing.name} has not named ${owing.choice.placeholder} yet`
+      : remaining > 0
+        ? `${remaining} more ${remaining === 1 ? 'skill' : 'skills'} to choose from ${
+            background.name
+          }. Take ${remaining === 1 ? 'it' : 'them'} off the wall and this closes.`
+        : null;
+
+  /* Taking one is two things when the skill asks something: the skill is yours,
+     and the window becomes the question it left. */
+  const take = (id) => {
+    onTake(id);
+    if (background.skills.find((skill) => skill.id === id)?.choice) setAsking(id);
+  };
 
   return (
     <Modal
-      title={`${background.name}: Keep ${picks} Skills`}
+      title={
+        open
+          ? `${open.name}: What It Asks You`
+          : `${background.name}: Learn ${picks === 1 ? 'a Skill' : `${picks} Skills`}`
+      }
       onClose={onClose}
       size="page"
       accent={PICK_ACCENTS.background}
       footer={
         <>
-          <span className={`pick-count${remaining ? ' is-open' : ''}`}>
+          <span className={`pick-count${remaining || unanswered ? ' is-open' : ''}`}>
             {skillIds.length} of {picks} chosen
           </span>
           <span className="spacer" />
+          {open && (
+            <button
+              type="button"
+              className="btn btn-minimal btn-sm"
+              onClick={() => setAsking(null)}
+            >
+              ← All {background.name} skills
+            </button>
+          )}
           {/* During the walk this button is the way on to the kit, and says so.
-              Opened on its own it only closes. */}
-          <button type="button" className="btn btn-take btn-sm" onClick={onClose}>
-            {walking ? 'Next: your kit' : 'Done'}
-          </button>
+              Opened on its own it only closes. Either way it waits on a skill
+              still to choose and on a spell still to name, and it says which of
+              the two it is waiting on rather than only greying out. */}
+          <Gated className="btn btn-take btn-sm" why={shut} onClick={onClose}>
+            {!shut
+              ? walking
+                ? 'Next: your kit'
+                : 'Done'
+              : owing
+                ? 'One spell to name'
+                : `${remaining} still to choose`}
+          </Gated>
         </>
       }
     >
-      <p className="frame-foot" style={{ marginTop: 0 }}>
-        {remaining
-          ? `Keep ${remaining} more. You can give any of them back and pick again, since none of this is spent until you leave level 1 behind.`
-          : 'All chosen. Give one back to swap it for another.'}
-      </p>
+      {open ? (
+        <>
+          <p className="frame-foot" style={{ marginTop: 0 }}>
+            <b>{open.name}</b> is yours, and it is not finished. {open.choice.prompt} Tap one and
+            the skill rewrites itself around it. You can change it later, from the block or from
+            here.
+          </p>
 
-      <div className="card-brief-wall">
-        {background.skills.map((skill) => {
-          const held = skillIds.includes(skill.id);
-          const full = !held && remaining === 0;
+          <LearnSection
+            card={open}
+            picked={picked}
+            character={character}
+            art={open.art_url ?? null}
+            readOnly={readOnly}
+            onPick={(optionId) => onAnswer(open.id, optionId)}
+          />
+        </>
+      ) : (
+        <>
+          <p className="frame-foot" style={{ marginTop: 0 }}>
+            {remaining
+              ? `Learn ${remaining} more. You can give any of them back and pick again, since none of this is spent until you leave level 1 behind.`
+              : unanswered
+                ? 'All chosen. One of them is still waiting on an answer.'
+                : 'All chosen. Give one back to swap it for another.'}
+          </p>
 
-          return (
-            <CardBrief
-              key={skill.id}
-              card={skill}
-              character={character}
-              held={held}
-              onOpen={() => stack?.openCard(skill)}
-            >
-              {!readOnly && (
-                <button
-                  type="button"
-                  className={`btn btn-sm card-brief-btn ${held ? 'btn-minimal talent-drop' : 'btn-take'}`}
-                  disabled={full}
-                  title={full ? 'No picks left, give one back first' : undefined}
-                  onClick={() => (held ? onDrop(skill.id) : onTake(skill.id))}
+          <div className="card-brief-wall">
+            {background.skills.map((skill) => {
+              const held = skillIds.includes(skill.id);
+              const full = !held && remaining === 0;
+              const picked = held ? skillAnswer(skill, choices) : null;
+              const modifiers = picked ? { choice: picked } : null;
+
+              return (
+                <CardBrief
+                  key={skill.id}
+                  card={skill}
+                  character={character}
+                  held={held}
+                  modifiers={modifiers}
+                  onOpen={() => stack?.openCard(skill, modifiers)}
                 >
-                  {held ? 'Chosen, give it back' : full ? 'No picks left' : 'Keep this skill'}
-                </button>
-              )}
-            </CardBrief>
-          );
-        })}
-      </div>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      className={`btn btn-sm card-brief-btn ${held ? 'btn-minimal talent-drop' : 'btn-take'}`}
+                      disabled={full}
+                      title={full ? 'No picks left, give one back first' : undefined}
+                      onClick={() => (held ? onDrop(skill.id) : take(skill.id))}
+                    >
+                      {held ? 'Learned, give it back' : full ? 'No picks left' : 'Learn this skill'}
+                    </button>
+                  )}
+                </CardBrief>
+              );
+            })}
+          </div>
+
+          {/* And the way back into a question from the pool. The shelf itself is the
+              view above, which is where taking the skill landed you. */}
+          {owing && (
+            <div className="pick-tools pick-tools-tight">
+              <button
+                type="button"
+                className="btn btn-sub btn-sm"
+                onClick={() => setAsking(owing.id)}
+              >
+                {owing.name} has not named {owing.choice.placeholder} yet. Answer it
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </Modal>
   );
 }

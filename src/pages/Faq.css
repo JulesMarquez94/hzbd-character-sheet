@@ -1,0 +1,59 @@
+/*
+ * The FAQ page. One narrow column and nothing else, for the same reason the
+ * legal pages get one: this is a page to be read rather than played with, and
+ * the interface's panels and copper invite skimming.
+ *
+ * The accordion itself is FaqList.css. Everything here is the page around it.
+ */
+
+.faq-page {
+  min-height: 100vh;
+  background: var(--bg-black);
+  color: var(--text-silver);
+}
+
+.faq-sheet {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 3.5rem 1.25rem 4rem;
+}
+
+.faq-head {
+  border-bottom: 1px solid rgba(120, 139, 149, 0.18);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.faq-head .heading-page {
+  margin-bottom: 0.9rem;
+}
+
+.faq-lede {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.faq-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 3rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid rgba(120, 139, 149, 0.18);
+}
+
+.faq-nav a {
+  color: var(--copper);
+  font-family: var(--font-headings);
+  font-size: 0.78rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.faq-nav a:hover {
+  color: var(--text-bright);
+}

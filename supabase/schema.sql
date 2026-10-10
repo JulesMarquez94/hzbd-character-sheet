@@ -198,8 +198,14 @@ create table if not exists public.characters (
 
   -- flexible bags
   -- Worn / wielded gear: one item id (or null) per slot, e.g.
-  -- { "head": "iron-helm", "torso": null, "legs": null, "main_hand": null, "off_hand": null }.
-  -- Ids point into the item codex in src/lib/items.js.
+  -- { "head": "iron-helm", "torso": null, "legs": null, "main_hand": null,
+  --   "off_hand": null, "bag": "leather-rucksack" }.
+  -- Ids point into the item codex in src/lib/items.js. `bag` is in here rather
+  -- than in a column of its own for the reason the map exists: there is one of
+  -- it and it is one place. What it holds is not stored anywhere, because a bag
+  -- holds nothing -- it raises the weight the whole sheet may come to. See
+  -- carryCapacity in src/lib/items.js. A row saved before the slot existed has
+  -- no key and reads as no bag.
   equipment    jsonb not null default '{}'::jsonb,
   -- Item ids carried in the pack — where unequipped gear goes.
   pack         jsonb not null default '[]'::jsonb,
@@ -229,6 +235,12 @@ create table if not exists public.characters (
   -- null until the kit is taken.
   background_skills jsonb not null default '[]'::jsonb,
   background_kit    jsonb,
+  -- Where an unfinished way in stopped, or null:
+  --   { "path": "guided", "step": "talent", "ts": "..." }
+  -- The Walkthrough writes the step it is on so a character can be picked up
+  -- where it was left, from any device, and finishing any way in clears it.
+  -- See src/lib/walkthrough.js.
+  creation     jsonb,
   -- Everything a level handed out that is not a talent, keyed by the level
   -- that granted it. Level 1 records the attribute spread, and every odd level
   -- after it records that level's point and the skill learned there:
@@ -241,6 +253,10 @@ create table if not exists public.characters (
   -- Choices a card leaves to the player, keyed by the card that asks:
   -- { "chromatic-resistance": "red", "dark-bargain": "mind" }.
   choices      jsonb not null default '{}'::jsonb,
+  -- How much of a limited card has been spent, keyed by the card:
+  -- { "sprout-wings": 1 }. A card that says you must rest before using it again
+  -- carries `uses` and `recharge` in the codex, and a rest empties this.
+  card_uses    jsonb not null default '{}'::jsonb,
   lore         jsonb not null default '{}'::jsonb,  -- { appearance, personality, backstory, allies, notes }
   -- Session logs, newest first. A title and a note, plus the session it belongs
   -- to when the table counts them:
@@ -255,22 +271,48 @@ create table if not exists public.characters (
   -- is the creature's own tracker in the same shape as the character's own
   -- `effects` column below. See src/lib/minions.js.
   minions      jsonb not null default '{}'::jsonb,
+  -- The bargains a talent set struck, keyed by the set that granted one:
+  -- { "pactbound": { kind, form, weapon, progress, picks, extra, missions,
+  -- log } }. Which of the two pacts it is, what shape the pact-bound weapon
+  -- wears, the lifetime progress fed into it, every boon claimed off it, the
+  -- standing missions and the feeding log. See src/lib/pact.js.
+  pact         jsonb not null default '{}'::jsonb,
+  -- The vows a talent set bound this character to, keyed by the set that
+  -- granted one: { "oathbound": { oath, faith, log, sanctuary } }. Which of the
+  -- ten Oaths was sworn, where the Faith bar stands, every deed that moved it
+  -- and the ground that has been consecrated. See src/lib/oathbound.js.
+  oath         jsonb not null default '{}'::jsonb,
 
   -- Left-to-right order of the Character-tab blocks, e.g. [3,1,2,6,4,5]. The
   -- six numbered ones are every character's; a set that grants a creature adds
   -- "minion:<set>" and "minion:<set>:bar" to the list, so it is no longer a
-  -- fixed length. The app repairs anything malformed on read.
+  -- fixed length. A null in the list is a cell the player deliberately left
+  -- blank. The app repairs anything malformed on read.
   block_order  jsonb not null default '[1,2,3,4,5,6]'::jsonb,
+
+  -- And how many columns that tab lays them out in, 1 to 9. A ceiling rather
+  -- than a promise: the grid takes this many or as many as the window is wide
+  -- enough for, whichever is fewer.
+  block_columns int not null default 3,
+
+  -- And which of those blocks were taken off the grid and pinned to a side
+  -- tray: {"left": [id, id], "right": [id, id]}, two slots a side, a null for
+  -- an empty slot. A tray does not scroll with the tab. See normalizeTrays.
+  block_trays  jsonb not null default '{}'::jsonb,
 
   -- Left-to-right order of the Abilities tab's blocks, by source id
   -- ("lineage", "talent:mycomancer", "gear"). No fixed length: a source
   -- appears when it is taken and goes when it is handed back.
   ability_order jsonb not null default '[]'::jsonb,
+  ability_columns int not null default 3,
+  ability_trays jsonb not null default '{}'::jsonb,
 
   -- Left-to-right order of the Inventory tab's three fixed blocks, by block id
   -- ("armor", "weapons", "belt"). The inventory itself is not in the list: it
   -- is a row wide and always sits under the other three.
   inventory_order jsonb not null default '[]'::jsonb,
+  inventory_columns int not null default 3,
+  inventory_trays jsonb not null default '{}'::jsonb,
 
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
@@ -284,6 +326,12 @@ alter table public.characters add column if not exists grit       int   not null
 alter table public.characters add column if not exists block_order jsonb not null default '[1,2,3,4,5,6]'::jsonb;
 alter table public.characters add column if not exists ability_order jsonb not null default '[]'::jsonb;
 alter table public.characters add column if not exists inventory_order jsonb not null default '[]'::jsonb;
+alter table public.characters add column if not exists block_columns int not null default 3;
+alter table public.characters add column if not exists ability_columns int not null default 3;
+alter table public.characters add column if not exists inventory_columns int not null default 3;
+alter table public.characters add column if not exists block_trays jsonb not null default '{}'::jsonb;
+alter table public.characters add column if not exists ability_trays jsonb not null default '{}'::jsonb;
+alter table public.characters add column if not exists inventory_trays jsonb not null default '{}'::jsonb;
 alter table public.characters add column if not exists equipment  jsonb not null default '{}'::jsonb;
 alter table public.characters add column if not exists pack       jsonb not null default '[]'::jsonb;
 alter table public.characters add column if not exists belt       jsonb not null default '[]'::jsonb;
@@ -308,6 +356,14 @@ alter table public.characters add column if not exists minions     jsonb not nul
 -- The form's *clock* is not in here: it is the `shield` column above, because the
 -- card says the form lasts "until all Shield is gone".
 alter table public.characters add column if not exists feral       jsonb not null default '{}'::jsonb;
+-- And one that hands you a debt: the Pact of Ordenance's bargain, keyed by the
+-- set that granted it. Which pact was struck, the weapon's current form, the
+-- lifetime progress fed into it and the boons claimed off it.
+alter table public.characters add column if not exists pact        jsonb not null default '{}'::jsonb;
+-- And one that hands you a vow: the Oathbound, keyed by the set that granted it.
+-- Which Oath was sworn, where the Faith bar stands between -100 and 100, the
+-- ledger of every deed that moved it and the ground consecrated as a Sanctuary.
+alter table public.characters add column if not exists oath        jsonb not null default '{}'::jsonb;
 -- Rings, chains and cloaks. A plain list of item ids with no ceiling on it, which
 -- is why it is not in the `equipment` map: that has one key per place and a fixed
 -- set of keys, and a character wearing nine rings is wearing nine rings.
@@ -319,6 +375,14 @@ alter table public.characters add column if not exists trinkets    jsonb not nul
 -- the item instance: two silver rings with different workings, a named piece, and
 -- one handed to another player as a code.
 alter table public.characters add column if not exists forged      jsonb not null default '{}'::jsonb;
+-- What a card that limits itself has spent, keyed by the card id. "Once per long
+-- rest" is a codex rider of `uses: 1, recharge: 'Long Rest'`, the same pair a
+-- flask on the belt carries, and this counts what has gone. The rest that the
+-- card names is what empties it again.
+alter table public.characters add column if not exists card_uses   jsonb not null default '{}'::jsonb;
+-- Where an unfinished Walkthrough stopped, so the dashboard can offer the way
+-- back to it. Null for every finished character. See src/lib/walkthrough.js.
+alter table public.characters add column if not exists creation    jsonb;
 
 create index if not exists characters_user_id_idx on public.characters (user_id);
 
@@ -344,6 +408,58 @@ create policy "characters: owner or admin update" on public.characters
 drop policy if exists "characters: owner or admin delete" on public.characters;
 create policy "characters: owner or admin delete" on public.characters
   for delete using (auth.uid() = user_id or public.is_admin());
+
+-- ----------------------------------------------------------------------------
+--  How many characters each tier may keep in its vault.
+--
+--  The third ceiling, and the last of the three to get a guard. It was a bare
+--  constant in src/lib/api.js until 2026-09-06 and the interface was the only
+--  thing that counted, which was fine while the number was the same for
+--  everybody and stopped being fine the moment one tier bought a bigger vault.
+--  characterSlots in src/lib/tiers.js is the twin; this is what enforces it.
+--
+--  Jules, 2026-09-06: three free, twenty-five paid.
+--
+--  The device shelf is not in here and never will be: a character kept in a
+--  browser has no row and no account, and LOCAL_CHARACTER_SLOTS in
+--  src/lib/localCharacters.js is its own ceiling.
+-- ----------------------------------------------------------------------------
+create or replace function public.character_slots(tier text)
+returns int
+language sql immutable
+as $$
+  select case tier
+           when 'admin'   then 50
+           when 'friend'  then 25
+           when 'premium' then 25
+           else 3
+         end;
+$$;
+
+create or replace function public.guard_character_slots()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  -- The SQL editor and the service role pass, the way every other guard here
+  -- lets them.
+  if auth.uid() is null then
+    return new;
+  end if;
+
+  if (select count(*) from public.characters c where c.user_id = new.user_id)
+     >= public.character_slots(public.account_tier()) then
+    raise exception 'Every character slot on this account is full.';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists characters_guard_slots on public.characters;
+create trigger characters_guard_slots
+  before insert on public.characters
+  for each row execute function public.guard_character_slots();
 
 -- ----------------------------------------------------------------------------
 --  ABILITIES  (the cards)
@@ -452,6 +568,913 @@ create policy "inventory: owner delete" on public.inventory_items
   );
 
 -- ----------------------------------------------------------------------------
+--  CAMPAIGNS
+--  One row per table being run. The creator is the DM and the only writer;
+--  players link a character to it through campaign_members below.
+-- ----------------------------------------------------------------------------
+create table if not exists public.campaigns (
+  id            uuid primary key default gen_random_uuid(),
+  dm_user_id    uuid not null references auth.users on delete cascade,
+
+  name          text not null default 'Unnamed Campaign',
+  -- A sentence for the card on the Campaigns page.
+  description   text not null default '',
+  -- The picture on that card, as a plain link the way portraits are.
+  thumbnail_url text,
+  -- The join code handed to players. Generated by the app (see makeJoinCode in
+  -- src/lib/campaigns.js); join_campaign below is how it is spent, so nobody
+  -- ever has to be able to *read* a campaign they are not yet in.
+  code          text not null unique,
+
+  -- Left-to-right order of the Overview tab's blocks, by block id
+  -- ("member:<character_id>", "minion:<character_id>:<set>"). No fixed length:
+  -- a block appears when a character is linked and goes when they leave, so the
+  -- app repairs the list against what actually exists on read, the way the
+  -- Abilities tab does (see normalizeSourceOrder).
+  overview_order   jsonb not null default '[]'::jsonb,
+  -- And how many columns that tab lays them out in, 1 to 9. A ceiling rather
+  -- than a promise, exactly as on the character sheet.
+  overview_columns int   not null default 3,
+  -- And which of those blocks are pinned to a side tray rather than laid on the
+  -- grid: {"left": [id, id], "right": [id, id]}. See normalizeTrays.
+  overview_trays   jsonb not null default '{}'::jsonb,
+
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+-- For databases created before these columns existed.
+alter table public.campaigns add column if not exists overview_trays jsonb not null default '{}'::jsonb;
+
+create index if not exists campaigns_dm_user_id_idx on public.campaigns (dm_user_id);
+
+alter table public.campaigns enable row level security;
+
+-- One row per character sitting at a table. `user_id` is the character's owner,
+-- written by the trigger below rather than trusted from the client, so "which
+-- campaigns am I in" is always answered by the truth.
+create table if not exists public.campaign_members (
+  id           uuid primary key default gen_random_uuid(),
+  campaign_id  uuid not null references public.campaigns  on delete cascade,
+  character_id uuid not null references public.characters on delete cascade,
+  user_id      uuid not null references auth.users        on delete cascade,
+  joined_at    timestamptz not null default now(),
+  unique (campaign_id, character_id)
+);
+
+create index if not exists campaign_members_campaign_id_idx on public.campaign_members (campaign_id);
+create index if not exists campaign_members_user_id_idx     on public.campaign_members (user_id);
+
+alter table public.campaign_members enable row level security;
+
+-- SECURITY DEFINER for the same reason is_admin() is: policies on campaigns and
+-- campaign_members both ask it, and a policy that queried campaign_members from
+-- inside campaign_members would recurse.
+create or replace function public.is_campaign_member(cid uuid)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select exists (
+    select 1 from public.campaign_members m
+    where m.campaign_id = cid and m.user_id = auth.uid()
+  );
+$$;
+
+-- ----------------------------------------------------------------------------
+--  How many campaigns each tier may run. The ladder's twin lives in
+--  src/lib/tiers.js (campaignSlots), which is what the interface offers;
+--  this pair is what actually enforces it, because the client is not trusted
+--  with a ceiling. Counted per DM on insert.
+--
+--  Jules, 2026-09-06: one campaign free, five paid.
+-- ----------------------------------------------------------------------------
+create or replace function public.campaign_slots(tier text)
+returns int
+language sql immutable
+as $$
+  select case tier
+           when 'admin'   then 20
+           when 'friend'  then 5
+           when 'premium' then 5
+           else 1
+         end;
+$$;
+
+create or replace function public.guard_campaign_slots()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  -- The SQL editor and the service role pass, the way the tier guard lets them.
+  if auth.uid() is null then
+    return new;
+  end if;
+  if (select count(*) from public.campaigns c where c.dm_user_id = new.dm_user_id)
+     >= public.campaign_slots(public.account_tier()) then
+    raise exception 'Every campaign slot on this account is full.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists campaigns_guard_slots on public.campaigns;
+create trigger campaigns_guard_slots
+  before insert on public.campaigns
+  for each row execute function public.guard_campaign_slots();
+
+-- ----------------------------------------------------------------------------
+--  A membership row always names the character's real owner. The client never
+--  sends user_id at all: whatever it claimed is overwritten with the owner of
+--  the character being linked, so a forged row cannot put a campaign in
+--  somebody else's list.
+-- ----------------------------------------------------------------------------
+create or replace function public.claim_member_owner()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  select ch.user_id into new.user_id
+  from public.characters ch
+  where ch.id = new.character_id;
+
+  if new.user_id is null then
+    raise exception 'No character exists at that link.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists campaign_members_claim_owner on public.campaign_members;
+create trigger campaign_members_claim_owner
+  before insert on public.campaign_members
+  for each row execute function public.claim_member_owner();
+
+-- A campaign is read by the table sitting at it: the DM, its members, an admin.
+drop policy if exists "campaigns: table read" on public.campaigns;
+create policy "campaigns: table read" on public.campaigns
+  for select using (
+    dm_user_id = auth.uid()
+    or public.is_campaign_member(id)
+    or public.is_admin()
+  );
+
+drop policy if exists "campaigns: dm insert" on public.campaigns;
+create policy "campaigns: dm insert" on public.campaigns
+  for insert with check (dm_user_id = auth.uid());
+
+drop policy if exists "campaigns: dm update" on public.campaigns;
+create policy "campaigns: dm update" on public.campaigns
+  for update using (dm_user_id = auth.uid() or public.is_admin())
+  with check (dm_user_id = auth.uid() or public.is_admin());
+
+drop policy if exists "campaigns: dm delete" on public.campaigns;
+create policy "campaigns: dm delete" on public.campaigns
+  for delete using (dm_user_id = auth.uid() or public.is_admin());
+
+-- The roster is read by the same table that reads the campaign.
+drop policy if exists "campaign_members: table read" on public.campaign_members;
+create policy "campaign_members: table read" on public.campaign_members
+  for select using (
+    public.is_campaign_member(campaign_id)
+    or exists (select 1 from public.campaigns c
+               where c.id = campaign_members.campaign_id
+                 and c.dm_user_id = auth.uid())
+    or public.is_admin()
+  );
+
+-- Only the DM links characters directly (by sheet link). A player joining with
+-- the code goes through join_campaign below, which is SECURITY DEFINER and so
+-- needs no policy of its own.
+drop policy if exists "campaign_members: dm insert" on public.campaign_members;
+create policy "campaign_members: dm insert" on public.campaign_members
+  for insert with check (
+    exists (select 1 from public.campaigns c
+            where c.id = campaign_members.campaign_id
+              and c.dm_user_id = auth.uid())
+    or public.is_admin()
+  );
+
+-- The DM removes anyone; a player removes their own character.
+drop policy if exists "campaign_members: dm or own delete" on public.campaign_members;
+create policy "campaign_members: dm or own delete" on public.campaign_members
+  for delete using (
+    user_id = auth.uid()
+    or exists (select 1 from public.campaigns c
+               where c.id = campaign_members.campaign_id
+                 and c.dm_user_id = auth.uid())
+    or public.is_admin()
+  );
+
+-- ----------------------------------------------------------------------------
+--  Joining by code. SECURITY DEFINER so the lookup can see a campaign the
+--  caller cannot yet read: the code is the invitation, and holding it is the
+--  whole of the proof. The dash in a printed code is decoration, so it is
+--  ignored on both sides of the comparison.
+-- ----------------------------------------------------------------------------
+create or replace function public.join_campaign(join_code text, sheet_id uuid)
+returns uuid
+language plpgsql security definer set search_path = public
+as $$
+declare
+  camp_id uuid;
+begin
+  if auth.uid() is null then
+    raise exception 'Sign in to join a campaign.';
+  end if;
+
+  select c.id into camp_id
+  from public.campaigns c
+  where upper(replace(c.code, '-', '')) = upper(replace(trim(join_code), '-', ''));
+
+  if camp_id is null then
+    raise exception 'No campaign answers to that code.';
+  end if;
+
+  if not exists (select 1 from public.characters ch
+                 where ch.id = sheet_id and ch.user_id = auth.uid()) then
+    raise exception 'Only a character you own can be linked.';
+  end if;
+
+  insert into public.campaign_members (campaign_id, character_id, user_id)
+  values (camp_id, sheet_id, auth.uid())
+  on conflict (campaign_id, character_id) do nothing;
+
+  return camp_id;
+end;
+$$;
+
+-- ----------------------------------------------------------------------------
+--  THE EVENT LOG
+--  What happened at the table, one row per thing that happened, insert only.
+--
+--  A character sitting at a campaign writes here every time it does something:
+--  a card played, a rest taken, a turn crossed. Every member reads the whole
+--  log, so a player watching their own sheet sees the fight going on around it
+--  without anybody having to say it out loud.
+--
+--  Insert only, deliberately. Nothing updates a row and nothing deletes one but
+--  the sweep at the bottom, because a log that can be edited after the fact is
+--  not a log. It is also the channel the plan builds targeted casting on later
+--  (see data/README.md): an event is already the whole account of an action, so
+--  a future delivery is a reader of these rows rather than a second table.
+-- ----------------------------------------------------------------------------
+create table if not exists public.campaign_events (
+  id           uuid primary key default gen_random_uuid(),
+  -- A gapless-enough count for reading in order and for a cursor later. The
+  -- clock is not enough on its own: two players acting in the same millisecond
+  -- must still land in some order, and every reader must agree which.
+  seq          bigint generated always as identity,
+
+  campaign_id  uuid not null references public.campaigns  on delete cascade,
+  -- Null for an event the table itself raised rather than a character. Set
+  -- null rather than cascade on a deleted sheet: what happened still happened.
+  character_id uuid references public.characters on delete set null,
+  user_id      uuid not null references auth.users on delete cascade,
+
+  -- 'use' | 'rest' | 'turn'. Kept as text rather than an enum so a new kind is
+  -- a deploy of the app and not a migration.
+  kind         text not null,
+  -- The name that acted, copied at the time. Denormalized on purpose: a
+  -- character can be renamed or deleted, and a log that then reads "someone
+  -- cast Fireball" has lost the only thing worth keeping.
+  --
+  -- It is not always a player: a bonded creature, a risen undead and a conjured
+  -- wall each sign their own rows. `data.portrait` is that body's own face and
+  -- `data.owner` is whoever it answers to, both copied at the time for the same
+  -- reason this is. See `ownerOf` in src/lib/campaignLog.js.
+  actor        text not null default '',
+  -- What was done, and the one line under it. "Fireball", "2 Action Points and
+  -- 4 Willpower · Quick Bar".
+  title        text not null default '',
+  detail       text not null default '',
+  -- The receipt: the card id the row opens, what it cost, how it was tapped.
+  -- Read by the block for the tap-through and by nothing for arithmetic.
+  data         jsonb not null default '{}'::jsonb,
+
+  created_at   timestamptz not null default now()
+);
+
+-- The one query there is: this campaign, newest first.
+create index if not exists campaign_events_feed_idx
+  on public.campaign_events (campaign_id, seq desc);
+-- And the one the sweep runs.
+create index if not exists campaign_events_age_idx
+  on public.campaign_events (campaign_id, created_at);
+
+alter table public.campaign_events enable row level security;
+
+-- The actor is taken from the session, never from the client, exactly as
+-- campaign_members takes its owner. Two things are checked rather than trusted:
+-- the character is one you own, and it is actually sitting at this table. A DM
+-- may write an event with no character on it; that is the table speaking.
+create or replace function public.claim_event_actor()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  is_dm boolean;
+begin
+  if auth.uid() is null then
+    raise exception 'Sign in to write to a campaign log.';
+  end if;
+
+  new.user_id = auth.uid();
+
+  select c.dm_user_id = auth.uid() into is_dm
+  from public.campaigns c where c.id = new.campaign_id;
+
+  if new.character_id is not null then
+    -- An admin edits any sheet on this site, so an admin may speak for one.
+    if not exists (select 1 from public.characters ch
+                   where ch.id = new.character_id
+                     and (ch.user_id = auth.uid() or public.is_admin())) then
+      raise exception 'Only a character you own can act in a log.';
+    end if;
+    if not exists (select 1 from public.campaign_members m
+                   where m.campaign_id = new.campaign_id
+                     and m.character_id = new.character_id) then
+      raise exception 'That character does not sit at this table.';
+    end if;
+  elsif not coalesce(is_dm, false) then
+    raise exception 'Only the Game Master can write a table event.';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists campaign_events_claim_actor on public.campaign_events;
+create trigger campaign_events_claim_actor
+  before insert on public.campaign_events
+  for each row execute function public.claim_event_actor();
+
+-- Read by the table sitting at the campaign, the same reach that reads the
+-- roster.
+drop policy if exists "campaign_events: table read" on public.campaign_events;
+create policy "campaign_events: table read" on public.campaign_events
+  for select using (
+    public.is_campaign_member(campaign_id)
+    or exists (select 1 from public.campaigns c
+               where c.id = campaign_events.campaign_id
+                 and (c.dm_user_id = auth.uid() or public.is_admin()))
+  );
+
+-- Written by the same table. The trigger above is what makes this safe: the
+-- policy answers "may you speak here", the trigger answers "as whom".
+drop policy if exists "campaign_events: table insert" on public.campaign_events;
+create policy "campaign_events: table insert" on public.campaign_events
+  for insert with check (
+    public.is_campaign_member(campaign_id)
+    or exists (select 1 from public.campaigns c
+               where c.id = campaign_events.campaign_id
+                 and (c.dm_user_id = auth.uid() or public.is_admin()))
+  );
+
+-- There is deliberately no update policy and no delete policy. A log nobody can
+-- rewrite is the whole point: the sweep below runs as its owner, and so does the
+-- one clear there is, which is the Game Master's alone.
+
+-- ----------------------------------------------------------------------------
+--  Clearing a table log.
+--
+--  The one deliberate hole in "insert only". A table that has played six
+--  sessions has six sessions of arithmetic behind it, and starting a new
+--  chapter should not mean scrolling past the last one forever. So the Game
+--  Master, and nobody else, may empty their own table's log.
+--
+--  Not a policy, because a delete policy is a standing permission and this is a
+--  single act: SECURITY DEFINER, with the one check written where nobody can
+--  reach around it. A player at the table cannot call it for a table they only
+--  sit at, and neither can a Game Master call it for somebody else's.
+--
+--  It hands back how many rows went, which is what the app says afterwards. The
+--  word that it happened is an ordinary event written by the client that asked
+--  for it, so every open copy of the block hears the same insert everything
+--  else arrives on and reads itself again.
+-- ----------------------------------------------------------------------------
+create or replace function public.clear_campaign_log(campaign uuid)
+returns integer
+language plpgsql security definer set search_path = public
+as $$
+declare
+  gone integer;
+begin
+  if auth.uid() is null then
+    raise exception 'Sign in to clear a table log.';
+  end if;
+
+  if not exists (select 1 from public.campaigns c
+                 where c.id = campaign
+                   and (c.dm_user_id = auth.uid() or public.is_admin())) then
+    raise exception 'Only the Game Master can clear this table log.';
+  end if;
+
+  delete from public.campaign_events e where e.campaign_id = campaign;
+  get diagnostics gone = row_count;
+  return gone;
+end;
+$$;
+
+revoke all on function public.clear_campaign_log(uuid) from public;
+grant execute on function public.clear_campaign_log(uuid) to authenticated;
+
+-- ----------------------------------------------------------------------------
+--  How long an event lives. Ninety days: long enough that a campaign meeting
+--  once a fortnight can still read back over half a year of sessions, short
+--  enough that a table playing weekly for years does not carry every arrow it
+--  ever loosed.
+--
+--  Swept on insert rather than on a schedule, because there is no scheduler
+--  here. One insert in fifty pays for it, which on a table mid-fight is a sweep
+--  every few minutes and on a quiet one is a sweep whenever somebody plays.
+--  SECURITY DEFINER because the policies above give nobody a delete.
+-- ----------------------------------------------------------------------------
+create or replace function public.trim_campaign_events()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if random() < 0.02 then
+    delete from public.campaign_events e
+    where e.campaign_id = new.campaign_id
+      and e.created_at < now() - interval '90 days';
+  end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists campaign_events_trim on public.campaign_events;
+create trigger campaign_events_trim
+  after insert on public.campaign_events
+  for each row execute function public.trim_campaign_events();
+
+
+-- ----------------------------------------------------------------------------
+--  ENCOUNTERS
+--  A named pile of enemies, prepared by the Game Master for one campaign.
+--
+--  The bestiary itself is not here. A creature is codex data, shipped with the
+--  site the way spells and weapons are (src/lib/creatures.js), so this table
+--  holds only what a table actually did to one: which creatures are in tonight's
+--  fight, and how much Health each of them has left.
+--
+--  Everything about one encounter lives in `foes`, one jsonb array, rather than
+--  one row per enemy. Six goblins losing Health over one turn is then one write
+--  instead of six, every reader gets a consistent picture of the whole fight in
+--  one payload, and an enemy needs no policy of its own. The app holds it to 60
+--  enemies (FOES_MAX in src/lib/encounters.js).
+--
+--  Read and written by the Game Master alone, which is Jules's ruling of
+--  2026-08-31: half of what is on this row is the answer to "how much has the
+--  boss got left". Opening it to the players is one policy below and one tab
+--  condition in the app, and nothing else has to move.
+-- ----------------------------------------------------------------------------
+create table if not exists public.encounters (
+  id           uuid primary key default gen_random_uuid(),
+  campaign_id  uuid not null references public.campaigns on delete cascade,
+
+  name         text not null default 'Unnamed Encounter',
+  -- A line for the Game Master: where it happens, what sets it off.
+  notes        text not null default '',
+
+  -- The pile itself. One entry per enemy on the table:
+  --   { key, creature, name, health, shield, ap, reaction, willpower,
+  --     effects, broken }
+  -- A pool that is absent reads as full, which is what lets an enemy laid down
+  -- a moment ago stand there at full Health with nothing written for it. See
+  -- normalizeFoes in src/lib/encounters.js.
+  foes         jsonb not null default '[]'::jsonb,
+
+  -- The fight, once the pile is being played:
+  --   { live, round, at, order: [{ kind, ref, name, init }], awaiting }
+  -- The order is rolled once and stored, so a Game Master who reloads mid-fight
+  -- finds it here rather than in anybody's memory. `awaiting` is the character
+  -- whose turn has been announced and not yet ended. Empty until Roll
+  -- Initiative is pressed. See THE RUN in src/lib/encounters.js.
+  run          jsonb not null default '{}'::jsonb,
+
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+
+-- The table above is created "if not exists", so a campaign that already has
+-- encounters on it does not grow a column from the definition. This is what
+-- adds the fight to one that was made before there was a fight to have.
+alter table public.encounters add column if not exists run jsonb not null default '{}'::jsonb;
+
+-- Whether the players at the table may see this encounter's enemy pools. Off
+-- by default, which is the ruling that built the table: "how much has the boss
+-- got left" is the Game Master's. The checkbox on the encounter view flips it
+-- per encounter, and the read policy below is where it takes effect. Note that
+-- sharing opens the whole row to seated members, the Game Master's notes
+-- included — the flag is a curtain, not a filter.
+alter table public.encounters add column if not exists share_health boolean not null default false;
+
+create index if not exists encounters_campaign_id_idx on public.encounters (campaign_id);
+
+alter table public.encounters enable row level security;
+
+-- The Game Master of the campaign and an admin, always; the seated members
+-- too, for an encounter whose health has been shared. Writing stays the Game
+-- Master's alone in every case.
+drop policy if exists "encounters: dm read" on public.encounters;
+create policy "encounters: dm read" on public.encounters
+  for select using (
+    exists (select 1 from public.campaigns c
+            where c.id = encounters.campaign_id
+              and (c.dm_user_id = auth.uid() or public.is_admin()))
+    or (encounters.share_health and public.is_campaign_member(encounters.campaign_id))
+  );
+
+drop policy if exists "encounters: dm insert" on public.encounters;
+create policy "encounters: dm insert" on public.encounters
+  for insert with check (
+    exists (select 1 from public.campaigns c
+            where c.id = encounters.campaign_id
+              and (c.dm_user_id = auth.uid() or public.is_admin()))
+  );
+
+drop policy if exists "encounters: dm update" on public.encounters;
+create policy "encounters: dm update" on public.encounters
+  for update using (
+    exists (select 1 from public.campaigns c
+            where c.id = encounters.campaign_id
+              and (c.dm_user_id = auth.uid() or public.is_admin()))
+  );
+
+drop policy if exists "encounters: dm delete" on public.encounters;
+create policy "encounters: dm delete" on public.encounters
+  for delete using (
+    exists (select 1 from public.campaigns c
+            where c.id = encounters.campaign_id
+              and (c.dm_user_id = auth.uid() or public.is_admin()))
+  );
+
+-- ----------------------------------------------------------------------------
+--  FORGED CREATURES
+--  Creatures a table made for itself, as opposed to the ones shipped with the
+--  site in src/lib/creatures.js.
+--
+--  Jules, 2026-09-02: "For premium user they can create personal one with a cap.
+--  They have to edit or remove existing one if they want to do new one. Admins
+--  can create one that are added for everyone. Free and Friends for now cannot."
+--
+--  Two scopes, and the whole of the difference between them is who reads the
+--  row:
+--    'personal'  its author's, counted against their slots below.
+--    'codex'     an admin's, published into the bestiary everybody browses.
+--
+--  The whole creature is one jsonb `body` rather than twenty columns. It is a
+--  shape plus a handful of coefficients (see the header of creatures.js), the
+--  app already has one function that cleans it (normalizeBody in
+--  src/lib/customCreatures.js), and a stat block gains nothing from being
+--  queryable field by field: the only queries there are are "mine" and
+--  "published". A new coefficient is then a deploy of the app rather than a
+--  migration, which is the same trade `foes` and `run` make on encounters.
+-- ----------------------------------------------------------------------------
+create table if not exists public.custom_creatures (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users on delete cascade,
+
+  -- 'personal' | 'codex'. Checked here as well as in the policy below, so a row
+  -- can never hold a third value whatever writes it.
+  scope      text not null default 'personal'
+             check (scope in ('personal', 'codex')),
+
+  -- The creature itself: name, type, rank, level, xp, primary/secondary, bonus,
+  -- the Health and Willpower conversions, Defense, Armor, Speed, hit die, the
+  -- card ids it has learned, and its lore. See normalizeBody, which is the one
+  -- reader that decides what any of it means.
+  body       jsonb not null default '{}'::jsonb,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists custom_creatures_user_id_idx on public.custom_creatures (user_id);
+-- The one query the whole site makes of the published half.
+create index if not exists custom_creatures_scope_idx on public.custom_creatures (scope);
+
+alter table public.custom_creatures enable row level security;
+
+-- ----------------------------------------------------------------------------
+--  How many creatures of their own each tier may keep. CREATURE_SLOTS in
+--  src/lib/tiers.js is the same table again, and that one is only what the
+--  interface offers: this pair is what enforces it. Change one and change the
+--  other. Only 'codex' rows escape the count, because those are an admin's
+--  publications rather than their own shelf.
+--
+--  Jules, 2026-09-06: "For enemies and other creation have like 50", and a
+--  friend account is a premium account that was given rather than bought. So
+--  the exception that used to sit here is gone: 'friend' now matches 'premium'
+--  on every ceiling, and the ladder is monotonic again.
+-- ----------------------------------------------------------------------------
+create or replace function public.creature_slots(tier text)
+returns int
+language sql immutable
+as $$
+  select case tier
+           when 'admin'   then 60
+           when 'friend'  then 50
+           when 'premium' then 50
+           else 0
+         end;
+$$;
+
+create or replace function public.guard_creature_slots()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  -- The SQL editor and the service role pass, the way every other guard here
+  -- lets them: that is how a creature gets seeded by hand.
+  if auth.uid() is null then
+    return new;
+  end if;
+
+  -- A publication is not a slot. It is gated by the policy below instead, which
+  -- is the one that asks whether the caller is an admin at all.
+  if new.scope = 'codex' then
+    return new;
+  end if;
+
+  if (select count(*) from public.custom_creatures c
+      where c.user_id = new.user_id and c.scope = 'personal')
+     >= public.creature_slots(public.account_tier()) then
+    raise exception 'Every creature slot on this account is full.';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists custom_creatures_guard_slots on public.custom_creatures;
+create trigger custom_creatures_guard_slots
+  before insert on public.custom_creatures
+  for each row execute function public.guard_creature_slots();
+
+-- ----------------------------------------------------------------------------
+--  Who reads a forged creature.
+--
+--  A published one is read by everybody signed in, which is the point of
+--  publishing it.
+--
+--  A personal one is read by its author, by an admin, and by anybody signed in
+--  who is looking at a row that names it. That last clause is the one worth
+--  explaining: an encounter stores its enemies by creature id, and an encounter
+--  whose Health has been shared is readable by the players at that table (see
+--  the encounters policies). A player who could read the encounter but not the
+--  creature would be shown an enemy the app then silently dropped, and the next
+--  write would persist the loss. So the read follows the encounter.
+--
+--  The `exists` walks encounters the caller can already read and asks whether
+--  this creature's id appears in the pile. It is bounded by the encounters that
+--  caller sits at, which is a handful of rows, and only ever runs for a
+--  personal creature somebody else made.
+-- ----------------------------------------------------------------------------
+drop policy if exists "custom_creatures: read" on public.custom_creatures;
+create policy "custom_creatures: read" on public.custom_creatures
+  for select using (
+    scope = 'codex'
+    or user_id = auth.uid()
+    or public.is_admin()
+    or exists (
+      select 1
+      from public.encounters e
+      join public.campaigns c on c.id = e.campaign_id
+      where (c.dm_user_id = auth.uid()
+             or (e.share_health and public.is_campaign_member(e.campaign_id)))
+        and e.foes @> jsonb_build_array(
+              jsonb_build_object('creature', 'custom:' || custom_creatures.id::text))
+    )
+  );
+
+-- Written by its author, and only an admin may publish. A policy cannot
+-- restrict a single column on its own, but it can read one: `scope <> 'codex' or
+-- is_admin()` is the whole of "Admins can create one that are added for
+-- everyone", said on the insert and again on the update so a personal creature
+-- cannot be promoted by editing it.
+drop policy if exists "custom_creatures: owner insert" on public.custom_creatures;
+create policy "custom_creatures: owner insert" on public.custom_creatures
+  for insert with check (
+    user_id = auth.uid()
+    and (scope <> 'codex' or public.is_admin())
+  );
+
+drop policy if exists "custom_creatures: owner update" on public.custom_creatures;
+create policy "custom_creatures: owner update" on public.custom_creatures
+  for update using (user_id = auth.uid() or public.is_admin())
+  with check (
+    (user_id = auth.uid() or public.is_admin())
+    and (scope <> 'codex' or public.is_admin())
+  );
+
+drop policy if exists "custom_creatures: owner delete" on public.custom_creatures;
+create policy "custom_creatures: owner delete" on public.custom_creatures
+  for delete using (user_id = auth.uid() or public.is_admin());
+
+-- ============================================================================
+--  BILLING
+--
+--  What Stripe knows, mirrored here, and nothing else.
+--
+--  Three tables and one function, and the shape of it is one rule: **the
+--  browser never writes any of this and never decides its own tier.** A tier is
+--  derived from a subscription, a subscription is written only by the webhook
+--  handler running as the service role, and the webhook only believes what it
+--  re-fetched from Stripe's own API. Every table below is readable by its owner
+--  and writable by nobody, which in RLS is said by giving it a select policy
+--  and no others.
+--
+--  The hook this plugs into already existed: guard_account_tier() above refuses
+--  any change to profiles.role unless the caller is an admin or has no
+--  auth.uid() at all, which is exactly the service role. So the whole payment
+--  system is the handler plus these tables, and not one line of the tier ladder
+--  had to move to make room for it.
+--
+--  See supabase/functions/stripe-webhook/index.ts for the other half.
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+--  Which Stripe customer is which account.
+--
+--  One row per account that has ever reached the checkout, written the first
+--  time they do. It is the join between two id spaces, and it is what lets an
+--  event that names only a customer (an invoice, a card that expired) find the
+--  account it belongs to.
+-- ----------------------------------------------------------------------------
+create table if not exists public.billing_customers (
+  user_id              uuid primary key references auth.users on delete cascade,
+  -- 'stripe' today. Here so that a second processor is a value rather than a
+  -- migration, the same trade campaign_events.kind makes.
+  provider             text not null default 'stripe',
+  provider_customer_id text not null unique,
+  created_at           timestamptz not null default now()
+);
+
+alter table public.billing_customers enable row level security;
+
+-- ----------------------------------------------------------------------------
+--  The subscriptions themselves.
+--
+--  A mirror, not a ledger: one row per Stripe subscription, overwritten in
+--  place every time Stripe says something about it. Nothing here is arithmetic
+--  and nothing here is the truth. The truth is in Stripe, and this is the copy
+--  the sheet can read without a network call.
+--
+--  `status` is Stripe's own word, kept as text rather than an enum so that a
+--  status Stripe invents later is a deploy of the app rather than a migration.
+--  The ones that mean "you have paid for this" are listed once, in
+--  apply_entitlements below, and nowhere else.
+-- ----------------------------------------------------------------------------
+create table if not exists public.subscriptions (
+  id                   text primary key,            -- sub_... , Stripe's id
+  user_id              uuid not null references auth.users on delete cascade,
+  provider             text not null default 'stripe',
+
+  status               text not null,               -- active | trialing | past_due | canceled | unpaid | incomplete | ...
+  price_id             text,
+  -- Whether it is set to stop at the end of the paid period. A subscription
+  -- can be `active` and already cancelled, and the account page has to be able
+  -- to say so rather than promising a renewal that is not coming.
+  cancel_at_period_end boolean not null default false,
+  current_period_end   timestamptz,
+  canceled_at          timestamptz,
+  ended_at             timestamptz,
+
+  created_at           timestamptz not null default now(),
+  updated_at           timestamptz not null default now()
+);
+
+create index if not exists subscriptions_user_id_idx on public.subscriptions (user_id);
+
+alter table public.subscriptions enable row level security;
+
+-- ----------------------------------------------------------------------------
+--  Every webhook event this database has already acted on.
+--
+--  The idempotency key, and the whole of the defence against a webhook that
+--  arrives twice. Stripe retries for up to three days and makes no promise
+--  about order or uniqueness, so the handler inserts the event id here *before*
+--  it does anything, and a unique violation means "already done" rather than an
+--  error worth reporting.
+--
+--  Read by nobody. It has no policy at all, which under RLS means the anon and
+--  authenticated roles cannot see a row of it.
+-- ----------------------------------------------------------------------------
+create table if not exists public.billing_events (
+  id          text primary key,                     -- evt_... , Stripe's id
+  provider    text not null default 'stripe',
+  type        text not null,
+  received_at timestamptz not null default now()
+);
+
+create index if not exists billing_events_age_idx on public.billing_events (received_at);
+
+alter table public.billing_events enable row level security;
+
+-- Your own row, and only ever to read it. There is deliberately no insert,
+-- update or delete policy on any of the three: RLS denies what it does not
+-- allow, so this is how "the browser cannot write its own billing" is said.
+drop policy if exists "billing_customers: read own" on public.billing_customers;
+create policy "billing_customers: read own" on public.billing_customers
+  for select using ((select auth.uid()) = user_id);
+
+drop policy if exists "subscriptions: read own" on public.subscriptions;
+create policy "subscriptions: read own" on public.subscriptions
+  for select using ((select auth.uid()) = user_id);
+
+-- ----------------------------------------------------------------------------
+--  Ninety days of events is plenty: Stripe stops retrying after three, and the
+--  rest is for reading back when something looked wrong. Swept on insert on the
+--  same one-in-fifty sample the campaign log uses, because there is still no
+--  scheduler here.
+-- ----------------------------------------------------------------------------
+create or replace function public.trim_billing_events()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if random() < 0.02 then
+    delete from public.billing_events e where e.received_at < now() - interval '90 days';
+  end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists billing_events_trim on public.billing_events;
+create trigger billing_events_trim
+  after insert on public.billing_events
+  for each row execute function public.trim_billing_events();
+
+-- ----------------------------------------------------------------------------
+--  THE TIER, DERIVED
+--
+--  The one place a subscription becomes an account tier. Called by the webhook
+--  handler after every write, as the service role, and callable by nothing
+--  else.
+--
+--  Three rules, and each of them is a decision rather than a detail:
+--
+--  1. **A hand-given tier is never touched.** 'friend' and 'admin' are given by
+--     a person, in the SQL editor, and a lapsed card must not take them away.
+--     A friend who also subscribes stays a friend, which is the right way round:
+--     friend is the higher rung.
+--  2. **past_due still counts as paid.** A card that failed is a card that
+--     Stripe is still retrying, for up to two weeks. Locking somebody out of
+--     their campaigns on the first failed retry would be a worse bug than a
+--     fortnight of unpaid access. Stripe cancels or marks the subscription
+--     unpaid when the retries run out, and that arrives here as an event.
+--  3. **Anything else is free.** Including no subscription at all, which is
+--     what a first-time visitor and a cancelled account have in common.
+--
+--  It reads the *best* subscription rather than the newest, so somebody who
+--  resubscribed while an old cancelled row was still on the table gets the
+--  answer they paid for.
+-- ----------------------------------------------------------------------------
+create or replace function public.apply_entitlements(p_user uuid)
+returns text
+language plpgsql security definer set search_path = public
+as $$
+declare
+  v_status text;
+  v_role   text;
+  v_next   text;
+begin
+  select role into v_role from public.profiles where id = p_user;
+  if v_role is null then
+    raise exception 'No profile exists for that account.';
+  end if;
+
+  -- Given rather than bought. Nothing about a card changes it.
+  if v_role in ('friend', 'admin') then
+    return v_role;
+  end if;
+
+  select s.status into v_status
+    from public.subscriptions s
+   where s.user_id = p_user
+   order by (s.status in ('active', 'trialing', 'past_due')) desc, s.updated_at desc
+   limit 1;
+
+  v_next := case
+              when v_status in ('active', 'trialing', 'past_due') then 'premium'
+              else 'free'
+            end;
+
+  update public.profiles set role = v_next where id = p_user;
+  return v_next;
+end;
+$$;
+
+-- Reachable from the service role and from the SQL editor, and from nowhere a
+-- browser can get to. Without this revoke it would be one supabase.rpc() call
+-- away from being a self-service upgrade button.
+revoke all on function public.apply_entitlements(uuid) from public, anon, authenticated;
+grant execute on function public.apply_entitlements(uuid) to service_role;
+
+-- The ceilings are the same: nothing that can be reached with an anon key
+-- should be able to answer "what may I do" with a number the client chose.
+-- These are read by policies and triggers, which run as their definer.
+revoke all on function public.character_slots(text) from anon, authenticated;
+revoke all on function public.campaign_slots(text)  from anon, authenticated;
+revoke all on function public.creature_slots(text)  from anon, authenticated;
+
+-- ----------------------------------------------------------------------------
 --  updated_at housekeeping
 -- ----------------------------------------------------------------------------
 create or replace function public.touch_updated_at()
@@ -467,6 +1490,245 @@ create trigger characters_touch_updated_at
   before update on public.characters
   for each row execute function public.touch_updated_at();
 
+drop trigger if exists campaigns_touch_updated_at on public.campaigns;
+create trigger campaigns_touch_updated_at
+  before update on public.campaigns
+  for each row execute function public.touch_updated_at();
+
+drop trigger if exists encounters_touch_updated_at on public.encounters;
+create trigger encounters_touch_updated_at
+  before update on public.encounters
+  for each row execute function public.touch_updated_at();
+
+drop trigger if exists custom_creatures_touch_updated_at on public.custom_creatures;
+create trigger custom_creatures_touch_updated_at
+  before update on public.custom_creatures
+  for each row execute function public.touch_updated_at();
+
+-- apply_entitlements orders on this one, so a subscription that is rewritten
+-- without changing a single column still has to move it. It does: the webhook
+-- upserts the whole row every time.
+drop trigger if exists subscriptions_touch_updated_at on public.subscriptions;
+create trigger subscriptions_touch_updated_at
+  before update on public.subscriptions
+  for each row execute function public.touch_updated_at();
+
+-- ----------------------------------------------------------------------------
+--  PICTURES  (the storage bucket behind every portrait on the site)
+--
+--  One bucket, one folder per account, five objects per picture:
+--
+--    <user id>/<image id>.master.webp     the kept source, only ever re-cropped
+--    <user id>/<image id>.portrait.webp   9:16
+--    <user id>/<image id>.plate.webp      4:3
+--    <user id>/<image id>.face.webp       1:1
+--    <user id>/<image id>.meta.json       where the three crops were left
+--
+--  Public to read, because a character sheet is public to read and a portrait is
+--  part of one. Nothing is ever listed to anybody but its owner, though: the
+--  select policy below is owner-only, and everybody else reads a picture through
+--  the /object/public route, which needs the address to have been handed to them.
+--
+--  No table stands behind this. Storage is the record. A row and a file can
+--  disagree, and the way they disagree in practice is a file with no row: bytes
+--  an account is paying for and cannot see in order to delete. See the note at
+--  the top of src/lib/imageStore.js.
+--
+--  There are two ceilings and this file holds both of them:
+--
+--    per object   `file_size_limit` on the bucket, 1 MiB. The browser encodes
+--                 well under it (see OBJECT_BYTES_MAX in src/lib/imageViews.js),
+--                 and this is what refuses an upload that claims otherwise.
+--    per account  `image_slots` below, counted by `image_room` and enforced by
+--                 the insert policy. A count of pictures rather than a number of
+--                 bytes, because a count is a thing a person can be shown.
+--
+--  The two multiply out to the worst case an account can cost: five objects a
+--  picture, a megabyte an object, so a paid shelf cannot pass about 500 MB even
+--  if every file arrived at the limit. What it will actually cost is about a
+--  third of a megabyte a picture.
+-- ----------------------------------------------------------------------------
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('portraits', 'portraits', true, 1048576, array['image/webp', 'application/json'])
+on conflict (id) do update
+  set public             = true,
+      file_size_limit    = 1048576,
+      allowed_mime_types = array['image/webp', 'application/json'];
+
+-- ----------------------------------------------------------------------------
+--  How many pictures of their own each tier may keep. IMAGE_SLOTS in
+--  src/lib/tiers.js is the same table again, and that one is only what the
+--  interface offers: this pair is what enforces it. Change one and change the
+--  other; scripts/check-images.mjs fails if they disagree.
+--
+--  Jules, 2026-09-08: ten free, a hundred paid.
+-- ----------------------------------------------------------------------------
+create or replace function public.image_slots(tier text)
+returns int
+language sql immutable
+as $$
+  select case tier
+           when 'admin'   then 300
+           when 'friend'  then 100
+           when 'premium' then 100
+           else 10
+         end;
+$$;
+
+-- ----------------------------------------------------------------------------
+--  Whether this account has room for the picture this object belongs to.
+--
+--  A picture is five objects, so the count is of distinct image ids and not of
+--  objects: `<id>.master.webp` and `<id>.face.webp` are one picture. The id
+--  being written is excluded from its own count, which is what makes the
+--  second, third and fourth object of a new upload land after the first one has
+--  already taken the slot.
+--
+--  SECURITY DEFINER because it reads storage.objects from inside a policy on
+--  storage.objects, the same reason public.is_admin() is one. Named parts are
+--  cut with split_part rather than storage.filename() so the whole thing depends
+--  on nothing but the path shape this file documents.
+-- ----------------------------------------------------------------------------
+create or replace function public.image_room(p_name text)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select (
+    select count(distinct split_part(split_part(o.name, '/', 2), '.', 1))
+      from storage.objects o
+     where o.bucket_id = 'portraits'
+       -- `like` rather than split_part on this side so the index on
+       -- (bucket_id, name) is usable: the count runs on every upload.
+       and o.name like (auth.uid()::text || '/%')
+       and split_part(split_part(o.name, '/', 2), '.', 1)
+           <> split_part(split_part(p_name, '/', 2), '.', 1)
+  ) < public.image_slots(public.account_tier());
+$$;
+
+-- Your own folder, and one level deep exactly: `<uid>/<file>`. Anything nested
+-- deeper would break the id parsing that both the library and the count above
+-- rely on, so it is refused rather than tolerated.
+create or replace function public.owns_image_path(p_name text)
+returns boolean
+language sql stable
+as $$
+  select split_part(p_name, '/', 1) = auth.uid()::text
+     and split_part(p_name, '/', 2) <> ''
+     and split_part(p_name, '/', 3) = '';
+$$;
+
+-- Only the owner may list or download. Everybody else reads a picture through
+-- the public route, which does not consult these policies: that is the whole
+-- difference between a portrait being *shareable* and being *discoverable*, and
+-- it is the same distinction "characters: public read" makes for a sheet.
+drop policy if exists "portraits: owner read" on storage.objects;
+create policy "portraits: owner read" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'portraits' and public.owns_image_path(name));
+
+-- The ceiling is here and nowhere else that matters.
+drop policy if exists "portraits: owner insert" on storage.objects;
+create policy "portraits: owner insert" on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'portraits'
+    and public.owns_image_path(name)
+    and public.image_room(name)
+  );
+
+-- No room check on the way through here: an overwrite is a re-crop, and a
+-- re-crop takes no new slot. It is also why a stored URL never changes.
+drop policy if exists "portraits: owner update" on storage.objects;
+create policy "portraits: owner update" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'portraits' and public.owns_image_path(name))
+  with check (bucket_id = 'portraits' and public.owns_image_path(name));
+
+drop policy if exists "portraits: owner delete" on storage.objects;
+create policy "portraits: owner delete" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'portraits' and public.owns_image_path(name));
+
+-- ----------------------------------------------------------------------------
+--  CODEX ART  (the private bucket the card pictures live in)
+--
+--  Every picture in the codex today is AI generated placeholder art, made for
+--  Jules and the people he plays with and nobody else. It used to ship inside
+--  the repository under public/cards, which is a public GitHub repository
+--  served from an unauthenticated origin: showsArt() decided whether a plate
+--  was *drawn*, and anyone at all could fetch the file behind it, or read it
+--  out of the repository without visiting the site at all.
+--
+--  So the pictures live here instead, in a bucket with no public route. The
+--  only way to one is a signed URL, and the policy below has to allow it before
+--  a URL can be minted. That is what turns the art rule from an interface
+--  courtesy into a boundary.
+--
+--  ------------------------------------------------------------------ the names
+--
+--    <set>/<id>.<part>.<ext>
+--
+--    cards/heal.full.webp                720px, the plate a dealt card draws
+--    cards/heal.thumb.webp               200px, the 92px plate a brief draws
+--    items/healing-potion.full.webp      720px, the item card
+--    items/healing-potion.thumb.webp     128px, the 40px icon tile
+--    lineages/celestial.full.jpg         the square plate
+--    talents/berserker.full.jpg          the square plate
+--    backgrounds/criminal.full.jpg       the square plate
+--
+--  Three dot-separated pieces after the set, always. The part is never left off
+--  a picture that has only one size, so one parser reads every name in the
+--  bucket and a second size can be added later without renaming anything.
+--
+--  The part is separated by a dot rather than by the `-thumb` the repository
+--  used, because an id is kebab-case and full of hyphens: `healing-potion-thumb`
+--  only parses if you already know `-thumb` is a reserved trailing word. A dot
+--  cannot occur in an id, so split_part is enough and there is nothing to know.
+--  It is also what the portraits bucket above already does.
+--
+--  No content hash in the name. A signed URL is minted fresh each session, so a
+--  redraw is picked up without one, and a stable name means a redrawn picture
+--  overwrites in place: nothing that already points at it has to be found and
+--  rewritten. The hash stays in the manifests src/lib/cardArt.js and
+--  src/lib/itemArt.js carry, where it still versions art served from the
+--  repository.
+--
+--  -------------------------------------------------------------- who may read
+--  friend and admin. That is CAPABILITIES.art in src/lib/tiers.js said a second
+--  time somewhere it can actually be enforced, and the two must agree.
+--
+--  Paying does not buy pictures: premium buys room to play in. The gate is on
+--  how a picture was *made*, not on what a tier is worth. When commissioned art
+--  replaces a placeholder it goes back into public/ in the repository and is
+--  served to everybody, one picture at a time, and this bucket empties as that
+--  happens.
+--
+--  ------------------------------------------------------------- who may write
+--  Nobody. There is no insert, update or delete policy on this bucket, so no
+--  browser can write to it whatever tier it holds. scripts/push-codex-art.mjs
+--  uploads with the service role key, which bypasses RLS, and that key never
+--  leaves Jules's machine.
+-- ----------------------------------------------------------------------------
+
+-- 256 KiB an object. The largest picture in the set today is 85 KB and the pull
+-- scripts cut everything to 720px of WebP before it arrives, so this is three
+-- times the worst case rather than a limit anybody will meet.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('codex', 'codex', false, 262144, array['image/webp', 'image/jpeg'])
+on conflict (id) do update
+  set public             = false,
+      file_size_limit    = 262144,
+      allowed_mime_types = array['image/webp', 'image/jpeg'];
+
+-- The tier names are spelled out rather than compared on the ladder, the same
+-- way public.image_slots does it. A tier inserted above `friend` would have to
+-- be added here by hand, which is the trade for a policy anybody can read.
+drop policy if exists "codex: friends read" on storage.objects;
+create policy "codex: friends read" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'codex' and public.account_tier() in ('friend', 'admin'));
+
 -- ----------------------------------------------------------------------------
 --  REALTIME
 --  Lets viewers see a sheet update without reloading. Realtime still honours
@@ -476,15 +1738,35 @@ create trigger characters_touch_updated_at
 --  without it the payload holds only the primary key, and a subscription
 --  filtered on character_id would never match a delete.
 -- ----------------------------------------------------------------------------
-alter table public.characters      replica identity full;
-alter table public.abilities       replica identity full;
-alter table public.inventory_items replica identity full;
+alter table public.characters       replica identity full;
+alter table public.abilities        replica identity full;
+alter table public.inventory_items  replica identity full;
+alter table public.campaigns        replica identity full;
+alter table public.campaign_members replica identity full;
+-- The log is insert only for everyone; the sweep is the only delete and no
+-- client cares about one. Full identity all the same, so it matches its
+-- neighbours and a filtered delete would carry its campaign if one ever mattered.
+alter table public.campaign_events  replica identity full;
+-- The pile of enemies, so a Game Master with the encounter open on a second
+-- screen sees the same Health the one they are pressing on does.
+alter table public.encounters       replica identity full;
+-- And the creatures a table forged, so an edit to one reaches a bestiary open
+-- elsewhere rather than waiting for a reload.
+alter table public.custom_creatures replica identity full;
+-- And your own profile row, which is how a tier bought on Stripe's page reaches
+-- the tab you left open. The webhook writes profiles.role a second or two after
+-- the checkout redirects; without this the badge would say Free until a reload.
+-- "profiles: read own" is what keeps it yours: Realtime honours RLS, so nobody
+-- is subscribed to anybody else's tier.
+alter table public.profiles         replica identity full;
 
 do $$
 declare
   t text;
 begin
-  foreach t in array array['characters', 'abilities', 'inventory_items'] loop
+  foreach t in array array['characters', 'abilities', 'inventory_items',
+                          'campaigns', 'campaign_members', 'campaign_events',
+                          'encounters', 'custom_creatures', 'profiles'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t

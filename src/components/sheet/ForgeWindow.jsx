@@ -2,11 +2,14 @@ import { useMemo, useState } from 'react';
 import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import ShareCode from './ShareCode.jsx';
+import PortraitField from '../images/PortraitField.jsx';
 import TagFilter from './TagFilter.jsx';
-import { ItemIcon, ItemTags, ItemValues } from './itemParts.jsx';
+import { Gated } from './parts.jsx';
+import { ItemCarry, ItemIcon, ItemStats, ItemTags } from './itemParts.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
+import { compareTags, sortCards } from '../../lib/cardOrder.js';
 import { ENCHANTMENTS, ENCHANT_KINDS, enchantKind, getEnchantment } from '../../lib/enchantments.js';
 import { FORGED_NAME_MAX, forgeRecord, readCode } from '../../lib/forged.js';
 import {
@@ -176,18 +179,20 @@ export default function ForgeWindow({ character, onForge, onClose }) {
           <button type="button" className="btn btn-minimal btn-sm" onClick={onClose}>
             Close
           </button>
-          <button
-            type="button"
+          <Gated
             className="btn btn-take btn-sm"
-            disabled={!base}
-            title={base ? undefined : 'Choose the piece it is made from first.'}
+            why={
+              base
+                ? null
+                : 'Nothing to make it out of yet. Choose the piece it is based on, at the top of this window.'
+            }
             onClick={() => {
               onForge(forgeRecord(record));
               onClose();
             }}
           >
             Make it
-          </button>
+          </Gated>
         </>
       }
     >
@@ -233,7 +238,8 @@ export default function ForgeWindow({ character, onForge, onClose }) {
                 <div className="forge-base-body">
                   <span className="forge-base-name">{base.name}</span>
                   <ItemTags item={base} />
-                  <ItemValues item={base} />
+                  <ItemStats item={base} />
+                  <ItemCarry item={base} />
                 </div>
                 <button
                   type="button"
@@ -355,20 +361,15 @@ export default function ForgeWindow({ character, onForge, onClose }) {
                 </span>
               </label>
 
-              <label className="ench-target">
-                <span className="fx-label">A picture of it</span>
-                <input
-                  type="url"
+              <div className="ench-target">
+                <PortraitField
+                  label="A picture of it"
+                  view="plate"
                   value={art}
-                  placeholder={base.art_url ?? 'https://…'}
-                  spellCheck="false"
-                  onChange={(event) => setArt(event.target.value)}
+                  onChange={(url) => setArt(url ?? '')}
+                  hint="Nothing chosen keeps the codex picture. Yours shows at every account tier, because it is yours."
                 />
-                <span className="ench-target-note">
-                  A link to an image. Blank keeps the codex picture, and yours shows at every
-                  account tier because it is yours.
-                </span>
-              </label>
+              </div>
 
               {ench.length > 0 && (
                 <ul className="forge-list">
@@ -438,8 +439,15 @@ export default function ForgeWindow({ character, onForge, onClose }) {
 function SpellPick({ enchantId, ench, onPick }) {
   const enchantment = getEnchantment(enchantId);
   const tier = enchantment?.spellTier ?? 'Novice';
+  /* The stand-ins are out, the same way they are out of the enchanting shelf:
+     UNWRITTEN LIGHT holds a lineage's slot open, it is not a spell to bind. */
   const pool = useMemo(
-    () => SPELLS.filter((spell) => (spell.tags ?? []).some((tag) => tag.startsWith(tier))),
+    () =>
+      sortCards(
+        SPELLS.filter(
+          (spell) => !spell.placeholder && (spell.tags ?? []).some((tag) => tag.startsWith(tier))
+        )
+      ),
     [tier]
   );
   const chosen = ench.find((entry) => entry.id === enchantId)?.spell ?? null;
@@ -481,7 +489,8 @@ function baseTags() {
       }
     }
   }
-  return [...seen.values()].sort((a, b) => a.label.localeCompare(b.label));
+  // Rarity up its own ladder, the way the pack's chip row reads. See cardOrder.js.
+  return [...seen.values()].sort((a, b) => compareTags(a.label, b.label));
 }
 
 /**

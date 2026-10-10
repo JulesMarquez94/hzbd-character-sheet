@@ -17,7 +17,9 @@ import './Header.css';
  * one, folded to the wordmark and the burger.
  */
 function standsDownFor(pathname) {
-  return /^\/characters\/[^/]+\/?$/.test(pathname);
+  // A campaign page carries the same bar a sheet does, so this one stands
+  // down there too.
+  return /^\/characters\/[^/]+\/?$/.test(pathname) || /^\/campaigns\/[^/]+\/?$/.test(pathname);
 }
 
 /** Folded: the wordmark and the burger, and nothing else. */
@@ -86,23 +88,35 @@ export default function Header() {
               </NavLink>
             </li>
             <li>
-              <NavLink to="/codex" className="nav-link">
-                Codex
+              <NavLink to="/rules" className="nav-link">
+                Rules
               </NavLink>
             </li>
-            {user ? (
+            {/* Characters is a real link signed out as well: the page is the
+                characters kept on this device, and the way to make one before
+                there is an account. Campaigns stays an account's thing, because
+                a table can only seat a saved character. */}
+            <li>
+              <NavLink to="/dashboard" className="nav-link">
+                Characters
+              </NavLink>
+            </li>
+            {user && (
               <li>
-                <NavLink to="/dashboard" className="nav-link">
-                  Characters
+                <NavLink to="/campaigns" className="nav-link">
+                  Campaigns
                 </NavLink>
               </li>
-            ) : (
-              <li>
-                <span className="nav-link nav-link-locked" title="Sign in to open your character vault">
-                  Characters <span className="lock-badge">Requires Auth</span>
-                </span>
-              </li>
             )}
+            {/* Shown to everybody, including accounts that already have it:
+                the page is where a subscription is managed as well as where it
+                is bought, and a link that disappears once you pay is a link
+                people write in asking about. */}
+            <li>
+              <NavLink to="/premium" className="nav-link">
+                Premium
+              </NavLink>
+            </li>
           </ul>
 
           {user ? (
@@ -124,8 +138,17 @@ export default function Header() {
                   <Link to="/dashboard" className="dropdown-link" onClick={() => setMenuOpen(false)}>
                     My Characters
                   </Link>
+                  <Link to="/campaigns" className="dropdown-link" onClick={() => setMenuOpen(false)}>
+                    My Campaigns
+                  </Link>
+                  <Link to="/pictures" className="dropdown-link" onClick={() => setMenuOpen(false)}>
+                    My Pictures
+                  </Link>
                   <Link to="/account" className="dropdown-link" onClick={() => setMenuOpen(false)}>
                     Account Settings
+                  </Link>
+                  <Link to="/premium" className="dropdown-link" onClick={() => setMenuOpen(false)}>
+                    Premium
                   </Link>
                   <div className="dropdown-divider" />
                   <button type="button" className="dropdown-link logout" onClick={handleSignOut}>

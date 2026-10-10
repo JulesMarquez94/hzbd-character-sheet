@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { tagStyle } from '../../lib/tagColors.js';
 
 /**
  * The row that narrows a wall of choices.
@@ -13,6 +14,12 @@ import { useMemo, useRef, useState } from 'react';
  *
  * Enter takes the first suggestion, Backspace on an empty box gives the last
  * chip back, and a chip is dropped by clicking it.
+ *
+ * A chip naming a school or a family wears that school's colour, both as a
+ * suggestion and once it is taken (see tagColors.js). It is the same colour the
+ * cards under the row are chipped with, so "Ethereal" in the box and Ethereal on
+ * a brief are visibly the same thing. Every other chip keeps the copper the row
+ * has always used.
  *
  * The filter itself, what is picked and what matches, lives in useTagFilter.js
  * so a caller can work out what is visible before this has rendered.
@@ -108,7 +115,8 @@ export default function TagFilter({
               <button
                 key={tag.id}
                 type="button"
-                className="filter-chip"
+                className={`filter-chip${tagStyle(tag.label) ? ' is-toned' : ''}`}
+                style={tagStyle(tag.label)}
                 /* Keeps the box focused so the blur above never beats the click. */
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => add(tag)}
@@ -127,7 +135,8 @@ export default function TagFilter({
               <button
                 key={tag.id}
                 type="button"
-                className="filter-chip active"
+                className={`filter-chip active${tagStyle(tag.label) ? ' is-toned' : ''}`}
+                style={tagStyle(tag.label)}
                 onClick={() => filter.toggle(tag.id)}
                 title="Remove this filter"
               >

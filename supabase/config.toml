@@ -1,0 +1,33 @@
+# Supabase CLI configuration.
+#
+# This file exists for one setting, and the setting is a security decision:
+# stripe-webhook must be deployed with JWT verification OFF, because Stripe is
+# not a signed-in user and cannot present a token. Its door is the signature it
+# checks in code instead, and nothing in that function runs before the check.
+#
+# The flag can also be passed at deploy time (`--no-verify-jwt`), but a flag has
+# to be remembered on every deploy and this does not. Confirm it all the same:
+# the CLI has been known to lose the setting on a redeploy, and the Dashboard
+# under Edge Functions shows the state each function is actually running with.
+#
+# `project_id` is a local name for the project, used when running the stack on
+# this machine. It is not the project ref: that is set by `supabase link` and
+# kept out of the repository.
+
+project_id = "hazebound"
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+# The other three are called by the browser with the player's session, and every
+# one of them reads the account out of that token rather than out of the request
+# body. See supabase/functions/_shared/billing.ts.
+
+[functions.create-checkout-session]
+verify_jwt = true
+
+[functions.customer-portal]
+verify_jwt = true
+
+[functions.checkout-status]
+verify_jwt = true

@@ -5,18 +5,34 @@ import PickBlock from './PickBlock.jsx';
 import FeralSection from './FeralPick.jsx';
 import LoadoutSection, { LoadoutRankNote } from './LoadoutPick.jsx';
 import MinionSection from './MinionPick.jsx';
+import MinionPreview from './MinionPreview.jsx';
+import PactSection, { PactRankNote } from './PactPick.jsx';
+import { OathSection } from './OathPick.jsx';
 import WornEnchants from './WornEnchants.jsx';
 import { BrewRankNote } from './BrewWindow.jsx';
+import { AlchemyRankNote } from './BrewRest.jsx';
+import { ScribeRankNote } from './ScribeRest.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import TagFilter from './TagFilter.jsx';
 import useCodexArt from '../useCodexArt.js';
 import { useTagFilter } from './useTagFilter.js';
+import { useAuth } from '../../context/auth-context.js';
 import { useCardStack } from '../../context/card-stack.js';
+import { alchemyPreview } from '../../lib/alchemy.js';
 import { brewPreview } from '../../lib/brews.js';
 import { enchantmentsAt } from '../../lib/enchantments.js';
+import { levelForXp } from '../../lib/characterModel.js';
 import { knownAt, loadoutOf, rankPreview } from '../../lib/loadouts.js';
+import { heldOathCards, oathFamilies, oathOf } from '../../lib/oathbound.js';
 import { feralOf } from '../../lib/feral.js';
-import { minionOf } from '../../lib/minions.js';
+import {
+  heldMinionCards,
+  isMinionCard,
+  minionKindRows,
+  minionKinds,
+  minionOf,
+} from '../../lib/minions.js';
+import { pactOf } from '../../lib/pact.js';
 import {
   TALENT_RANKS,
   cardsAtRank,
@@ -26,6 +42,7 @@ import {
   enchantingOf,
   optionsAt,
   rankInfo,
+  talentShelves,
   talentTags,
   usedTalentTags,
 } from '../../lib/talents.js';
@@ -57,6 +74,14 @@ export default function TalentPick({
   openAt,
   step = null,
   readOnly = false,
+  /* Whether the set on this slot still owes one of the questions it granted.
+     Worked out in LevelLedger off `levelAsks`, so the panel and the tab badge
+     read the same list. */
+  owing = false,
+  /* Whether a finished panel folds itself away. The ledger wants it to; the
+     Walkthrough, where this panel stands alone beside the lesson about it, does
+     not. See PickBlock.jsx. */
+  foldable = true,
 }) {
   const [choosing, setChoosing] = useState(false);
   const [viewing, setViewing] = useState(null);
@@ -71,8 +96,24 @@ export default function TalentPick({
       kind="talent"
       step={step}
       title="Talent Set"
-      done={slot.filled}
-      state={slot.filled ? 'Chosen' : isOpen ? 'Waiting on you' : `After level ${openAt}`}
+      /* A set with a hand still to deal is not finished, and a panel that
+         folded itself away saying "Chosen" was hiding the one thing left to do
+         on it. The lineage panel has read "Half done" since it was written;
+         this one now does too. */
+      done={slot.filled && !owing}
+      state={
+        slot.filled
+          ? owing
+            ? 'Half done'
+            : 'Chosen'
+          : isOpen
+            ? 'Waiting on you'
+            : `After level ${openAt}`
+      }
+      foldable={foldable}
+      summary={
+        slot.filled ? `${slot.entry.name} · Rank ${slot.rank}` : 'No set chosen yet.'
+      }
     >
       {slot.level === 1 && (
         <p className="pick-lead">
@@ -147,7 +188,12 @@ export default function TalentPick({
             const rank = from + 1;
 
             const spec = loadoutOf(id);
-            if (spec && knownAt(spec, rank) > knownAt(spec, from)) setJustTook(id);
+            /* A library widens with every rank too, so this opens the book the
+               moment a rank buys room in it. The level is not threaded here on
+               purpose: both sides read the same one, so it cancels. */
+            const opens = oathFamilies(character, id);
+            if (spec && knownAt(spec, rank, 1, null, opens) > knownAt(spec, from, 1, null, opens))
+              setJustTook(id);
 
             /* And the same for a set that lays rather than picks. WIELDER OF
                WONDER says "choose one **when becoming an enchanter**", which is
@@ -166,6 +212,18 @@ export default function TalentPick({
                "when you become Feral Cursed, you choose a Carnivore Mammal" —
                which is this exact moment, and only this one. */
             if (rank === 1 && feralOf(id)) setJustTook(id);
+
+            /* And the same for a set that strikes a *bargain*. The pact is
+               sealed once, at Rank 1: which of the two it is, the weapon's
+               form and FIRST BOON's two picks all belong to this moment. */
+            if (rank === 1 && pactOf(id)) setJustTook(id);
+
+            /* And a set that binds you to a *vow*. "You need to select the Oath
+               before you finish the selection. It's not something you select
+               later" (Jules, 2026-09-11), so the page opens on top of the take
+               and the tab badges the level until it is answered. Rank 1 only:
+               the vow is sworn once and cannot be changed at all. */
+            if (rank === 1 && oathOf(id)) setJustTook(id);
           }}
           onClose={() => setChoosing(false)}
         />
@@ -186,10 +244,23 @@ export default function TalentPick({
 }
 
 /** What a filled block shows: the set, the rank this level bought, its cards. */
-function TalentSummary({ slot, character, patch, readOnly, justTook, undoAlso, onView, onUndo }) {
+function TalentSummary({
+  slot,
+  character,
+  patch,
+  readOnly,
+  justTook,
+  undoAlso,
+  onView,
+  onUndo,
+}) {
   const { talent, entry, rank } = slot;
   const info = rankInfo(rank);
-  const cards = talent ? cardsAtRank(talent, rank) : [];
+  /* The vow's one Aura and the companion's one strike, out of the codex's five
+     and three. See `heldOathCards` and `heldMinionCards`. */
+  const cards = talent
+    ? heldMinionCards(character, talent, heldOathCards(character, talent, cardsAtRank(talent, rank)))
+    : [];
   const stack = useCardStack();
   const art = useCodexArt()(talent?.art);
 
@@ -214,7 +285,7 @@ function TalentSummary({ slot, character, patch, readOnly, justTook, undoAlso, o
         <RankPips rank={rank} />
       </header>
 
-      {talent ? (
+      {talent && !talent.stub ? (
         <>
           <span className="talent-summary-label">
             {rank === 1 ? 'What this set opens with' : `What Rank ${rank} adds`}
@@ -270,6 +341,31 @@ function TalentSummary({ slot, character, patch, readOnly, justTook, undoAlso, o
             />
           )}
 
+          {/* And the bargain it strikes, for a set that grants a pact. Sealed
+              once at Rank 1: the ranks above deepen a debt already owed. */}
+          {rank === 1 && talent.pact && (
+            <PactSection
+              talent={talent}
+              character={character}
+              patch={patch}
+              readOnly={readOnly}
+              autoOpen={justTook === talent.id}
+            />
+          )}
+
+          {/* And the vow it binds you to, for a set that swears one. Sworn once at
+              Rank 1, the way a pact is sealed once, and unlike a pact it can never
+              be changed: the ranks above it are the same vow kept for longer. */}
+          {rank === 1 && talent.oath && (
+            <OathSection
+              talent={talent}
+              character={character}
+              patch={patch}
+              readOnly={readOnly}
+              autoOpen={justTook === talent.id}
+            />
+          )}
+
           {/* And what it lays on its own person, for the one set that does. Same
               slot rule and the same auto-open: the shelf arrives with the rank
               rather than waiting to be found. */}
@@ -286,8 +382,17 @@ function TalentSummary({ slot, character, patch, readOnly, justTook, undoAlso, o
           )}
         </>
       ) : (
+        /* Two ways a filled slot has nothing to print, and they are not the same
+           thing. A set the codex has never heard of was typed into the column by
+           somebody. A roster placeholder is in the codex and holds no cards yet,
+           and cannot be reached through this app at all: `chooseAt` refuses it
+           and the tile that offers it is locked. It can only be here because the
+           column was edited by hand, and saying which of the two happened is
+           worth the branch. */
         <p className="level-block-hint">
-          Written in by hand. This build&rsquo;s codex has no cards for it.
+          {talent?.stub
+            ? 'On the roster and not written yet. This set has no cards to hand over.'
+            : 'Written in by hand. This build’s codex has no cards for it.'}
         </p>
       )}
 
@@ -332,9 +437,14 @@ function TalentChooser({ level, list, character, onTake, onClose, startAt = null
 
   const filter = useTagFilter(usedTalentTags(), { searchable: true });
 
-  // Reading a set is not taking one: the reader sees the whole codex, the
-  // chooser only what this level can actually buy.
-  const options = optionsAt(list, level, { all: readOnly });
+  /* Reading a set is not taking one: the reader sees the whole codex, the
+     chooser only what this level can actually buy. And "the whole codex" is as
+     much of it as this account is shown: the roster's placeholders stand on the
+     wall for a friend or an admin and for nobody else. UI only, like every
+     capability, and with nothing behind it to protect: a placeholder has no
+     cards, and `chooseAt` refuses one at every tier. See src/lib/tiers.js. */
+  const { can } = useAuth();
+  const options = optionsAt(list, level, { all: readOnly, roster: can('roster') });
   const visible = options.filter(
     (option) =>
       filter.matches(option.talent.tags) &&
@@ -376,17 +486,13 @@ function TalentChooser({ level, list, character, onTake, onClose, startAt = null
         <>
           <p className="frame-foot" style={{ marginTop: 0 }}>
             {readOnly
-              ? 'Every set in the codex. Open one to read its ranks in full.'
-              : 'Open a set to read it in full before you spend this level on it.'}
+              ? 'Every set in the codex, on the shelf of the attribute it is built on. Open one to read its ranks in full.'
+              : 'Shelved by the attribute each set is built on, so the shelf holding your best number is the one to read first. Open a set to read it in full before you spend this level on it.'}
           </p>
 
           <TagFilter filter={filter} count={visible.length} noun="set" placeholder="Search sets" />
 
-          <div className="talent-wall">
-            {visible.map((option) => (
-              <TalentTile key={option.talent.id} option={option} onOpen={() => setOpen(option.talent)} />
-            ))}
-          </div>
+          <TalentWall options={visible} onOpen={setOpen} />
         </>
       )}
     </Modal>
@@ -395,6 +501,46 @@ function TalentChooser({ level, list, character, onTake, onClose, startAt = null
 
 function takeLabel(option) {
   return option.held === 0 ? 'Take at Rank 1 · Novice' : `Rank up to ${option.rank} · ${rankInfo(option.rank).title}`;
+}
+
+/**
+ * The wall, cut into shelves by the attribute each set is built on.
+ *
+ * Eight sets was already a wall you scrolled rather than read, and the question
+ * a reader actually arrives with is "my 6 is in Physique, so what does that
+ * buy": see the shelves in talents.js, which own the cut and the line under each
+ * heading. Nine of them is where it stopped being optional.
+ *
+ * Cut the way PoolWall cuts a pool of cards, down to its one exception: a single
+ * shelf is left as a plain wall, because a heading over everything says nothing.
+ * So a filter narrowed to one attribute reads as one wall again, and so would a
+ * codex that only ever held Instinct sets.
+ */
+function TalentWall({ options, onOpen }) {
+  const shelves = talentShelves(options);
+
+  const wall = (list) => (
+    <div className="talent-wall">
+      {list.map((option) => (
+        <TalentTile key={option.talent.id} option={option} onOpen={() => onOpen(option.talent)} />
+      ))}
+    </div>
+  );
+
+  if (shelves.length <= 1) return wall(options);
+
+  return shelves.map(({ category, options: sets }) => (
+    <section className="talent-shelf" key={category.id}>
+      <div className="talent-page-rank-head">
+        <span className="talent-page-rank-label">{category.label}</span>
+        <span className="talent-page-rank-note">
+          {sets.length} {sets.length === 1 ? 'set' : 'sets'}
+        </span>
+      </div>
+      <p className="talent-shelf-note">{category.note}</p>
+      {wall(sets)}
+    </section>
+  ));
 }
 
 /** One rectangle on the overview wall: art, name, a line, and what it buys. */
@@ -440,6 +586,9 @@ function TalentPresentation({ option, character }) {
   const { talent, held } = option;
   const stack = useCardStack();
   const art = useCodexArt()(talent.art);
+  /* Whether this set hands over a *menu* of bodies rather than one. A menu keeps
+     its cards off this page and shows the bodies themselves instead. */
+  const roster = minionKinds(minionOf(talent)).length > 0;
 
   return (
     <div className="talent-page">
@@ -461,15 +610,55 @@ function TalentPresentation({ option, character }) {
       </header>
 
       {TALENT_RANKS.map(({ rank, title, minLevel }) => {
-        const cards = cardsAtRank(talent, rank);
-        const choice = rankPreview(talent, rank);
+        /* A roster's bodies keep their cards off this page for the same reason
+           they keep them off the Abilities tab: they belong to the creature. What
+           the rank shows instead is the bodies themselves, each a press behind a
+           block. See "and the bodies" in abilitySources.js, and MinionPreview. */
+        /* And a vow's ten Auras come down to one, for the reason a roster's bodies
+           come off this page: nine of them are not this character's and never will
+           be. An Oathbound who has not sworn yet sees none of the ten and a line
+           under the rank saying so, rather than ten cards of which nine are wrong.
+           See `heldOathCards` in oathbound.js. */
+        /* And a companion's three strikes come down to the one its kind holds,
+           once a kind is chosen. A reader with no companion yet sees all three,
+           which is what a page for choosing between them is for. See
+           `heldMinionCards` in minions.js. */
+        const cards = heldMinionCards(
+          character,
+          talent,
+          heldOathCards(
+            character,
+            talent,
+            cardsAtRank(talent, rank).filter((card) => !roster || !isMinionCard(card))
+          )
+        );
+        const bodies = roster
+          ? minionKindRows(character, talent, { rank }).filter(
+              (row) => Math.max(1, Math.floor(Number(row.kind?.rank) || 1)) === rank
+            )
+          : [];
+        /* The character rides along for the one ceiling that reads an attribute: a
+           Runebearer's slate is half their Physique plus 4 a rank, and a preview
+           worked out without them would under-report it. See capacityAt. */
+        /* And the two sub-schools a vow opens, for the one pool whose families are
+           the holder's. Empty for every other set. See `familyGate` in loadouts.js. */
+        const choice = rankPreview(
+          talent,
+          rank,
+          levelForXp(character?.xp),
+          character,
+          oathFamilies(character, talent.id)
+        );
         const brewing = brewPreview(talent, rank);
         const enchanting = enchantPreview(talent, rank);
+        const alchemy = alchemyPreview(talent, rank);
         if (
           cards.length === 0 &&
+          bodies.length === 0 &&
           !choice?.known &&
           !brewing?.tiers?.length &&
-          !enchanting?.tiers?.length
+          !enchanting?.tiers?.length &&
+          !alchemy?.tiers?.length
         )
           return null;
 
@@ -498,6 +687,15 @@ function TalentPresentation({ option, character }) {
               ))}
             </div>
 
+            {/* And the bodies it opens, in place of their cards. */}
+            {bodies.length > 0 && (
+              <MinionPreview
+                bodies={bodies}
+                character={character}
+                lead={`${bodies.length === 1 ? 'The body' : `The ${bodies.length} bodies`} this rank opens, with what each one costs. Open one to read its stat block and everything it can do.`}
+              />
+            )}
+
             {/* What this rank leaves to you, with the pool one tap away. A set
                 that says "you learn two spells" should be readable as which
                 two you would be choosing from. */}
@@ -511,6 +709,20 @@ function TalentPresentation({ option, character }) {
                 which enchantments come within reach, and how many of them an
                 Enchanter wears themselves. */}
             <EnchantRankNote talent={talent} rank={rank} />
+
+            {/* And for the set whose ladder reaches shelves the codex has not
+                filled: how many recipes a rank actually opens, and what it does
+                to a night at the still. */}
+            <AlchemyRankNote talent={talent} rank={rank} />
+
+            {/* And for the set whose shelf is the whole spell codex: how many
+                spells a rung actually reaches, which "you can now inscribe from
+                the Adept list" does not count out. */}
+            <ScribeRankNote talent={talent} rank={rank} />
+
+            {/* And for the set that buys with a debt: what the rank puts on the
+                pact's ladder, which no card body counts out. */}
+            <PactRankNote talent={talent} rank={rank} />
           </section>
         );
       })}
@@ -562,7 +774,7 @@ function EnchantRankNote({ talent, rank }) {
               this. Saying it again at Rank 2 and Rank 3 would be the same sentence
               three times over, so the later ranks say what they add instead. */}
           {kept.length === 0
-            ? `Laid on an item over a Long Rest, ${spec.supplyRate} supplies for every point of Magic Burden`
+            ? `Laid on an item over a Long Rest, ${spec.supplyRate} Supplies for every point of Magic Burden`
             : `${reach} to lay from in all, over the ${listAnd(kept)} ${kept.length === 1 ? 'shelf' : 'shelves'} you already had`}
           {grew ? `, and ${WORN_ORDINAL[worn] ?? worn} worn on your own person` : ''}
           {/* And what LAYERED ENCHANTMENT buys, which is not countable off any

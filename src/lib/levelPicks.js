@@ -6,7 +6,7 @@
  *
  *   level 1  a talent set, a lineage, a background, and the +2 / +1 spread
  *   even     one talent choice — a new set at Rank 1, or the next rank of one held
- *   odd (3+) one attribute point, and one skill learned from the whole codex
+ *   odd (3+) +1 on two different attributes, and one skill from the whole codex
  *
  * Talents are not in here: they have their own level-bound model in talents.js,
  * written before this file and left where it is. Everything *else* a level
@@ -14,9 +14,21 @@
  *
  *   level_picks: {
  *     "1": { "major": "physique", "minor": "mind" },
- *     "3": { "attribute": "instinct", "skill": "apothecary" },
- *     "5": { "attribute": "mind" }
+ *     "3": { "raised": ["instinct", "mind"], "skill": "apothecary" },
+ *     "5": { "raised": ["mind", "physique"] }
  *   }
+ *
+ * ------------------------------------------------------------ two, not one
+ * An odd level used to hand out a single point and stored it as
+ * `attribute: "mind"`. Jules's, 2026-08-21: an odd level raises **two different**
+ * attributes by 1 apiece. Level 1 is untouched, since its +2 / +1 spread is a
+ * different shape and already lands on two.
+ *
+ * `raised` is a list rather than a pair of named slots because both points are
+ * the same size and their order means nothing. A record written by the older
+ * build reads as a list of one, which is what it now is: half a pick, badged as
+ * unfinished until the second point is placed. Nothing is lost and nothing is
+ * silently invented.
  *
  * ------------------------------------------------------------------- values
  * `physique`, `instinct` and `mind` stay the source of truth for every number
@@ -33,26 +45,39 @@
  */
 
 import { ATTRIBUTE_BASE, ATTRIBUTE_KEYS, attributeLabel, baseValues } from './attributes.js';
+import { compareTags } from './cardOrder.js';
 import {
   BACKGROUND_CARDS,
   backgroundState,
+  checkSkills,
   getBackground,
   getBackgroundSkill,
   normalizeBackgroundSkills,
+  skillAnswer,
+  skillCards,
+  skillLevel,
 } from './backgrounds.js';
-import { getLineage } from './lineages.js';
-import { advancementState, normalizeTalents, pruneTalents } from './talents.js';
+import { checkCards } from './checks.js';
+import { characterSkillGrantSources, heldSkillIds } from './items.js';
+import { getLineage, lineageCards, openPicks } from './lineages.js';
+import {
+  advancementState,
+  cardsThroughRank,
+  getTalent,
+  normalizeTalents,
+  pruneTalents,
+} from './talents.js';
+import { loadoutOf, loadoutSettled } from './loadouts.js';
 import { minionOf, minionSettled } from './minions.js';
 import { feralOf, feralSettled } from './feral.js';
-import { MAX_LEVEL } from './characterModel.js';
+import { oathOf, oathSettled } from './oathbound.js';
+import { pactOf, pactSettled, pactSkillIds } from './pact.js';
+import { MAX_LEVEL, levelForXp, levelGrants } from './levels.js';
 
-/** What a level hands out. The one place the even / odd rule is written down. */
-export function levelGrants(level) {
-  const n = Math.max(1, Math.floor(Number(level) || 1));
-  if (n === 1) return { talent: true, lineage: true, background: true, boosts: true };
-  if (n % 2 === 0) return { talent: true };
-  return { attribute: true, skill: true };
-}
+/* `levelGrants` moved to levels.js on 2026-09-11 so backgrounds.js could read
+   which levels sell a skill, and is re-exported here because every caller on the
+   site asks this file for it. See the note on it in levels.js. */
+export { levelGrants };
 
 /** Every level this character has reached — the ledger, top to bottom. */
 export function ledgerLevels(level) {
@@ -69,9 +94,12 @@ export function nextLevelPromise(level) {
     level: next,
     says: levelGrants(next).talent
       ? 'another talent choice: a new set, or the next rank of one you hold'
-      : 'an attribute point, and a new skill',
+      : '+1 on two different attributes, and a new skill',
   };
 }
+
+/** How many attributes an odd level raises. Two, each by 1. */
+export const ATTRIBUTE_POINTS = 2;
 
 /* --------------------------------------------------- what is still waiting *
  * One list of questions per level, and one count across the whole ledger.
@@ -86,11 +114,15 @@ export function nextLevelPromise(level) {
  * Whether the lineage is settled: chosen, and every question its cards leave to
  * the player answered.
  *
- * A lineage is one choice with up to one follow-up. Half of them ask nothing at
- * all; the other half ask which damage type your scales resist, or which
- * attribute you cast the blood's spell with, and an unanswered one leaves a card
- * on the sheet with a blank in the middle of its sentence. An ancestry written in
- * by hand asks nothing this codex knows about, so a name is all it needs.
+ * A lineage is one choice with up to one follow-up. Most of them ask nothing at
+ * all; Draconic asks which damage type your scales resist, and an unanswered one
+ * leaves a card on the sheet with a blank in the middle of its sentence. An
+ * ancestry written in by hand asks nothing this codex knows about, so a name is
+ * all it needs.
+ *
+ * A Wildkin is the one whose question is which cards it has rather than what one
+ * of them says, so the pool is counted first: two traits short of a hand is not
+ * settled, and the cards it does hold are the ones it kept.
  */
 export function lineageSettled(character) {
   const written = String(character?.lineage ?? '').trim();
@@ -98,27 +130,38 @@ export function lineageSettled(character) {
   if (!lineage) return Boolean(written);
 
   const choices = character?.choices ?? {};
-  return lineage.cards.every(
-    (card) =>
+  if (openPicks(lineage, choices) > 0) return false;
+  return lineageCards(lineage, choices).every(
+    ({ card }) =>
       !card.choice || card.choice.options.some((option) => option.id === choices[card.id])
   );
 }
 
 /**
- * What one level asked for, as one boolean per question: true where it has been
- * answered. The order is the order the panels stand in on the block.
+ * What one level asked for, one row a question, in the order the panels stand
+ * in on the block. `answered` says whether it has been;
+ * `kind` and `talent` are what the panel needs to know *which* question is open,
+ * so a screen can put the right window in front of somebody rather than only
+ * counting.
  *
  * The third argument is state already derived for the whole character — its
  * talents, its level picks and its background — so a ledger of twelve levels
  * derives it once rather than twelve times over.
+ *
+ * One list, read three ways: the level block numbers its panels off it, the tab
+ * badges itself off it, and the Crossroads opens its prompts off it. Anything
+ * that asks a question of a character belongs here and nowhere else, or the
+ * three of them drift.
  */
-export function levelQuestions(character, level, { talents, picks, background }) {
+export function levelAsks(character, level, { talents, picks, background }) {
   const grants = levelGrants(level);
   const asked = [];
+  const ask = (kind, answered, talent = null) =>
+    asked.push({ level, kind, talent: talent?.id ?? null, answered: Boolean(answered) });
 
   if (grants.talent) {
     const slot = talents.slots.find((entry) => entry.level === level);
-    asked.push(Boolean(slot?.filled));
+    ask('talent', slot?.filled);
 
     /* A set that puts a creature on the board asks a second question at the
        level that bought its first rank: what it is called, and what colour. Only
@@ -126,7 +169,7 @@ export function levelQuestions(character, level, { talents, picks, background })
        creature that already has a name. An unnamed one badges the tab exactly
        the way an unanswered lineage card does. */
     if (slot?.filled && slot.rank === 1 && minionOf(slot.talent)) {
-      asked.push(minionSettled(character, slot.talent.id));
+      ask('minion', minionSettled(character, slot.talent.id), slot.talent);
     }
 
     /* And a set that turns you into something asks the same kind of second
@@ -134,16 +177,90 @@ export function levelQuestions(character, level, { talents, picks, background })
        you choose a Carnivore Mammal." Only Rank 1 asks — the curse is caught
        once, and the ranks above it are the same animal getting better at it. */
     if (slot?.filled && slot.rank === 1 && feralOf(slot.talent)) {
-      asked.push(feralSettled(character, slot.talent.id));
+      ask('feral', feralSettled(character, slot.talent.id), slot.talent);
+    }
+
+    /* And a set that strikes a bargain asks four at once: which pact, what
+       form the weapon takes, and FIRST BOON's spell and Martial Move. All at
+       Rank 1 — the bargain is struck once, and the ranks above it are the same
+       debt growing deeper. One boolean rather than four, because the window
+       asks them as one walk and "the pact is not sealed" is the one fact the
+       badge needs. */
+    if (slot?.filled && slot.rank === 1 && pactOf(slot.talent)) {
+      ask('pact', pactSettled(character, slot.talent.id), slot.talent);
+    }
+
+    /* And a set that binds its holder to a vow asks which vow, at the level that
+       bought Rank 1 and at no other. "You need to select the Oath before you finish
+       the selection ... that's permanent, so you cannot change it later" (Jules,
+       2026-09-11), so this is the one ask in the list that can never be reopened
+       once it is answered. See oathbound.js. */
+    if (slot?.filled && slot.rank === 1 && oathOf(slot.talent)) {
+      ask('oath', oathSettled(character, slot.talent.id), slot.talent);
+    }
+
+    /* And a set that deals a hand rather than teaching one asks for the cards
+       themselves: a Rank 2 Mycomancer knows four spells and a Duelist's rank
+       hands over Martial Moves on the same terms, so two of four chosen is a
+       question half answered.
+
+       Asked on the slot holding the set's **highest** rank, because that is the
+       slot its pool panel stands on (see TalentBlock) and a badge has to point
+       at a block that can answer it. A debt only: `loadoutSettled` counts what
+       a rank owes and never the room a library has left, so a spellbook with
+       thirty places in it is finished rather than thirty short.
+
+       Added 2026-09-10, with the gates on the chooser's own Done. The two are
+       one rule: a choice is made in the window that granted it, before that
+       window will call itself done, and until then the tab says so. */
+    if (slot?.filled && slot.rank === slot.entry?.rank && loadoutOf(slot.talent)) {
+      ask(
+        'loadout',
+        loadoutSettled(character?.talents, slot.talent, {
+          level: levelForXp(character?.xp),
+          attributes: character,
+        }),
+        slot.talent
+      );
     }
   }
-  if (grants.lineage) asked.push(lineageSettled(character));
-  if (grants.background) asked.push(Boolean(background?.complete && background?.taken));
-  if (grants.boosts) asked.push(Boolean(picks.spreadDone));
-  if (grants.attribute) asked.push(Boolean(picks.at(level).attribute));
-  if (grants.skill) asked.push(Boolean(picks.at(level).skill));
+  if (grants.lineage) ask('lineage', lineageSettled(character));
+  if (grants.background) ask('background', background?.complete && background?.taken);
+  if (grants.boosts) ask('boosts', picks.spreadDone);
+  if (grants.attribute) {
+    ask('attribute', (picks.at(level).raised ?? []).length >= ATTRIBUTE_POINTS);
+  }
+  if (grants.skill) {
+    const learned = getBackgroundSkill(picks.at(level).skill);
+    ask('skill', learned);
+
+    /* A skill can leave a question behind it, exactly as a lineage card can:
+       Innate Spell Novice promises a spell and does not name one. An unanswered
+       one badges the tab the same way, because it is the same blank. */
+    if (learned?.choice) ask('skill-choice', skillAnswer(learned, character?.choices));
+  }
 
   return asked;
+}
+
+/**
+ * Every question still open on a character, across every level reached, in the
+ * order the ledger draws them. `openChoices` is its length and the Crossroads
+ * settle step takes the first of them, so what the tab badges and what a window
+ * is opened on can never be two different questions.
+ */
+export function openAsks(character, level) {
+  if (!character) return [];
+
+  const state = {
+    talents: advancementState(character.talents, level),
+    picks: levelPicksState(character, level),
+    background: backgroundState(character),
+  };
+
+  return ledgerLevels(level).flatMap((n) =>
+    levelAsks(character, n, state).filter((row) => !row.answered)
+  );
 }
 
 /**
@@ -153,19 +270,7 @@ export function levelQuestions(character, level, { talents, picks, background })
  * thing on the sheet nobody should have to go looking for.
  */
 export function openChoices(character, level) {
-  if (!character) return 0;
-
-  const state = {
-    talents: advancementState(character.talents, level),
-    picks: levelPicksState(character, level),
-    background: backgroundState(character),
-  };
-
-  let open = 0;
-  for (const n of ledgerLevels(level)) {
-    open += levelQuestions(character, n, state).filter((answered) => !answered).length;
-  }
-  return open;
+  return openAsks(character, level).length;
 }
 
 /* ---------------------------------------------------------- reading the row */
@@ -207,8 +312,19 @@ export function normalizeLevelPicks(value) {
         entry.minor = minor;
       }
     }
-    if (grants.attribute && ATTRIBUTE_KEYS.includes(rawEntry.attribute)) {
-      entry.attribute = rawEntry.attribute;
+    if (grants.attribute) {
+      /* `attribute` is the older build's single point, read as a list of one.
+         See "two, not one" at the top: it is half a pick now, and saying so is
+         better than either dropping it or inventing a second. */
+      const written = Array.isArray(rawEntry.raised)
+        ? rawEntry.raised
+        : [rawEntry.raised, rawEntry.attribute];
+
+      const raised = [];
+      for (const key of written) {
+        if (ATTRIBUTE_KEYS.includes(key) && !raised.includes(key)) raised.push(key);
+      }
+      if (raised.length > 0) entry.raised = raised.slice(0, ATTRIBUTE_POINTS);
     }
     if (grants.skill && SKILL_IDS.has(rawEntry.skill)) {
       entry.skill = rawEntry.skill;
@@ -240,8 +356,8 @@ function inferBoosts(character) {
 }
 
 /**
- * Everything that moves an attribute, added up: base, the level-1 spread, a
- * point for every odd level taken, and whatever your blood carries.
+ * Everything that moves an attribute, added up: base, the level-1 spread, the
+ * two points every odd level taken hands out, and whatever your blood carries.
  *
  * A lineage that says "your Instinct increases by +1" declares it in
  * lineages.js as well as printing it, and it lands here. It is folded into the
@@ -256,7 +372,7 @@ export function attributeTotals(picks, lineage = null) {
       values[entry.major] += 2;
       values[entry.minor] += 1;
     }
-    if (entry.attribute) values[entry.attribute] += 1;
+    for (const key of entry.raised ?? []) values[key] += 1;
   }
 
   for (const [key, bonus] of Object.entries(lineageBonuses(lineage))) {
@@ -277,17 +393,55 @@ export function lineageBonuses(lineage) {
   return bonuses;
 }
 
-/** Every skill this character holds, background and learned alike, by id. */
-export function heldSkillIds(character) {
-  const picks = normalizeLevelPicks(character?.level_picks);
-  const background = getBackground(character?.background);
+/* `heldSkillIds` and the composed reading below it moved to items.js on
+   2026-09-11 and are re-exported here, because every window on the site asks the
+   ledger for them. What moved them: `deriveStats` reads what a skill grants and
+   sits below this file, and items.js is the one place that can see all three
+   sources *and* what is worn. See the note on them in items.js. */
+export { characterSkillGrantSources, heldSkillIds };
 
-  return new Set([
-    ...normalizeBackgroundSkills(background, character?.background_skills),
-    ...Object.values(picks)
-      .map((entry) => entry.skill)
-      .filter(Boolean),
-  ]);
+/**
+ * And every card this character can bring to a Skill Check, composed the same
+ * way and for the same reason.
+ *
+ * What the SKILL CHECK basic action's prompt offers. **Three kinds of card, not
+ * one.** It was skills alone until 2026-09-04, which left a Feral Cursed looking
+ * at a prompt that had never heard of BESTIAL SENSE, and a Wildkin at one that
+ * had never heard of SHARP SENSE. A card that says it lends advantage on a check
+ * is a card you can bring, wherever it came from, so the trade, every talent set
+ * and the blood are all read.
+ *
+ * A talent's cards are read *through* the rank held rather than at it, because a
+ * Rank 3 Trickster still has SKULK. Whether a card speaks and what it is worth
+ * are both checks.js's, and the order is the order of the sources: what you
+ * learned, then what you trained, then what you were born with.
+ *
+ * One row per card even when two sources offer the same id, which no pair does
+ * today and which a pact's skill boon came within one step of doing. A creature
+ * has none of the three, so its own bar raises the same action and offers the
+ * attribute alone, which is right: a wolf has no background. See CheckPick.jsx.
+ */
+export function characterCheckCards(character) {
+  const lineage = getLineage(character?.lineage);
+
+  const rows = [
+    ...checkSkills(heldSkillIds(character)),
+    ...normalizeTalents(character?.talents).flatMap((held) => {
+      const talent = getTalent(held.id);
+      return talent ? checkCards(cardsThroughRank(talent, held.rank), talent.name) : [];
+    }),
+    ...checkCards(
+      lineageCards(lineage, character?.choices).map((row) => row.card),
+      lineage?.name ?? ''
+    ),
+  ];
+
+  const seen = new Set();
+  return rows.filter((row) => {
+    if (seen.has(row.id)) return false;
+    seen.add(row.id);
+    return true;
+  });
 }
 
 /**
@@ -364,12 +518,30 @@ export function setBoosts(character, major, minor) {
   return writePicks(picks, character);
 }
 
-/** An odd level's single point. */
-export function setLevelAttribute(character, level, key) {
-  if (!levelGrants(level).attribute || !ATTRIBUTE_KEYS.includes(key)) return null;
+/**
+ * An odd level's two points, on two different attributes.
+ *
+ * The list is cleaned rather than refused: anything unknown or repeated is
+ * dropped and what is left is kept in the order it was given, so a half-made
+ * choice can be written down and finished later. An empty list clears the level
+ * the way `clearLevelPick` does.
+ */
+export function setLevelAttributes(character, level, keys) {
+  if (!levelGrants(level).attribute) return null;
+
+  const raised = [];
+  for (const key of Array.isArray(keys) ? keys : [keys]) {
+    if (ATTRIBUTE_KEYS.includes(key) && !raised.includes(key)) raised.push(key);
+  }
 
   const picks = currentPicks(character);
-  picks[level] = { ...picks[level], attribute: key };
+  const entry = { ...picks[level] };
+  if (raised.length === 0) delete entry.raised;
+  else entry.raised = raised.slice(0, ATTRIBUTE_POINTS);
+
+  if (Object.keys(entry).length === 0) delete picks[level];
+  else picks[level] = entry;
+
   return writePicks(picks, character);
 }
 
@@ -394,7 +566,7 @@ export function setLevelSkill(character, level, skillId) {
   return writePicks(picks, character);
 }
 
-/** Hand one pick back. `what` is 'boosts', 'attribute' or 'skill'. */
+/** Hand one pick back. `what` is 'boosts', 'raised' or 'skill'. */
 export function clearLevelPick(character, level, what) {
   const picks = currentPicks(character);
   const entry = { ...picks[level] };
@@ -437,7 +609,7 @@ function spentAt(picks, talents, level) {
   if (rank) said.push(`${rank.name} rank ${rank.taken.indexOf(level) + 1}`);
 
   if (entry?.major && entry?.minor) said.push('the attribute spread');
-  if (entry?.attribute) said.push(`+1 ${attributeLabel(entry.attribute)}`);
+  for (const key of entry?.raised ?? []) said.push(`+1 ${attributeLabel(key)}`);
   if (entry?.skill) said.push(getBackgroundSkill(entry.skill)?.name ?? entry.skill);
 
   return said;
@@ -495,48 +667,112 @@ export function allSkills() {
 }
 
 /**
- * The whole pool measured against one level: what may be learned there, and —
- * when it may not — the one line the card should say instead.
+ * The whole pool measured against one level: what may be learned there, and,
+ * when it may not, why not.
+ *
+ * Three reasons a skill is closed, and the level is the newest of them. Five
+ * skills on the tab carry a Requirement, and the level that reaches one is the
+ * level it can first be taken at: an Armor Mastery reads level 5 and Innate
+ * Spell Master reads level 10, so the level-3 slot is offered neither. The
+ * *slot's* level is what is measured, not where the character stands today,
+ * because a skill is learned at the level that taught it.
+ *
+ * None of the three is a refusal you can argue with in the window, so `gate`
+ * says which one it was and the wall leaves those rows off rather than printing
+ * them dead. `level` is the one a later level opens, `held` is the one already
+ * yours from somewhere else, and the chooser counts each kind in a line of its
+ * own. `reason` is still written, for anything that wants to name one.
  */
 export function skillOptionsAt(character, level) {
   const picks = normalizeLevelPicks(character?.level_picks);
   const mine = picks[level]?.skill ?? null;
+  const at = Math.max(1, Math.floor(Number(level) || 1));
   const background = getBackground(character?.background);
   const fromBackground = new Set(
     normalizeBackgroundSkills(background, character?.background_skills)
   );
 
   const elsewhere = new Map();
-  for (const [at, entry] of Object.entries(picks)) {
-    if (entry.skill && Number(at) !== Number(level)) elsewhere.set(entry.skill, Number(at));
+  for (const [when, entry] of Object.entries(picks)) {
+    if (entry.skill && Number(when) !== Number(level)) elsewhere.set(entry.skill, Number(when));
   }
+
+  /* And what a pact has taught. A skill claimed as a boon is held exactly the
+     way a background's is, so offering it here again would sell one skill
+     twice. See pactSkillIds in pact.js, which keeps the same rule in the
+     other direction. */
+  const fromPact = new Set(pactSkillIds(character));
 
   return allSkills().map((skill) => {
     if (skill.id === mine) return { skill, ok: true, held: true };
     if (fromBackground.has(skill.id)) {
-      return { skill, ok: false, held: false, reason: 'Your background already taught you this' };
+      return {
+        skill,
+        ok: false,
+        held: false,
+        gate: 'held',
+        reason: 'Your background already taught you this',
+      };
+    }
+    if (fromPact.has(skill.id)) {
+      return {
+        skill,
+        ok: false,
+        held: false,
+        gate: 'held',
+        reason: 'Your pact already granted you this',
+      };
     }
     if (elsewhere.has(skill.id)) {
       return {
         skill,
         ok: false,
         held: false,
+        gate: 'held',
         reason: `Already learned at level ${elsewhere.get(skill.id)}`,
+      };
+    }
+    if (skillLevel(skill) > at) {
+      return {
+        skill,
+        ok: false,
+        held: false,
+        gate: 'level',
+        reason: `Needs level ${skillLevel(skill)}`,
       };
     }
     return { skill, ok: true, held: false };
   });
 }
 
-/** The tags a wall of skills can be narrowed by — the labels the cards carry. */
+/**
+ * The tags a wall of skills can be narrowed by — the labels the cards carry.
+ *
+ * `Skill` and `Passive` are dropped: every card on the tab is a skill and all
+ * but three are passive, so neither narrows anything. What is left is what a
+ * skill is *for*, which is the question a wall of thirty-two is asked.
+ */
+const UNNARROWING = new Set(['Skill', 'Passive']);
+
 export function usedSkillTags() {
   const seen = new Set();
   for (const skill of BACKGROUND_CARDS) {
     for (const tag of skill.tags ?? []) {
-      if (tag !== 'Background Skill') seen.add(tag);
+      if (!UNNARROWING.has(tag)) seen.add(tag);
     }
   }
-  return [...seen].sort().map((tag) => ({ id: tag, label: tag, kind: 'skill' }));
+  // The same chip-row order every filter on the sheet uses. See cardOrder.js.
+  return [...seen].sort(compareTags).map((tag) => ({ id: tag, label: tag, kind: 'skill' }));
+}
+
+/**
+ * What one level's skill actually puts on the sheet: the skill, and the spell it
+ * taught if it taught one, each as a `{ card, modifiers }` row. The same reading
+ * `backgroundState.cards` is, for the other half of the ledger.
+ */
+export function learnedCardsAt(character, level) {
+  const skill = getBackgroundSkill(normalizeLevelPicks(character?.level_picks)[level]?.skill);
+  return skill ? skillCards([skill], character?.choices) : [];
 }
 
 export { getBackgroundSkill as getSkill };

@@ -1,0 +1,2468 @@
+/* =========================================================
+   CAMPAIGNS
+   The Campaigns page (the cards) and the campaign page itself
+   (the tab bar title, the party blocks, the Details tab).
+   ========================================================= */
+
+.camp-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .camp-grid {
+    grid-template-columns: repeat(2, minmax(430px, 1fr));
+  }
+}
+
+.camp-section-gap {
+  margin-top: 2.5rem;
+}
+
+/* ---------- THE CAMPAIGN CARD ---------- */
+.camp-card {
+  background-color: var(--panel-teal);
+  border-left: 3px solid var(--haze-purple);
+  border-radius: 4px;
+  padding: 1.25rem;
+  display: flex;
+  gap: 1.25rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  position: relative;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.camp-card:hover {
+  transform: translateY(-2px);
+  border-left-color: var(--copper);
+  box-shadow: 0 16px 35px rgba(0, 0, 0, 0.5);
+}
+
+.camp-card:focus-within {
+  border-left-color: var(--copper);
+}
+
+/* The whole card is the way in, under the name and the delete button. Same
+   trick as the character card: see Dashboard.css. */
+.camp-card-open {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 4px;
+}
+
+.camp-thumb {
+  width: 128px;
+  height: 128px;
+  border-radius: 4px;
+  border: 1px solid rgba(200, 138, 75, 0.25);
+  flex-shrink: 0;
+  background-color: var(--bg-black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  align-self: flex-start;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.4);
+  position: relative;
+}
+
+.camp-thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+}
+
+.camp-thumb-initials {
+  font-family: var(--font-headings);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--copper);
+  user-select: none;
+}
+
+.camp-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.camp-name {
+  font-family: var(--font-headings);
+  font-size: 1.3rem;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+  min-width: 0;
+  padding-right: 2rem;
+}
+
+.camp-name a {
+  position: relative;
+  color: var(--focus-cyan);
+  text-decoration: none;
+  transition: text-shadow 0.2s ease;
+}
+
+.camp-name a:hover {
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+}
+
+.camp-blurb {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+/* ---------- WHO SITS AT IT ----------
+   One small rectangle per linked character: face, name, level. */
+.camp-party-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 0.4rem;
+}
+
+.camp-member-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background-color: var(--inset-bg);
+  border: 1px solid rgba(148, 167, 176, 0.12);
+  border-radius: 4px;
+  padding: 3px 9px 3px 3px;
+  min-width: 0;
+}
+
+.camp-member-face {
+  width: 30px;
+  height: 30px;
+  border-radius: 3px;
+  background-color: var(--bg-black);
+  border: 1px solid rgba(200, 138, 75, 0.25);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.camp-member-face img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+}
+
+.camp-member-initials {
+  font-family: var(--font-headings);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: rgba(200, 138, 75, 0.6);
+}
+
+.camp-member-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-silver);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 12ch;
+}
+
+.camp-member-level {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--copper);
+  white-space: nowrap;
+}
+
+.camp-strip-empty {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 520px) {
+  .camp-card {
+    flex-direction: column;
+  }
+  .camp-thumb {
+    width: 100%;
+    height: 140px;
+  }
+}
+
+/* ---------- CREATE / JOIN / DELETE ----------
+   The dashboard's own cards and button, repeated here because the two pages
+   load their styles independently: whichever loads second, the rules agree. */
+.camp-grid .create-card {
+  background-color: transparent;
+  border: 2px dashed rgba(120, 139, 149, 0.3);
+  border-radius: 4px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  color: var(--text-muted);
+  min-height: 178px;
+  font-family: var(--font-body);
+}
+
+.camp-grid .create-card:hover {
+  border-color: var(--copper);
+  background-color: rgba(19, 34, 42, 0.4);
+  color: var(--text-silver);
+}
+
+.camp-grid .create-icon {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.camp-grid .create-text {
+  font-family: var(--font-headings);
+  font-size: 0.92rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.camp-card .btn-delete {
+  background-color: rgba(229, 57, 53, 0.05);
+  border: 1px solid rgba(229, 57, 53, 0.25);
+  color: var(--danger-red);
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  transition: all 0.2s ease, transform 0.25s ease;
+  z-index: 10;
+  line-height: 1;
+}
+
+.camp-card .btn-delete:hover {
+  background-color: var(--danger-red);
+  border-color: var(--danger-red);
+  color: var(--text-silver);
+  transform: rotate(90deg);
+}
+
+/* ---------- PICKED CHARACTERS (create dialog) ---------- */
+.camp-add-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.camp-add-row .form-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.camp-add-row .btn {
+  flex-shrink: 0;
+}
+
+.camp-picked {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.camp-picked-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background-color: var(--inset-bg);
+  border: 1px solid rgba(148, 167, 176, 0.1);
+  border-radius: 4px;
+  padding: 0.35rem 0.6rem;
+}
+
+.camp-picked-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-silver);
+}
+
+.camp-picked-level {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--copper);
+}
+
+.camp-code-input {
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* =========================================================
+   THE CAMPAIGN PAGE
+   ========================================================= */
+
+/* The campaign's name, at the head of the tab bar. The sheet does not need
+   one because the sheet's name is on block 1; the campaign's blocks are all
+   somebody else's name. */
+.camp-title {
+  font-family: var(--font-headings);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--focus-cyan);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 30ch;
+  flex-shrink: 1;
+}
+
+@media (max-width: 640px) {
+  .camp-title {
+    max-width: 12ch;
+  }
+}
+
+/* =========================================================
+   THE PARTY BLOCK
+
+   Everything the Character tab spreads over blocks 1 and 2, in one 360x640
+   cell that does NOT scroll. At the sheet's own spacing those rows come to
+   about 850px, and the answer is not a scrollbar: a party overview is read by
+   glancing across it, and a number you have to scroll to find is a number
+   nobody checks. So the rows are laid tighter here and nothing is dropped.
+
+   The three compactions, each paying for itself:
+
+     the rows lie down   five labels move beside their bar instead of above it,
+                         sharing one label column, so every track and every pip
+                         row starts at the same x.
+     the headings go     nine tiles that each name themselves had three lines
+                         of heading over them. On the sheet those separate two
+                         blocks. Here they were a third of the grid.
+     the purse is a chip Experience is one thin line and the purses are two
+                         chips, where the sheet gives each of the three a panel.
+
+   The parts themselves are the sheet's own — AttrTile, StatBox, ResourceBar,
+   PipRow, KarmaPill — so a Grit here is drawn in the same box as a Grit there
+   and hovering it prints the same arithmetic.
+   ========================================================= */
+.party-block {
+  /* Everything the sheet's .cell-scroll does, minus the scrolling. The block
+     fits, so there is nothing to scroll to; `hidden` is the guarantee that a
+     freak-length name can never push a bar half off the bottom edge. */
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  /* The rows come to about 580 of the 636 on offer, and the leftover is spread
+     between them rather than left pooled under Karma. Every party block holds
+     the same fourteen rows, so this is a fixed few pixels a seam and not a
+     layout that changes shape per character. If a row ever grows, the free
+     space is simply gone and the gaps fall back to the one above. */
+  justify-content: space-between;
+
+  /* One column for all five pool labels. Wide enough for "Reaction Points"
+     and its count on one line, which is the longest of them. */
+  --party-label: 104px;
+}
+
+/* The two seams the dropped headings used to draw. Cheaper than a line of
+   words and they do the one job the headings were doing here, which is saying
+   where the identity ends, the stats begin and the pools take over. */
+.party-purses + .attr-row,
+.attr-row + .meter {
+  margin-top: 0.3rem;
+}
+
+/* ---------- who ---------- */
+.party-id {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.party-portrait {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid rgba(200, 138, 75, 0.35);
+  background-color: var(--bg-black);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  /* It is a link to the sheet, so without this the initials wear the
+     browser's underline. */
+  text-decoration: none;
+}
+
+.party-portrait img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+}
+
+.party-initials {
+  font-family: var(--font-headings);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: rgba(200, 138, 75, 0.55);
+  letter-spacing: 1px;
+}
+
+/* Two lines and then it stops. The block's whole promise is that it fits, and
+   an eight-word name is the one thing on it with no natural ceiling. The full
+   name is always a click away on the sheet. */
+.party-name {
+  font-family: var(--font-headings);
+  font-size: 1.05rem;
+  line-height: 1.2;
+  color: var(--focus-cyan);
+  letter-spacing: 0.5px;
+  overflow-wrap: anywhere;
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.party-name a {
+  color: inherit;
+  text-decoration: none;
+  transition: text-shadow 0.2s ease;
+}
+
+.party-name a:hover {
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+}
+
+.party-level {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--copper);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ---------- experience and the purses ----------
+   Three panels on the sheet, three strips here. The label is the same small
+   caps in all of them so the strips read as one group. */
+.party-strip-label {
+  font-size: 0.56rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-bright);
+  white-space: nowrap;
+}
+
+.party-xp {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.party-xp .bar-track {
+  flex: 1;
+  min-width: 0;
+}
+
+.party-xp-num {
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.party-purses {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.party-purse {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background-color: rgba(9, 17, 21, 0.45);
+  border: 1px solid rgba(148, 167, 176, 0.1);
+  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+}
+
+.party-purse .meter-glyph {
+  width: 12px;
+  height: 12px;
+}
+
+.party-purse:first-child .meter-glyph {
+  color: var(--stat-coin);
+}
+
+.party-purse:last-child .meter-glyph {
+  color: var(--stat-supply);
+}
+
+.party-purse-num {
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-left: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- the nine tiles ----------
+   The sheet's own tiles, shorter. The value keeps most of its size because it
+   is the thing being read; the padding is what pays. */
+.party-block .attr-row {
+  gap: 7px;
+}
+
+.party-block .attr-tile,
+.party-block .stat-box {
+  padding: 0.48rem 0.2rem;
+  gap: 2px;
+}
+
+.party-block .attr-value,
+.party-block .stat-box-value {
+  font-size: 1.3rem;
+}
+
+.party-block .attr-label,
+.party-block .stat-box-label {
+  font-size: 0.56rem;
+}
+
+/* ---------- the five pools ----------
+   Label beside the bar, in the shared column, and no ledger behind any of
+   them: these are readouts, so they drop the hand cursor and the hover
+   invitation the sheet's own meters carry. */
+.party-block .meter {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 0.38rem 0.5rem;
+  cursor: default;
+}
+
+.party-block .meter:hover {
+  border-color: rgba(148, 167, 176, 0.1);
+  background-color: rgba(9, 17, 21, 0.45);
+}
+
+.party-block .meter .meter-label {
+  flex: 0 0 var(--party-label);
+  font-size: 0.58rem;
+  letter-spacing: 0.6px;
+}
+
+.party-block .mana-track {
+  height: 22px;
+  flex: 1;
+  min-width: 0;
+}
+
+.party-block .mana-text {
+  font-size: 0.7rem;
+}
+
+/* The two pip rows take the same shape, so all five lines agree. */
+.party-block .pool-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 0.1rem 0.5rem;
+}
+
+.party-block .pool-head {
+  flex: 0 0 var(--party-label);
+}
+
+.party-block .pool-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+
+.party-block .pip-row {
+  gap: 5px;
+  flex-wrap: nowrap;
+}
+
+/* Smaller than the sheet's 18px: a pip nobody can press needs no touch target,
+   only a size you can count at a glance. */
+.party-block .res-pip {
+  width: 15px;
+  height: 15px;
+  border-width: 2px;
+}
+
+.party-block .karma-pill {
+  padding: 0.3rem 0.5rem;
+}
+
+.party-block .karma-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.6px;
+}
+
+/* A stepper that can never step is furniture. The value stays, and it is the
+   only thing in the pill that was ever a readout. */
+.party-block .karma-btn {
+  display: none;
+}
+
+.party-block .karma-value {
+  font-size: 0.88rem;
+  min-width: 0;
+}
+
+/* ---------- THE DETAILS TAB ---------- */
+.camp-details {
+  width: min(100%, 720px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-bottom: 2rem;
+}
+
+.camp-panel {
+  background-color: var(--panel-teal);
+  border: 1px solid var(--hairline);
+  border-top: 3px solid var(--haze-purple);
+  border-radius: 6px;
+  padding: 1.1rem 1.25rem 1.25rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+.camp-panel-title {
+  font-family: var(--font-headings);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.9rem;
+}
+
+.camp-desc-input {
+  resize: vertical;
+  min-height: 60px;
+  font-family: var(--font-body);
+}
+
+.camp-read-name {
+  font-family: var(--font-headings);
+  font-size: 1.3rem;
+  color: var(--focus-cyan);
+  margin-bottom: 0.4rem;
+}
+
+.camp-read-desc {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.camp-thumb-preview {
+  margin-top: 0.75rem;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(200, 138, 75, 0.25);
+  max-height: 180px;
+  background-color: var(--bg-black);
+}
+
+.camp-thumb-preview img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  object-position: 50% 0;
+  display: block;
+}
+
+.camp-code-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.6rem 0;
+  flex-wrap: wrap;
+}
+
+.camp-code-centered {
+  justify-content: center;
+  margin-top: 1.25rem;
+}
+
+.camp-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--level-amber);
+  background-color: var(--bg-black);
+  border: 1px solid rgba(255, 179, 0, 0.3);
+  border-radius: 4px;
+  padding: 0.45rem 0.8rem;
+  user-select: all;
+}
+
+.camp-note-ok {
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--stat-supply, #7dbb6f);
+}
+
+/* ---------- THE ROSTER ---------- */
+.camp-roster {
+  list-style: none;
+  margin: 0 0 0.9rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.camp-roster-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background-color: var(--inset-bg);
+  border: 1px solid rgba(148, 167, 176, 0.1);
+  border-radius: 4px;
+  padding: 0.4rem 0.6rem;
+  min-width: 0;
+}
+
+.camp-roster-face {
+  width: 34px;
+  height: 34px;
+  border-radius: 3px;
+  background-color: var(--bg-black);
+  border: 1px solid rgba(200, 138, 75, 0.25);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.camp-roster-face img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+}
+
+.camp-roster-initials {
+  font-family: var(--font-headings);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(200, 138, 75, 0.6);
+}
+
+.camp-roster-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--focus-cyan);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.camp-roster-name:hover {
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+}
+
+.camp-roster-level {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--copper);
+  white-space: nowrap;
+}
+
+.camp-roster-mine {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  border: 1px solid rgba(148, 167, 176, 0.25);
+  border-radius: 3px;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+/* The empty table, centred on the canvas rather than left on its edge. */
+.camp-empty {
+  margin: 3rem auto 0;
+  max-width: 480px;
+}
+
+/* ---------- THE BAR ON A PHONE ----------
+   Below 820px the sheet folds its five tabs into a burger (see sheet.css).
+   The campaign page keeps the row instead and gives the tabs a slimmer coat.
+
+   Two of them are the Game Master's alone, so a player reads two tabs here and
+   a Game Master reads four. Two fit a phone outright; four do not, so the row
+   scrolls sideways rather than wrapping onto a second line and doubling the
+   height of the bar. The scrollbar is hidden because the row is four words
+   wide and a finger finds the fourth without being told it is there. */
+@media (max-width: 820px) {
+  .camp-sheet .sheet-tabs {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .camp-sheet .sheet-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .camp-sheet .sheet-tabbar-inner {
+    flex-direction: row;
+  }
+
+  .camp-sheet .sheet-tab {
+    padding: 0.85rem 0.8rem;
+    white-space: nowrap;
+  }
+}
+
+/* The name gives way before the tabs do: the tabs are the only way around the
+   page, and the name is printed again on the campaigns card it came from. */
+@media (max-width: 480px) {
+  .camp-title {
+    display: none;
+  }
+}
+
+/* =========================================================
+   THE BESTIARY AND THE ENCOUNTERS
+   Two tabs the Game Master alone gets, and one block shape
+   drawn on both of them.
+
+   Jules, 2026-08-31: "just like the draconic ally, a two
+   block but in this case nestled inside a main double block
+   for redabelity." So the cell is the inventory's own
+   `sheet-cell-wide` (two tracks, one height) and the two
+   panes are laid inside it as a grid, with a hairline down
+   the middle where the gap between two cells would be. A
+   Game Master reads an enemy as one thing, and the pools
+   they are pressing have to sit beside the Health they are
+   pressing them against.
+   ========================================================= */
+.sheet-cell.cell-foe {
+  /* The top edge is the danger, the way a creature's block wears talent amber
+     for the choice that granted it. Set per block off the rank. */
+  border-top-color: var(--rank-tone, var(--copper));
+}
+
+/* Whose turn it is, on the block itself: the acting enemy is ringed in copper
+   and stands first in the grid, because the blocks follow the order while a
+   fight runs. See orderedFoes in EncounterTab.jsx. */
+.sheet-cell.cell-foe.is-up {
+  border-color: var(--copper);
+  box-shadow:
+    0 0 0 1px rgba(200, 138, 75, 0.5),
+    0 0 18px rgba(200, 138, 75, 0.22);
+}
+
+.foe-block {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* The seam. One hairline rather than a gap, because the two panes are one
+   block: a gap here would read as two cells that happen to be touching. */
+.foe-pane + .foe-pane {
+  border-left: 1px solid var(--hairline);
+}
+
+/* 0.42 rather than the 0.5 every other block uses, and measured rather than
+   chosen: this pane holds eleven rows where a creature's holds eight, and the
+   eight hundredths of a rem between each of them is the fifteen pixels that were
+   pushing Willpower off the bottom. */
+.foe-pane {
+  gap: 0.42rem;
+  min-height: 0;
+}
+
+/* The left pane is a fixed list and fits; the right holds three lists with no
+   natural length, so the pane itself holds still and the lists scroll inside
+   it. Same division of labour as a creature's two blocks. */
+.foe-pane-actions {
+  overflow: hidden;
+}
+
+.foe-lists {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200, 138, 75, 0.35) transparent;
+}
+
+.foe-lists::-webkit-scrollbar {
+  width: 6px;
+}
+
+.foe-lists::-webkit-scrollbar-thumb {
+  background-color: rgba(200, 138, 75, 0.35);
+  border-radius: 3px;
+}
+
+/* ---------- the head ----------
+   The lore button is a circle with one letter in it, at the size of the block
+   head's own type, so it costs the head no height at all. */
+.foe-info {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid rgba(200, 138, 75, 0.45);
+  background-color: rgba(9, 17, 21, 0.55);
+  color: var(--copper);
+  font-family: var(--font-headings);
+  font-size: 0.62rem;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.foe-info:hover {
+  color: var(--copper-bright);
+  border-color: var(--copper-bright);
+}
+
+.foe-drop {
+  margin-left: 0.4rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid rgba(179, 0, 0, 0.35);
+  background-color: rgba(9, 17, 21, 0.55);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.foe-drop:hover {
+  color: var(--stat-speed);
+  border-color: var(--stat-speed);
+}
+
+/* ---------- who it is ----------
+   The creature's plate is smaller than a bonded minion's 88px, because this
+   pane carries three lines the minion's does not (Proficiencies, Sense,
+   Language) and the picture is the one thing on it with slack to give. */
+.foe-id {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  flex-shrink: 0;
+}
+
+.foe-plate {
+  width: 58px;
+  height: 58px;
+  flex: none;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--rank-tone, var(--copper)) 32%, transparent);
+  background-color: var(--bg-black);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.foe-plate img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+}
+
+/* The same haze an unpainted card draws, so a creature nobody has drawn yet
+   never reads as a broken image. */
+.foe-plate-empty {
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(157, 91, 255, 0.22), transparent 60%),
+    radial-gradient(circle at 70% 75%, rgba(255, 179, 0, 0.14), transparent 55%),
+    var(--bg-black);
+}
+
+.foe-id-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.foe-name {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-headings);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  line-height: 1.15;
+}
+
+.foe-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.foe-chip {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid rgba(148, 167, 176, 0.28);
+  background-color: rgba(9, 17, 21, 0.55);
+  color: var(--text-muted);
+}
+
+/* The rank wears its own colour, which is the one fact about an enemy a reader
+   wants before any number on the block. */
+.foe-chip-rank {
+  border-color: color-mix(in srgb, var(--rank-tone, var(--copper)) 45%, transparent);
+  background-color: color-mix(in srgb, var(--rank-tone, var(--copper)) 12%, rgba(9, 17, 21, 0.55));
+  color: color-mix(in srgb, var(--rank-tone, var(--copper)) 78%, var(--text-silver));
+}
+
+.foe-chip.is-down {
+  border-color: rgba(179, 0, 0, 0.45);
+  color: var(--stat-speed);
+}
+
+/* ---------- the level, and the two steps that change it ----------
+   Inside the chip rather than beside it, so the row of chips stays one row: a
+   fourth chip would wrap the tags onto a second line and take height off a pane
+   that has none to give. */
+.foe-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 1px 3px;
+}
+
+/* An enemy moved off the level its page was written at says so, because a
+   scaled block must not be read as the printed one. */
+.foe-level.is-scaled {
+  border-color: rgba(255, 179, 0, 0.45);
+  color: var(--level-amber);
+}
+
+.foe-level-step {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  border-radius: 3px;
+  border: 1px solid rgba(148, 167, 176, 0.28);
+  background-color: rgba(9, 17, 21, 0.55);
+  color: inherit;
+  font-size: 0.7rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.foe-level-step:hover:not(:disabled) {
+  border-color: var(--copper);
+  color: var(--copper-bright);
+}
+
+.foe-level-step:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* ---------- the rank's rule ----------
+   Printed under the two point pools it is about, the way a creature's block
+   prints "It spends your Willpower" under the same two. */
+.foe-rule {
+  margin: 0;
+  font-size: 0.66rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+  border-left: 2px solid color-mix(in srgb, var(--rank-tone, var(--copper)) 50%, transparent);
+  padding-left: 0.5rem;
+}
+
+/* ---------- the passives ----------
+   A row you tap to read, and on the environmental ones a switch beside it. */
+.foe-passives {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.foe-passive {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  padding: 0.35rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--hairline);
+  background-color: var(--inset-bg);
+}
+
+/* A ward is marked out from an ordinary passive, because it is the one row on
+   the block that answers to something happening in the room. */
+.foe-passive.is-ward {
+  border-left: 2px solid var(--level-amber);
+}
+
+.foe-passive.is-broken {
+  opacity: 0.6;
+}
+
+.foe-passive.is-broken .foe-passive-name {
+  text-decoration: line-through;
+}
+
+.foe-passive-name {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-headings);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-silver);
+}
+
+.foe-passive-name:hover {
+  color: var(--copper-bright);
+}
+
+.foe-passive-while {
+  font-size: 0.58rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.foe-ward-btn {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 179, 0, 0.4);
+  background-color: rgba(9, 17, 21, 0.55);
+  color: var(--level-amber);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.foe-ward-btn:hover {
+  border-color: var(--level-amber);
+  color: var(--text-bright);
+}
+
+/* ---------- the lore window ---------- */
+.foe-lore-head {
+  margin: 0 0 0.8rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.foe-lore {
+  margin: 0 0 1rem;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  font-style: italic;
+  color: var(--text-silver);
+}
+
+.foe-lore-rank {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  border-top: 1px solid var(--hairline);
+  padding-top: 0.8rem;
+}
+
+.foe-lore-rank b {
+  color: var(--text-silver);
+}
+
+/* =========================================================
+   THE TOOLBARS
+   One row over the canvas on each of the two tabs, in the
+   grammar the Overview's "Arrange blocks" bar already set.
+   ========================================================= */
+.camp-toolbar {
+  width: min(100%, var(--sheet-measure));
+  margin: 0 auto 0.9rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.camp-toolbar-note {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.camp-toolbar-note b {
+  color: var(--copper);
+  font-style: italic;
+}
+
+.foe-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.foe-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  padding: 0.35rem 0.7rem;
+  border-radius: 4px;
+  border: 1px solid var(--hairline);
+  background-color: var(--inset-bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.foe-filter-btn:hover {
+  color: var(--text-silver);
+}
+
+/* The chosen one wears the rank it filters to, which is the same colour its
+   chips wear on every block below. */
+.foe-filter-btn.is-on {
+  border-color: color-mix(in srgb, var(--rank-tone, var(--copper)) 55%, transparent);
+  background-color: color-mix(in srgb, var(--rank-tone, var(--copper)) 12%, var(--inset-bg));
+  color: color-mix(in srgb, var(--rank-tone, var(--copper)) 80%, var(--text-silver));
+}
+
+.foe-filter-count {
+  font-size: 0.6rem;
+  opacity: 0.7;
+}
+
+/* =========================================================
+   THE SHELF OF CREATURES
+   The Bestiary tab itself: a wall of summaries, and the
+   block behind one of them.
+
+   Jules, 2026-09-04: "the bestiary should be a menu with
+   summary version of the enemies. The block should show when
+   you click on it. Summary should be the same size as like
+   spell summary."
+
+   So the wall IS the spell wall — `.card-brief-wall` and
+   `.card-brief-*` in sheet.css, unchanged and unforked. What
+   is here is only the four things a creature has that a card
+   does not, plus the box the block opens in. See
+   CreatureBrief.jsx for why the two share one measure rather
+   than two that match today.
+   ========================================================= */
+
+/* Measured against the toolbar above it, the way every row on
+   these two tabs is measured against the grid: the filter and
+   the wall begin and end on the same edge. `.card-brief-wall`
+   brings the columns (auto-fill at 275px), so the count falls
+   out of the measure rather than being set here. */
+.foe-brief-wall {
+  width: min(100%, var(--sheet-measure));
+  margin-inline: auto;
+  /* `.card-brief-wall` leads with 0.8rem, which is right under a dialog's own
+     heading and is a second gap under the toolbar: the toolbar already spends
+     0.9rem below itself, exactly as it did over the grid this wall replaced. */
+  margin-top: 0;
+}
+
+/* The level, in the corner a card brief keeps its cost orbs.
+   Same question, same place, same reason: a column of them is
+   read straight down without reading the names. Tabular, so
+   Lvl 01 and Lvl 12 are the same width. */
+.foe-brief-level {
+  flex: none;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid color-mix(in srgb, var(--ac-accent, var(--copper)) 35%, transparent);
+  background-color: rgba(9, 17, 21, 0.6);
+  color: color-mix(in srgb, var(--ac-accent, var(--copper)) 70%, var(--text-silver));
+}
+
+/* The page's own head numbers, in the summary's own slot. Only
+   the figures are tuned: five of them read as a stat line
+   rather than a sentence, which is what they are. */
+.foe-brief-stats {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.2px;
+}
+
+/* What it plays, counted, on the far end of the open label. It
+   rides that line rather than the chip row because it is not
+   what the creature *is*, it is what opening the block gets
+   you. The label holds the two ends apart here and nowhere
+   else, so the row is opened up on `.foe-brief` rather than on
+   the label every card brief on the site shares. */
+.foe-brief .card-brief-open {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.foe-brief-moves {
+  color: var(--text-muted);
+}
+
+/* ---------- the block, opened ----------
+   The enemy block at its real footprint inside the dialog:
+   two block tracks and the gap between them, which is the
+   736px the tab used to give it in the grid. Centred, because
+   the page measure is 1180 and a 736px block pinned left
+   would read as a column of a wider thing.
+
+   Deliberately NOT `.sheet-cell-wide`. That class is a grid
+   instruction (`span 2`) and both the phone query and the
+   one-column canvas rule take the span away and hand back a
+   360px block — correct in a grid, wrong in a dialog, where
+   there is no grid and the width is this box's to give. So the
+   cell keeps its own height and takes the width it is given.
+
+   Below 820px the block becomes one column of two panes and
+   scrolls inside itself, which is the rule at the foot of this
+   file and needs nothing added here. */
+.foe-page {
+  width: min(100%, calc(var(--block-w) * 2 + 16px));
+  margin-inline: auto;
+}
+
+.foe-page > .sheet-cell {
+  width: 100%;
+}
+
+/* =========================================================
+   THE ENCOUNTERS TAB
+   ========================================================= */
+.enc-bar {
+  margin-bottom: 0.7rem;
+}
+
+.enc-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.enc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-headings);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid var(--hairline);
+  background-color: var(--inset-bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.enc-chip:hover {
+  color: var(--text-silver);
+}
+
+.enc-chip.is-on {
+  border-color: rgba(200, 138, 75, 0.5);
+  background-color: rgba(200, 138, 75, 0.1);
+  color: var(--copper-bright);
+}
+
+.enc-chip-count {
+  font-size: 0.6rem;
+  opacity: 0.75;
+  border-left: 1px solid var(--hairline);
+  padding-left: 0.45rem;
+}
+
+.enc-chip-new {
+  border-style: dashed;
+}
+
+/* The encounter's own head: what it is called, the line under it, the tally and
+   the four presses. Kept to the three-block measure the rest of the page is
+   drawn against, so it lines up with the canvas below it whatever the column
+   count is. */
+.enc-head {
+  width: min(100%, var(--sheet-measure));
+  margin: 0 auto 1rem;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.enc-head-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 0.8rem;
+}
+
+.enc-head-fields .form-group {
+  margin: 0;
+}
+
+.enc-head-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.enc-tally {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.enc-tally-chip {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid color-mix(in srgb, var(--rank-tone, var(--copper)) 45%, transparent);
+  background-color: color-mix(in srgb, var(--rank-tone, var(--copper)) 12%, rgba(9, 17, 21, 0.55));
+  color: color-mix(in srgb, var(--rank-tone, var(--copper)) 78%, var(--text-silver));
+}
+
+.enc-gains {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-silver);
+}
+
+/* ---------- the shelf ----------
+   A menu you browse rather than a question you answer, so it takes the page
+   measure and flows into columns. See the width note in Modal.jsx. */
+.foe-filter-shelf {
+  margin-bottom: 0.9rem;
+}
+
+.foe-shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 0.5rem;
+}
+
+.foe-shelf-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 4px;
+  border: 1px solid var(--hairline);
+  background-color: var(--inset-bg);
+}
+
+.foe-shelf-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.foe-shelf-name {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-family: var(--font-headings);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-silver);
+}
+
+.foe-shelf-have {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--copper);
+}
+
+.foe-shelf-line {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+}
+
+.foe-shelf-stats {
+  font-variant-numeric: tabular-nums;
+}
+
+.foe-shelf-adds {
+  display: flex;
+  gap: 0.25rem;
+  flex: none;
+}
+
+/* ---------- the double block on a narrow canvas ----------
+   One column and there is no second track to span, so the block gives up the
+   span and takes the width it is given. Same reset the inventory's wide cell
+   makes, for the same reason: `span 2` against a one-column grid has the
+   browser invent a second track. */
+.sheet[data-columns='1'] .sheet-cell.cell-foe {
+  width: auto;
+}
+
+@media (max-width: 820px) {
+  .enc-head-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* 820 and not a pixel else, because that is where sheet.css takes the second
+   track off `.sheet-cell-wide`: below it the cell is one 360px block, and two
+   panes inside a 360px block is two 170px columns of squeezed tiles. The two
+   numbers have to be the same number, and this is the one that has to follow.
+
+   So the block becomes one column of two panes and scrolls. Nothing is dropped
+   and nothing shrinks: a stat block read on a phone is read by scrolling, which
+   is what a phone does. */
+@media (max-width: 820px) {
+  .foe-block {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: min-content;
+    overflow-y: auto;
+  }
+
+  .foe-pane + .foe-pane {
+    border-left: none;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .foe-pane,
+  .foe-pane-actions,
+  .foe-lists {
+    overflow: visible;
+  }
+}
+
+/* =========================================================
+   THE FIGHT
+   The initiative strip on the Encounters tab, and the seam
+   the log draws between one turn and the next.
+   ========================================================= */
+.enc-strip {
+  width: min(100%, var(--sheet-measure));
+  margin: 0 auto 1rem;
+  padding: 0.6rem 0.8rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  border-radius: 4px;
+  border: 1px solid var(--hairline);
+  background-color: var(--inset-bg);
+}
+
+/* A fight in progress is the thing on the page, so it says so with the same
+   copper edge every live control on the site wears. */
+.enc-strip.is-live {
+  border-color: rgba(200, 138, 75, 0.4);
+  background-color: rgba(200, 138, 75, 0.06);
+}
+
+.enc-strip-note {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.enc-round {
+  font-family: var(--font-headings);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--copper);
+  white-space: nowrap;
+}
+
+/* The order itself. It scrolls sideways rather than wrapping: a fight with
+   twelve bodies in it would otherwise be four lines of chips above the blocks,
+   and the only part anybody reads is the few either side of whoever is up. */
+.enc-order {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 0;
+  max-width: 100%;
+}
+
+.enc-order::-webkit-scrollbar {
+  display: none;
+}
+
+.enc-turn {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  flex: none;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 3px;
+  border: 1px solid var(--hairline);
+  background-color: rgba(9, 17, 21, 0.55);
+  color: var(--text-muted);
+  max-width: 15ch;
+}
+
+.enc-turn-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.enc-turn-init {
+  font-size: 0.6rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+/* The two sides, told apart by colour rather than by a word. The party wears the
+   cyan a character's own Defense tile wears; an enemy wears its rank. */
+.enc-turn-member {
+  border-color: rgba(0, 229, 255, 0.28);
+  color: color-mix(in srgb, var(--focus-cyan) 55%, var(--text-silver));
+}
+
+.enc-turn-foe {
+  border-color: color-mix(in srgb, var(--rank-tone, var(--copper)) 35%, transparent);
+  color: color-mix(in srgb, var(--rank-tone, var(--copper)) 65%, var(--text-silver));
+}
+
+/* Whoever is up. The one chip on the row that is filled rather than outlined,
+   because it is read at a glance from across a table. */
+.enc-turn.is-up {
+  border-color: var(--copper);
+  background-color: rgba(200, 138, 75, 0.18);
+  color: var(--text-bright);
+  box-shadow: 0 0 0 1px rgba(200, 138, 75, 0.25);
+}
+
+.enc-turn-member.is-up {
+  border-color: var(--focus-cyan);
+  background-color: rgba(0, 229, 255, 0.16);
+  box-shadow: 0 0 0 1px rgba(0, 229, 255, 0.25);
+}
+
+/* =========================================================
+   THE TURN CALL moved to sheet.css. It renders on the
+   character sheet, and this file is only loaded with the two
+   campaign pages: a player whose first stop tonight was
+   their own sheet got the cover unstyled. sheet.css is the
+   file that page actually loads.
+   ========================================================= */
+
+/* =========================================================
+   THE SHELF OF ENCOUNTERS
+   One block per prepared encounter: the name, the note, the
+   ranks in it and the bodies by name. The whole block is the
+   button, because the block is the way in.
+   ========================================================= */
+.enc-shelf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  width: min(100%, var(--sheet-measure));
+  margin: 0 auto;
+}
+
+.enc-block {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.55rem;
+  padding: 0.9rem 1rem;
+  text-align: left;
+  border-radius: 4px;
+  border: 1px solid var(--hairline);
+  background-color: var(--inset-bg);
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.enc-block:hover,
+.enc-block:focus-visible {
+  border-color: var(--copper);
+  transform: translateY(-2px);
+}
+
+.enc-block-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.enc-block-name {
+  font-family: var(--font-headings);
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-bright);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A fight running inside it is the one thing worth a badge on the shelf. */
+.enc-block-live {
+  margin-left: auto;
+  flex: none;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  color: var(--copper-bright);
+  border: 1px solid rgba(200, 138, 75, 0.45);
+  background-color: rgba(200, 138, 75, 0.12);
+}
+
+.enc-block-notes {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-silver);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.enc-block-foes {
+  font-size: 0.7rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.enc-block-empty {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.enc-block-open {
+  margin-top: auto;
+  padding-top: 0.35rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--copper);
+}
+
+.enc-block-new {
+  border-style: dashed;
+  justify-content: center;
+  text-align: center;
+  min-height: 130px;
+}
+
+.enc-back {
+  align-self: flex-start;
+  flex: none;
+}
+
+/* The curtain's checkbox: whether the seated sheets may see this encounter's
+   enemy pools. A label rather than a button, because it is a standing state
+   and not a press. */
+.enc-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--text-silver);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.enc-share input {
+  accent-color: var(--copper);
+  cursor: pointer;
+}
+
+/* =========================================================
+   TARGET CHIPS, THE PICKER AND THE TURN MANAGER BLOCK moved
+   to sheet.css. All three render on the character sheet now
+   — the picker on any use in a live fight, the chips and the
+   run block inside the fight block a linked sheet grows —
+   and this file is only loaded with the two campaign pages.
+   sheet.css is the file both pages load.
+   ========================================================= */
+
+/* =========================================================
+   LANDING IT
+   The apply window: what was rolled, who it lands on, and
+   the working per body. See ApplyWindow.jsx.
+   ========================================================= */
+.apply-window {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.apply-lead {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-silver);
+}
+
+.apply-deltas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.apply-delta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid var(--hairline);
+  background-color: rgba(9, 17, 21, 0.5);
+  font-size: 0.8rem;
+}
+
+.apply-delta b {
+  font-size: 1.05rem;
+  color: var(--text-bright);
+}
+
+.apply-delta.is-damage b {
+  color: var(--stat-health);
+}
+
+.apply-delta.is-healing b {
+  color: var(--def-healing);
+}
+
+.apply-delta.is-shield b {
+  color: var(--stat-shield);
+}
+
+.apply-delta-what {
+  font-size: 0.72rem;
+  color: var(--text-silver);
+}
+
+.apply-delta-landings {
+  font-size: 0.64rem;
+  color: var(--text-muted);
+}
+
+/* The one roll judged per body: who it critically caught, who it caught and
+   who dodged, each band in the verdict's own colour. */
+.apply-verdicts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.apply-verdict {
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--text-silver);
+}
+
+.apply-verdict b {
+  margin-right: 0.45rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--verdict-tone, var(--text-muted));
+}
+
+.apply-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.apply-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.apply-line-name {
+  flex: none;
+  min-width: 9ch;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--tgt-tone, var(--copper)) 70%, var(--text-silver));
+}
+
+.apply-line-math {
+  color: var(--text-muted);
+}
+
+/* One side of an enemy's turn boundary in the prompt: whose turn is ending or
+   starting, over the same trigger rows the sheet's own prompt draws. */
+.foe-boundary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.foe-boundary-head {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--copper);
+}
+
+/* The level everything added from the shelf goes in at. Beside the rank filter,
+   because a Game Master picks a level for the fight once and then fills it. */
+.foe-shelf-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.foe-shelf-level-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-right: 0.15rem;
+}
+
+/* The seam over the three pools, where a "Resources" heading used to be. The
+   party block on the Overview made the same trade for the same reason: a
+   heading over rows that each name themselves is a heading spent on nothing,
+   and this pane has no height to spend. */
+.foe-seam {
+  height: 1px;
+  flex: none;
+  margin: 0.15rem 0;
+  background-color: var(--hairline);
+}
+
+/* =========================================================
+   THE CREATURE FORGE
+   One creature, built by hand, inside a page-width dialog.
+
+   Two columns on a desktop and one on a phone. The panels
+   are the Details tab's own, because this is the same kind
+   of thing: a form that edits a record, in a stack of named
+   sections. What is different is the width, and the width is
+   what earns the second column: a form of this many fields in
+   one 560px stripe is a scroll nobody reaches the end of.
+   ========================================================= */
+.forge-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+/* The attribute panel spans both, because its table has seven
+   columns and cannot be squeezed into half a dialog. */
+.forge-panel-wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 900px) {
+  .forge-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.forge-panel {
+  border-top-color: var(--copper);
+}
+
+/* A row of fields that belong together: two coefficients, or a
+   size and a kind. They share the width evenly and stack on a
+   narrow screen rather than shrinking into unusable boxes. */
+.forge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.forge-row > .form-group {
+  flex: 1 1 120px;
+  min-width: 110px;
+  margin-bottom: 0;
+}
+
+.forge-panel .form-group {
+  margin-bottom: 0.9rem;
+}
+
+/* The line under a control that says what the number means, or
+   what it will do. Muted, small, and the one place in the forge
+   where a sentence is allowed. */
+.forge-hint {
+  display: block;
+  margin: 0.35rem 0 0;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.forge-hint b {
+  color: var(--text-silver);
+}
+
+.forge-empty {
+  margin: 0.4rem 0 0.8rem;
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.forge-error {
+  color: var(--danger-rose);
+}
+
+/* ---------- a number with two steps ----------
+   The same two steps the level chip on an enemy block carries,
+   for the same reason: a coefficient is nudged while building
+   and typed when it is known. */
+.forge-nudge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.forge-nudge.is-off {
+  opacity: 0.45;
+}
+
+.forge-cell {
+  width: 100%;
+  max-width: 84px;
+  min-width: 0;
+  text-align: center;
+  font-family: var(--font-headings);
+  font-size: 0.85rem;
+  padding: 0.35rem 0.2rem;
+}
+
+/* The spinner arrows are dead weight beside two steps of our own
+   that know the field's range. */
+.forge-cell::-webkit-outer-spin-button,
+.forge-cell::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.forge-cell {
+  appearance: textfield;
+}
+
+/* ---------- the attribute sum ----------
+   The whole arithmetic, column by column, because a creature does
+   not store its attributes: it stores which one is its main, which
+   its second, and one flat bonus each. Printing only the total
+   would leave the reader to work out why an 8 is an 8.
+   ========================================================= */
+/* A table wide enough that a phone cannot hold it. It scrolls inside its own
+   box rather than pushing the dialog sideways: the attribute sum is seven
+   columns and none of them can be dropped without hiding a step of the
+   arithmetic the panel exists to show. */
+.forge-scroll {
+  overflow-x: auto;
+  scrollbar-gutter: stable;
+}
+
+.forge-attrs,
+.forge-numbers {
+  width: 100%;
+  min-width: 380px;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+
+.forge-attrs th,
+.forge-attrs td,
+.forge-numbers th,
+.forge-numbers td {
+  padding: 0.35rem 0.45rem;
+  text-align: center;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.forge-attrs thead th,
+.forge-numbers thead th {
+  font-family: var(--font-headings);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.forge-attrs tbody th,
+.forge-numbers tbody th {
+  text-align: left;
+  font-family: var(--font-headings);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.forge-attrs tbody td,
+.forge-numbers tbody td {
+  color: var(--text-muted);
+}
+
+/* The number at level 12, which is the one every creature is really
+   built for: the ceiling it reaches, not the level it was written
+   at. Silver rather than muted, so a column can be read straight
+   down. */
+.forge-top {
+  color: var(--text-silver) !important;
+  font-family: var(--font-headings);
+  font-weight: 700;
+}
+
+.forge-attrs tr.is-main {
+  background-color: rgba(200, 138, 75, 0.06);
+}
+
+/* Which one is the main and which the second, said in a word on the
+   row rather than only in the two dropdowns under the table. This is
+   the ask: you can see which stat gets increased as main. */
+.forge-mark {
+  margin-left: 0.4rem;
+  font-family: var(--font-body);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid rgba(200, 138, 75, 0.45);
+  color: var(--copper-bright);
+}
+
+.forge-mark.is-second {
+  border-color: rgba(148, 167, 176, 0.3);
+  color: var(--text-muted);
+}
+
+/* The creature's own bonus, which is the only number under the table
+   that is really its. Up, down or flat, coloured so a spread reads at
+   a glance. */
+.forge-attrs td.is-up {
+  color: var(--stat-health);
+}
+
+.forge-attrs td.is-down {
+  color: var(--danger-rose);
+}
+
+.forge-attrs td.is-flat {
+  opacity: 0.6;
+}
+
+.forge-attrs td .forge-cell {
+  max-width: 70px;
+  margin: 0 auto;
+}
+
+/* ---------- the readout ----------
+   What the page will print, at the level it is written at and at the
+   twelve every creature climbs to. */
+.forge-readout {
+  border-top-color: var(--focus-cyan);
+}
+
+.forge-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.8rem;
+}
+
+.forge-sheet-name {
+  font-family: var(--font-headings);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-silver);
+}
+
+.forge-sheet-line {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+/* ---------- what it knows ---------- */
+.forge-cards {
+  list-style: none;
+  margin: 0 0 0.8rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.forge-card-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background-color: var(--inset-bg);
+}
+
+.forge-card-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+}
+
+.forge-card-open:hover .forge-card-name {
+  color: var(--copper-bright);
+}
+
+.forge-card-name {
+  font-family: var(--font-headings);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-silver);
+}
+
+.forge-card-line {
+  font-size: 0.66rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.forge-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.2rem;
+}
+
+/* A card the creature already holds, on the shelf it was taken from. */
+.foe-shelf-row.is-held {
+  border-color: color-mix(in srgb, var(--copper) 35%, transparent);
+  background-color: rgba(200, 138, 75, 0.06);
+}
+
+.forge-lore {
+  width: 100%;
+  resize: vertical;
+  min-height: 90px;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* ---------- whose shelf ----------
+   Two answers to one question, so a pair of radios rather than a
+   checkbox that would leave the other answer unnamed. */
+.forge-scope {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 1rem;
+}
+
+.forge-scope-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background-color: var(--inset-bg);
+  cursor: pointer;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.forge-scope-row.is-on {
+  border-color: rgba(200, 138, 75, 0.45);
+  background-color: rgba(200, 138, 75, 0.08);
+}
+
+.forge-scope-row b {
+  display: block;
+  color: var(--text-silver);
+}
+
+.forge-scope-row .forge-hint {
+  margin-top: 0.15rem;
+}
+
+/* The line under the kind row in the card picker: what the kind that is open
+   actually is. Tighter than a panel hint, because it sits between two controls
+   rather than under one. */
+.forge-shelf-note {
+  margin: -0.4rem 0 0.7rem;
+}
+
+/* A creature that was forged rather than printed, said on its own
+   block so nobody reads one as codex. */
+.foe-chip-forged {
+  border-color: rgba(200, 138, 75, 0.45);
+  background-color: rgba(200, 138, 75, 0.1);
+  color: var(--copper-bright);
+}
+
+/* And the same fact on the encounter shelf, where the row is one line and a
+   chip would be too loud. It reads like the "x2 in" beside it. */
+.foe-shelf-forged {
+  margin-left: 0.4rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--copper);
+}

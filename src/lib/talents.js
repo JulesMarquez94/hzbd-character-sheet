@@ -46,6 +46,15 @@
  * is a leaf, and a spec that needed the codex to describe itself would cost it
  * that.
  *
+ * ------------------------------------------------------- and a set may be empty
+ * A set carrying `stub: true` is a **placeholder**: a name off the designer's
+ * roster, the shelf it was filed under, and nothing else. No cards, no spec, no
+ * prose of its own. It draws on the chooser wall for a friend or an admin so
+ * the shelf says what is coming, it is left off the wall for every other
+ * account, it can never be taken, and it is replaced by a real entry the day
+ * its sheet arrives. The roster and the reasoning are at the bottom of the
+ * codex.
+ *
  * ------------------------------------------------------------ what to roll
  * A card that asks for a roll against another entity has exactly two shapes,
  * and every new card has to pick one:
@@ -73,7 +82,10 @@
  * both end up importing it back.
  */
 
+import { ATTRIBUTES, HIGHEST } from './attributes.js';
 import { withArt } from './cardArt.js';
+import { OATH_AURAS } from './oaths.js';
+import { sumGrants } from './grants.js';
 
 /* --------------------------------------------------------------- the ranks */
 
@@ -105,6 +117,15 @@ export const TALENT_TAGS = [
   { id: 'physique', label: 'Physique', kind: 'attribute' },
   { id: 'instinct', label: 'Instinct', kind: 'attribute' },
   { id: 'mind', label: 'Mind', kind: 'attribute' },
+  /* Not an attribute, and it wears the same `kind` anyway. A set can lean on
+     something no attribute answers for: the Draconic Bond's whole spec is a
+     second stat block that grows with its bonded's *level* and with nothing
+     else. It is the same pseudo-attribute cardText.js prints for a `{level}`
+     token, and the kind is `attribute` because that is what makes the filter
+     behave — chips inside a kind widen ("Mind or Level"), chips across kinds
+     narrow, and a kind of its own would make those two chips together match
+     nothing at all. */
+  { id: 'level', label: 'Level', kind: 'attribute' },
 
   { id: 'martial', label: 'Martial', kind: 'role' },
   { id: 'spellcasting', label: 'Spellcasting', kind: 'role' },
@@ -113,16 +134,125 @@ export const TALENT_TAGS = [
   { id: 'control', label: 'Control', kind: 'role' },
 ];
 
+/* ------------------------------------------------------------- the shelves *
+ * The chooser wall is cut by the attribute a set is built on, because that is
+ * the first question anybody asks of it: my 6 is in Physique, so what does a 6
+ * in Physique buy me. Three shelves are the three attributes, in the order the
+ * whole sheet prints them, and the fourth is every set that leans on neither.
+ *
+ * The three read their label and their line off attributes.js, so a recolour or
+ * a reword of what an attribute buys is made once and shows up here. `Other` has
+ * no attribute to read, and its line says what lands there: the Draconic Bond,
+ * whose ally is a stat block that grows on level alone.
+ *
+ * A set's shelf is its `stat` and nothing else, which is why that field is worth
+ * having beside the tag that says the same thing — see the note on Guardian for
+ * the one set whose shelf is not the attribute its cards roll.
+ */
+export const TALENT_CATEGORIES = [
+  ...ATTRIBUTES.map(({ key, label, buys }) => ({ id: key, label, note: buys })),
+  {
+    id: 'other',
+    label: 'Other',
+    note: 'Scaled on your level, or on nothing you raise.',
+  },
+];
+
+const OTHER_CATEGORY = TALENT_CATEGORIES[TALENT_CATEGORIES.length - 1];
+
+/**
+ * And a shelf above all four: what this character already holds.
+ *
+ * "In the talent set selection screen, move the talent set you already have
+ * selected to the top on 'Current' category", Jules, 2026-09-09. Four shelves
+ * and thirty-four sets is a wall you scroll, and the answer to "where is the set
+ * I am ranking up" was somewhere down the Mind shelf between two placeholders.
+ * A level spent on a set you hold is the commonest choice there is, so it is the
+ * first thing on the wall.
+ *
+ * Not one of `TALENT_CATEGORIES`, and deliberately: those four are a fact about
+ * a *set* — the attribute it is built on — and `talentCategory` answers them off
+ * the set alone. This one is a fact about the reader, so it is cut in
+ * `talentShelves`, which is the only place both are known.
+ */
+const HELD_CATEGORY = {
+  id: 'current',
+  label: 'Current',
+  note: 'Sets you already hold. A level spent here deepens one rather than starting something new.',
+};
+
 /* ------------------------------------------------------------- the codex */
 
+/* --------------------------------------------------------- the granted three
+ *
+ * **A set can hand over a Martial Move outright**, as one of its own cards, and
+ * three do. Jules, 2026-09-03:
+ *
+ *   "Make sure that all ability like ambush are reshaped to work like marital
+ *    move. Actualy, make them special martail mvoe that are given by the talnet.
+ *    look for other similar cases and adjust them."
+ *
+ *   AMBUSH             Trickster, Rank 1
+ *   RAGING BLOW        Berserker, Rank 1
+ *   RECKLESS VIOLENCE  Berserker, Rank 3
+ *
+ * All three were Abilities that did nothing to the world and everything to your
+ * own next swing, and all three had to be paid for on one turn to be spent on
+ * another. AMBUSH was wired that way — bought at the quick bar, a rider on the
+ * effects tracker, spent by the next weapon attack — and was the last thing on
+ * the sheet still working the way every Martial Move worked before 2026-09-02.
+ * The other two were not wired at all: "your next melee Weapon Attack is made
+ * with advantage" was prose nothing read, and the advantage was the table's to
+ * remember a turn after the Willpower had gone.
+ *
+ * As moves they are one tick inside the attack they were always for. Priced into
+ * the same pay button, folded into the same printed card, credited in the same
+ * arrow, spent by the same press, and impossible to buy for a swing that never
+ * happens.
+ *
+ * A granted move differs from one out of a pool in exactly two ways: no chooser
+ * offers it and no rest re-picks it, and it is printed under its set on the
+ * Abilities tab rather than under a hand. Both follow from it being the set's own
+ * card. `grantedMoves` in moves.js is what reads them, off `kind` rather than off
+ * a list, so a fourth is one word on one card.
+ *
+ * **What was looked at and left alone.** The sweep found four more cards with
+ * "your next attack" in them and none of them is this shape:
+ *
+ *   SHIELD EXPERTISE and BASTION'S FURY are Passives whose clause fires when you
+ *   *block*. Nothing is activated and nothing is paid, so there is no moment at
+ *   which to tick a box: a Martial Move is chosen and priced, and these are
+ *   conditions.
+ *
+ *   SPORADIC INFUSION empowers **an ally's** next attack. A move rides the swing
+ *   being paid for on this sheet, and that swing is somebody else's.
+ *
+ *   STEAL's Poison row rides "your next Weapon Attacks", plural and unnumbered,
+ *   and is a menu outcome rather than an ability. It stays a tracker rider and is
+ *   now the only one — see tricks.js.
+ *
+ * QUICK DRAW and STICKY RESIN are the same two reasons again from outside the
+ * talent sets: a passive condition on a swap, and a coating that rides the next
+ * attack made with a weapon by whoever is holding it.
+ */
 const TALENT_SETS = [
   {
     id: 'guardian',
     name: 'Guardian',
     tagline: 'A bulwark who turns an enemy’s strength into an opening.',
-    art: '/talents/guardian.jpg',
-    tags: ['instinct', 'martial', 'defense', 'support'],
-    stat: 'instinct',
+    art: 'codex:talents/guardian.full.jpg',
+    /* Physique, and every card below still rolls Instinct. Ruled by Jules on
+       2026-08-23: a Guardian is built on the body that holds the shield up, so
+       Physique is the attribute somebody choosing this set is choosing it *for*,
+       and the Physique shelf is where they will look for it.
+
+       The Instinct on the cards is a different question and is untouched. The
+       contest SHIELD EXPERTISE gives advantage on is an Instinct contest because
+       that is what the sheet prints, and a card's own `stat` is what it rolls —
+       so the set's `stat` is the shelf and never the roll. These are the only two
+       that disagree, which is exactly why both fields exist. */
+    tags: ['physique', 'martial', 'defense', 'support'],
+    stat: 'physique',
     /* SHIELD EXPERTISE has promised Martial Moves since the set was written, and
        until the move codex existed there was nothing for it to promise. Now there
        is (martial.js), so the promise is a spec: "a number of Novice Martial Moves
@@ -137,6 +267,36 @@ const TALENT_SETS = [
 
        No `cast` either: nothing on this set names an attribute for its moves, so
        they print the codex's own default. */
+    /* What this set does to the move system. Numbers here, behaviour in
+       moves.js, indexed by rank the way every other set's is. Guardian had none of
+       this until 2026-09-02: it taught the moves and moved nothing about them, so
+       a Master Guardian added one to a swing the way a Rank 1 did. */
+    martial: {
+      /* BULWARK FORM at Rank 2 and PERFECT GUARD at Rank 3.
+         --------------------------------------------------------------------
+         **And SHIELD EXPERTISE's point of Defense, from 2026-09-11.** It used to
+         say here that a shield is gear and so the point would land through
+         `equipmentEffects` in items.js. It never did: what lands there is the
+         *weapon's* own printed Defense, and the Guardian's extra point had
+         nothing carrying it, so a Guardian with a shield up read one Defense
+         short of their own card.
+
+         It is a weapon rider and not a flat `grants`, because the card hangs it
+         on what is in your hand: `weaponRiders` puts it on while a Shielded
+         weapon is wielded and takes it straight back off on the swap, exactly as
+         a Duelist's AGILE behaves. `Shielded` is the tag all three of the
+         shield-bearing weapons carry.
+
+         From Rank 1, because the card is a Rank 1 card. The advantage the same
+         sentence grants is deliberately *not* here: `advantage` in this spec is
+         extra dice on an **attack** roll, and SHIELD EXPERTISE's is on Instinct
+         contested rolls, which is a different roll and has no rider yet. */
+      weapon: 'Shielded',
+      grants: [{ from: 'Shield Expertise', weapon: 'Shielded', defense: [null, 1, 1, 1] }],
+      special: [null, false, true, true],
+      perAttack: [null, 1, 1, 2],
+      onReaction: [null, false, false, true],
+    },
     loadout: {
       id: 'guardian-martial-moves',
       label: 'Martial Moves',
@@ -145,7 +305,7 @@ const TALENT_SETS = [
       group: 'tier',
       known: [null, 2, 3, 4],
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
-      note: 'A move waits on the tracker once you pay for it, and rides the next weapon attack you make.',
+      note: 'You add a move to a weapon attack when you make one, inside the prompt that pays for it.',
     },
     blurb:
       'The Guardian is a master of defense, a steadfast bulwark on the battlefield. Through rigorous training, they have perfected the art of using their shield not just to deflect blows but to turn an enemy’s strength against them.\n\n' +
@@ -163,10 +323,10 @@ const TALENT_SETS = [
         wp: null,
         stat: 'instinct',
         body:
-          'While wielding a weapon that includes a shield, you gain an advantage on {instinct} contested rolls {roll:instinct} and your Defense is increased by 1.\n\n' +
+          'While wielding a weapon that includes a shield, you gain advantage on {instinct} contested rolls {roll:instinct} and your Defense is increased by 1.\n\n' +
           'You learn a number of Novice Martial Moves equal to 1 + your Rank in Guardian.\n\n' +
           'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.\n\n' + // text-style-ok: joins two clauses
-          'After successfully blocking damage with a shield, your next weapon attack costs 1 less Action Point and can be used immediately after the block, even if you have already used a reaction to an action.',
+          'After blocking damage with a shield, your next weapon attack costs 1 less Action Point and can follow immediately, even if you have already used a reaction to it.',
       },
       {
         id: 'intercept',
@@ -178,9 +338,20 @@ const TALENT_SETS = [
         ap: 1,
         wp: 1,
         stat: 'instinct',
+        /* **This card names an ability the codex no longer has.** The weapon wall
+           was rebuilt on 2026-08-24 and the shield's second card went from a Block
+           to a passive: "The shield give 3 Armor and 1 Defense, that is their
+           special is a passive." So there is nothing left called Shield &
+           One-handed Block for this to hand over free, and the same goes for
+           SHIELD EXPERTISE's last sentence, which pays out "after successfully
+           blocking damage with a shield".
+
+           Left exactly as the designer wrote it rather than reworded, because what
+           a Guardian gets instead is a ruling and not a transcription. Flagged in
+           data/README.md. */
         body:
           'You prepare to intercept the next hit.\n\n' +
-          'The next time an adjacent entity makes a successful roll to hit or is the victim of one, you can choose to take the hit instead.\n\n' +
+          'The next time **an adjacent entity** makes a successful roll to hit or is the victim of one, you can choose to take the hit instead.\n\n' +
           'If you intercept a hit that deals damage, you can use your Shield & One-handed Block ability without paying its action point cost, even if you have already used a reaction on the same action.',
       },
       {
@@ -193,8 +364,14 @@ const TALENT_SETS = [
         ap: null,
         wp: null,
         stat: 'instinct',
+        /* The last line of the body, said again as a rider, and **the first flat
+           grant a talent card has ever carried**. Flat, unconditional and
+           permanent, which is the shape WIND GRACE's rider already had: a rank-2
+           Guardian's Speed tile reads a metre longer from the level they take it.
+           See talentGrantSources below and the Speed line in statMath.js. */
+        grants: { speed: 1 },
         body:
-          'You can now use {{Intercept}} on any entity you can see and could reach with a Move Action.\n\n' +
+          'You can now use {{Intercept}} on **any entity** you can see and could reach with a Move Action.\n\n' +
           'When you do, you move to an empty space in melee range of that entity, and the cost of {{Intercept}} is increased by 1 Action Point.\n\n' + // text-style-ok: joins two clauses
           'Additionally your Movement Speed is increased by 1.',
       },
@@ -212,6 +389,45 @@ const TALENT_SETS = [
           'After you use {{Intercept}}, you can use this ability to allow the entity for which you intercepted to make a free reaction weapon attack.',
       },
       {
+        id: 'bulwark-form',
+        rank: 2,
+        name: 'Bulwark Form',
+        house: true,
+        summary: 'Your moves reach the special attack as well as the plain one.',
+        kind: 'talent',
+        tags: ['Guardian', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        /* House-written, and asked for by name on 2026-09-02: "A talent that
+           allow you to use martial move on weapon special attack", on every set
+           that teaches them. Mechanics as data: `martial.special` below.
+
+           The sentence is the one all four sets print, unchanged. See the note on
+           BESTIAL FRENZY, which keeps the same law about SHARP. */
+        body: 'Your Martial Moves can now be added to a Special Weapon Attack as well as to a Weapon Attack.',
+      },
+      {
+        id: 'perfect-guard',
+        rank: 3,
+        name: 'Perfect Guard',
+        house: true,
+        summary: 'Two Martial Moves on one swing, or one on a reaction attack.',
+        kind: 'talent',
+        tags: ['Guardian', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        /* House-written, and asked for by name on 2026-09-02: "All talent set
+           that use martial move need to be updated to have a talent that give you
+           the possibility to use 2 martial move on 1 Weapon attack at Master
+           level." Guardian was the one of the four that had no such card.
+
+           Mechanics as data: `martial.perAttack` and `martial.onReaction` below,
+           the same pair SHARP raises. The text is SHARP's, unchanged. */
+        body: 'You can now add two Martial Moves to the same Weapon Attack, or add one to a Weapon Attack you make as a reaction.',
+      },
+      {
         id: 'bastions-fury',
         rank: 3,
         name: 'Bastion’s Fury',
@@ -224,7 +440,7 @@ const TALENT_SETS = [
         body:
           'Whenever you {{Intercept}} a hit, you gain 1 Reaction Point.\n\n' +
           'Whenever you block an attack, the damage of your next weapon attack is increased by the amount of damage you blocked.\n\n' +
-          'Finally, your Martial Moves cost 1 less Action Point if they are used with a weapon attack whose cost has been reduced by {{Shield Expertise}}.',
+          'Finally, a Martial Move added to a weapon attack whose cost has been reduced by {{Shield Expertise}} costs 1 less Willpower.',
       },
     ],
   },
@@ -239,7 +455,7 @@ const TALENT_SETS = [
        replacement prose for a tab that simply did not export is how a set stops
        being the designer's. Flagged rather than fixed; see data/README.md. */
     tagline: 'A conduit of the mycelial network, turning the dead into power.',
-    art: '/talents/mycomancer.jpg',
+    art: 'codex:talents/mycomancer.full.jpg',
     tags: ['instinct', 'spellcasting', 'support', 'control'],
     stat: 'instinct',
     /* A set that does not only hand you cards, it hands you a *choice* of them.
@@ -266,14 +482,14 @@ const TALENT_SETS = [
       known: [null, 4, 6, 8],
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
       /* Which rests may re-prepare the hand, straight off Fungal Invocation:
-         "Whenever you take a long rest, you can use your long rest action to
-         change any number of learned spells." A long rest and no other — the
+         "Whenever you take a Long Rest, you can use your Long Rest action to
+         change any number of learned spells." A Long Rest and no other — the
          short rest was withdrawn on 2026-08-20, and the swap now costs the long
          rest's action rather than riding along free. The rest window reads this
          to decide whether to offer the swap while the camp is being made, which
          is where the swap actually happens at a table. */
       swap: ['long'],
-      note: 'Your long rest action can change any number of them, so nothing here is spent for good.',
+      note: 'Your Long Rest action can change any number of them, so nothing here is spent for good.',
     },
     blurb:
       'Mycomancers are living conduits of nature’s life and death cycle, their bodies host to a symbiotic mycelial network. This connection allows them to commune with and command the flora around them, weaving powerful spells that can either usher in renewal or accelerate decay.\n\n' +
@@ -283,7 +499,7 @@ const TALENT_SETS = [
         id: 'fungal-invocation',
         rank: 1,
         name: 'Fungal Invocation',
-        summary: 'Cast Primal spells, more of them each rank and change them on a long rest.',
+        summary: 'Cast Primal spells, more of them each rank and change them on a Long Rest.',
         kind: 'talent',
         tags: ['Talent', 'Mycomancer', 'Passive'],
         ap: null,
@@ -291,7 +507,7 @@ const TALENT_SETS = [
         stat: 'instinct',
         body:
           'Your deep connection with the mycelial network lets you cast Primal Spells. You learn a number of Primal School spells equal to 2 + 2 x your Rank in Mycomancer.\n\n' +
-          'Whenever you take a long rest, you can use your long rest action to change any number of learned spells.\n\n' +
+          'Whenever you take a Long Rest, you can use your Long Rest action to change any number of learned spells.\n\n' +
           'At Rank 2, you can learn Adept Primal Spells, and at Rank 3, you gain access to Master Primal Spells.', // text-style-ok: joins two clauses
       },
       {
@@ -318,7 +534,7 @@ const TALENT_SETS = [
         wp: 4,
         stat: 'instinct',
         body:
-          'You release a cloud of spores that affects all entities within 9 meters (30 feet).\n\n' +
+          'You release a cloud of spores that affects **all entities** within **9 meters (30 feet)**.\n\n' +
           'Allies within the range of the cloud gain a shield equal to your {instinct} attribute.\n\n' +
           'Enemies within the range of the cloud take {damage:Decay} damage equal to your {instinct} attribute.',
       },
@@ -333,7 +549,7 @@ const TALENT_SETS = [
         wp: 1,
         stat: 'instinct',
         body:
-          'You bond with a willing entity you can touch, making them a temporary part of the fungal network until your next long rest.\n\n' +
+          'You bond with **a willing entity** you can touch, making them a temporary part of the fungal network **until your next Long Rest**.\n\n' +
           'While bonded, you can communicate telepathically with all bonded entities.',
       },
       {
@@ -347,7 +563,7 @@ const TALENT_SETS = [
         wp: 5,
         stat: 'instinct',
         body:
-          'You empower an ally through your mycelial bond, the next time this ally lands an attack they deal an additional [[4d6 + 4*stat]] in {damage:Decay} damage.',
+          'You empower **an ally** through your mycelial bond, the next time this ally lands an attack they deal an additional [[4d6 + 4*stat]] {damage:Decay} damage.',
       },
       {
         id: 'deepening-connection',
@@ -372,7 +588,7 @@ const TALENT_SETS = [
     /* The sheet's Summary column, byte for byte. */
     tagline:
       'An opportunistic alchemist who transforms raw battlefield chaos into potent, custom brews.',
-    art: '/talents/cauldron-keeper.jpg',
+    art: 'codex:talents/cauldron-keeper.full.jpg',
     /* The sheet's Tags column: "Support, Instinct". */
     tags: ['instinct', 'support'],
     stat: 'instinct',
@@ -440,10 +656,10 @@ const TALENT_SETS = [
         opens: 'brew',
         body:
           'While your Cauldron is Summoned, you can combine Ingredients to unleash a magical effect.\n\n' +
-          'You choose Ingredients from your known list in the following configuration:\n\n' +
+          'You choose Ingredients from your known list:\n\n' +
           'At least 1 Essence, exactly 1 Catalyst and any number of Infusions.\n\n' +
           'You must pay the combined Action Point and Willpower cost of all chosen Ingredients. The resulting Brew takes effect immediately.\n\n' +
-          'You gain access to Novice Ingredients at Rank 1, Adept Ingredients at Rank 2 and Master Ingredients at Rank 3.',
+          'You gain access to Novice Ingredients at Rank 1, Adept at Rank 2 and Master at Rank 3.',
       },
       {
         id: 'efficient-brewing',
@@ -571,8 +787,8 @@ const TALENT_SETS = [
         body:
           'You have learned the art of imbuing an item with Willpower.\n\n' +
           'Whenever you take a Long Rest, you can use your Long Rest action to enchant.\n\n' +
-          'Enchanting an item costs you an amount of supplies equal to 70 times the Magic Burden value of the enchantment.\n\n' +
-          'At Rank 1 you learn Novice enchantments, at Rank 2 you learn Adept enchantments, and at Rank 3 you learn Master enchantments.\n\n' + // text-style-ok: joins two clauses
+          'Enchanting an item costs Supplies equal to 70 times the enchantment’s Magic Burden.\n\n' +
+          'You learn Novice enchantments at Rank 1, Adept at Rank 2 and Master at Rank 3.\n\n' + // text-style-ok: joins two clauses
           'An item can hold one enchantment at a time.',
       },
       {
@@ -594,7 +810,7 @@ const TALENT_SETS = [
         opens: 'ephemeral',
         pays: 'window',
         body:
-          'You temporarily enchant an item you can touch for the next 1 hour.\n\n' +
+          'You temporarily enchant an item you can touch for the next **1 hour**.\n\n' +
           'When doing so, you choose an enchantment you know, applying its effect to the wielder of the item.\n\n' +
           'Ephemeral Enchantment costs an amount of Willpower equal to the enchantment\u2019s Magic Burden.\n\n' +
           'This does not count toward the wielder\u2019s Magic Burden and makes the item Attuned to the person wielding it at the moment of enchantment.',
@@ -603,14 +819,27 @@ const TALENT_SETS = [
         id: 'wielder-of-wonder',
         rank: 1,
         name: 'Wielder of Wonder',
-        summary: 'Enchantments apply to your own person, one for every rank you hold.',
+        summary: 'Enchantments apply to your own person, one for every rank you hold, and they weigh nothing.',
         kind: 'talent',
         tags: ['Enchanter', 'Novice Talent', 'Long Rest'],
         ap: null,
         wp: null,
         stat: 'mind',
+        /* One house edit, on Jules's instruction (2026-08-21): the last line is
+           new, and it is the ruling rather than a reading. The sheet's own
+           sentence says the enchanter body "is able to withstand the power of
+           enchantments onto itself" and then names no price at all, which the
+           sheet had been reading as a silence to be filled the ordinary way, so
+           the body slots were weighing on the Magic Burden meter. They do not.
+           What is written into the body is withstood rather than carried.
+
+           Worded out of EPHEMERAL ENCHANTMENT's own line for the same rule
+           ("This does not count toward the wielder's Magic Burden"), so the set
+           says its one free thing one way. `magicBurdenUsed` in items.js is
+           where it is now true. */
         body:
-          'The enchanter body is able to withstand the power of enchantments onto itself. Enchantments apply to your person. Choose one when becoming an enchanter, you can change it during a Long Rest. The amount of such enchantments you can have is equal to your rank in enchanter.',
+          'Your body withstands the power of enchantments laid onto itself: enchantments can apply to your person. Choose one when becoming an Enchanter; you can change it during a Long Rest. You can carry a number of them equal to your Rank in Enchanter.\n\n' +
+          'These do not count toward your Magic Burden.',
       },
       {
         id: 'layered-enchantment',
@@ -651,15 +880,22 @@ const TALENT_SETS = [
        order so the workbook can hold the same words. Every card below is the
        Ability tab, byte for byte. */
     tagline: 'A beast-bonded drifter who sends their dragon ahead and takes its wounds in its stead.',
-    art: '/talents/draconic-bond.jpg',
-    /* House-written with the rest of the Overview. Mind because every roll the
-       ally makes is a Mind roll and it has no other attribute it leans on;
+    art: 'codex:talents/draconic-bond.full.jpg',
+    /* House-written with the rest of the Overview, and re-shelved on 2026-08-23.
+       It read Mind, because every roll the ally makes is a Mind roll. Jules
+       ruled Level instead: what a Draconic Bond actually buys is the second stat
+       block below, and every number in it grows on level — 5 Health a level, a
+       point of Mind every odd one and a point of Physique or Instinct every even
+       one. A bonded who never raises Mind again still gets all of that. So the
+       set leans on the level and lands on the Other shelf, and Mind is left to
+       the cards, which roll it.
+
        Martial because the ally is a body on the field that attacks and, once
        Empowered, is ridden; Support for the half of the set that is spent on
        somebody else's roll (DRAGON'S FAVOR, DRACONIC MARK, taking a wound in
        its stead); Control for FRIGHTFUL ROAR. */
-    tags: ['mind', 'martial', 'support', 'control'],
-    stat: 'mind',
+    tags: ['level', 'martial', 'support', 'control'],
+    stat: 'level',
     /* A fifth shape of what a set can hand over, beside a fixed hand, a
        `loadout` of picked cards, a `brewing` spec and an `enchanting` one: this
        set hands over a *body*. Everything here is the Developpement Notes said
@@ -699,8 +935,8 @@ const TALENT_SETS = [
          ONE AND THE SAME's own business, and the block prints that line. */
       floor: 0,
       /* "If it would die, it instead retreats into your shadow and is unable to
-         reemerge until you take a Long Rest." The long rest and no other: a
-         short rest is offered nothing here because the card never printed one. */
+         reemerge until you take a Long Rest." The Long Rest and no other: a
+         Short Rest is offered nothing here because the card never printed one. */
       returns: 'long',
       down: 'Retreated into your shadow. It cannot reemerge until you take a Long Rest.',
       /* EMPOWERED BOND, at Rank 3: "its damage is Elevated by 1". Indexed by
@@ -748,8 +984,7 @@ const TALENT_SETS = [
           'You have bonded with a draconic beast; your lives are now forever intertwined.\n\n' +
           'During your turn, you also control your draconic ally. It uses its own Action Points and Reaction Points, but uses your Willpower for its abilities.\n\n' +
           'Whenever your draconic ally takes damage, you can choose to take any amount of that damage yourself in its stead.\n\n' +
-          'If it would die, it instead retreats into your shadow and is unable to reemerge until you take a Long Rest.\n\n' +
-          'If you die, it dies along with you.',
+          'If it would die, it instead retreats into your shadow **until you take a Long Rest**. If you die, it dies along with you.',
       },
       {
         id: 'wyrm-bolt',
@@ -767,7 +1002,7 @@ const TALENT_SETS = [
            as the typo it is rather than transcribed into a term that would not
            light. Flagged in data/README.md. */
         body:
-          'Your draconic ally shoots a magic projectile at an entity it can see within 9 meters (30 feet).\n\n' +
+          'Your draconic ally shoots a magic projectile at **an entity** it can see within **9 meters (30 feet)**.\n\n' +
           'It makes a {stat} Ranged Attack {roll}.\n\n' +
           'On a hit, it deals [[2d4 + stat]] damage in your draconic ally’s chosen damage type.',
       },
@@ -809,8 +1044,8 @@ const TALENT_SETS = [
         wp: null,
         stat: 'mind',
         body:
-          'Whenever your draconic ally deals damage to an enemy, it bears a Draconic Mark until your next Turn End.\n\n' +
-          'The next time you make an Attack Roll against the target, you can do so with Advantage.',
+          'Whenever your draconic ally deals damage to **an enemy**, it bears a Draconic Mark **until your next Turn End**.\n\n' +
+          'The next time you make an Attack Roll against the target, you can do so with advantage.',
       },
       {
         id: 'dragon-breath',
@@ -823,8 +1058,8 @@ const TALENT_SETS = [
         wp: 2,
         stat: 'mind',
         body:
-          'Your draconic ally breathes a torrent of magical energy in front of itself, affecting all entities in a 6 meter (20 feet) cone.\n\n' +
-          'It makes a {stat} roll {roll} against the entities’ Reflex.\n\n' +
+          'Your draconic ally breathes a torrent of magical energy in front of itself, affecting **all entities** in a **6-meter (20-foot)** cone.\n\n' +
+          'It makes a {stat} Roll {roll} against the entities’ Reflex.\n\n' +
           'On a success, it deals [[2d4 + 2*stat]] damage in your draconic ally’s chosen damage type.',
       },
       {
@@ -857,9 +1092,9 @@ const TALENT_SETS = [
            trade every other term on a card has made. See the note in
            keywords.js. */
         body:
-          'While Empowered, you can have your draconic ally bellow a frightening roar intimidating all enemy entities within 18 meters (60 feet) that can hear it.\n\n' +
-          'It makes a {stat} roll {roll} against the entities’ Grit.\n\n' +
-          'On a success, they are Frightened of you and your draconic ally for the next 2 Turns.',
+          'While Empowered, you can have your draconic ally bellow a frightening roar intimidating **all enemy entities** within **18 meters (60 feet)** that can hear it.\n\n' +
+          'It makes a {stat} Roll {roll} against the entities’ Grit.\n\n' +
+          'On a success, they are frightened of you and your draconic ally for the next **2 turns**.',
       },
       {
         id: 'draconic-link',
@@ -888,7 +1123,7 @@ const TALENT_SETS = [
        so the workbook can hold the same words. Every card below is the Ability
        tab, byte for byte. */
     tagline: 'A thief who strikes from where nobody is looking and is never standing where the blow lands.',
-    art: '/talents/trickster.jpg',
+    art: 'codex:talents/trickster.full.jpg',
     /* House-written with the rest of the Overview. Instinct because every roll
        the set asks for is an Instinct roll and it leans on nothing else; Martial
        because AMBUSH and STEAL are both spent on a weapon in hand; Defense for
@@ -899,9 +1134,15 @@ const TALENT_SETS = [
     stat: 'instinct',
     /* A sixth shape of what a set can hand over, beside a fixed hand, a
        `loadout` of picked cards, a `brewing` spec, an `enchanting` one and a
-       `minion`: this set hands over things that wait on your *next* weapon
-       attack, and a table to steal from. Everything here is the Ability tab and
-       the Developpement Notes said as data, and tricks.js is what resolves it.
+       `minion`: a table to steal from, and the point ceilings THRILLED raises.
+       Everything here is the Ability tab and the Developpement Notes said as
+       data, and tricks.js is what resolves it.
+
+       **It used to be two things and AMBUSH was the other.** That card waited on
+       your next weapon attack, which is what this spec was first written for, and
+       it became a granted Martial Move on 2026-09-03 — see "the granted three"
+       above. What is left waiting is STEAL's Poison row, which is a menu outcome
+       rather than an ability and stays where it is.
 
        Numbers only. What a row does to the sheet is tricks.js's business, which
        is the same split minions.js keeps. */
@@ -961,45 +1202,112 @@ const TALENT_SETS = [
            FRIGHTFUL ROAR made, and the one every other term on a card has made.
            See the note in keywords.js. */
         body:
-          'You attempt to Blind a target you can see within 3 meters (10 feet).\n' +
-          'Make an {stat} roll {roll} against the target\'s Grit.\n' +
-          'On a success, the target is Blinded until its Turn End.',
+          'You attempt to Blind **an entity** you can see within **3 meters (10 feet)**.\n\n' +
+          'Make an {stat} Roll {roll} against its Grit. ' +
+          'On a success, the target is blinded **until its Turn End**.',
       },
       {
         id: 'ambush',
         rank: 1,
         name: 'Ambush',
-        summary: 'Ride a weapon attack on somebody who cannot see you: Advantage, and the damage Elevated.',
-        kind: 'talent',
-        tags: ['Trickster', 'Novice Talent', 'Ability'],
+        summary: 'Advantage and a die size on a swing at somebody who cannot see you, for no Martial Move.',
+        /* **The first of the granted three.** See "the granted three" above.
+           AMBUSH was an Ability that laid a rider on the effects tracker and
+           waited there for a weapon attack, which is exactly what every Martial
+           Move did before 2026-09-02 and what none of them did after — it was the
+           last one left working the old way, and its own card says so in the
+           first line ("Use this when making a Weapon Attack"). It is a move now.
+
+           What that cost: the chip on the quick bar, `ambushUse` in combatBar.js,
+           the pending rider, and `ambushCost`, `ambushOption`, `ambushLine` and
+           `ambushEffect` in tricks.js. What it bought: the Willpower is paid inside
+           the swing it was always for, the printed card shows the advantage and
+           the Elevate before a point is spent, and nothing can be bought for an
+           attack that never happens. */
+        kind: 'martial-move',
+        /* `Martial Move` where `Ability` was, and the set and the rung stay: this
+           is not a card out of the move pool, it is the Trickster's own, and the
+           banner has to say both. */
+        tags: ['Trickster', 'Novice Talent', 'Martial Move'],
         ap: null,
-        /* The sheet's own "x". What this costs is the attack's own base damage
-           dice, which is not known until the attack is chosen, so the window
-           works it out and pays for it there — the same trade BREW and EPHEMERAL
-           ENCHANTMENT make. See src/lib/tricks.js. */
-        wp: 'X',
+        /* The rate, where the sheet's own "x" used to be. "Willpower equal to the
+           weapon's printed number of damage dice, before any enchantment or
+           boost" is 1 per Damage Die, which is what `scales: 'dice'` says — so a
+           dagger's swing costs 1 and a Staff's blast costs 3, and the row in the
+           prompt prints whichever it is. The plate prints the rate. See
+           `moveWillpower` in martial.js. */
+        wp: 1,
+        scales: 'dice',
+        /* And the ruling that has narrowed this card since 2026-08-21 — "Ambush
+           only apply on Weapon Attack, not special attack" — which has to be the
+           card's own now rather than the system's: a Trickster who also holds a
+           Rank 2 Duelist has bought the widening for the Duelist's hand, and
+           letting it reach here would quietly undo a ruling nobody revisited. See
+           `moveTakesSwing` in moves.js. */
+        plain: true,
+        /* And it is besides the allowance rather than inside it. Jules,
+           2026-09-03: "it should state that it does not count toward the martial
+           move limit." So a Duelist 1 who ambushes still has their one move to
+           add, which is the trade for the Elevate below being flat — the card got
+           smaller and stopped taking the slot with it.
+
+           It is the only card in the game that carries this, and it is on the card
+           rather than in the system for the reason `plain` is: an allowance is
+           what a set bought, and being outside one is what a card says about
+           itself. See `clampMoves` in UsePrompt.jsx, which is the one place the
+           allowance is actually counted. */
+        uncounted: true,
         stat: 'instinct',
-        /* Mechanics as data, never read out of the prose. */
-        opens: 'ambush',
-        pays: 'window',
+        /* **Elevated once, whatever the swing.** Jules, 2026-09-03: "it is
+           elevated once, no matter what." It used to be Elevated as many times as
+           the Willpower paid, which meant as many times as the weapon rolled dice,
+           and a Great Weapon's ambush was three steps up the die ladder for three
+           Willpower. One step for the same price now, and the slot it no longer
+           takes is what it is paid in instead.
+
+           The price is untouched and is still the designer's own printed line:
+           "Willpower equal to the weapon's printed number of damage dice". With
+           the Elevate flat, that line no longer has the Elevate to justify it — a
+           Staff pays 3 for exactly what a dagger pays 1 for — and it is flagged in
+           data/README.md rather than quietly flattened, because the cost is a
+           transcription and the Elevate was the thing asked about. */
+        rides: { advantage: 1, elevate: 1 },
         body:
-          'When making a Weapon Attack against a target that cannot see you or is afflicted with the Stunned, Grappled or Constrained status. (The cost of this ability is equal to the weapon number of base damage dice before enchant or boost)\n\n' +
-          'The Weapon Attack is made with Advantage.\n\n' +
-          'On a hit, the Weapon Attack is Elevated a number of times equal to the Willpower paid.',
+          'Ambush can only be added to a Weapon Attack against **an entity** that cannot see you, or one that is stunned, grappled or constrained.\n\n' +
+          'The attack is made with advantage, and on a hit its damage is Elevated once.\n\n' +
+          'It costs 1 Willpower for every Damage Die the attack prints, before any enchantment or boost, and it does not count toward how many Martial Moves you can add.',
       },
       {
         id: 'skulk',
         rank: 1,
         name: 'Skulk',
-        summary: 'Hide in plain sight at 9 meters, and Hide or palm anything with Advantage.',
+        summary: 'Hide in plain sight at 9 meters, with advantage and for nothing after a crit.',
         kind: 'talent',
         tags: ['Trickster', 'Novice Talent', 'Passive'],
         ap: null,
         wp: null,
         stat: 'instinct',
+        /* The middle clause, wired: a stealth or sleight of hand check made with
+           advantage, for nothing, because the card prints no price. Only the
+           holder's half of it is on the sheet. The ally standing within 3 metres
+           has their own sheet and their own prompt, and no card anywhere reaches
+           across two of those yet.
+
+           `checkWhen` says the domain because this card's summary is about the
+           other clause, which is the hiding. See checks.js. */
+        grants: {
+          checkAdvantage: 1,
+          checkWhen: 'Advantage on a stealth or sleight of hand check.',
+        },
+        /* The last line is Jules's, 2026-09-03: "Add to skulk the[n] it remove[s]
+           the cost of hide whenever you land a critical hit." Wired rather than
+           printed: the crit lays a row on the tracker and the Hide chip prints
+           its price as nothing with the 2 struck out beside it. See "the
+           opening" in tricks.js, which is where both halves live. */
         body:
-          'You can use the {{Hide}} action even if entities can see you, as long as you are at least 9 meters (30 feet) away from them.\n' +
-          'Additionally, when you or an ally within 3 meters (10 feet) use the {{Hide}} action or make a Skill Check related to sleight of hand or stealth, they do so with Advantage.',
+          'You can use the {{Hide}} action even if entities can see you, as long as you are at least **9 meters (30 feet)** away from them.\n\n' +
+          'When you or **an ally** within **3 meters (10 feet)** use the {{Hide}} action or make a skill check related to sleight of hand or stealth, they do so with advantage.\n\n' +
+          'When you land a Critical Hit, your next {{Hide}} costs no Action Points.',
       },
       {
         id: 'dodge',
@@ -1012,7 +1320,7 @@ const TALENT_SETS = [
         wp: 2,
         stat: 'instinct',
         body:
-          'When an attack lands on you, you can use this ability to make an {stat} roll {roll} with a difficulty rating equal to the attack roll that hit you. On a success, the attack misses instead.',
+          'When an attack lands on you, you can use this ability to make an {stat} Roll {roll} with a difficulty rating equal to the Attack Roll that hit you. On a success, the attack misses instead.',
       },
       {
         id: 'distract',
@@ -1025,7 +1333,7 @@ const TALENT_SETS = [
         wp: 1,
         stat: 'instinct',
         body:
-          'If you fail a Hiding or Stealth-related Skill Check, you can use Distract once to immediately retry the check.',
+          'If you fail a Hiding or Stealth-related skill check, you can use Distract once to immediately retry the check.',
       },
       {
         id: 'steal',
@@ -1042,10 +1350,10 @@ const TALENT_SETS = [
            which is what the Developpement Notes asked for. */
         opens: 'steal',
         body:
-          'You make an Attack Roll with your {stat} Attribute {roll}. On a hit, you steal something from a humanoid. Roll a d4 and choose any one effect whose value is below the number you rolled:\n' +
-          '1: Healing Tonic · Restores [[2d6 + 2*stat]] in Health.\n' +
-          '2: Poison · Your next Weapon Attacks deal additional damage equal to your {stat} Attribute.\n' +
-          '3: Protective Charm · Provides a Shield equal to [[3*stat]].\n' +
+          'You make an Attack Roll with your {stat} Attribute {roll}. On a hit, you steal something from a humanoid. Roll a d4 and choose any one effect whose value is below the number you rolled: ' +
+          '1: Healing Tonic · Restores [[2d6 + 2*stat]] Health. ' +
+          '2: Poison · Your next Weapon Attacks deal additional damage equal to your {stat} Attribute. ' +
+          '3: Protective Charm · Provides a Shield equal to [[3*stat]]. ' +
           '4: Strange Dust · Grants 3 Action Points for the current round and refunds the Steal Willpower cost.',
       },
       {
@@ -1066,7 +1374,7 @@ const TALENT_SETS = [
            either that rule restated or a number that did not export. Flagged in
            data/README.md. */
         body:
-          'Your Action Points and Reaction Points maximum are increased to 7 and you start with Action Points each turn.',
+          'Your Action Point and Reaction Point maximums are increased to 7, and you start each turn with 7 Action Points.',
       },
     ],
   },
@@ -1102,7 +1410,7 @@ const TALENT_SETS = [
        equal to 2 + your Rank in Duelist" is [null, 3, 4, 5], and "at Rank 2, you
        can learn Adept Martial Moves, and at Rank 3, you gain access to Master
        Martial Moves" is the tier ladder. `swap: ['long']` is the card's own next
-       sentence, word for word the one FUNGAL INVOCATION prints, so the long rest
+       sentence, word for word the one FUNGAL INVOCATION prints, so the Long Rest
        window offers the change as one of the actions the night buys.
 
        `group: 'tier'` because a move has no school and no family to wall it by:
@@ -1118,7 +1426,7 @@ const TALENT_SETS = [
       known: [null, 3, 4, 5],
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
       swap: ['long'],
-      note: 'Your long rest action can change any number of them, and a move you pay for waits on the tracker until you swing.',
+      note: 'Your Long Rest action can change any number of them, and you add one to a weapon attack as you make it.',
     },
     /* A seventh shape of what a set can hand over, beside a fixed hand, a
        `loadout`, a `brewing` spec, an `enchanting` one, a `minion` and the
@@ -1130,18 +1438,45 @@ const TALENT_SETS = [
        `tricks.points` is, so a reading is always a number rather than sometimes
        being absent: a Rank 1 Duelist has the allowance everybody has. */
     martial: {
-      /* The tag the weapon has to carry, off the designer's own weapon list.
-         'Shield & One-Handed' carries `Shielded` there rather than `One-Handed`,
-         so on a literal reading a Duelist holding a shield gets none of this.
-         Flagged in data/README.md for a ruling. */
-      weapon: 'One-Handed',
-      /* DEXTEROUS: "You have advantage when using One-handed weapons." A count
-         rather than a flag because Advantage stacks (each instance is another
-         d4), which is what lets the arrow on the card print a number. */
-      advantage: [null, 1, 1, 1],
-      /* AGILE: "While you have a one-handed weapon in hand your Defense is
-         increased by 1." */
-      defense: [null, 1, 1, 1],
+      /* The tags the weapon has to carry one of, off the designer's own word of
+         2026-08-24: "Duelist is Finesse, Whip, Fist and polearm." It was `One-Handed`
+         until the weapon wall was rebuilt around families, then Finesse and Light
+         Melee, and now it is four families rather than two.
+
+         **This is wider than it was and narrower in one place.** The Whip, the Fist
+         Weapon and both Polearms come in; Melee Light and its three enchanted
+         cousins go out. Two of the four are Two-Handed, which retires the reading
+         that this set was ever about the empty hand: it is about the *kind* of
+         weapon, and the designer has now named the kinds twice. `Whip` is a family
+         tag from the same pass, for the same reason a Wand is one.
+
+         Great Polearm is in it, since it carries `Polearm` like the other two. A
+         Duelist with a siege halberd is not a thing anybody has ruled on either
+         way, and the tag the designer named is the tag that answers.
+
+         The three shielded weapons carry `Shielded` rather than their family's
+         tag, so on a literal reading a Duelist holding a shield still gets none of
+         this. Flagged in data/README.md for a ruling. */
+      weapon: ['Finesse', 'Whip', 'Fist', 'Polearm'],
+      /* One entry per card that hangs on the weapon in hand. Neither names a tag,
+         so both take the set's own, which is what they always read. The list is
+         the Colossus's doing: it holds cards on two different tags at once and
+         needed somewhere to say which. See `grants` in moves.js.
+
+         `from` is the card the grant *is*, and it is what the use prompt credits.
+         Both were only ever named in these comments, so a Duelist swinging with
+         advantage was told the source was "Duelist" when the card they wanted was
+         DEXTEROUS. See attribution.js. */
+      grants: [
+        /* DEXTEROUS: "You have advantage when using One-handed weapons", read onto
+           the four families the designer named on 2026-08-24. A count rather than a
+           flag because advantage stacks (each instance is another d4), which is
+           what lets the arrow on the card print a number. */
+        { from: 'Dexterous', advantage: [null, 1, 1, 1] },
+        /* AGILE: "While you have a Finesse or Light Melee weapon in hand your
+           Defense is increased by 1", now read against the four families. */
+        { from: 'Agile', defense: [null, 1, 1, 1] },
+      ],
       /* FOLLOW UP is deliberately not here. It hangs on the same weapon, but the
          sheet does not know an attack missed and never will, so its reroll is a
          printed rule the table plays. A number nothing reads would be a promise
@@ -1152,6 +1487,8 @@ const TALENT_SETS = [
          the game that moves it. */
       perAttack: [null, 1, 1, 2],
       onReaction: [null, false, false, true],
+      /* FLOURISH at Rank 2, and the same field on all four sets. */
+      special: [null, false, true, true],
     },
     blurb:
       'A Duelist fights with one hand and keeps the other free, and the free hand is the point. Everything they have is bought with the room a single blade leaves them: the footwork to be somewhere else when the answer comes, the balance to swing again after a swing that missed and the trained manoeuvres nobody with two hands on a haft has the time for.\n\n' +
@@ -1162,7 +1499,7 @@ const TALENT_SETS = [
         id: 'dexterous',
         rank: 1,
         name: 'Dexterous',
-        summary: 'Advantage with one-handed weapons, and the Martial Moves to use them with.',
+        summary: 'Advantage with Finesse, Whip, Fist and Polearm weapons, and the Martial Moves to use them with.',
         kind: 'talent',
         tags: ['Duelist', 'Novice Talent', 'Passive'],
         ap: null,
@@ -1173,20 +1510,20 @@ const TALENT_SETS = [
 
            Four spellings corrected on the way in, each so a defined term lights
            rather than sitting in the sentence as plain text: "adventage" reads
-           advantage, "Martial moves" reads Martial Moves, "long rest" keeps the
+           advantage, "Martial moves" reads Martial Moves, "Long Rest" keeps the
            lowercase FUNGAL INVOCATION prints it in, and "rank in duelist.." ends
            on one full stop. */
         body:
-          'You have advantage when using One-handed weapons.\n\n' +
+          'You have advantage when using Finesse, Whip, Fist or Polearm weapons.\n\n' +
           'You learn a number of Novice Martial Moves equal to 2 + your Rank in Duelist.\n\n' +
-          'Whenever you take a long rest, you can use your long rest action to change any number of learned Martial Moves.\n\n' +
+          'Whenever you take a Long Rest, you can use your Long Rest action to change any number of learned Martial Moves.\n\n' +
           'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.', // text-style-ok: joins two clauses
       },
       {
         id: 'agile',
         rank: 1,
         name: 'Agile',
-        summary: 'A one-handed weapon in your hand is worth 1 Defense.',
+        summary: 'A Finesse, Whip, Fist or Polearm weapon in your hand is worth 1 Defense.',
         kind: 'talent',
         tags: ['Duelist', 'Novice Talent', 'Passive'],
         ap: null,
@@ -1199,13 +1536,13 @@ const TALENT_SETS = [
            already say, so it came off the card and went into the code that honours
            it: `duelistDefense` in moves.js reads the weapon in the main hand, so
            swapping to a two-hander takes the point back on the spot. */
-        body: 'While you have a one-handed weapon in hand your Defense is increased by 1.',
+        body: 'While you have a Finesse, Whip, Fist or Polearm weapon in hand your Defense is increased by 1.',
       },
       {
         id: 'follow-up',
         rank: 2,
         name: 'Follow Up',
-        summary: 'Your first miss each turn with a one-handed weapon gets one more try.',
+        summary: 'Your first miss each turn with one of the four Duelist weapons gets one more try.',
         kind: 'talent',
         tags: ['Duelist', 'Adept Talent', 'Passive'],
         ap: null,
@@ -1214,13 +1551,36 @@ const TALENT_SETS = [
         /* "your fist attack" reads first, and "that miss can be re rolled once"
            reads "that misses can be rerolled once" so that reroll lights. */
         body:
-          'While you have a one-handed weapon in hand, your first attack with a one-handed weapon each turn that misses can be rerolled once.',
+          'While you have a Finesse, Whip, Fist or Polearm weapon in hand, your first attack with one each turn that misses can be rerolled once.',
+      },
+      {
+        id: 'flourish',
+        rank: 2,
+        name: 'Flourish',
+        house: true,
+        summary: 'Your moves reach the special attack as well as the plain one.',
+        kind: 'talent',
+        tags: ['Duelist', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        /* House-written, and asked for by name on 2026-09-02, on every set that
+           teaches moves. Mechanics as data: `martial.special` above.
+
+           This is the card the `special` field was built for and never had. It was
+           added to moves.js on 2026-08-28 off Jules's own ruling ("reckless is only
+           for weapon attacks, then gets updated to also special weapon attack if
+           you have the rank 3 talent") and nothing set it, because a rank that
+           widened a move with no card saying so would have been the sheet inventing
+           a talent. Rank 2 rather than Rank 3, since Jules asked for it separately
+           from the two-on-one-swing card that sits at Master. See data/README.md. */
+        body: 'Your Martial Moves can now be added to a Special Weapon Attack as well as to a Weapon Attack.',
       },
       {
         id: 'sharp',
         rank: 3,
         name: 'Sharp',
-        summary: 'Two Martial Moves on one swing, or one laid just before a reaction attack.',
+        summary: 'Two Martial Moves on one swing, or one on a reaction attack.',
         kind: 'talent',
         tags: ['Duelist', 'Master Talent', 'Passive'],
         ap: null,
@@ -1236,8 +1596,7 @@ const TALENT_SETS = [
            MARTIAL MOVE NAME". It is built, in moves.js and on the three places the
            sheet prints an attack, and it is not printed here: it describes how the
            sheet works, not what this card does. */
-        body:
-          'You can now use two Martial Moves on the same Weapon Attack, or use one Martial Move just before a Weapon Attack reaction.',
+        body: 'You can now add two Martial Moves to the same Weapon Attack, or add one to a Weapon Attack you make as a reaction.',
       },
     ],
   },
@@ -1278,7 +1637,7 @@ const TALENT_SETS = [
        the set names is one: FERAL RAGE rolls it, BESTIAL SENSE is the five senses
        and both Claws & Teeth cards are Instinct attacks. Martial because the
        whole set is a weapon and the manoeuvres for it. Defense because the form
-       is bought in Shield and thickened in Armor, which is the only reason a
+       is bought Shield and thickened in Armor, which is the only reason a
        transformation costing half your blood is worth making. */
     tags: ['instinct', 'martial', 'defense'],
     stat: 'instinct',
@@ -1290,7 +1649,7 @@ const TALENT_SETS = [
        ladder DEXTEROUS prints, off a different set's card.
 
        `swap: ['long']` is the card's own next sentence, word for word the one
-       DEXTEROUS and FUNGAL INVOCATION both print, so the long rest window offers
+       DEXTEROUS and FUNGAL INVOCATION both print, so the Long Rest window offers
        the change as one of the actions the night buys.
 
        `group: 'tier'` because a move has no school and no family: the tier is the
@@ -1304,7 +1663,7 @@ const TALENT_SETS = [
       known: [null, 3, 4, 5],
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
       swap: ['long'],
-      note: 'Used with Claws & Teeth. Your long rest action can change any number of them, and a move you pay for waits on the tracker until you swing.',
+      note: 'Used with Claws & Teeth. Your Long Rest action can change any number of them, and you add one to a weapon attack as you make it.',
     },
     /* What this set does to the Martial Move *system*, read by moves.js. The same
        spec the Duelist carries, and deliberately so: the rule was parsed out of a
@@ -1327,6 +1686,8 @@ const TALENT_SETS = [
       weapon: 'Natural',
       perAttack: [null, 1, 1, 2],
       onReaction: [null, false, false, true],
+      /* BESTIAL GRACE at Rank 2, and the same field on all four sets. */
+      special: [null, false, true, true],
     },
     /* A seventh shape of what a set can hand over, beside a fixed hand, a
        `loadout`, a `brewing` spec, an `enchanting` one, a `minion`, the
@@ -1352,14 +1713,23 @@ const TALENT_SETS = [
          the character, since a form whose clock is a pool is a form the sheet can
          simply look at. */
       ends: 'short',
-      /* FERAL RAGE: "make an Instinct roll with a difficulty of 8. On a failure
+      /* FERAL RAGE: "make an Instinct roll with a difficulty of 8. On a success
          the difficulty increases by 1 for your next roll. It resets to 8 on a
-         transformation." The trigger — losing Health or spending Willpower — is
-         printed on the card and played at the table: the sheet is told about a
-         Health change and never about the reason for it, so asking for the roll
-         would mean asking on every scratch. The block holds the difficulty and
-         the two presses that move it. */
-      rage: { base: 8, step: 1 },
+         transformation."
+
+         It is a *control* roll, ruled by Jules on 2026-09-03: "with the feral
+         curse you transform when you fail not when you succeed." So `base` is
+         what you are trying to beat to keep the beast in, and `step` is what
+         holding it in costs you next time. See the card's own reads below.
+
+         The trigger — losing Health or spending Willpower — used to be printed
+         on the card and played at the table, because the sheet saw its Health
+         column change and never learned what changed it, so asking for the roll
+         would have meant asking on every scratch. Since 2026-09-03 it asks: both
+         triggers write a ledger row naming what did it, and `card` is the id the
+         prompt deals. See FeralCall.jsx. The block still holds the difficulty and
+         the two presses that move it by hand. */
+      rage: { base: 8, step: 1, card: 'feral-rage' },
       /* "While in this form you have advantage on all attack rolls and your
          Claws & Teeth attacks are Empowered by 1." The advantage is on every
          attack; the Empowered is the natural weapon's alone, so it is gated on
@@ -1377,6 +1747,29 @@ const TALENT_SETS = [
          A share of the attribute rather than a flat number, floored where it is
          worked out. Indexed by rank the way the Duelist's `martial.defense` is. */
       armor: [null, 0, 0.5, 0.5],
+      /* BESTIAL SENSE, at Rank 1: "Your maximum Shield is now equal to your
+         Health instead of half."
+
+         The share of maximum Health the Shield pool ceilings at, where everybody
+         else's is a half. A share and not a flat number for the same reason
+         `armor` is one, and indexed by rank because that is how every other
+         rider here is read, even though the card that grants it is a Novice one
+         and so no rank of the set is without it.
+
+         It belongs on the *form* spec rather than beside the card, because the
+         pool it raises is the form's own clock: "you remain in your Feral Form
+         until all Shield is gone." Raising the ceiling is the one thing that
+         makes "gain twice as much Shield" pay twice, and it is what closes the
+         biggest open question the set had. See feralShieldShare in feral.js and
+         `shield_cap` in characterModel.js.
+
+         Unlike the four Rank 1 cards around it, this sentence is not on the tab.
+         It was asked for in chat on 2026-08-21: "Bestial sense passive should
+         also have an effect that read Your maximum shield is now equal to your
+         health instead of half." So the card is transcribed and then amended,
+         which is why it carries no `house` flag but is flagged in
+         data/README.md. */
+      shieldShare: [null, 1, 1, 1],
       /* CALL THE BEAST, at Rank 2: the form entered on purpose rather than rolled
          for. Which ranks may, and nothing about the price — that is printed on
          the card and charged by the prompt, like every other cost on the sheet. */
@@ -1433,7 +1826,7 @@ const TALENT_SETS = [
         body:
           'Whenever you enter your Feral Form, you lose half your current Health and gain twice as much Shield.\n\n' +
           'You remain in your Feral Form until all Shield is gone or you take a Short Rest.\n\n' +
-          'While in this form you have advantage on all attack rolls and your **Claws & Teeth** attacks are Empowered by 1.\n\n' +
+          'While in this form you have advantage on all Attack Rolls and your **Claws & Teeth** attacks are Empowered by 1.\n\n' +
           'In this form you are unable to use items, or abilities and spells that are not Feral Curse ones.',
       },
       {
@@ -1455,13 +1848,26 @@ const TALENT_SETS = [
            transformation you can choose to willingly fail the roll" is two
            sentences run together and is set as two.
 
-           Worth noticing what the last one says: a Feral Cursed may choose to
-           *fail*, and nothing on this card lets them choose to succeed. At Rank 1
-           the beast can only be refused, never called, which is the hole CALL THE
-           BEAST was written to fill. */
+           And one *amendment*, ruled by Jules on 2026-09-03: "with the feral
+           curse you transform when you fail not when you succeed." The roll is
+           the one you make to hold the beast in, so the sentence that moves the
+           difficulty had to flip with it — the tab reads "on a failure the
+           difficulty increase by 1", which under this reading fires on the same
+           event as "it resets to 8 on a transformation" and cancels it. It is
+           set as **on a success**, which is also what the Developpement Notes
+           asked for in the first place: a button that increments the difficulty
+           "as you succed your roll". And the direction is said out loud — "on a
+           failure you transform" — because leaving it to be inferred is what
+           made the sheet read it backwards for a fortnight. Flagged in
+           data/README.md.
+
+           Which turns the last sentence into the only way to *call* the beast at
+           Rank 1: choosing to fail is choosing to transform. Nothing here lets a
+           Feral Cursed choose to hold it in, so restraint is never guaranteed
+           and giving in always is. */
         body:
           'Whenever you lose Health or spend Willpower, you have a chance to transform into your Feral Form.\n\n' +
-          'Each time, make an {stat} roll {roll} with a difficulty of 8. On a failure the difficulty increases by 1 for your next roll. It resets to 8 on a transformation.\n\n' +
+          'Each time, make an {stat} Roll {roll} with a difficulty of 8. On a failure you transform. On a success the difficulty increases by 1 for your next roll, and it resets to 8 on a transformation.\n\n' +
           'You can choose to willingly fail the roll.',
       },
       {
@@ -1492,28 +1898,54 @@ const TALENT_SETS = [
            it also contradicts this card's own next clause: a slot that always
            holds the weapon is a pair of hands that is never empty. */
         body:
-          'When you become Feral Cursed, you choose a Carnivore Mammal. This beast represents how your ability manifests.\n\n' +
-          'While your hands are empty, you can use the **Claws & Teeth** weapon. You learn a number of Novice Martial Moves equal to 2 + your Rank in Feral Curse, which you can use with **Claws & Teeth**.\n\n' +
-          'Whenever you take a long rest, you can use your long rest action to change any number of learned Martial Moves.\n\n' +
+          'When you become Feral Cursed, you choose a Carnivore Mammal: the beast your ability manifests as.\n\n' +
+          'While your hands are empty, you can use the **Claws & Teeth** weapon. You learn a number of Novice Martial Moves equal to 2 + your Rank in Feral Curse to use with them.\n\n' +
+          'Whenever you take a Long Rest, you can use your Long Rest action to change any number of learned Martial Moves.\n\n' +
           'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.', // text-style-ok: joins two clauses
       },
       {
         id: 'bestial-sense',
         rank: 1,
         name: 'Bestial Sense',
-        summary: 'Advantage on any Skill Check that runs through your five senses.',
+        summary: 'Advantage on any skill check that runs through your five senses, and a Shield pool the size of your Health.',
         kind: 'talent',
         tags: ['Feral Curse', 'Novice Talent', 'Passive'],
         ap: null,
         wp: null,
         stat: 'instinct',
+        /* The first `grants` on a talent card, and the reason the SKILL CHECK
+           prompt can see this one: `checkAdvantage` is the die it lends and the
+           absent `checkWp` is what it charges, which is nothing, because the card
+           prints no price at all. Same rider a skill carries and read by the same
+           file. See checks.js, and note that `grants` on a *spec* above is a
+           different thing entirely: that is a list of what a rank hands over.
+
+           `checkWhen` because this card does two things and its summary carries
+           the other one: a player about to tick it needs the domain, not the
+           Shield pool. */
+        grants: {
+          checkAdvantage: 1,
+          checkWhen: 'Advantage on any check that runs through your five senses.',
+        },
         /* Two reads. The card's own *name* is misspelled on the tab — "BEATIAL
            SENSE" — and is set as Bestial Sense, which is the only name correction
            in the set and carries no risk, because the id `bestial-sense` is new
-           and nothing has ever pointed at the other spelling. And "You Advantage
-           on Skill Checks" reads "You have advantage on Skill Checks": the verb is
-           missing, and both terms light once it is there. */
-        body: 'You have advantage on Skill Checks related to using your 5 senses.',
+           and nothing has ever pointed at the other spelling. And "You advantage
+           on skill checks" reads "You have advantage on skill checks": the verb is
+           missing, and both terms light once it is there.
+
+           And one *addition*, which is the only one in the set: the second
+           sentence is not on the tab and was asked for in chat on 2026-08-21.
+           Mechanics as data, like everything else here: it is `feral.shieldShare`
+           above and none of it is read out of this prose. What it answers is the
+           question this set shipped with — FERAL FORM buys "twice as much Shield"
+           and the ceiling on the pool used to eat exactly half of that at full
+           Health — so the two cards are read together and the Novice one is where
+           the ceiling moves. Flagged in data/README.md as an amendment rather
+           than a transcription. */
+        body:
+          'You have advantage on skill checks related to using your 5 senses.\n\n' +
+          'Your maximum Shield is now equal to your Health instead of half of it.',
       },
       {
         id: 'feral-hide',
@@ -1548,9 +1980,18 @@ const TALENT_SETS = [
         ap: 1,
         wp: 2,
         stat: 'instinct',
-        /* House-written, and the hole it fills is FERAL RAGE's: that card lets a
-           Feral Cursed choose to *fail* the roll and never to pass it, so at Rank
-           1 the beast can only be refused.
+        /* House-written, and the hole it fills is FERAL RAGE's: that card only
+           ever offers the beast when something has already triggered the roll, so
+           at Rank 1 the form is never a thing you simply decide to enter. This is
+           the trigger you carry with you.
+
+           Worth a ruling since 2026-09-03, when the roll became a control roll:
+           willingly failing is now a transformation, so a Feral Cursed who wants
+           the form can spend Willpower on anything at all and choose to fail the
+           roll it provokes. That is cheaper than this card, which asks 1 AP and 2
+           WP on top. It still buys the one thing the other route cannot — the
+           form on demand, with nothing spent first — but the gap it was written
+           to fill is narrower than it was. Flagged in data/README.md.
 
            The Willpower is not decoration. "Whenever you lose Health or spend
            Willpower, you have a chance to transform" is the set's own trigger, so
@@ -1566,11 +2007,28 @@ const TALENT_SETS = [
           'You lose half your current Health and gain twice as much Shield, as {{Feral Form}} says.',
       },
       {
+        id: 'bestial-grace',
+        rank: 2,
+        name: 'Bestial Grace',
+        house: true,
+        summary: 'Your moves reach the special attack as well as the plain one.',
+        kind: 'talent',
+        tags: ['Feral Curse', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        /* House-written, and asked for by name on 2026-09-02, on every set that
+           teaches moves. Mechanics as data: `martial.special` above. The sentence
+           is the one all four sets print, unchanged, for the reason BESTIAL FRENZY
+           below spells out. */
+        body: 'Your Martial Moves can now be added to a Special Weapon Attack as well as to a Weapon Attack.',
+      },
+      {
         id: 'bestial-frenzy',
         rank: 3,
         name: 'Bestial Frenzy',
         house: true,
-        summary: 'Two Martial Moves on one swing, or one laid just before a reaction attack.',
+        summary: 'Two Martial Moves on one swing, or one on a reaction attack.',
         kind: 'talent',
         tags: ['Feral Curse', 'Master Talent', 'Passive'],
         ap: null,
@@ -1584,8 +2042,7 @@ const TALENT_SETS = [
            two clauses deliberately unchanged — two cards that move the same
            allowance must say it the same way, or a table reading one of them will
            think the other does something else. */
-        body:
-          'You can now use two Martial Moves on the same Weapon Attack, or use one Martial Move just before a Weapon Attack reaction.',
+        body: 'You can now add two Martial Moves to the same Weapon Attack, or add one to a Weapon Attack you make as a reaction.',
       },
       {
         id: 'beast-and-drifter',
@@ -1612,7 +2069,4289 @@ const TALENT_SETS = [
       },
     ],
   },
+
+  {
+    id: 'berserker',
+    name: 'Berserker',
+    /* The eighth set, and the first to arrive as a *character sheet* rather than
+       a workbook: `Hazebound - Character Sheet V4 - BERSERKER.pdf`, 2026-08-23,
+       with its cards printed as pictures. It was transcribed into
+       `Talent Set - Berserker.xlsx` first, in the three tabs every other set
+       arrives in, and this is that workbook: the Overview below is its Summary
+       and Overview columns, and every card is its Ability tab.
+
+       What the V4 sheet needed on the way in is written out on that workbook's
+       `Developpement Notes` tab, twenty rows of it, and copied into
+       data/README.md because the tab itself is gitignored. Four of those rows are
+       open questions and each is noted on the card it belongs to. The two
+       adaptations worth knowing here: the track was four ranks and is three, and
+       every "at Rank N you learn X" line is gone, because the rank is the Tags
+       column and holding it is what hands the card over.
+
+       Its Ability tab carries two columns no other set's does, both written here
+       rather than by the sheet: `id`, so the ids arrived with the drop instead of
+       being read off the names, and `Source`, which says `sheet` on all nine rows.
+       Nothing in this set is house-written. */
+    tagline: 'Willpower poured into muscle, and every trick you pull cuts the rage shorter.',
+    art: 'codex:talents/berserker.full.jpg',
+    /* Martial, Defense and Physique are the sheet's own Tags column. Physique is
+       what the rage *raises* rather than what the set rolls: nothing here is
+       contested against anybody, and the two numbers the cards move are the
+       Physique BERSERKER'S RAGE hands over and the Physique IGNORE PAIN
+       multiplies. Defense for the half of the set spent on not being stopped:
+       taking 4d6 + 4 x Physique off a hit, refusing a contest against your Reflex
+       or Grit, and walking through difficult terrain. */
+    tags: ['physique', 'martial', 'defense'],
+    stat: 'physique',
+    blurb:
+      'A Berserker channels raw willpower into their own body. Entering the rage bulks the muscle, surges the strength and turns every swing into something devastating, and a seasoned one can push it far enough to shrug off wounds and refuse a hold on their mind. The price is judgment: the bloodlust paying for all of it does not care who is standing nearest.\n\n' + // text-style-ok: joins two clauses
+      'The rage runs on a clock of 10 turns, and that clock is the set’s whole currency. Rampage Skills are the powerful moves the state opens up, and not one of them is bought with Willpower alone. Each takes turns off the rage feeding it, so a Berserker who spends everything at once is a Berserker whose rage is already over.\n\n' + // text-style-ok: joins two clauses
+      'That makes every rank a question about pace rather than power. Going berserk is cheap and it lasts a while. Getting anything out of it means deciding which turns you are willing to burn and which ones you need to still be standing in.',
+    cards: [
+      {
+        id: 'going-berserk',
+        rank: 1,
+        name: 'Going Berserk',
+        summary: 'Willpower into muscle, and the state that opens the Rampage Skills.',
+        kind: 'talent',
+        tags: ['Berserker', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        body:
+          'You can channel your willpower into your body, enhancing your strength while entering an altered state of mind driven by a vicious bloodlust for violence.\n\n' +
+          'While in this state, you gain access to Rampage Skills: powerful moves that shorten the duration of your rage.',
+      },
+      {
+        id: 'berserkers-rage',
+        rank: 1,
+        name: 'Berserker’s Rage',
+        summary: 'Ten turns of extra Physique and bigger dice, and you swing at whoever is nearest.',
+        kind: 'talent',
+        tags: ['Berserker', 'Novice Talent', 'Ability'],
+        ap: 1,
+        wp: 4,
+        stat: 'physique',
+        /* The clock, and it needed no adapting. "for 10 turns" is written into the
+           first sentence, which is where `effectDuration` reads a duration from,
+           so the rage lands on the tracker as a row of 10 and comes off a turn at
+           a time. Every Rampage card below takes turns off that row by hand.
+
+           Two open questions, both left as the sheet wrote them. The Physique is
+           the first thing in the codex that would bend a stat by the rank of the
+           set holding it, and every rider in riders.js is a flat number, so none
+           is declared here and the line is a rule the table applies. And the
+           compulsion stays prose because the sheet does not know where anybody is
+           standing: it cannot tell you the nearest target is your friend. */
+        body:
+          'You enter a Berserker’s Rage for **10 turns**.\n\n' +
+          'While in this state, you gain additional {physique} equal to your Berserker Rank. Your Damage Dice are Elevated by 1.\n\n' +
+          'While raging, you must make at least one melee attack per turn, prioritizing it over any other action. If no enemies are within reach, you attack the nearest target, even if it is **an ally**.\n\n' +
+          'With no valid target in reach, you must spend your Action Points moving toward the nearest one.',
+      },
+      {
+        id: 'raging-blow',
+        rank: 1,
+        name: 'Raging Blow',
+        summary: 'One turn off the rage, ticked onto a melee swing for advantage and a Critical Hit at Defense by 4.',
+        /* **The second of the granted three.** See "the granted three" above.
+           "Your next melee Weapon Attack" is a Martial Move's sentence written
+           before there was anywhere to put it, and it was never wired: the card
+           cost 1 Willpower on one turn and the advantage was the table's to
+           remember on the next. Added to the swing it is one tick and the arrow
+           on the roll says where the d4 came from.
+
+           The Rage is untouched and is still the table's to count. Nothing on the
+           sheet has ever spent a turn of {{Berserker's Rage}} — every Rampage card
+           says its own price in prose and `Rampage` is a tag and nothing more — so
+           this is exactly as wired as it was, which is to say the Willpower is
+           charged and the turn is announced.
+
+           "Critical Hit" is the glossary's term. The sheet said critical strike,
+           which the glossary has never had. The clause that earns it, exceeding
+           Defense by 4 or more, is untouched — and it stays printed rather than
+           wired for the reason EXECUTE's halves do: the sheet does not hold the
+           target's Defense at the moment the card is drawn. */
+        kind: 'martial-move',
+        tags: ['Berserker', 'Novice Talent', 'Martial Move', 'Rampage'],
+        /* `ap: null` where the card printed a deliberate 0. A Martial Move costs
+           no Action Points by definition — they belong to the attack it rides —
+           so the nothing no longer has to be said out loud. */
+        ap: null,
+        wp: 1,
+        /* The one narrowing the sheet can actually check, and the card's own word:
+           a weapon attack carries `Melee` or `Ranged` in its tags, so a Berserker
+           with a bow in hand is not offered this. See `moveTakesSwing` in moves.js. */
+        melee: true,
+        stat: 'physique',
+        rides: { advantage: 1 },
+        body:
+          'Raging Blow can only be added to a melee Weapon Attack, and adding it reduces the remaining turns of your {{Berserker’s Rage}} by 1.\n\n' +
+          'The attack is made with advantage, and it becomes a Critical Hit if the Attack Roll exceeds the target’s Defense by 4 or more.', // text-style-ok: joins two clauses
+      },
+      {
+        id: 'master-of-pain',
+        rank: 2,
+        name: 'Master of Pain',
+        summary: 'Raging Blow on a Special Attack, and advantage on Reflex and Grit.',
+        kind: 'talent',
+        tags: ['Berserker', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Two reads on the way in, both on the notes tab. "Melee Weapon Special
+           Attack" is the codex's Special Weapon Attack, the tag every weapon's
+           second card carries, and it is already melee or ranged by the weapon
+           holding it. And the sheet's "enemies make saving throws against it with
+           disadvantage" is the same rule from the other side: nothing makes a
+           saving throw any more, a card is either swung at Defense or contested
+           against Reflex or Grit, and either way the roll is the attacker's, so
+           the enemy's disadvantage is your advantage.
+
+           The picture in data/Berserker/ is called `Master of Rage.jpg`, which is
+           neither this card's name nor anything else's. The sheet prints MASTER OF
+           PAIN, on this tab and in the V4 sheet's own rank list, so that is the
+           name and the file is placed by an alias in pull-card-art.mjs. */
+        body:
+          '{{Raging Blow}} can now be used with a Special Weapon Attack.\n\n' +
+          'Rolls you make against **an entity**’s Reflex or Grit as part of a Special Weapon Attack are made with advantage.',
+      },
+      {
+        id: 'ignore-pain',
+        rank: 2,
+        name: 'Ignore Pain',
+        summary: 'Two turns off the rage takes 4d6 + 4 x Physique off a hit.',
+        kind: 'talent',
+        tags: ['Berserker', 'Adept Talent', 'Ability', 'Rampage'],
+        ap: 1,
+        wp: 2,
+        stat: 'physique',
+        /* "4d6 + Four time your Physique Attribute" on the sheet, and the same
+           number written the way every other card in the codex writes one. `stat`
+           and not a literal `{physique}`: this is the holder's own attribute, and
+           the literal form is reserved for a target's. */
+        body:
+          'Using this ability reduces the remaining turns of your {{Berserker’s Rage}} by 2.\n\n' +
+          'As a reaction to taking damage, you can reduce that damage by [[4d6 + 4*stat]].',
+      },
+      {
+        id: 'unstoppable',
+        rank: 3,
+        name: 'Unstoppable',
+        summary: 'While raging, difficult terrain costs you nothing.',
+        kind: 'talent',
+        tags: ['Berserker', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* A Rank 4 card on the V4 sheet, and the cap is three. Master is where a
+           fourth rank's cards land, and both of the old rank's are kept as cards
+           of their own so nothing the sheet named is lost. */
+        body: 'While raging, you can move through difficult terrain without penalty.',
+      },
+      {
+        id: 'rage-through',
+        rank: 3,
+        name: 'Rage Through',
+        summary: 'Two turns off the rage: the next roll against your Reflex or Grit fails.',
+        kind: 'talent',
+        tags: ['Berserker', 'Master Talent', 'Ability', 'Rampage'],
+        ap: 0,
+        wp: 2,
+        stat: 'physique',
+        /* The one card the V4 track never actually handed out: its Rank 3 line
+           names Ignore Pain, which Rank 2 had already granted, so the sheet never
+           says where this sits. Rank 3 is the slot with the broken line, so this
+           is where it goes, which leaves the track 3 Novice, 2 Adept and 4 Master.
+           Adept would even that to 3, 3 and 3 and is the other defensible reading.
+           Open on the notes tab.
+
+           "You automatically succeed on your next saving throw" read from the
+           defending side, the same swap MASTER OF PAIN makes on the attacking one.
+           Reflex and Grit are what anything aimed at your body or your will is
+           contested against, and this is the clause the overview calls refusing a
+           hold on your mind. */
+        body:
+          'Using this ability reduces the remaining turns of your {{Berserker’s Rage}} by 2.\n\n' +
+          'The next roll contested against your Reflex or Grit automatically fails.',
+      },
+      {
+        id: 'avatar-of-carnage',
+        rank: 3,
+        name: 'Avatar of Carnage',
+        summary: 'Once a fight, Health buys a whole turn back: 6 Action Points.',
+        kind: 'talent',
+        tags: ['Berserker', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Sacrifice and not spend: Sacrifice is the glossary's word for a cost
+           that ignores reduction, mitigation and prevention. Plain spending would
+           be stopped by Shield and by damage reduction, this set's own IGNORE PAIN
+           included, which would let a Berserker buy the Action Points for nothing.
+
+           No `uses` rider, and that is the fourth open question. "Once per combat"
+           is a count plus the boundary that refills it, and the only boundaries
+           the sheet can refill on are the Short Rest and the long one — see
+           uses.js, which will not quietly refill a thing whose refill it is not.
+           So the limit is a rule the table keeps.
+
+           The price was twice your level when the workbook was written and is 5 x
+           level on the tab that arrived, which is the sheet's to set: 6 Action
+           Points is the whole ceiling, and a weapon attack costs 4 of them. */
+        body: 'Once per combat, you can Sacrifice Health equal to [[5*level]] to regain 6 Action Points.',
+      },
+      {
+        id: 'reckless-violence',
+        rank: 3,
+        name: 'Reckless Violence',
+        summary: 'Two turns off the rage and the swing is free, but dealing nothing buys them an action.',
+        /* **The third of the granted three.** See "the granted three" above, and
+           RAGING BLOW, which this is the Master version of in every way including
+           what it was wrong about: "your next attack costs no Action Points" was
+           prose nothing read, and the free swing was the table's to remember a
+           turn after the Willpower was spent.
+
+           `rides: { ap: 'free' }` is the one place in the move system where the
+           Action Points are *replaced* rather than nudged. RIPOSTE's `-1` is a
+           delta and works everywhere; "costs no Action Points" cannot be a delta,
+           because minus six is wrong on a dagger and right on a Great Weapon. See
+           `moveCost` in moves.js.
+
+           **"Your next attack" is read as a Weapon Attack**, which is a narrowing:
+           a Martial Move rides one of the two attacks a weapon teaches and nothing
+           else, so a free spell is off the table. That is almost certainly what a
+           Rampage card in a rage meant, and it is flagged in data/README.md
+           because it is a reading rather than a transcription.
+
+           "Once per round" is unchanged and still unenforced, for the reason it
+           always was: a round is neither of the two rests a use limit refills on. */
+        kind: 'martial-move',
+        tags: ['Berserker', 'Master Talent', 'Martial Move', 'Rampage'],
+        ap: null,
+        wp: 1,
+        stat: 'physique',
+        rides: { ap: 'free' },
+        body:
+          'Reckless Violence can only be added to a Weapon Attack, and adding it reduces the remaining turns of your {{Berserker’s Rage}} by 2.\n\n' +
+          'The attack costs no Action Points. If it fails to deal damage, the target may take a free action of its choice.\n\n' +
+          'It can only be added once per round.',
+      },
+    ],
+  },
+
+  {
+    id: 'colossus',
+    name: 'Colossus',
+    /* The ninth set, and it arrived the same day the Berserker did, in the same
+       three tabs: `Talent Set - Colossus.xlsx`, 2026-08-23. The Overview below is
+       its Summary and Overview columns and every card is its Ability tab.
+
+       It is the Duelist's opposite number and its own overview says so, so it is
+       built out of the same two specs: a `loadout` that hands over Martial Moves
+       and a `martial` block that says what the move system lets this set do.
+       Everything new is in the second one, and it is one thing: a set whose cards
+       hang on **two different weapon tags at once**. See `grants` in moves.js.
+
+       Its Ability tab carries the Berserker's two extra columns, `id` and
+       `Source`, and this is the first set whose `Source` is not one word. Five
+       cards say `sheet`. COLOSSAL FORCE and COLOSSAL GRIP say `house`, and both
+       are marked below.
+
+       The same tab's `Developpement Notes` asked for a whole weapon category to
+       go with it, and it was built: four Great Weapons in weapons.js, which is
+       what GIANT SLAYER and COLOSSAL GRIP are about. Without them two of these
+       seven cards would name a kind of weapon nothing in the codex is.
+
+       Those four are the **Great** tier now, in name as well as in fact. The
+       weapon wall was rebuilt off the designer's own cost table on 2026-08-24 and
+       they confirmed the two are the same thing: Melee Great, Great Bow, Great
+       Polearm and Paired Great Weapon cost 5, 5, 5 and 6 Action Points on
+       Physique, which is what the Colossal four cost. The tag pass later that day
+       renamed `Colossal` to `Great` on all four, and the two cards that print the
+       category print Great Weapon with it. */
+    tagline: 'A weapon too big for one hand, and the training to make one swing count for everything.',
+    art: 'codex:talents/colossus.full.jpg',
+    /* Martial and Physique are the sheet's own Tags column, and Physique earns it
+       twice over: it is what somebody choosing this set is choosing it for, and it
+       is what every Great Weapon is swung on. No Defense and no Control, and
+       deliberately so: nothing on this track buys a number that is not on an
+       attack. */
+    tags: ['physique', 'martial'],
+    stat: 'physique',
+    /* MARTIAL TRAINING, and the same pool DEXTEROUS hands over on the same terms.
+       "You learn a number of Novice Martial Moves equal to 2 + your Rank in
+       Colossus" is [null, 3, 4, 5], the tier ladder is the card's own last line,
+       and `swap: ['long']` is the sentence between them, word for word the one
+       FUNGAL INVOCATION prints.
+
+       `group: 'tier'` for the reason the Duelist's carries it: a move has no
+       school and no family, so the tier is the only thing that sorts the pool. */
+    loadout: {
+      id: 'colossus-martial-moves',
+      label: 'Martial Moves',
+      noun: 'martial move',
+      kind: 'martial-move',
+      group: 'tier',
+      known: [null, 3, 4, 5],
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      swap: ['long'],
+      note: 'Your Long Rest action can change any number of them, and this is the set that swings them with both hands on the haft.',
+    },
+    /* What this set does to the move system, and what it hangs on the weapon in
+       hand. Numbers here, behaviour in moves.js, indexed by rank the way the
+       Duelist's is. */
+    martial: {
+      /* MARTIAL TRAINING's own clause, and the tag every grant below falls back to
+         when it names none. It was `Two-Handed` until the weapon wall was rebuilt
+         around families, and the designer moved it on 2026-08-24: "Colossus to be
+         Heavy & Great Melee".
+
+         GIANT SLAYER below names `Great`, which is not one of these two. It does
+         not have to be: the four weapons whose names say Great carry `Great` as a
+         second tag, and a Great Bow is a Great Weapon without being a Melee one,
+         which is exactly the reach that card has always had.
+
+         **`Great` is the old `Colossal` renamed**, in the tag pass of 2026-08-24.
+         The designer's own sheet spells the category "Colosal Weapon" on two
+         cards, and both of them print "Great Weapon" now: a card that named a
+         category no weapon carries would be a rule a player cannot check against
+         the thing in their hands. Flagged in data/README.md.
+
+         Read as a **permission** rather than a restriction, which is the reading
+         the overview takes: a Martial Move is "the trained manoeuvres nobody with
+         two hands on a haft has the time for", and this is the set that buys the
+         time. Nothing enforces it either way, because `offeredMoves` has never
+         asked what is in your hand: it asks what the *card being paid for* is, and
+         one weapon's Strike is another's. Flagged in data/README.md. */
+      weapon: ['Heavy Melee', 'Great Melee'],
+      grants: [
+        /* GIANT SLAYER, at Rank 1: "When you attack with a Colosal Weapon, the
+           attack is made with advantage." The one grant in the codex that names a
+           tag its own set's `weapon` is not, and the whole reason `grants` is a
+           list rather than a block. A count and not a flag, because advantage
+           stacks and the arrow on the card prints the number. */
+        { from: 'Giant Slayer', weapon: 'Great', advantage: [null, 1, 1, 1] },
+        /* COLOSSAL FORCE, at Rank 2: "Your Heavy and Great Melee Weapon Attacks
+           are Elevated by 1." The first thing in the codex to Elevate a swing for
+           the weapon in hand rather than for something that was paid for. */
+        { from: 'Colossal Force', elevate: [null, 0, 1, 1] },
+        /* PERFECT TECHNIQUE's second sentence, at Rank 3: "Each Martial Move on
+           the attack Empowers its damage by 1." On the same tag as its first
+           sentence, which is what makes it a Heavy or Great Melee Weapon Attack, and per
+           move rather than per attack. */
+        { from: 'Perfect Technique', perMove: [null, 0, 0, 1] },
+      ],
+      /* BROAD PRACTICE at Rank 2, and the same field on all four sets. */
+      special: [null, false, true, true],
+      /* MARTIAL SWIFTNESS at Rank 3, rewritten on 2026-09-02: a move costs no
+         Action Points on anybody's sheet now, so the card was granting the thing
+         everybody already had. It cuts a Willpower instead, per move, and it is
+         **wired**: the prompt is the one place a move's price is worked out, so
+         there is somewhere honest to take it off. That was the whole reason the
+         old Action Point version stayed prose. See moveCost in moves.js. */
+      discount: [null, 0, 0, 1],
+      /* PERFECT TECHNIQUE's first sentence: "You can now use two Martial Moves on
+         the same Heavy or Great Melee Weapon Attack." Not gated on the weapon, the same way
+         SHARP is not, because a move is laid before the swing and refusing the
+         second one would be refusing it against a weapon that may not be the one
+         it ends up riding. */
+      perAttack: [null, 1, 1, 2],
+      /* PRACTICED MOVES, at Rank 2: "When you make a Weapon Attack as a reaction,
+         you can use a Martial Move with it." Two ranks earlier than the Duelist's
+         SHARP buys the same thing, which is the trade for buying nothing else. */
+      onReaction: [null, false, true, true],
+    },
+    blurb:
+      'A Colossus fights with both hands on the haft and asks one question of every exchange: how much can be put behind a single swing. Where a Duelist buys options with a free hand, a Colossus buys weight. The weapon is too big to be quick and too heavy to be subtle, and neither of those is a problem once the thing it lands on has stopped being one.\n\n' + // text-style-ok: joins two clauses
+      'What separates a Colossus from anybody else swinging something large is the training. Martial Moves are the trained motions that ride a swing: a wound opened, a guard broken, a weapon knocked out of a hand. A Colossus learns more of them than most and rebuilds the list every night, and at the top of the track two of them ride the same blow while each one adds a die to it.\n\n' + // text-style-ok: joins two clauses
+      'The set rewards patience and punishes hesitation. Almost everything a Colossus has goes into one attack a turn, and a Master holding a Great Weapon in each hand spends the whole turn on it. Get that one right and there is not much left standing to answer it.', // text-style-ok: joins two clauses
+    cards: [
+      {
+        id: 'martial-training',
+        rank: 1,
+        name: 'Martial Training',
+        summary: 'Martial Moves by the handful, rebuilt every night and swung with both hands.',
+        kind: 'talent',
+        tags: ['Colossus', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Mechanics as data: the pool is the `loadout` above and the weapon clause
+           is `martial.weapon`, neither of them read out of this prose.
+
+           Transcribed with nothing changed. It is DEXTEROUS's three sentences with
+           the set's own name in the first and one clause added to it, and that
+           clause is the difference between the two sets. */
+        body:
+          'You learn a number of Novice Martial Moves equal to 2 + your Rank in Colossus, and you can use them with Heavy and Great Melee Weapons.\n\n' + // text-style-ok: joins two clauses
+          'Whenever you take a Long Rest, you can use your Long Rest action to change any number of learned Martial Moves.\n\n' +
+          'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.', // text-style-ok: joins two clauses
+      },
+      {
+        id: 'giant-slayer',
+        rank: 1,
+        name: 'Giant Slayer',
+        summary: 'Every swing of a Great Weapon is made with advantage.',
+        kind: 'talent',
+        tags: ['Colossus', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Mechanics as data: the first entry in `martial.grants` above, keyed on
+           the `Great` tag, so the arrow comes off the moment the weapon is stowed.
+           The designer's "Colosal Weapon" reads Great Weapon, which is what the
+           four weapons carrying the tag are called since the tag pass of
+           2026-08-24. Their spelling and the old tag name are both in
+           data/README.md. */
+        body: 'When you attack with a Great Weapon, the attack is made with advantage.',
+      },
+      {
+        id: 'colossal-force',
+        rank: 2,
+        name: 'Colossal Force',
+        summary: 'Both hands on the haft is worth a die size on every swing.',
+        kind: 'talent',
+        tags: ['Colossus', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* `house` on the Ability tab's Source column, and the transcription changed
+           nothing: it arrived as one written sentence. Mechanics as data, the
+           second entry in `martial.grants`.
+
+           Elevated and not Empowered, which the sheet already got right: the same
+           dice one size up, capped at a d12. A Melee Great weapon carries
+           both tags, so a Rank 2 Colossus holding one has this and GIANT SLAYER
+           at once. */
+        body: 'Your Heavy and Great Melee Weapon Attacks are Elevated by 1.',
+      },
+      {
+        id: 'practiced-moves',
+        rank: 2,
+        name: 'Practiced Moves',
+        summary: 'A Martial Move rides a reaction attack, two ranks before a Duelist gets it.',
+        kind: 'talent',
+        tags: ['Colossus', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* All data now. `martial.onReaction` carries the permission, which is the
+           same field SHARP raises at Rank 3.
+
+           **It used to carry a discount as well and no longer does.** "That
+           Martial Move costs no Action Points" was the first of three Action Point
+           cuts on this set, and none of the three has anything left to cut: a
+           Martial Move costs Willpower alone since 2026-09-02, because the Action
+           Points belong to the attack it rides. So the clause is gone rather than
+           translated: what it bought is the permission above it, and the
+           permission is the whole card. See data/README.md. */
+        body: 'When you make a Weapon Attack as a reaction, you can add a Martial Move to it.',
+      },
+      {
+        id: 'broad-practice',
+        rank: 2,
+        name: 'Broad Practice',
+        summary: 'Your moves reach the special attack as well as the plain one.',
+        kind: 'talent',
+        tags: ['Colossus', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* House-written, and asked for by name on 2026-09-02, on every set that
+           teaches moves. Mechanics as data: `martial.special` above. The sentence
+           is the one all four sets print, unchanged, for the reason BESTIAL FRENZY
+           spells out.
+
+           Not gated on the haft, the same way PERFECT TECHNIQUE's first sentence
+           is not: what widens is the character's moves rather than one weapon's
+           attacks, and a Colossus with a bow in their hands still learned it. */
+        body: 'Your Martial Moves can now be added to a Special Weapon Attack as well as to a Weapon Attack.',
+      },
+      {
+        id: 'perfect-technique',
+        rank: 3,
+        name: 'Perfect Technique',
+        summary: 'Two Martial Moves on one swing, and every one of them adds a die.',
+        kind: 'talent',
+        tags: ['Colossus', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Both sentences are data and they are two different fields, because they
+           are two different questions: `martial.perAttack` is how many may wait,
+           and the `perMove` grant is what each one that waited is worth. The
+           second is per move, so a Colossus who laid one gets one die and a
+           Colossus who laid two gets two.
+
+           SHARP's other half is not here. A Duelist may add a move to a reaction
+           attack at Rank 3; a Colossus bought that at Rank 2 with PRACTICED MOVES
+           and this card only raises the count. */
+        body:
+          'You can now add two Martial Moves to the same Heavy or Great Melee Weapon Attack.\n\n' +
+          'Each Martial Move on the attack Empowers its damage by 1.',
+      },
+      {
+        id: 'martial-swiftness',
+        rank: 3,
+        name: 'Martial Swiftness',
+        summary: 'Every Martial Move you add to a swing costs a Willpower less.',
+        kind: 'talent',
+        tags: ['Colossus', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* **Rewritten on 2026-09-02.** It read "Your Martial Moves no longer cost
+           Action Points", which was the second of three Action Point discounts on
+           this set and is now true of everybody: a move costs Willpower alone,
+           because the Action Points belong to the attack it rides. A Master card
+           granting what a Rank 1 already has is a dead card, so it cuts the pool a
+           move actually spends.
+
+           And it is **wired**, which the old one could not be. The reason the old
+           version stayed prose was that a card printing 1 beside a button charging
+           0 is worse than a rule the table reads once, and there was nowhere else
+           to take the number off. Now there is: the prompt prices the moves it
+           offers, so the cut lands on the row and on the pay button together and
+           the card beside them is not the thing being contradicted. See
+           `discount` above and moveCost in moves.js. */
+        body: 'Every Martial Move you add to an attack costs 1 less Willpower.',
+      },
+      {
+        id: 'colossal-grip',
+        rank: 3,
+        name: 'Colossal Grip',
+        summary: 'A Great Weapon in each hand, and every Great swing is a point cheaper.',
+        kind: 'talent',
+        tags: ['Colossus', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* `house` on the Source column, and the card the transcription had to work
+           hardest on. It arrived as "You can now equped Pair Two-handed  colosall
+           weapon, and your Colosall weapon attack cost 1 lest Aciton Points":
+           equped reads equip, Pair reads Paired, lest reads less, Aciton reads
+           Action, and the sentence gained the full stop it was missing. Their
+           "colosall weapon" is printed Great Weapon, twice, since the tag pass of
+           2026-08-24 renamed the category. Nothing about what it does was touched.
+
+           Both halves are printed rules. The first is a gate on an *item* and the
+           sheet has never had one: nothing stops anybody equipping Paired Great
+           Weapons, the same way nothing stops a wizard putting on full plate. The
+           second is the third Action Point discount, and it is refused for the
+           reason MARTIAL SWIFTNESS's is.
+
+           What is real is the weapons themselves. Paired Great Weapons are in
+           weapons.js and weigh 16 kg, which is most of what a Physique 4 character
+           can carry and the reason this is a Master card. */
+        body:
+          'You can now equip Paired Great Weapons, and your Great Weapon Attacks cost 1 less Action Point.', // text-style-ok: joins two clauses
+      },
+    ],
+  },
+  {
+    id: 'arcanist',
+    name: 'Arcanist',
+    /* The eleventh set, from `Talent Set - Arcanist - Ability.csv`, 2026-08-24, and
+       the first caster on the wall whose spells are not a *hand*.
+
+       Every other choosing set prepares: a Mycomancer knows four Primal spells,
+       swaps any number of them at a Long Rest and is never allowed a fifth. An
+       Arcanist keeps a **library**. Spells go in one at a time, they stay in, and
+       the ceiling is a formula off rank and level rather than a number per rank.
+       That is the whole reason `capacity`, `start` and `research` exist on a
+       loadout spec at all. See loadouts.js.
+
+       ---------------------------------------------------------- the older draft
+       `data/Conversion/Talent Set - Arcanist.xlsx` (2026-08-23) is a six-card
+       proposal off the PDF: SPELLBOOK, TRANSCRIBING, IMPROVED FORMULAS, ARCANE
+       SPECIALIST, ANALYTIC SIGHT and ARCHMAGI, with a cap of Mind + level and a
+       24-hour transcription taken two hours at a time. **It is superseded** and
+       none of it is built. The four-card sheet above is a day newer, the five
+       pictures in `data/Arcanist/` are drawn for those four cards and the set
+       plate, and the xlsx's own Special Feature tab called the half-transcribed
+       spell "a progress bar the site has nowhere for". The new sheet deletes it:
+       research is one Long Rest action that finishes in that rest, which the site
+       already has a slot for. The proposal is logged in data/README.md rather than
+       thrown away, because its Overview tab is where the fantasy below comes from. */
+    tagline: 'A book bound to a life, and every spell in it was copied out by hand.',
+    art: 'codex:talents/arcanist.full.jpg',
+    /* Mind, Support and Control are the superseded sheet's own Tags column, and
+       they still fit a set whose reach is whatever it has written down. The
+       fourth is added here: `spellcasting`, which is the role this whole track is,
+       and a caster missing off the casting shelf would be a hole in the filter
+       rather than a judgement. Flagged in data/README.md. */
+    tags: ['mind', 'spellcasting', 'support', 'control'],
+    stat: 'mind',
+    /* ARCANE RESEARCH, as data. Four things here are new and each one is a
+       sentence of that card:
+
+         `start`      "You start with 5 Novice Spells of your choice from any
+                      school". The free grant, and the only spells that arrive
+                      without a rest.
+         `capacity`   "a number of spells equal to your Rank in Arcanist
+                      multiplied by 10 + your level", read as (rank x 10) + level.
+                      Flagged in data/README.md.
+         `research`   "Whenever you take a Long Rest you can take the Arcane
+                      Research action and research a single spell". One spell, one
+                      rest, where every other set's `swap` is any number.
+         no `school`  "from any school". The first spec in the codex to name none,
+                      which is a bigger change than it looks: see the tier gate in
+                      loadouts.js.
+
+       No `cast`. A spell is printed for Mind and an Arcanist casts on Mind, so
+       there is nothing to override. The Mycomancer's `cast: 'instinct'` exists
+       because that set rolls a spell on an attribute it was not written for.
+
+       `tiers` is the ladder every casting set has, and this is the one card in the
+       codex that does not print it. ARCANE RESEARCH says "research a single
+       spell" and names no tier at all, so a literal reading lets a Rank 1
+       Arcanist research a Master spell on the first night. The ladder is the
+       reading that makes the rest of the codex work, and it is what the
+       superseded sheet's TRANSCRIBING spelled out in as many words. Flagged in
+       data/README.md. */
+    loadout: {
+      id: 'arcanist-spellbook',
+      label: 'Spellbook',
+      noun: 'spell',
+      kind: 'spell',
+      /* Cut by school, because that is the only question worth asking of a pool
+         this set does not narrow: fifty-odd spells across Primal and Elemental,
+         and a reader wants one shelf of it at a time. Every other spec groups by
+         sub-school, which is the right cut when the school is already fixed. */
+      group: 'school',
+      start: 5,
+      capacity: { perRank: 10, perLevel: 1 },
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      research: ['long'],
+      /* OVERLOAD, at Rank 2, on the cards this set hands out rather than on the
+         set: "All spells from your spellbook are Empowered and you have advantage
+         when rolling for those spells." Empowered is one more die of the same
+         kind (see cardText.js), and the advantage is a count rather than a flag
+         for the reason GIANT SLAYER's is: advantage stacks and the arrow prints
+         the number. Both ride the prepared card, so a spell in the book shows the
+         numbers this Arcanist actually rolls. */
+      boost: {
+        /* The card the arrow in a spell's corner names, so a reader with two
+           sources of advantage can tell which one comes off. */
+        from: 'Overload',
+        empower: [null, 0, 1, 1],
+        advantage: [null, 0, 1, 1],
+      },
+      /* PERFECT CASTING, at Rank 3, and the same shape running the other way:
+         "Spells from your spellbook cost 1 less Action Point to cast, to a minimum
+         of 1." Indexed by rank like the boost, and carrying its own floor because
+         the card prints one.
+
+         The cut rides the prepared card rather than the finished number, because
+         every spell in the book prints a different cost for it to come off. It is
+         resolved in cardCost in cardText.js, which is the only place a printed cost
+         and a rider that cuts it are read together, and drawn as the old number
+         struck through beside the orb wherever that cost appears: the card, the
+         brief, the quick-bar chip and the button that charges it. */
+      discount: {
+        from: 'Perfect Casting',
+        ap: [null, 0, 0, 1],
+        floor: 1,
+      },
+      note: 'A spell goes in and stays in. Your Long Rest action researches one more, and the book only replaces a spell once it is full.',
+    },
+    /* SPELLBOOK's last sentence, which is the one number on this track that is not
+       about spells: "Your spellbook grants you 4 Additional Willpower per Rank in
+       Arcanist." Read by spellbook.js and summed into both places a Willpower
+       maximum is worked out. */
+    spellbook: {
+      willpower: 4,
+    },
+    blurb:
+      'An Arcanist does not know spells, they own them. The tome is bound to their being and comes when called even after it has been burned, and what it holds is exactly what has been written into it. Nothing arrives by revelation. A spell is found in somebody else’s book or taught by somebody who already has it, and then it is copied out by hand at the fire, one night’s work at a time.\n\n' + // text-style-ok: joins two clauses
+      'They excel at breadth. Where another caster carries the handful their talent gave them and trades one away when the morning asks a different question, an Arcanist carries everything they have ever written down. No school is closed to them and nothing is ever given back. Given enough nights and enough books worth stealing from, the tome ends up holding more magic than any one caster was ever meant to have.\n\n' + // text-style-ok: joins two clauses
+      'The book has to be held open and read aloud, which costs a hand and a voice. An Arcanist who can spare neither is a scholar standing in a fight with nothing to say. That is the whole bargain, and it is a good one: everything they have is on the page, the page is always with them, and what is written there only ever grows.', // text-style-ok: joins two clauses
+    cards: [
+      {
+        id: 'spellbook',
+        rank: 1,
+        name: 'Spellbook',
+        summary: 'A bound tome you summon at will, and 4 more Willpower for every rank.',
+        kind: 'talent',
+        tags: ['Arcanist', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: the Willpower is `spellbook.willpower` above, times
+           the rank, and nothing here is read out of this prose.
+
+           The hand and the voice stay printed rather than checked. A voice is not
+           on the sheet at all, and a free hand is: `martialDefense` in moves.js
+           already reads what is held. It is still prose, because the sheet has
+           nowhere to refuse a *spell* for what is in your hands and inventing one
+           would refuse the Mycomancer's spells too. The table plays it. Flagged in
+           data/README.md.
+
+           Three changes and no more. "As an Arcanist you record" loses its first
+           three words, the way MARTIAL TRAINING is not headed "As a Colossus": the
+           card is in the set, and the tag says so. The comma splice after "bound
+           tome" becomes the "and" it was standing in for, and "dismiss" gets the
+           "it" it was missing. "Additional" is lowercased, because the codex
+           capitalises a term and this is an adjective. The middle sentence is
+           untouched. */
+        body:
+          'You record all your spells in a bound tome, and you can summon and dismiss it at will.\n\n' + // text-style-ok: joins two clauses
+          'To be able to cast spells you need to have a free hand and be able to talk.\n\n' +
+          'Your spellbook grants you 4 additional Willpower per Rank in Arcanist.',
+      },
+      {
+        id: 'arcane-research',
+        rank: 1,
+        name: 'Arcane Research',
+        summary: 'Five Novice spells to start, and one more researched every Long Rest.',
+        kind: 'talent',
+        tags: ['Arcanist', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: the whole `loadout` above. `Long Rest` and not
+           `Passive`, the same tag the Enchanter's three evening cards carry, which
+           is what puts the row in the rest window.
+
+           Two changes. "you can take the Arcane Research action" becomes "you can
+           use your Long Rest action", which is FUNGAL INVOCATION's idiom word for
+           word: the site's rest buys one action and the card should say which one
+           it is spending, rather than naming itself.
+
+           And "multiplied by 10 + your level" is written out as the arithmetic it
+           resolves to, because the sheet's phrasing reads two ways and they only
+           agree at Rank 1: (rank x 10) + level, which is what precedence gives.
+           Flagged in data/README.md. Everything else is the cell. */
+        body:
+          'Spells you know to cast are recorded in your spellbook. You start with 5 Novice Spells of your choice from any school inscribed in the spellbook.\n\n' +
+          'Whenever you take a Long Rest you can use your Long Rest action to research a single spell to learn, adding it to your spellbook.\n\n' +
+          'Your spellbook can hold a number of spells equal to 10 x your Rank in Arcanist plus your level. If you have reached your limit of transcribed spells you will have to replace a spell.',
+      },
+      {
+        id: 'overload',
+        rank: 2,
+        name: 'Overload',
+        summary: 'Every spell in the book is Empowered, and rolled with advantage.',
+        kind: 'talent',
+        tags: ['Arcanist', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: `loadout.boost` above, so the numbers print on the
+           spells themselves rather than being remembered against them.
+
+           The cell verbatim but for one letter. advantage is lowercased: the codex
+           capitalises Empowered because it is a term off the Status & Terms sheet,
+           and writes "made with advantage" in prose everywhere else. See RAGING
+           BLOW. */
+        body:
+          'All spells from your spellbook are Empowered and you have advantage when rolling for those spells.',
+      },
+      {
+        id: 'perfect-casting',
+        rank: 3,
+        name: 'Perfect Casting',
+        summary: 'Every spell in the book costs 1 less Action Point, never below 1.',
+        kind: 'talent',
+        tags: ['Arcanist', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Two readings on the way in.
+
+           The sheet tags this `Long Rest`, which is ARCANE RESEARCH's tag two rows
+           above it and cannot be this card's: nothing here is done at a rest. Read
+           as `Passive`, which is what OVERLOAD beside it carries and what the
+           superseded sheet's IMPROVED FORMULAS carried for the same sentence.
+           Flagged in data/README.md.
+
+           And the discount is **wired**, which reverses the standing ruling that
+           every card cutting another card's Action Point cost stays prose. That
+           ruling was never about the arithmetic: it was that `UsePrompt` deals the
+           codex card beside the pay button, so a button charging 3 next to a card
+           printing 4 reads as a bug at the exact moment somebody is deciding
+           whether to pay. Being the fifth card on that line, after the Berserker's
+           RECKLESS VIOLENCE and the Colossus's MARTIAL SWIFTNESS, PRACTICED MOVES
+           and COLOSSAL GRIP, is what bought the place to print a discounted cost:
+           the orb shows what is paid and strikes through what was printed, on the
+           card and on the button alike, so the two can no longer disagree.
+
+           Asked for outright, 2026-08-24: "The cost of spell shoud visible be
+           reduced when yo utry to cast arcanist spell at master, same fro all
+           acarnist effect."
+
+           The other four stay in prose, and it is not the same call twice. They sit
+           on sets that hand out no pool, so there is nothing of theirs riding the
+           cards they discount: RECKLESS VIOLENCE cuts a Berserker's own attacks,
+           which arrive off a weapon and not out of a spec. The rider they need is a
+           different one. Flagged in data/README.md.
+
+           "cannot bring the spell below 1" is written as the floor it is, in the
+           words the designer used for the same rule on the superseded sheet: "to a
+           minimum of 1". */
+        body:
+          'Spells from your spellbook cost 1 less Action Point to cast, to a minimum of 1.',
+      },
+    ],
+  },
+  {
+    id: 'alchemist',
+    name: 'Alchemist',
+    /* The twelfth set, converted 2026-08-24 out of the pile rather than off a
+       workbook. Three sources and no Ability tab anywhere:
+
+         data/Source Temp/Hazebound/Tables/Alchemist - Potions.xlsx
+           8 Novice potions, with a Willpower cost, an Improvised Brewing dice
+           combination and full effect text for each.
+         data/Source Temp/.../Skillsets/Alchemist/*.jpg
+           three card renders, which is where every word of ALCHEMY,
+           ALCHEMICAL INGREDIENTS and IMPROVISED BREWING comes from.
+         data/Conversion/General Items.xlsx
+           the 2026-08-23 pass, which converted the potion table as consumables
+           and explicitly did **not** build the set: "the Alchemist is the
+           Cauldron Keeper on the site already". Jules reversed that call on
+           2026-08-24 and asked for both, so the potions are items *and* this is
+           a set. The two sit on different shelves, which is what the roster
+           itself says: Cauldron Keeper on Instinct, Alchemist on Mind.
+
+       ------------------------------------------------------ the empty ranks
+       The source is **Rank 1 only**. There is no Rank 2, 3, 4 or 5 card for the
+       Alchemist anywhere in the pile, and the potions table is titled Novice.
+       So the three Novice cards are transcribed and the two above them are
+       house-written, in the set's own lexicon, each doing one thing this sheet
+       can actually honour. Both are flagged in data/README.md and exported to
+       data/templates/alchemist-ability.csv marked `house`. */
+    tagline: 'A still, a crate of components and a night at the fire. Whatever tomorrow needs, bottled.',
+    /* No plate yet. Drop pictures into data/Alchemist/ and run `npm run art`. */
+    art: null,
+    /* Mind is the roster’s column. Support and Control are this file’s reading of
+       seven cards: five of the seven potions hand somebody a number they did not
+       have, and the other two are a burning patch of ground and an hour of being
+       trusted. No `spellcasting`: nothing here is cast, and the whole point of a
+       flask is that it works in a hand that has never cast anything. */
+    tags: ['mind', 'support', 'control'],
+    stat: 'mind',
+    /* ALCHEMY, as data. The sixth shape of spec in the codex and the first whose
+       output is an **item**: a hand and a library pick cards (loadouts.js), a Brew
+       composes one and throws it away (brews.js), a working becomes a rider on
+       something you own (enchanting.js), and this fills the pack.
+
+         `tiers`     "you have learned to brew all Novice Potions", read as the
+                     ladder every other tiered set prints. The codex holds no
+                     Adept or Master potion yet, so Ranks 2 and 3 open nothing
+                     today and will the day one is written. Flagged.
+         `perRest`   "during a Long Rest, you can craft two potions while still
+                     benefiting from a Long Rest", and REFINED REAGENTS makes it
+                     three. Brews a night, never flasks.
+         `discount`  REFINED REAGENTS again, and `floor` is its own "to a minimum
+                     of 10". Rank 3 still carries it, because ranks stack.
+         `batch`     TWIN DISTILLATION: one brew, two flasks.
+         `brew`      which rest offers it, the same shape `swap` and `research`
+                     carry on a loadout. A Short Rest names none of this.
+
+       What a potion costs is on the potion (utility.js), never here, so a row the
+       designer reprices stays repriced. See alchemy.js for where those numbers
+       came from and why the old table’s Willpower is not charged. */
+    alchemy: {
+      id: 'alchemy',
+      label: 'Alchemy',
+      noun: 'potion',
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      perRest: [null, 2, 3, 3],
+      discount: [null, 0, 10, 10],
+      floor: 10,
+      batch: [null, 1, 1, 2],
+      brew: ['long'],
+      note: 'Brewed at the fire and carried away. Your Long Rest action buys the night’s batch, and the crate pays for the components.',
+    },
+    blurb:
+      'An Alchemist does not cast. They distil. Every ingredient in the world carries an element that people have always read into it, and alchemy is the patience to draw that element back out of a feather or a pepper and hold it in glass. What comes out of the still is not a spell, and it does not need them standing there when it is drunk.\n\n' + // text-style-ok: joins two clauses
+      'They excel at arriving prepared. Their work is done the night before, out of the same crate the whole party travels on, and the morning is when it gets handed round. A flask of borrowed Physique, a draught that closes a wound, a clay bottle that puts a burning patch of ground between the party and whatever is coming: none of it asks for Willpower at the moment it matters, because all of it was paid for hours ago.\n\n' + // text-style-ok: joins two clauses
+      'An Alchemist’s presence is felt in what everybody else is carrying. Pressed with no night to spare, they can still brew out of whatever the ground around the camp gave up, and what that produces is real enough to save a life and gone by nightfall.', // text-style-ok: joins two clauses
+    cards: [
+      {
+        id: 'alchemy',
+        rank: 1,
+        name: 'Alchemy',
+        summary: 'Two Novice potions on a Long Rest, paid for out of the crate.',
+        kind: 'talent',
+        tags: ['Alchemist', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: the whole `alchemy` spec above. `Long Rest` and not
+           `Passive`, the same tag ENCHANTING and ARCANE RESEARCH carry, which is
+           what puts the row in the rest window.
+
+           Three changes on the way in.
+
+           The render is headed "Rank 1 - Novice Alchemist" and the card is called
+           Alchemy, off its own first word. A card never names its own rank on this
+           site: the Tags column carries it.
+
+           "during a Long Rest, you can craft two potions while still benefiting
+           from a Long Rest" becomes "whenever you take a Long Rest you can use
+           your Long Rest action to brew two of them and still benefit from the
+           rest". A rest here buys exactly one action and a card that spends it
+           should say which one it is spending, which is FUNGAL INVOCATION’s idiom
+           and ARCANE RESEARCH’s.
+
+           "you need to have the required components and willpower available" is
+           the sentence Jules asked to be converted, and the components are now
+           priced in Supplies. The Willpower half is not charged: brewing happens
+           inside a Long Rest and a Long Rest ends by filling Willpower, so it is a
+           price nobody would ever pay. See alchemy.js, and data/README.md.
+
+           The last line of the render, "You learn the Alchemical Ingredients and
+           Improvised Brewing abilities", is dropped. Both are Novice Alchemist
+           cards on this same rank, so the sentence hands over what the set has
+           already handed over. */
+        body:
+          'Alchemy is the art of blending the elements with willpower into liquids with magical properties.\n\n' +
+          'You have learned to brew all Novice Potions. Brewing a potion takes **1 hour**, and whenever you take a Long Rest you can use your Long Rest action to brew two of them and still benefit from the rest.\n\n' + // text-style-ok: joins two clauses
+          'To brew a potion you need its components. Every recipe prints what those cost in Supplies, and they come out of the crate on the night you brew it.',
+      },
+      {
+        id: 'alchemical-ingredients',
+        rank: 1,
+        name: 'Alchemical Ingredients',
+        summary: 'What an ingredient is worth is the element people read into it.',
+        kind: 'talent',
+        tags: ['Alchemist', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* The render is tagged "Self / Alchemist Ability / n/a", which is a card
+           with no cost, no target and no clock: a Passive, which is what this site
+           calls that.
+
+           Two changes. "feathers are associated with winds" becomes Wind, which is
+           the name of that family everywhere in the codex, and it puts all four of
+           IMPROVISED BREWING’s dice on words the site already uses.
+
+           And the last paragraph is the coin sentence, converted. It read "when a
+           recipe asks for 1000 coins' worth of Fire ingredients, this could be 100
+           spicy peppers or a dragon flower". A recipe on this site asks in Supplies,
+           so the example is priced in Supplies and the rest of the sentence is his. */
+        body:
+          'In alchemy the ingredient itself is not important, but rather the element people associate with it. Alchemy distills that elemental essence out of the ingredient to combine into potions.\n\n' +
+          'An ingredient’s element is the perceived association: feathers go with Wind, while spicy peppers go with Fire and Earth.\n\n' +
+          'A recipe asks for its components in Supplies, and what you hand over for them is yours to picture: 20 Supplies of Fire could be a hundred spicy peppers or a single dragon flower.',
+      },
+      {
+        id: 'improvised-brewing',
+        rank: 1,
+        name: 'Improvised Brewing',
+        summary: 'Brew out of what the camp gave up for no Supplies, and drink it before the day is out.',
+        kind: 'talent',
+        tags: ['Alchemist', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* **Printed and not wired**, and the only card in this set that is. The
+           rest window offers ALCHEMY and does not offer this, for two reasons that
+           are both about what the sheet does not hold:
+
+             it expires at the end of the day, and this site has no day. It has
+             rests, and an item in the pack with no instance of its own for a state
+             to live on (see forged.js: "nothing mechanical is stored").
+
+             which means wiring it would hand over free potions that never spoil,
+             and the spoiling is the whole reason they are free.
+
+           So the card carries its own rule and the table plays it, the same way
+           SPELLBOOK’s free hand and voice are played. Flagged in data/README.md as
+           an open question. Every recipe still carries its dice on the shelf, so
+           the combination the card sends you looking for is there to read.
+
+           Two changes on the way in. "a number of d4s equal to half your power" is
+           written out: old Power was the attribute plus the level, this site has no
+           such number, and the conversion key says every "your power" becomes a die
+           count and an attribute multiple. Halving the sum is what it resolves to.
+
+           And "you still have to spend the required Willpower" becomes "costs no
+           Supplies", which is the same sentence in the currency this pass moved the
+           price into: improvised brewing is the path that skips the components, and
+           the components are what Supplies now are. */
+        body:
+          'After a Long Rest, you can brew from ingredients scavenged during it, infused with willpower to make them viable.\n\n' +
+          'Roll a number of d4s equal to your {mind} plus your level, halved and rounded down. Each die is one component: 1 is Earth, 2 is Water, 3 is Fire and 4 is Wind.\n\n' + // text-style-ok: joins two clauses
+          'Every recipe prints the dice that craft it this way. A potion brewed this way costs no Supplies and expires at the end of the day.\n\n' + // text-style-ok: joins two clauses
+          'Instead of rolling, you may redo your last batch exactly.',
+      },
+      {
+        id: 'refined-reagents',
+        rank: 2,
+        name: 'Refined Reagents',
+        summary: 'Three potions a night, and every one of them 10 Supplies cheaper.',
+        kind: 'talent',
+        tags: ['Alchemist', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* **House-written.** The source has no Adept card, because it has no rank
+           above 1 at all. Both numbers here are the two ALCHEMY already prints,
+           moved: the count of brews and the price of one. Nothing new is invented
+           for the sheet to hold, which is the whole test a house card has to pass.
+
+           The discount reads the way PERFECT CASTING’s does, floor and all, because
+           that is the shape this codex settled on for a cost cut that rides a pool
+           the set hands out. See alchemy.js and data/README.md. */
+        body:
+          'Nothing you distil is wasted. You brew three potions on a Long Rest rather than two, and every potion you brew costs 10 fewer Supplies, to a minimum of 10.\n\n' + // text-style-ok: joins two clauses
+          'Adept Potions are within your reach.',
+      },
+      {
+        id: 'twin-distillation',
+        rank: 3,
+        name: 'Twin Distillation',
+        summary: 'Every potion you brew comes out of the still twice.',
+        kind: 'talent',
+        tags: ['Alchemist', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* **House-written**, for the same empty rank. A third card raising the
+           count would have been the Adept card twice, so this doubles the output of
+           a night instead of lengthening it: three brews and six flasks, at three
+           prices. `batch` in the spec above is the whole of it. */
+        body:
+          'Your still runs true enough to fill a second flask off the same working. Every potion you brew comes out of it twice, and you keep both.\n\n' + // text-style-ok: joins two clauses
+          'Master Potions are within your reach.',
+      },
+    ],
+  },
+
+  /* =================================================================== *
+   *  PACT OF ORDENANCE                                                  *
+   * =================================================================== */
+  {
+    /* The roster's `pactbound` slot, filled. The id stays the roster's — short,
+       already reserved, and "pact-bound" is the set's own word for its wielder —
+       while the name is the one the designer gave the set in chat on 2026-08-27.
+       Handed over in chat rather than as a sheet, so every card here is written
+       to his spec; the readings the spec left open are in data/README.md under
+       "The Pact of Ordenance, 2026-08-27". */
+    id: 'pactbound',
+    name: 'Pact of Ordenance',
+    tagline: 'A weapon with something living in it, and power on loan until you feed it.',
+    /* No plate yet, the same null the Duelist and the Feral Curse carry. Drop
+       the overview picture into `data/Pact of Ordenance/` and run
+       `npm run art:cards`. */
+    art: null,
+    /* No attribute tag: everything the pact grants runs on the wielder's best
+       attribute, so the set leans on whichever number is highest. Martial for
+       the weapon, spellcasting for the boons that are spells. */
+    tags: ['martial', 'spellcasting'],
+    /* The Other shelf, like the roster filed it: scaled on the best of you
+       rather than on one attribute you raise. */
+    stat: 'other',
+    /* The ninth shape of what a set can hand over: a **debt**. The spec is the
+       designer's chat notes as numbers, and pact.js is the resolver that reads
+       it, the same split minions.js and feral.js keep. Rank-indexed arrays use
+       index = rank, index 0 = null. */
+    pact: {
+      id: 'pact',
+      label: 'The Pact',
+      noun: 'boon',
+      weaponLabel: 'Pact-Bound Weapon',
+      /* The two bargains, chosen when the set is taken. `start` is the first
+         bar's price and `step` what every fill adds to the next one: "collectors
+         starts at 4000 coins and then increase by 2000 every time it's completed.
+         Soul collector starts at 8 and increase by 4." A soul is worth the dead
+         entity's level, so two level 4 kills feed a Soulreaping Pact 8. */
+      kinds: [
+        {
+          id: 'souls',
+          label: 'Soulreaping Pact',
+          unit: 'souls',
+          verb: 'Tally souls',
+          line: 'Advances by the level of every entity that dies carrying your damage. The blow that ends them does not have to be yours.',
+          start: 8,
+          step: 4,
+        },
+        {
+          id: 'collector',
+          label: "Collector's Pact",
+          unit: 'coins',
+          verb: 'Offer tribute',
+          line: 'Advances by every coin of gold or valuables you give up forever. Sacrificed, not spent.',
+          start: 4000,
+          step: 2000,
+        },
+      ],
+      /* Sealed with the pact at Rank 1, before any bar fills: FIRST BOON's two
+         picks. Same shape as a ladder rung so one chooser serves both. */
+      grants: [
+        { id: 'grant-spell', kind: 'spell', tiers: ['Novice'], label: 'A Novice spell of any school' },
+        { id: 'grant-move', kind: 'martial-move', tiers: ['Novice'], label: 'A Novice Martial Move' },
+      ],
+      /* The ladder: four boons a rank, in the printed order the designer gave
+         ("they come in a specific order and cap at 4 per rank"). The next
+         unclaimed rung is what the block announces; which rung a filled bar is
+         spent on is the wielder's choice among the open ones. */
+      boons: [
+        { id: 'novice-enchant', rank: 1, kind: 'enchant', tiers: ['Novice'], label: 'A Novice enchantment for your pact-bound weapon' },
+        { id: 'novice-spell', rank: 1, kind: 'spell', tiers: ['Novice'], label: 'A Novice spell of any school' },
+        { id: 'novice-move', rank: 1, kind: 'martial-move', tiers: ['Novice'], label: 'A Novice Martial Move' },
+        { id: 'novice-skill', rank: 1, kind: 'skill', label: 'A skill' },
+        { id: 'adept-enchant', rank: 2, kind: 'enchant', tiers: ['Adept'], label: 'An Adept enchantment for your pact-bound weapon' },
+        { id: 'adept-spell', rank: 2, kind: 'spell', tiers: ['Adept'], label: 'An Adept spell of any school' },
+        { id: 'adept-move', rank: 2, kind: 'martial-move', tiers: ['Adept'], label: 'An Adept Martial Move' },
+        { id: 'adept-skill', rank: 2, kind: 'skill', label: 'Another skill' },
+        { id: 'master-enchant', rank: 3, kind: 'enchant', tiers: ['Master'], label: 'A Master enchantment for your pact-bound weapon' },
+        { id: 'master-spell', rank: 3, kind: 'spell', tiers: ['Master'], label: 'A Master spell of any school' },
+        { id: 'master-move', rank: 3, kind: 'martial-move', tiers: ['Master'], label: 'A Master Martial Move' },
+        { id: 'master-skill', rank: 3, kind: 'skill', label: 'A third skill' },
+      ],
+      /* ENDLESS BARGAIN: once every rung is claimed, the ladder loops. Half
+         again more each fill instead of the flat step, and the pick widens to
+         any spell or any Martial Move the codex prints a rung for. */
+      loop: {
+        factor: 1.5,
+        kinds: ['spell', 'martial-move'],
+        tiers: ['Novice', 'Adept', 'Master'],
+      },
+      /* FIRST BOON: "all abilities earned through the pact use the best stat
+         instead of the one normally indicated." The same HIGHEST the lineage
+         cards use, riding as a modifier so the codex card is never rewritten. */
+      cast: 'highest',
+      /* DEEPENED BARGAIN at Rank 2 and ENDLESS BARGAIN at Rank 3, as the rank
+         riders every pact-granted card and the weapon's own attacks carry. */
+      empower: [null, 0, 1, 1],
+      advantage: [null, 0, 0, 1],
+      boostFrom: 'Endless Bargain',
+      /* GM errands, role-played as the pact giver and worth a set amount of
+         progress. "Can only have 2 active at most." */
+      missions: { max: 2 },
+      /* PACT-BOUND WEAPON: reshaped over a Long Rest, as that night's one
+         action. The same rest-keyed permission a loadout's `swap` carries. */
+      reshape: ['long'],
+    },
+    blurb:
+      'Somewhere an old and powerful entity took a weapon for its home, and the weapon took you for its wielder. The bargain is plain: it lends you its power now, and you feed it what it hungers for. A Soulreaping Pact is fed on the souls of those who die carrying your damage. A Collector’s Pact is fed on coin and treasure given up forever.\n\n' +
+      'What it grants starts small and grows with the feeding. Each time the bargain is satisfied the entity hands over a boon: a working laid into the weapon itself, a spell, a Martial Move or a skill, and every gift of the pact runs on your highest Attribute. The weapon cannot be lost, stolen or disarmed, and over a Long Rest it reshapes itself into any form its wielder asks of it.\n\n' +
+      'The pact giver is patient, and it is never finished. It may offer missions worth a measure of progress, and a wielder who has claimed everything it holds finds the bargain simply deepens: every further payment costs half again the last, and the boons never stop coming.',
+    cards: [
+      {
+        id: 'what-it-hungers-for',
+        rank: 1,
+        name: 'What It Hungers For',
+        summary: 'Feed the pact souls or treasure, and claim a boon every time the bar fills.',
+        kind: 'talent',
+        tags: ['Pact of Ordenance', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* Mechanics as data: the whole card is the `pact` spec above. The two
+           prices and the growing bar live on the spec's `kinds`, the missions on
+           `missions`, and the block on the Character tab is where the feeding is
+           tallied. */
+        body:
+          'When you strike your bargain, choose its shape. A Soulreaping Pact advances by the level of every entity that dies carrying your damage. A Collector’s Pact advances by every coin of gold or valuables you give up forever.\n\n' +
+          'Each time your progress fills the pact’s bar you claim a boon from the pact giver, and the bar grows larger. The pact giver may also offer missions worth a set amount of progress.',
+      },
+      {
+        id: 'pact-bound-weapon',
+        rank: 1,
+        name: 'Pact-Bound Weapon',
+        summary: 'A weapon that cannot be lost or disarmed, reshaped into any form over a Long Rest.',
+        kind: 'talent',
+        tags: ['Pact of Ordenance', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* "The pact bound weapon permanently takes a slot in the weapon selection
+           screen" is the sheet's business rather than the card's: the instance is
+           pinned to the first slot by the equip hook, and the slot 1 weapon it
+           displaces goes to the inventory. The card carries the table half:
+           cannot be lost, immune to disarm, reshaped on a Long Rest. */
+        body:
+          'The pact giver dwells in your weapon. It takes the form of any weapon you choose and always fills your first weapon slot. It cannot be lost or stolen, you are immune to effects that would disarm it, and it returns to your hand at a word.\n\n' +
+          'Whenever you take a Long Rest, you can use your Long Rest action to reshape it into another form.',
+      },
+      {
+        id: 'first-boon',
+        rank: 1,
+        name: 'First Boon',
+        summary: 'A Novice spell and a Novice Martial Move, and every pact gift runs on your highest Attribute.',
+        kind: 'talent',
+        tags: ['Pact of Ordenance', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* The highest-Attribute rule is the spec's `cast: 'highest'`, riding
+           every granted card and the weapon's attacks as a modifier. The codex
+           card underneath is never rewritten, exactly like the Mycomancer's
+           Instinct casting. "Your highest Attribute" is the codex's one
+           spelling for this mechanic — the INNATE lineage cards and the
+           background grants print those exact words — so this card says the
+           same thing the same way. */
+        body:
+          'You learn one Novice spell of any school and one Novice Martial Move.\n\n' +
+          'Every ability your pact grants you, and your pact-bound weapon’s attacks, use your highest Attribute in place of the one they print.',
+      },
+      {
+        id: 'deepened-bargain',
+        rank: 2,
+        name: 'Deepened Bargain',
+        summary: 'Everything the pact grants hits a die harder, and four Adept boons open up.',
+        kind: 'talent',
+        tags: ['Pact of Ordenance', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* `empower: [null, 0, 1, 1]` on the spec. The second sentence is the
+           allowed tier-widening shape, the one DEXTEROUS and FUNGAL INVOCATION
+           print, never "at Rank 2 you learn". */
+        body:
+          'Every ability your pact grants you, and your pact-bound weapon’s attacks, are Empowered by 1.\n\n' +
+          'The pact now offers Adept boons: an Adept enchantment for your weapon, an Adept spell, an Adept Martial Move and another skill.',
+      },
+      {
+        id: 'endless-bargain',
+        rank: 3,
+        name: 'Endless Bargain',
+        summary: 'Every pact gift rolls with advantage, and the bargain never runs out of boons.',
+        kind: 'talent',
+        tags: ['Pact of Ordenance', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* `advantage: [null, 0, 0, 1]` and `loop` on the spec. "Half again more
+           than the last" is the 1.5 factor, compounding, rounded up where the
+           threshold is worked out in pact.js. */
+        body:
+          'Every ability your pact grants you, and your pact-bound weapon’s attacks, are rolled with advantage.\n\n' +
+          'The pact now offers Master boons. Once every boon is claimed the bargain has no end: each bar costs half again more than the last, and each grants any spell or any Martial Move of your choice.',
+      },
+    ],
+  },
+  {
+    id: 'runebearer',
+    name: 'Runebearer',
+    /* The fourteenth written set, and the second placeholder on the Physique
+       shelf to be filled. Adapted 2026-09-08 from three sources that disagree
+       with each other, which is why this comment is long:
+
+         the old cards    `data/Source Temp/.../Old/Runebearer/`, two printed
+                          pages over five ranks. Basic Runework, Recharge, Runic
+                          Network, Instinctive Activation, Streamlined Patterns.
+         the conversion   `data/Conversion/Talent Set - Runebearer.xlsx`, seven
+                          tabs from the 2026-08-23 pass. Six cards, and an Open
+                          Questions tab that flagged four things this set could
+                          not be built without.
+         the designer     the answers, in chat on 2026-09-08, which reversed two
+                          of the conversion's own readings.
+
+       **The centrepiece was dropped and then put back.** Both older sources
+       price a rune in *permanent* maximum Willpower: you inscribe a spell, your
+       ceiling comes down by what the spell would have cost, and it stays down
+       until the rune comes off. Jules dropped it on 2026-09-08 in favour of the
+       count, and restored it on 2026-09-09: "reduce the maximum willpower so
+       that the spell cost is baked in". So a Runebearer is held twice, by how
+       many runes will fit and by what they are worth, and the two limits are
+       different shapes on purpose. It is the only thing on this sheet that
+       subtracts from a derived maximum. See runeDebtFrom in runes.js.
+
+       ---------------------------------------------------------------- the word
+       **Nothing here is carved, cut or scarred, and nothing is a tattoo.** Both
+       words were tried and both were refused (Jules, 2026-09-09), the first for
+       reading as a wound and the second for being the wrong trade. A rune is
+       *inscribed*, which is the old cards own verb and says nothing at all about
+       the tool that did it. The sheet never names one.
+
+       ------------------------------------------------------------ the four answers
+       Each one changed something, and each is written on the card it changed:
+
+         the pool     **any spell in the codex**, with its reach collapsed to
+                      touch. The old cards allow only spells "that have a range
+                      of Self or Touch"; Jules's own example is a Fire Seed
+                      planted on somebody you are touching and detonated within
+                      touch of them, which only makes sense if the ranged spells
+                      are in. So there is no `school` and no reach filter, and
+                      the range rule is printed on RUNEWORK.
+         the count    half your Physique plus 4 a rank, which is
+                      `capacity.perStat` and the first attribute in the codex to
+                      move a ceiling. Physique 4 at Rank 1 is 6 runes and
+                      Physique 8 at Rank 3 is 16. What a Runebearer can
+                      afford runs out long before that, which is what the
+                      restored Willpower cost is for. Two of them arrive with the
+                      set (`start: 2`, 2026-09-09) and the rest are a night's work
+                      apiece.
+         the halves   an inscribed spell **cannot** be Overcast or Multicast, and
+                      nothing else its card offers is open to it either. Reversed
+                      on 2026-09-08 and reversed back on 2026-09-09, which puts
+                      the set where both older sources always had it: the
+                      conversion kept the old page's line word for word and
+                      called it "already in the site vocabulary". Wired rather
+                      than printed: `halves: false` on the pool. The Fire Seed
+                      example still works, it is simply the printed spell that is
+                      planted.
+         the ladder   normalised. The old pages reach Adept at Rank 3 and Master
+                      at Rank 5, which is slower than every other set on the
+                      wall; the conversion's own Open Questions tab asked for a
+                      ruling and Jules gave the usual ladder.
+         the copies   **the same spell may be inscribed more than once**, and each
+                      copy is its own single firing (2026-09-09). Both older
+                      sources forbid it and the 2026-09-08 build printed the ban
+                      on RUNEWORK. It is the first pool in the codex that can hold
+                      one card twice, and it needed no more than the `repeat` flag
+                      and a count where an "is it held" used to be: `runeLimit`
+                      hands the spell as many uses as there are copies, and the
+                      one `card_uses` row it always had counts them down.
+
+       ------------------------------------------------------------ the two cards moved
+       INSTINCTIVE ACTIVATION and STREAMLINED PATTERNS are **not built**. Firing
+       always costs an Action Point ("Acitviting those psell always cost 1 action
+       points"), which deletes the first. STREAMLINED PATTERNS has a cost to
+       discount again now that the Willpower is back, and is still not built,
+       because what Jules asked for at the top two rungs is a
+       Willpower grant and a recharge, so RUNIC NETWORK keeps the conversion's own
+       Willpower half at the whole of the Physique rather than half of it, and
+       RECHARGE comes up from Rank 2 to the Master rung as RECHARGED.
+
+       **One contradiction is resolved rather than transcribed.** Jules ruled
+       both that every rune comes back on a Long Rest and that the Master talent
+       brings some back "during a long rest", and the second is nothing at all if
+       the first is true. Built as the Short Rest the original Rank 2 card
+       printed, which is the only reading where the card does anything. Flagged
+       in data/README.md.
+
+       Both plates and all four card pictures are unpainted. The prompts are on
+       the conversion's Image Prompts tab and copied into data/README.md. */
+    tagline: 'Spells inscribed on the skin, and the Willpower they cost is theirs for as long as they stay.',
+    /* No plate yet. Null rather than a path to a file that is not there: the
+       tiles draw the picture as a CSS background and would show nothing either
+       way, but the summary and the presentation page use an `img` and would show
+       a broken one. Drop the overview picture into `data/Runebearer/` and run
+       `npm run art:cards`; it lands at public/talents/runebearer.jpg, and this
+       becomes that path. */
+    art: null,
+    /* Support, Defense and Physique are the conversion's Overview tab. The fourth
+       is added here for the reason the Arcanist's was: `spellcasting` is the role
+       this whole track is, and a caster missing off the casting shelf would be a
+       hole in the filter rather than a judgement. Flagged in data/README.md. */
+    tags: ['physique', 'spellcasting', 'support', 'defense'],
+    stat: 'physique',
+    /* The slate, as an ordinary pool. Everything here is loadouts.js's, and only
+       three fields are new to it:
+
+         `capacity.perStat`   half your Physique, floored on its own before the 4
+                              a rank joins it. The first ceiling an attribute
+                              moves. See capacityAt in loadouts.js.
+         `price`              "for 1 Action Point and no Willpower", flat across a
+                              pool whose printed costs run from 1 to 5 Action
+                              Points and to 12 Willpower. A cut could not say it,
+                              so `cardCost` learned to be handed a price instead
+                              of a discount. Every orb on the sheet then prints
+                              the printed number struck through beside it.
+         `verb` and `kept`    the two words a rest window and an Abilities block
+                              would otherwise say in the Arcanist's voice. A rune
+                              is inscribed on you, not researched and
+                              written down.
+
+       No `school`, because the pool is the whole codex. The tier gate in
+       loadouts.js is the only thing narrowing it, which is the Arcanist's
+       situation exactly and the reason that gate stopped leaning on the school
+       one. A Unique or a Legendary spell falls off the ladder and is refused by
+       name.
+
+       `cast: 'physique'` is the set's own line and the reason it is shelved
+       where it is. A spell is printed for Mind; a Runebearer rolls it off the
+       body it is written on, and the card prints the numbers they actually roll.
+
+       `start: 2` since 2026-09-09, and it is the second thing the panel is for: a
+       Runebearer engraves two the day they take the set, then fills the rest of
+       the slate a night at a time. The panel is the sheet's editing surface for
+       every pool and may write up to the ceiling; the rest window grants one a
+       night, which is what RUNEWORK actually promises. See the note on allowance
+       against capacity in loadouts.js. */
+    loadout: {
+      id: 'runebearer-runes',
+      label: 'Runes',
+      noun: 'rune',
+      kind: 'spell',
+      group: 'school',
+      cast: 'physique',
+      capacity: { perRank: 4, perStat: { stat: 'physique', divide: 2 } },
+      /* Two the night the set is taken ("the runebearer engraves 2 rune when he
+         take the talent set", Jules, 2026-09-09), and one a night after that.
+         The same `start` an Arcanist's spellbook carries, which is what makes the
+         panel *owe* them: a Runebearer arriving with an empty slate is a
+         Runebearer who has not been asked yet, and the block says so until they
+         have. See `allowanceAt` and `owed` in loadouts.js. */
+      start: 2,
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      research: ['long'],
+      /* The first pool in the codex that may hold the same card twice, and the
+         reason `repeat` exists: a rune fires once, so a second copy of it is a
+         second firing. "he can inscribe the same spells more than once. each
+         beings it on 1 time use instance" (Jules, 2026-09-09). Nothing else about
+         it is special-cased: the copies are two entries in `picks`, and
+         `runeLimit` counts them into the one `card_uses` row the spell already
+         had. See allowsRepeat in loadouts.js and runes.js. */
+      repeat: true,
+      /* And the first that takes something *off* the cards in it. An inscribed
+         spell is fired as printed: no Overcast, no Multicast and no other option
+         the card offers. Jules's reversal of his own 2026-09-08 ruling, on
+         2026-09-09. See loadoutModifiers. */
+      halves: false,
+      halvesFrom: 'Rune Activation',
+      verb: 'Inscribe',
+      kept: 'inscribed',
+      section: 'What is inscribed on you',
+      holds: 'your runework',
+      price: { ap: 1, wp: 0, from: 'Rune Activation' },
+      note: 'Two arrive with the set and one a night after that, inscribed with your Long Rest action. Each one holds its own Willpower cost off your maximum, fires once as printed and comes back with the morning, and reaches yourself or something you can touch and no further.',
+    },
+    /* The ninth shape of what a set can hand over: a slate. Numbers only, and
+       what they mean is runes.js's business, which is the same split minions.js,
+       feral.js and pact.js keep.
+
+       Neither of these is stored anywhere. What is inscribed is `picks` on the
+       talent entry like every other pool, and what has been fired is `card_uses`
+       like every other spent use, so this set needed no column and no migration.
+       See the note at the top of runes.js. */
+    runes: {
+      label: 'Runes',
+      /* RUNIC NETWORK. `per: 1` is "1 Willpower per point of Physique", which is
+         the whole attribute; the conversion had half of it at this rung and the
+         whole of it at the next, and there is no next rung any more. */
+      willpower: { rank: 2, stat: 'physique', per: 1, from: 'Runic Network' },
+      /* RECHARGED, and the one ruling in this set that is a reading rather than
+         a transcription. A Short Rest, because a Long Rest already brings the
+         whole slate back on its own.
+
+         **A count, and not a budget, since 2026-09-09.** The original card and
+         the 2026-09-08 build both spent a Willpower allowance against the runes'
+         own printed costs, which meant the cheap end of the slate came back four
+         at a time and a single Master spell came back never. Jules asked for a
+         flat four ("Have the tattoo return be 4 by master"), so what the budget
+         is spent on is runes. */
+      recharge: { rank: 3, rest: 'short', count: 4, from: 'Recharged' },
+    },
+    blurb:
+      'A Runebearer carries their magic on their body. A spell is inscribed on the skin and from that moment it costs nothing to cast, because it was paid for once and paid in full: the maximum Willpower comes down by what the spell would have cost, and stays down until the rune is taken off.\n\n' + // text-style-ok: joins two clauses
+      'They excel at having something left. Every other caster is a pool that empties, and a Runebearer is a set of switches that were paid for years ago. Nothing a rune does reaches further than what they can put a hand on, so they work in the middle of it rather than behind it, and every rune is spent for the day once it fires.\n\n' + // text-style-ok: joins two clauses
+      'A Runebearer’s presence is a source of dependable, unspendable resilience. A Short Rest brings some of the runes back, the body that carries them is the same body that pays for them, and what began as a maximum given away ends as a Physique handed back.', // text-style-ok: joins two clauses
+    cards: [
+      {
+        id: 'runework',
+        rank: 1,
+        name: 'Runework',
+        summary: 'Spells written on your own skin, one a night, each holding its cost off your maximum Willpower.',
+        kind: 'talent',
+        tags: ['Runebearer', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Mechanics as data: the slate is `loadout.capacity` and the ladder is
+           `loadout.tiers`, neither of them read out of this prose.
+
+           `printout` was the conversion's id for this card and it is not one:
+           Printout was the old page's heading for the printable-card link, and
+           no card was ever called it. The id is the name.
+
+           The range rule is the one printed sentence in the set that the sheet
+           cannot check. There is no range field on a spell (see spells.js), so
+           nothing here can refuse a cast made across a room, and the table plays
+           it the way it plays a Mycomancer's free hand. Flagged in
+           data/README.md. */
+        body:
+          'You inscribe spells on your own skin, two of them the day you learn how. A rune reaches yourself or something you can touch, whatever the spell prints.\n\n' + // text-style-ok: joins two clauses
+          'An inscribed spell lowers your maximum Willpower by its own cost until it is removed. The same spell can be inscribed any number of times and each copy fires on its own. Your Long Rest action inscribes one, removes one or does both.\n\n' +
+          'You carry half your Physique in runes, plus 4 per Rank in Runebearer. Adept Spells at Rank 2, Master Spells at Rank 3.',
+      },
+      {
+        id: 'rune-activation',
+        rank: 1,
+        name: 'Rune Activation',
+        summary: 'One rune a turn for a single Action Point. The Willpower was paid the night it went on.',
+        kind: 'talent',
+        /* **Passive, and the conversion tagged it Ability with 1 Action Point in
+           the cost column.** Changed on the way in, because the price it prints is
+           the price of firing a *rune* and there is nothing here to press: the
+           runes are the chips, on the block and on the quick bar, and each of them
+           already charges this 1 with the spell’s own cost struck through beside
+           it. Left as an Ability it would have been a chip of its own charging an
+           Action Point for nothing, which is the same reason a Martial Move is kept
+           off that bar. The cost columns are empty for the same reason and the
+           sentence keeps the number. Flagged in data/README.md. */
+        tags: ['Runebearer', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Mechanics as data: the price is `loadout.price` and the once-a-rest
+           limit is `runeLimit` in runes.js, which is the tracker every other
+           spent card already uses.
+
+           **"Once a turn" is printed and not enforced**, which is the same
+           ruling RECKLESS VIOLENCE's "once per round" got: the use tracker holds
+           a count and a rest, and a turn is neither. The card says it, the table
+           keeps it, and a Runebearer with 6 Action Points could tap six runes if
+           nobody was reading. Flagged in data/README.md.
+
+           **The second paragraph reversed twice and this is the older reading
+           back.** The old printed page said "Inscribed spells cannot be Overcast
+           or multicasted", the conversion kept it word for word, Jules dropped it
+           on 2026-09-08 and restored it on 2026-09-09: "Simply make it that
+           Runebearer cannot overcast, multicast of other keywords." So a rune is
+           the spell as printed and nothing else on the card is on offer, which is
+           wired rather than left to the table: `halves: false` on the pool, and
+           the use prompt says who took the option away. See loadoutModifiers in
+           loadouts.js. */
+        body:
+          'Once a turn, you can fire one of your runes for 1 Action Point and no Willpower.\n\n' +
+          'A rune fires the spell exactly as printed. It cannot be Overcast or Multicast, and nothing else the card offers is open to it. A fired rune is spent until your next Long Rest.', // text-style-ok: joins two clauses
+      },
+      {
+        id: 'runic-network',
+        rank: 2,
+        name: 'Runic Network',
+        summary: 'The runework carries a charge of its own, and gives you back a Physique of Willpower.',
+        kind: 'talent',
+        tags: ['Runebearer', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Mechanics as data: `runes.willpower`, summed into both places a
+           Willpower maximum is worked out. See runes.js.
+
+           **The concentration clause is gone.** Both old pages carry one ("you
+           can maintain concentration on up to 2 spells", raised to 3 at Rank 3)
+           and the conversion translated it to an Upkeep cap. The site has no
+           concentration and no cap on how many Upkeeps you may pay, so printing
+           one would be a rule nothing enforces on a card that has a real number
+           on it already. Flagged in data/README.md. */
+        body: 'Your maximum Willpower is increased by your Physique.',
+      },
+      {
+        id: 'recharged',
+        rank: 3,
+        name: 'Recharged',
+        summary: 'A few hours off your feet, and four of your fired runes light up again.',
+        kind: 'talent',
+        tags: ['Runebearer', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Mechanics as data: `runes.recharge`, offered as a chooser in the Short
+           Rest window and spent against the budget there. See runes.js.
+
+           The original card is Rank 2 and reads "After a short rest, you can
+           reactivate a number of previously used Rune spells with a total
+           cumulative cost not exceeding your Wits". Wits is Physique on this
+           sheet, "reactivate" is brought back, and the rung is Master.
+
+           **The budget is a count now** (Jules, 2026-09-09: "Have the tattoo
+           return be 4 by master"). Spent against Willpower it paid for the cheap
+           end of the slate four times over and never once for a Master spell,
+           which is the wrong way round for the top card in the set. Four runes,
+           whatever they cost. */
+        body:
+          'Whenever you take a Short Rest, you can bring back up to 4 of your fired runes.',
+      },
+    ],
+  },
+  {
+    id: 'spellblade',
+    name: 'Spellblade',
+    /* The fifteenth written set, and the first placeholder on the Mind shelf to
+       be filled since the Alchemist. **Handed over in chat on 2026-09-09 and
+       nowhere else**: there is no Ability tab for it, no conversion workbook and
+       no old printed page. Every card below is written here off the designer's
+       spoken description, which is why this comment carries the description
+       rather than pointing at a file.
+
+       ------------------------------------------------------------ what was said
+       In his own words, cleaned of the transcription's slips:
+
+         "A character that can [touch] your weapon, and whichever weapon [is] in
+          touch essentially has a special ability [that] turns that weapon into a
+          magic weapon. So a blade of energy, or a moon bow, or this type of
+          thing. It's like two Action Points, two Willpower [and] the weapon
+          becomes like this until [you] take a Long Rest. A weapon touched that
+          way essentially [becomes one] that use[s] Mind attribute instead of
+          anything else.
+
+          The model the Spellblade works [on] is that whenever you land an attack
+          you can also choose to cast a spell. [The] spell you cast with this, you
+          still pay for the Willpower, but they will be cast on your target of the
+          attack, on the point of impact. If you [cast something] like the
+          [rumbling] waves that deal damage then it does damage to the target.
+          Obviously you [cannot Multicast] because you're only getting one target.
+          But if you were to cast an area spell then the [area] happens centred on
+          the target. Or even if you were to make an attack and use a healing
+          field, [it] will do that.
+
+          [A] Spellblade can learn essentially a number of spells equal to one plus
+          twice their Rank in Spellblade. They can change [the] spells at the Long
+          Rest, and then when they become Masters they can change them on the Short
+          Rest if they will.
+
+          When the blade is enchanted [it] also changes damage profile to any of
+          the elemental damage, which mean cold, fire or lightning. When you reach
+          Adept the blade is also [Empowered] when it's enchanted. When I'm talking
+          here I'm not talking about Enhancement, like the measurement system in the
+          game. When you reach Master the Willpower cost of your spells is reduced
+          by one.
+
+          While it cannot [Multicast, it can be] Overcast. Overcast can be used, and
+          it is allowed to strike the ground to [deliver the] spell. [That] doesn't
+          necessarily [need] to be explained. If a spell require[s] an Attack Roll or
+          any kind of Roll, that Roll is met by the Attack Roll of the weapon [you]
+          strike [with], essentially because you [are extending] the attack. [The]
+          spell will automatically hit.
+
+          The Spellblade cost of Willpower for the ability is increased by half the
+          Action Point cost of the spell. So if the spell cost four Action Points
+          then the spell cost two additional Willpower to cast. At Master [it]
+          allow[s] the character to cast two spells on one attack. And of course
+          [the ladder is the usual one]: Rank two only [reaches] Adept spells, and
+          Rank three Master spells."
+
+       ------------------------------------------------------ the five readings
+       Five things the description leaves to be settled, each one settled here and
+       flagged in data/README.md:
+
+         the school   **any school**, and no `school` on the spec. Not said either
+                      way, and the examples say it: a wave of damage is Elemental,
+                      a healing field is Primal. The Arcanist is the only other
+                      pool in the codex with no school, and it is the same reason.
+         the rounding **up**, which is the codex's own reading of exactly this
+                      arithmetic. `moveWillpower` in martial.js already prices five
+                      Martial Moves "per 2 Action Points the attack costs, rounded
+                      up", and the note there argues the case: the rung matters and
+                      the parity does not. A 3 Action Point spell costs what a 4
+                      costs. The card prints the rate rather than the half, so the
+                      rounding never has to be said.
+         the strike   **the spells are cast through a strike and no other way.**
+                      Not said outright and the ground clause settles it: nobody
+                      needs permission to hit the floor unless hitting something is
+                      the only way the spell leaves your hands. So they are kept
+                      off the quick bar the way a Martial Move is, and the whole
+                      cost of one is worked out inside the attack's own prompt.
+         the miss     **printed, not enforced.** "Whenever you land an attack"
+                      names a hit, and this sheet has never known whether an attack
+                      landed. The Willpower is charged when the swing is paid for,
+                      which is where every other rider on a swing is charged. The
+                      table plays the miss.
+         the floor    the Master cut stops at **0 Willpower** and not at 1. No floor
+                      was named, the Arcanist's cut names one because its own card
+                      does, and a Novice spell costing nothing at Master is the
+                      rung doing what the rung is for.
+
+       No plate and no card pictures. Drop them into `data/Spellblade/` and run
+       `npm run art:cards`. */
+    tagline: 'A weapon bound to a mind, and every spell it knows arrives at the point of impact.',
+    /* No plate yet. Null rather than a path to a file that is not there, for the
+       reason the Runebearer's is. */
+    art: null,
+    /* Mind is the roster's own column and it is also the whole mechanism: a bound
+       weapon stops rolling off the arm that swings it. `martial` and
+       `spellcasting` both, which no other set in the codex carries together, and
+       that pairing is the set. */
+    tags: ['mind', 'spellcasting', 'martial', 'control'],
+    stat: 'mind',
+    /* The hand, as an ordinary pool. Everything here is loadouts.js's and only one
+       field is new to it:
+
+         `swap`   rank-indexed, `[null, ['long'], ['long'], ['long', 'short']]`,
+                  which is the shape `tiers` beside it already carries. The first
+                  pool in the codex whose *permission* moves with the rank rather
+                  than only its size, because TWINNED STRIKE hands a Short Rest the
+                  swap a Long Rest had. See swapsAtRest in loadouts.js.
+
+       No `school`, no `cast` and no `discount`. The pool is the whole codex; a
+       spell is printed for Mind and a Spellblade casts on Mind, so there is
+       nothing to override; and the Master's Willpower cut is not a discount on a
+       printed cost but a term in a price this set works out itself. See
+       `strikePrice` in spellblade.js. */
+    loadout: {
+      id: 'spellblade-spells',
+      label: 'Bound Spells',
+      noun: 'spell',
+      kind: 'spell',
+      group: 'school',
+      known: [null, 3, 5, 7],
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      swap: [null, ['long'], ['long'], ['long', 'short']],
+      section: 'What your edge carries',
+      note: 'They are cast through the weapon you have bound and no other way. What one costs to carry on a strike is worked out on the strike itself.',
+    },
+    /* The tenth shape of what a set can hand over: a **bond**. Numbers only, and
+       what they mean is spellblade.js's business, which is the same split
+       minions.js, feral.js, pact.js and runes.js keep.
+
+       Nothing here is stored in a column of its own either. What is bound is one
+       row on the effects tracker carrying a `blade` payload, which is where the
+       sheet already keeps the four other things a running effect can be doing, and
+       `until: 'long'` is already what a rest reads to end one. So this set needed
+       no migration, the way the Runebearer needed none. See the note at the top
+       of spellblade.js. */
+    blade: {
+      label: 'Bound Edge',
+      from: 'Bound Edge',
+      /* BOUND EDGE's own printed price, read rather than restated: the card is
+         the source and this is the block's copy for the button it draws. */
+      ap: 2,
+      wp: 2,
+      /* "use[s] Mind attribute instead of anything else". Named here rather than
+         assumed, because a set's shelf and a set's swap are two different claims
+         and every other place in this file that moves an attribute says which. */
+      cast: 'mind',
+      /* "cold, fire or lightning", in the codex's own spelling. The order is the
+         designer's. */
+      types: ['Cold', 'Fire', 'Lightning'],
+      /* RESONANT EDGE, rank-indexed the way every other rider on a set is. */
+      empower: [null, 0, 1, 1],
+      /* TWINNED STRIKE, and both halves of it. `spells` is how many may ride one
+         swing and `cut` is what comes off each one's Willpower. */
+      spells: [null, 1, 1, 2],
+      cut: [null, 0, 0, 1],
+      /* POINT OF IMPACT's surcharge, as the rate the card prints: 1 Willpower for
+         every 2 Action Points the spell costs, rounded up. The same rate and the
+         same rounding as `moveWillpower`'s `'ap'` scale. */
+      rate: 2,
+    },
+    blurb:
+      'A Spellblade does not carry a wand or a book. They put a hand on a weapon, and for as long as the binding holds it is theirs in a way no smith could make it: an edge of cold light, a bow strung with something that is not a string, a haft that answers a mind rather than an arm. What was a piece of steel now swings on what they know.\n\n' + // text-style-ok: joins two clauses
+      'They excel at arriving. Every other caster stands off and sends the spell across the room, where it can be seen coming and stepped out of. A Spellblade carries it in on the swing. The attack and the spell are one motion and one Roll, so a spell that would have needed its own Roll simply lands, and whatever it does to the air around it happens where the blade already is.\n\n' + // text-style-ok: joins two clauses
+      'The bargain is that they have to be there. The spells go nowhere the weapon cannot reach and there are never many of them, so a Spellblade picks the handful the day is likely to ask for and then walks into the middle of it. When there is nothing worth hitting, they hit the ground.', // text-style-ok: joins two clauses
+    cards: [
+      {
+        id: 'bound-edge',
+        rank: 1,
+        name: 'Bound Edge',
+        summary: 'A weapon you touch becomes magic, elemental and swung off your Mind until the morning.',
+        kind: 'talent',
+        tags: ['Spellblade', 'Novice Talent', 'Ability'],
+        ap: 2,
+        wp: 2,
+        stat: 'mind',
+        /* Mechanics as data: `blade.ap`, `blade.wp`, `blade.cast` and
+           `blade.types` above, and the row it writes is spellblade.js's.
+
+           `opens` and `pays`, because the card asks two questions before it can
+           charge for anything: which weapon, and which of the three types. BREW
+           already carries the pair for the same reason, and the Ephemeral
+           Enchantment carries them in this direction: the window opens first and
+           the price is paid inside it, so backing out of the question costs
+           nothing. See ActiveBlock.jsx and BladeBlock.jsx, which raise the same
+           window.
+
+           "magic weapon" is the designer's own phrase and is left in even though
+           nothing on this sheet reads it. There is no magic-weapon flag in the
+           codex and inventing one to satisfy one card would be a rule with one
+           holder. What the sheet does read is the three things after it.
+
+           **until your next Long Rest** is bolded whole, which is the duration
+           shape `effectDuration` reads: the row this lays ends itself at the
+           right rest without anybody storing a clock. */
+        opens: 'blade',
+        pays: 'window',
+        body:
+          'Touch a weapon and bind it to you **until your next Long Rest**. It becomes a magic weapon and its attacks use your {mind} in place of the Attribute they print.\n\n' +
+          'Its damage type becomes {damage:Cold}, {damage:Fire} or {damage:Lightning}, chosen as you bind it.\n\n' +
+          'Binding a weapon releases the one you had bound before.',
+      },
+      {
+        id: 'spell-strike',
+        rank: 1,
+        name: 'Spell Strike',
+        summary: 'Spells equal to 1 plus twice your rank, cast through the weapon you bound and no other way.',
+        kind: 'talent',
+        tags: ['Spellblade', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: the whole `loadout` above. `Long Rest` and not
+           `Passive`, the tag every card that re-prepares a hand carries.
+
+           The pool sentence is the Mycomancer's, with the formula the designer
+           gave: "a number of spells equal to 1 + 2 x your Rank in Spellblade".
+           The rank as a number in a formula is the one way a card may name it.
+
+           The ladder sentence is FUNGAL INVOCATION's word for word but for the
+           school it names, and it is the other thing a card may say about a rank. */
+        body:
+          'You learn a number of spells equal to 1 + 2 x your Rank in Spellblade. You cast them through the weapon you have bound and no other way.\n\n' +
+          'Whenever you take a Long Rest, you can use your Long Rest action to change any number of learned spells.\n\n' +
+          'At Rank 2, you can learn Adept Spells, and at Rank 3, you gain access to Master Spells.', // text-style-ok: joins two clauses
+      },
+      {
+        id: 'point-of-impact',
+        rank: 1,
+        name: 'Point of Impact',
+        summary: 'Your attack carries a spell to where it lands, and the Attack Roll is the spell’s Roll.',
+        kind: 'talent',
+        tags: ['Spellblade', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: `blade.rate` and `blade.spells` above, resolved in
+           `strikePrice` and offered in the attack's own use prompt beside the
+           Martial Moves. See spellblade.js and UsePrompt.jsx.
+
+           The price is printed as a **rate** rather than as "half the Action Point
+           cost", which is the same trade RECKLESS VIOLENCE makes on the other
+           side of the sheet: a rate needs no rounding clause after it, and the
+           rounding the designer wants is the one a rate gives. 4 Action Points is
+           2 Willpower either way; 3 Action Points is 2 under the rate and is the
+           reading martial.js already argues for.
+
+           Nothing here says the attack has to hit, and the description does. See
+           the miss, above: the sheet has never known, so the sentence says what
+           the sheet can keep and the table plays the rest. Flagged in
+           data/README.md.
+
+           Multicast and Overcast are both named because the designer named both,
+           and the second is the one a reader would otherwise assume was gone with
+           the first. */
+        body:
+          'When you attack with your bound weapon you can cast one of your spells, paying its Willpower and 1 more for every 2 Action Points it costs.\n\n' +
+          'It is cast where the attack lands, and anything it reaches beyond the target is centered there. It needs no Roll of its own: the Attack Roll carries it, and it lands.\n\n' +
+          'You can strike an empty space to place it. It can be Overcast and never Multicast.',
+      },
+      {
+        id: 'resonant-edge',
+        rank: 2,
+        name: 'Resonant Edge',
+        summary: 'The weapon you have bound deals Empowered damage.',
+        kind: 'talent',
+        tags: ['Spellblade', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: `blade.empower` above, folded into
+           `attackModifiers` in moves.js beside the Colossus's Elevate and the
+           form's die, so the extra die is on the printed card before the swing
+           is paid for rather than remembered against it.
+
+           Empowered and not Elevated, and the designer said so twice: "the blade
+           is also [Empowered] when it's enchanted", then "I'm not talking about
+           Enhancement, like the measurement system in the game". Empowered is one
+           more die of the same kind. See cardText.js. */
+        body: 'Your bound weapon’s damage is Empowered by 1.',
+      },
+      {
+        id: 'twinned-strike',
+        rank: 3,
+        name: 'Twinned Strike',
+        summary: 'Two spells on one attack, each 1 Willpower cheaper, re-chosen on a Short Rest.',
+        kind: 'talent',
+        tags: ['Spellblade', 'Master Talent', 'Short Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: `blade.spells`, `blade.cut` and the rank-indexed
+           `loadout.swap` above, all three of them.
+
+           "now" is the idiom for a card that only exists because of the rank, off
+           BESTIAL FRENZY, and it is doing real work in the first clause: one
+           spell to a strike was POINT OF IMPACT's rule and this is the rule
+           changing.
+
+           The cut has no floor and is the first in the codex without one. See
+           the floor, above. */
+        body:
+          'You can now cast 2 spells on the same attack, and your spells cost 1 less Willpower.\n\n' +
+          'Whenever you take a Short Rest, you can change any number of learned spells.',
+      },
+    ],
+  },
+  {
+    id: 'necromancer',
+    name: 'Necromancer',
+    /* The sixteenth written set, and the second placeholder on the Mind shelf to
+       be filled in two days. **Handed over in chat on 2026-09-09 and nowhere
+       else**: no Ability tab, no conversion workbook, no old printed page. Every
+       number and every card below is written here off the designer's spoken
+       description, which is why this comment carries the description rather than
+       pointing at a file.
+
+       ------------------------------------------------------------ what was said
+       In his own words, cleaned of the transcription's slips and with the two
+       reversals resolved in favour of the last thing he said:
+
+         "You have a new resource that you manage from a new block, which is going
+          to be necromantic bones or something. I'll let you imagine the terms
+          that's more fitting. Essentially it's a point system where you get free
+          points per rank, and you spend those points to animate. So the basic one
+          is to have a skeleton. It takes you three points to add one, and that
+          gives you something similar to how the Draconic ally works: you're
+          getting your block where you have what that entity can do, and you can
+          control it.
+
+          At Novice the undead you'll be able to create are an undead skeleton,
+          which has a bow and a simple sword, and all it can do is shoot its bow
+          and attack with its sword, no special move. A ghoul, which is a fast
+          agile fighter that punches and has an infected claw, so it's less
+          versatile than the skeleton because it cannot do any ranged attack, but
+          it is sturdier and faster and more of a melee character. And a wraith,
+          which is a simple ranged spellcaster, which has one attack, a four
+          Action Point attack that does magic damage at range, and then it has a
+          special ability where it can create a fog area which blinds people in
+          it, a six meter radius fog area at a point it can see, using Willpower.
+          Willpower used by your construct is the Willpower of the necromancer
+          that's being used.
+
+          On top of costing that special resource for each construct that you have
+          active, you also reduce your maximum Willpower. It's a small amount, but
+          it offsets the fact that you have several actors you control in combat.
+
+          As you go up in rank you will unlock more powerful undead that cost six
+          instead. So at Adept you would have a skeleton magus, a skeleton that
+          can learn two Novice spells on creation that it can cast, and otherwise
+          has a basic ranged attack like the wraith, just a magic bolt type of
+          thing that copies the stats so it works properly. And you also have the
+          undead knight, which is a melee tank. It's very tanky, it has a shield
+          and a sword, it can taunt and block, and as long as it's active it can
+          intercept your damage.
+
+          Then when you get to Master you unlock more that cost nine. There you
+          have the abomination, which is a flesh construct, big and very tanky,
+          a lot of Health, and its attack is the equivalent of a paired greatsword
+          attack on the target. It has a hook ability to pull targets to it, so a
+          two Action Point one Willpower thing where it can send the hook flying
+          nine meters in any direction and bring a target to it. And it has a
+          passive, a pestilence aura: any enemies adjacent to it at the start of
+          their turn take the Mind of the necromancer in necrotic damage. The
+          other Master undead is the undead cleric, capable of learning three
+          Novice or Adept Shadow or Light spells. That choice is made at creation.
+          To change the spells it knows you need to destroy it.
+
+          The amount of undead you can control is based off your Mind. The number
+          of necromantic bones you have is equal to your Mind, and it's still
+          three, six and nine to raise one.
+
+          To raise an undead, that's an action that is done during a Long Rest.
+          Only one undead at a time can be done, and to be able to do so they need
+          a corpse. If he doesn't have a fresh corpse, making an undead costs a
+          hundred Supplies. The necromancer will also automatically learn all the
+          Death spells.
+
+          In combat, having the undead minion act requires the necromancer to
+          spend two Action Points to use the Command action, which is a special
+          necromancer action. When it does it, it activates his undead as able to
+          fight. They're not autonomous.
+
+          For the stats I'll let you make some that make sense and directly
+          utilize the scales. The magus and the cleric are Mind oriented. The
+          ghoul is going to be Instinct. The skeletal archer needs to be balanced
+          because it uses Instinct and Physique. The wraith is a Mind creature.
+          The abomination is Physique, and the skeleton knight is Physique as
+          well."
+
+       ------------------------------------------------------------- the two reversals
+       He changed the arithmetic twice inside one message and the **last** answer
+       is what is built:
+
+         the pool     free points a rank, then "based off your Mind", then "we're
+                      still gonna use Mind, the number of bones you have is equal
+                      to your Mind". So the pool is the Mind column and a rank
+                      adds nothing to it. What a rank buys is *which bodies* are
+                      within reach, which is the rung gate on each kind below.
+         the prices   three, six and nine, then "so change the cost, instead of
+                      being three it's four, eight and twelve", then "scratch
+                      that, it's still three six nine". So 3, 6 and 9.
+
+       That pair together is tight, and it is flagged in data/README.md rather
+       than quietly loosened: a Master Necromancer on Mind 10 holds exactly one
+       abomination and nothing beside it.
+
+       ------------------------------------------------------------------ the word
+       "Necromantic bones or something. I'll let you imagine the terms that's more
+       fitting." **Marrow** is the term, and the block it is managed from is the
+       **Ossuary**. Bones read oddly as a count ("you have 9 bones"), and what the
+       pool actually measures is animating substance that stays in a body for as
+       long as the body stands and drains back out of it when the body falls.
+       Marrow says that; his own word is the one it is made of. His to veto. */
+    tagline: 'A keeper of the Ossuary, who spends their own Marrow to stand the dead up and command them.',
+    art: null,
+    /* Mind because the pool *is* the Mind column: what a Necromancer can hold on
+       the board is that number and nothing else moves it. Spellcasting for the
+       whole Death family arriving at once, Martial for seven bodies that fight,
+       and Control for the fog, the hook and the taunt. */
+    tags: ['mind', 'spellcasting', 'martial', 'control'],
+    stat: 'mind',
+    /* --------------------------------------------------------------- the pool
+       The tenth shape of what a talent set can hand over, beside a fixed hand, a
+       `loadout`, a `brewing` spec, an `enchanting` one, a `minion`, the
+       Trickster's `tricks`, the Duelist's `martial`, the Feral Curse's `feral`,
+       the Pact's `pact` and the Runebearer's `runes`. This one hands over a
+       **graveyard**: a pool measured off an attribute, a menu of bodies priced
+       against it, and a debt on the maximum Willpower for every body standing.
+
+       undead.js is what resolves all of it. Everything here is data. */
+    undead: {
+      id: 'ossuary',
+      label: 'Ossuary',
+      resource: 'Marrow',
+      noun: 'undead',
+      /* What the rest window's own row is called. Written out rather than built
+         out of the noun, because "Raise undead" is what a noun with no article
+         gets you and every other row in that list reads like a sentence. */
+      raising: 'Raise an undead',
+      /* What a list of them is called, for every line that counts more than one.
+         "3 risen" rather than "3 undeads", which is not a word. */
+      plural: 'risen',
+      /* "The number of necromantic bones you have is equal to your Mind." One
+         term, and a rank is deliberately not in it. Written as a rule rather
+         than a number so a second such set, or a ruling that adds a rank term,
+         is a line in the codex and no change in undead.js. */
+      marrow: { stat: 'mind', per: 1 },
+      /* "For each construct that you have active you also reduce your maximum
+         Willpower. It's a small amount, but it offsets the fact that you have
+         several actors you control in combat."
+
+         **Per Marrow, and 1 apiece**, ruled on 2026-09-09: "max willpower is
+         reduce by 1 per marrow it cost to animate the body." So a skeleton is 3
+         and an abomination is 9, and the pool and the debt are the same number
+         read twice: a Necromancer on Mind 9 holding a full Ossuary has 9 less
+         maximum Willpower, whatever it is made of.
+
+         It was `[null, 2, 2, 1]`, two a body with a rank rider taking it to one,
+         which was this file's guess at "a small amount" and priced three
+         skeletons at six Willpower against one abomination's two. The rank term
+         went with it — what a rank buys is which bodies are within reach. */
+      burden: { perMarrow: 1 },
+      /* "To raise an undead, that's an action that is done during a Long Rest.
+         Only one undead at a time can be done." */
+      rests: ['long'],
+      perRest: 1,
+      /* "To be able to do so they need a corpse. If he doesn't have a fresh
+         corpse, making an undead costs a hundred Supplies." */
+      supplies: 100,
+      /* And the rank at which your own dead are corpse enough, which is DEEPER
+         GRAVES. Nothing he said, and the reason it is here rather than in a
+         card's prose is that the raise window can actually offer it: a destroyed
+         body on the sheet becomes the third answer to the corpse question, and
+         raising over it is what finally sweeps it away. */
+      remains: 2,
+      /* "Having the undead minion act requires the necromancer to spend two
+         Action Points to use the Command action." The card is an ordinary card
+         and this is the pointer the bodies read, so each of them can say whether
+         it may act. See `commandedBy` in minions.js.
+
+         `perMarrow` is what it costs, and it is a rate rather than the flat two
+         it was: "command the undead cost should be 1 action point per 4 marrow
+         currently used" (Jules, 2026-09-09). Rounded up and never less than one,
+         so a lone skeleton is 1 Action Point and a Master's whole court is 3.
+         See `commandCost` in undead.js, which is what actually prices the card. */
+      command: { card: 'command-the-dead', perMarrow: 4 },
+    },
+    /* ------------------------------------------------------------- the bodies
+       Seven of them, which is why this is a `roster` rather than a body: see
+       "one body, or a roster" at the top of minions.js. Everything true of every
+       undead is written once here and a kind says only what is its own.
+
+       ------------------------------------------------------------- the stat blocks
+       "For the stats I'll let you make some that make sense and directly utilize
+       the scales." So every number below is this file's, built against the two
+       stat blocks the codex already has: a character's own (10 Health a level and
+       10 a Physique, `deriveStats`) and a draconic ally's (5 and 5, and 16 points
+       of attribute at level 1). An undead is cheaper than both.
+
+       **Rebuilt on 2026-09-09 to one shape**, on Jules's ruling: "no entity
+       starts with 1 in a stat, default is 4 as base. Minion entities should have
+       1 main and then alternate mind and instinct."
+
+       So every body in the codex is now built the same way, and there are only
+       two numbers left to choose per kind:
+
+         the floor   4 in all three attributes. Nothing anywhere in the game has a
+                     1 in a stat, and the first draft of this roster had a ghoul
+                     on Mind 0 and a wraith on Physique 2 — a stat block written
+                     as a shape rather than as a creature. 4 is where a starting
+                     character's spread sits, and an undead is not less than a
+                     person at the thing it is not for.
+         the main    the one attribute it is *for*, above the floor: 5 at the
+                     Novice rung, 7 at Adept and 9 at Master. So the three rungs
+                     open on 13, 15 and 17 points of attribute where a draconic
+                     ally opens on 16, and what a rung buys is which of the three
+                     the main is and how much of it there is.
+
+       And the growth is the same for all seven: the main every odd level, then
+       Mind and Instinct alternating on the even ones. Which reads oddly for a
+       body whose main is one of those two and is right anyway — Instinct is
+       Reflex, Initiative and Speed, Mind is Grit, and Physique is Health, which
+       already grows per level on its own. A body gets better at what it is for
+       and harder to put down, whatever it is.
+
+       Each kind's Defense is the sum of the two attributes it is built on, which
+       is the rule the ally's own Notes set down ("a Defense equal to its Grit")
+       read as a rule rather than as one creature's line. The abomination is the
+       exception and it is the designer's own reading: it is huge and it does not
+       dodge, so it answers on bare Physique and pays for it in Health. */
+    minion: {
+      id: 'risen',
+      label: 'Risen',
+      noun: 'undead',
+      kin: 'body you raised',
+      lead: 'It rose on a night, over a corpse, and it is yours. Give it a name and a face, and it takes two blocks of its own on your Character tab.',
+      /* "If its health reach 0 it instantly is shown as dead, it cannot go in
+         negative" is the ally's rule and it is this one's too. What "dead" means
+         is where the two part company: an ally retreats into a shadow, and an
+         undead is simply broken. `perish` is what says a Long Rest sweeps it up
+         instead of standing it back up. */
+      floor: 0,
+      returns: 'long',
+      perish: true,
+      down: 'Destroyed. Its Marrow is already back in your Ossuary, and a Long Rest is what sweeps up the rest of it.',
+      swept: 'The Marrow came back when it fell. This is the bones going in the ground.',
+      command: { card: 'command-the-dead' },
+      roster: [
+        /* ------------------------------------------------------- Novice, 3 Marrow */
+        {
+          /* "An undead skeleton, which has a bow and a simple sword, and all it
+             can do is shoot its bow and attack with its sword, no special move."
+             And: "the skeletal archer needs to be balanced because it uses
+             Instinct and Physique." So the one body in the set that grows both
+             evenly, and the only Novice one that can reach anything at range. */
+          id: 'skeleton-archer',
+          label: 'Skeleton Archer',
+          noun: 'skeleton',
+          tag: 'Skeleton Archer',
+          cost: 3,
+          rank: 1,
+          kin: 'skeleton with a bow across its back',
+          /* Instinct for both hands since 2026-09-09: "make the skeleton use
+             instinct for both weapons". It was the one body built to be balanced
+             across two attributes, because its sword rolled Physique and its bow
+             Instinct, and one attribute for both is what makes it a body with a
+             main like every other. */
+          base: { physique: 4, instinct: 5, mind: 4 },
+          growth: { odd: ['instinct'], even: ['mind', 'instinct'] },
+          health: { perLevel: 3, perPhysique: 3 },
+          defense: 'reflex',
+          /* "Give reckless martial move to skeleton" (Jules, 2026-09-09). Known
+             outright rather than chosen: every skeleton archer has it and none of
+             them can give it back. RECKLESS buys advantage and an Elevated die
+             with advantage against itself, which is the whole character of a
+             thing that does not care what happens to it. Offered inside its own
+             swing's prompt, at 1 Willpower for every 2 Action Points the swing
+             costs. See `knows` in minions.js. */
+          knows: ['reckless'],
+        },
+        {
+          /* "A ghoul, which is a fast agile fighter that punches and has an
+             infected claw, so it's less versatile than the skeleton because it
+             cannot do any ranged attack, but it is sturdier and faster and more
+             of a melee character."
+
+             Sturdier is a point of Health a level over the skeleton, faster is
+             the Instinct its Speed is half of, and less versatile is having
+             nothing that reaches past a meter. */
+          id: 'ghoul',
+          label: 'Ghoul',
+          noun: 'ghoul',
+          tag: 'Ghoul',
+          cost: 3,
+          rank: 1,
+          kin: 'ghoul that has not eaten',
+          base: { physique: 4, instinct: 5, mind: 4 },
+          growth: { odd: ['instinct'], even: ['mind', 'instinct'] },
+          health: { perLevel: 4, perPhysique: 3 },
+          defense: 'reflex',
+          /* "Ghoul can use wound" (Jules, 2026-09-09). WOUND leaves an opening
+             that every weapon swing after it bites through, which is what a thing
+             with claws and no reach is for: it cannot finish anything at range,
+             so what it does is open something up for whatever can. */
+          knows: ['wound'],
+        },
+        {
+          /* "A wraith, which is a simple ranged spellcaster, which has one
+             attack, a four Action Point attack that does magic damage at range,
+             and then it has a special ability where it can create a fog area
+             which blinds people in it." And: "the wraith is a Mind creature." */
+          id: 'wraith',
+          label: 'Wraith',
+          noun: 'wraith',
+          tag: 'Wraith',
+          cost: 3,
+          rank: 1,
+          kin: 'wraith that is barely there',
+          base: { physique: 4, instinct: 4, mind: 5 },
+          growth: { odd: ['mind'], even: ['mind', 'instinct'] },
+          health: { perLevel: 4, perPhysique: 2 },
+          defense: 'grit',
+        },
+
+        /* -------------------------------------------------------- Adept, 6 Marrow */
+        {
+          /* "A skeleton magus, a skeleton that can learn two Novice spells on
+             creation that it can cast, and otherwise has a basic ranged attack
+             like the wraith." And: "the magus and the cleric are Mind oriented."
+
+             `spells` is the choice made the night it stands up, and it is stored
+             on the body rather than on the set: two magi are two spellbooks. Any
+             Novice spell in the codex, which is what he said, and it is wide.
+             Flagged in data/README.md against narrowing it to Primal. */
+          id: 'skeleton-magus',
+          label: 'Skeleton Magus',
+          noun: 'magus',
+          tag: 'Skeleton Magus',
+          cost: 6,
+          rank: 2,
+          kin: 'skeleton that remembers being taught',
+          base: { physique: 4, instinct: 4, mind: 7 },
+          growth: { odd: ['mind'], even: ['mind', 'instinct'] },
+          health: { perLevel: 4, perPhysique: 3 },
+          defense: 'grit',
+          spells: { count: 2, tiers: ['Novice'] },
+        },
+        {
+          /* "The undead knight, which is a melee tank. It's very tanky, it has a
+             shield and a sword, it can taunt and block, and as long as it's
+             active it can intercept your damage." And: "the skeleton knight is
+             Physique as well."
+
+             The shield is the one piece of `armor` in the codex on a creature.
+             It is a printed number and not a piece of gear: nothing can take it
+             off it and nothing can add to it. See minionDerived in minions.js. */
+          id: 'undead-knight',
+          label: 'Undead Knight',
+          noun: 'knight',
+          tag: 'Undead Knight',
+          cost: 6,
+          rank: 2,
+          kin: 'knight that never took its plate off',
+          base: { physique: 7, instinct: 4, mind: 4 },
+          growth: { odd: ['physique'], even: ['mind', 'instinct'] },
+          health: { perLevel: 5, perPhysique: 4 },
+          defense: 'reflex',
+          armor: 3,
+        },
+
+        /* ------------------------------------------------------- Master, 9 Marrow */
+        {
+          /* "The abomination, which is a flesh construct, big and very tanky, a
+             lot of Health, and its attack is the equivalent of a paired
+             greatsword attack on the target." And: "the abomination is Physique."
+
+             The one body whose Defense is a bare attribute rather than the sum of
+             its two. It is enormous and it does not dodge: what it has instead is
+             6 Health a level and 5 a Physique, which is the most in the codex
+             outside a character's own. */
+          id: 'abomination',
+          label: 'Abomination',
+          noun: 'abomination',
+          tag: 'Abomination',
+          cost: 9,
+          rank: 3,
+          kin: 'thing sewn out of several people',
+          base: { physique: 9, instinct: 4, mind: 4 },
+          growth: { odd: ['physique'], even: ['mind', 'instinct'] },
+          health: { perLevel: 6, perPhysique: 5 },
+          defense: 'physique',
+          /* "Add that the abomination can learn 2 martial move of any rank"
+             (Jules, 2026-09-09). Chosen the night it stands up like the two
+             casters' spells, stored on its own row like them, and every rung is
+             open: no set in the codex reaches Master moves at Rank 1 and this
+             body does, which is the designer's own call.
+
+             A move is added to a swing rather than played, so what these ride is
+             ABATTOIR SWEEP, which is why that card carries the `Weapon Attack`
+             tag: `moveRides` asks the tag and nothing else. One per swing, which
+             is the base allowance everybody has. See heldMoves in moves.js. */
+          moves: { count: 2, tiers: ['Novice', 'Adept', 'Master'] },
+        },
+        {
+          /* "The undead cleric, capable of learning three Novice or Adept Shadow
+             or Light spells. That choice is made at creation. To change the
+             spells it knows you need to destroy it." And: "the magus and the
+             cleric are Mind oriented."
+
+             The only body in the roster with no attack of its own. Its whole kit
+             is the three spells it rose knowing, which is exactly what he
+             described, and HOLLOW DEVOTION is the card that says so. */
+          id: 'undead-cleric',
+          label: 'Undead Cleric',
+          noun: 'cleric',
+          tag: 'Undead Cleric',
+          cost: 9,
+          rank: 3,
+          kin: 'cleric still saying its office',
+          base: { physique: 4, instinct: 4, mind: 9 },
+          growth: { odd: ['mind'], even: ['mind', 'instinct'] },
+          health: { perLevel: 4, perPhysique: 3 },
+          defense: 'grit',
+          spells: {
+            count: 3,
+            tiers: ['Novice', 'Adept'],
+            school: 'Ethereal',
+            families: ['Light', 'Shadow'],
+          },
+        },
+      ],
+    },
+    /* --------------------------------------------------------- the Death family
+       "The necromancer will also automatically learn all the Death spells."
+
+       Not a hand and not a library: the pool *is* the hand, which is the third
+       shape a loadout can take and the first set to want it. `all: true`, so
+       nothing is stored, nothing is chosen, and a spell added to the family
+       tomorrow is a spell every Necromancer already knows. See `isWhole` in
+       loadouts.js.
+
+       `school` and `family` both, because a Death spell is a Primal spell and a
+       Primal pool would hand over the Flora and the Wild with it. The rungs open
+       on the rank ladder every other pool uses, which is the one part of this he
+       did not say: "all the Death spells" read literally would give a Novice
+       Necromancer four Master spells. Flagged. */
+    loadout: {
+      id: 'death-spells',
+      label: 'Death Spells',
+      noun: 'spell',
+      kind: 'spell',
+      school: 'Primal',
+      family: 'Death',
+      all: true,
+      section: 'The Death family',
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      note: 'Every one of them, as the rungs open. There is nothing here to choose and nothing to prepare.',
+    },
+    blurb:
+      'A Necromancer keeps an Ossuary, and what is in it is Marrow: the animating stuff of the dead, measured out in their own Mind and spent a body at a time. Over a fresh corpse and a full night they put that Marrow into something that used to be a person, and in the morning it stands up and waits to be told.\n\n' +
+      'They excel at being an army. A skeleton with a bow, a ghoul that runs, a wraith that fills a room with blinding fog, a knight that steps in front of blows meant for its master: each is bought with Marrow that stays spent for as long as the body stands, and paid for again out of the Willpower its keeper no longer has. None of them thinks. An Action Point for every four Marrow standing is what turns a row of corpses into a fight, so a bigger court is a slower one to wake.\n\n' + // text-style-ok: joins two clauses
+      'A Necromancer at the height of their work is a small procession: an abomination hauling bodies to itself on a hook, a cleric mumbling light over the ruin and somewhere behind all of it a drifter who has given up half their own strength to keep the whole thing on its feet.',
+    cards: [
+      /* ============================================== the Necromancer's own six */
+      {
+        id: 'the-ossuary',
+        rank: 1,
+        name: 'The Ossuary',
+        summary: 'Marrow equal to your Mind, and a point of maximum Willpower for every point of it spent.',
+        kind: 'talent',
+        tags: ['Necromancer', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'You keep an Ossuary of animating Marrow, and it holds an amount equal to your {mind} [[mind]].\n\n' +
+          'A body you raise takes the Marrow it costs, and your maximum Willpower is reduced by the same amount for as long as the body is in your Ossuary.\n\n' +
+          'A body destroyed gives its Marrow back at once. The Willpower comes back when you lay what is left of it to rest.',
+      },
+      {
+        id: 'raise-the-dead',
+        rank: 1,
+        name: 'Raise the Dead',
+        summary: 'One body a night over a fresh corpse, or a hundred Supplies to build one.',
+        kind: 'talent',
+        tags: ['Necromancer', 'Novice Talent', 'Ability'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'Whenever you take a **Long Rest**, you can use your Long Rest action to raise one undead over a fresh corpse: a skeleton archer, a ghoul or a wraith, at 3 Marrow apiece.\n\n' +
+          'One a night, and what it is stays what it is. Without a corpse to work on you must build one, which takes 100 Supplies.',
+      },
+      {
+        id: 'command-the-dead',
+        rank: 1,
+        name: 'Command the Dead',
+        summary: 'An Action Point for every 4 Marrow standing, and all of it can act this turn.',
+        kind: 'talent',
+        tags: ['Necromancer', 'Novice Talent', 'Ability'],
+        /* The floor, and what the codex prints for a reader with no Ossuary of
+           their own. What it actually costs is worked out against the Marrow in
+           use and set on the card as a rider, which is what puts the real number
+           on the chip, in the prompt and on the dealt card at once. See
+           `commandCost` in undead.js. */
+        ap: 1,
+        wp: null,
+        stat: 'mind',
+        body:
+          'Every undead you have raised can act on your turn **until your next Turn End**, spending its own Action Points and Reaction Points and your Willpower.\n\n' +
+          'This costs 1 Action Point for every 4 Marrow standing in your Ossuary, rounded up and never less than 1.\n\n' +
+          'None of them is its own. Without this they stand where they are and do nothing at all.',
+      },
+      {
+        id: 'grave-lore',
+        rank: 1,
+        name: 'Grave Lore',
+        summary: 'Every Death spell in the codex, as the rungs open to you.',
+        kind: 'talent',
+        tags: ['Necromancer', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'You know every Death spell in the codex, cast with your {mind} and paid for out of your own Willpower.\n\n' +
+          'The Novice ones to begin with. At Rank 2 the Adept ones open to you, and at Rank 3 the Master ones.',
+      },
+      {
+        id: 'deeper-graves',
+        rank: 2,
+        name: 'Deeper Graves',
+        summary: 'The magus and the knight at 6 Marrow, and your own dead are corpse enough.',
+        kind: 'talent',
+        tags: ['Necromancer', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* The third paragraph was "Each body you hold costs 1 less of your
+           maximum Willpower", which was never true: the rank table it named read
+           2 at Rank 1 and 2 at Rank 2. It went with the rank term itself when the
+           debt became 1 per Marrow on 2026-09-09. */
+        body:
+          'You can raise a skeleton magus or an undead knight, at 6 Marrow apiece.\n\n' +
+          'What is left of your own risen is corpse enough. A body of yours that has been destroyed can be raised again out of its own remains, with no corpse to find and no Supplies to spend.',
+      },
+      {
+        id: 'charnel-court',
+        rank: 3,
+        name: 'The Charnel Court',
+        summary: 'The abomination and the cleric at 9 Marrow, and one Command wakes the whole court.',
+        kind: 'talent',
+        tags: ['Necromancer', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'You can raise an abomination or an undead cleric, at 9 Marrow apiece.\n\n' +
+          'Nothing you raise is beneath your notice any more. One Command wakes every body you keep, however many of them are standing and whatever they are.',
+      },
+
+      /* ================================================ what the skeleton does */
+      {
+        id: 'bone-bow',
+        rank: 1,
+        name: 'Bone Bow',
+        summary: 'A shortbow shot at 18 meters, off its own Instinct.',
+        kind: 'talent',
+        tags: ['Skeleton Archer', 'Novice Ability', 'Weapon Attack'],
+        ap: 3,
+        wp: null,
+        stat: 'instinct',
+        damage: ['Sharp'],
+        body:
+          'It makes an {stat} Ranged Attack {roll} against **an entity** it can see within **18 meters (60 feet)**.\n\n' +
+          'On a hit, it deals [[1d6 + stat]] {damage} damage.',
+      },
+      {
+        id: 'rusted-sword',
+        rank: 1,
+        name: 'Rusted Sword',
+        summary: 'The plain sword it was buried with.',
+        kind: 'talent',
+        /* `Weapon Attack`, because a skeleton archer knows RECKLESS and a move
+           rides a weapon attack and nothing else. Both its swings carry it: see
+           `moveRides` in moves.js, which asks the tag and nothing more. */
+        tags: ['Skeleton Archer', 'Novice Ability', 'Weapon Attack'],
+        ap: 3,
+        wp: null,
+        /* Instinct, like its bow. "Make the skeleton use instinct for both
+           weapons" (Jules, 2026-09-09) — it was Physique, which made this the
+           one body in the codex that rolled two different attributes and the one
+           that had to grow both. */
+        stat: 'instinct',
+        damage: ['Sharp'],
+        body:
+          'It makes an {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of it.\n\n' +
+          'On a hit, it deals [[1d6 + stat]] {damage} damage.',
+      },
+
+      /* =================================================== what the ghoul does */
+      {
+        id: 'rending-punch',
+        rank: 1,
+        name: 'Rending Punch',
+        summary: 'A cheap swing it can throw three of in a turn.',
+        kind: 'talent',
+        /* `Weapon Attack` on both of the ghoul's swings, because it knows WOUND
+           and a move rides a weapon attack and nothing else. */
+        tags: ['Ghoul', 'Novice Ability', 'Weapon Attack'],
+        ap: 2,
+        wp: null,
+        stat: 'instinct',
+        damage: ['Blunt'],
+        body:
+          'It makes an {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of it.\n\n' +
+          'On a hit, it deals [[1d6 + stat]] {damage} damage.',
+      },
+      {
+        id: 'infected-claws',
+        rank: 1,
+        name: 'Infected Claws',
+        summary: 'Filthy claws that leave whatever they open diseased.',
+        kind: 'talent',
+        tags: ['Ghoul', 'Novice Ability', 'Weapon Attack'],
+        ap: 4,
+        wp: null,
+        stat: 'instinct',
+        damage: ['Sharp'],
+        body:
+          'It makes an {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of it.\n\n' +
+          'On a hit, it deals [[2d4 + stat]] {damage} damage and the target is diseased.',
+      },
+
+      /* ================================================== what the wraith does */
+      {
+        id: 'grave-bolt',
+        rank: 1,
+        name: 'Grave Bolt',
+        summary: 'A bolt of grave cold thrown at 12 meters.',
+        kind: 'talent',
+        tags: ['Wraith', 'Novice Ability'],
+        ap: 4,
+        wp: null,
+        stat: 'mind',
+        damage: ['Necrotic'],
+        body:
+          'It makes a {stat} Ranged Attack {roll} against **an entity** it can see within **12 meters (40 feet)**.\n\n' +
+          'On a hit, it deals [[2d4 + stat]] {damage} damage.',
+      },
+      {
+        id: 'shroud-of-fog',
+        rank: 1,
+        name: 'Shroud of Fog',
+        summary: 'A 6 meter fog at 12 meters that blinds anything standing in it.',
+        kind: 'talent',
+        tags: ['Wraith', 'Novice Ability'],
+        ap: 4,
+        wp: 3,
+        stat: 'mind',
+        body:
+          'A grave fog rises in a **6-meter (20-foot)** radius around a point it can see within **12 meters (40 feet)**, and it lasts for **10 turns (1 minute)**.\n\n' +
+          '**All entities** inside the fog are blinded for as long as they stay in it.',
+      },
+
+      /* =================================================== what the magus does */
+      {
+        id: 'withering-bolt',
+        rank: 2,
+        name: 'Withering Bolt',
+        summary: 'The magus’s own bolt, heavier than a wraith’s and further.',
+        kind: 'talent',
+        tags: ['Skeleton Magus', 'Adept Ability'],
+        ap: 4,
+        wp: null,
+        stat: 'mind',
+        damage: ['Necrotic'],
+        body:
+          'It makes a {stat} Ranged Attack {roll} against **an entity** it can see within **15 meters (50 feet)**.\n\n' +
+          'On a hit, it deals [[2d6 + stat]] {damage} damage.',
+      },
+      {
+        id: 'rote-of-the-magus',
+        rank: 2,
+        name: 'Rote of the Magus',
+        summary: 'Two Novice spells, chosen the night it stood up and never again.',
+        kind: 'talent',
+        tags: ['Skeleton Magus', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'It rose knowing 2 Novice spells, chosen the night it stood up, and it casts them with its own {mind} out of your Willpower.\n\n' +
+          'It never learns another. To change what it knows, destroy it and raise a new one.',
+      },
+
+      /* =================================================== what the knight does */
+      {
+        id: 'grave-iron-blade',
+        rank: 2,
+        name: 'Grave-Iron Blade',
+        summary: 'A heavy sword swung from behind a shield.',
+        kind: 'talent',
+        tags: ['Undead Knight', 'Adept Ability'],
+        ap: 4,
+        wp: null,
+        stat: 'physique',
+        damage: ['Sharp'],
+        body:
+          'It makes a {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of it.\n\n' +
+          'On a hit, it deals [[2d6 + stat]] {damage} damage.',
+      },
+      {
+        id: 'bonewall',
+        rank: 2,
+        name: 'Bonewall',
+        summary: 'It steps into a blow meant for you and takes it instead.',
+        kind: 'talent',
+        tags: ['Undead Knight', 'Adept Ability'],
+        ap: 1,
+        wp: null,
+        stat: 'physique',
+        body:
+          'Whenever you would take damage while it stands within **6 meters (20 feet)** of you, it steps into the blow and takes that damage in your stead.',
+      },
+      {
+        id: 'iron-provocation',
+        rank: 2,
+        name: 'Iron Provocation',
+        summary: 'It beats its shield until nothing wants to look anywhere else.',
+        kind: 'talent',
+        tags: ['Undead Knight', 'Adept Ability'],
+        ap: 2,
+        /* 2 and one turn, from 1 and two turns. Jules, 2026-09-09: "double the
+           cost of the skeleton knight ability in willpower, make it last until
+           the end of the entity's turn." A taunt on every enemy inside 9 meters
+           is the widest single clause any body in the roster has, and it was
+           holding a whole side of the board for a Willpower and a press. Now it
+           is bought again every turn it is wanted, out of a pool that is its
+           keeper's and not its own. */
+        wp: 2,
+        stat: 'physique',
+        body:
+          'It beats its shield and howls. It makes a {stat} Roll {roll} against the Grit of **all enemy entities** within **9 meters (30 feet)** that can hear it.\n\n' +
+          'On a success, their attacks must be aimed at it **until its next Turn End**.',
+      },
+
+      /* ============================================== what the abomination does */
+      {
+        id: 'abattoir-sweep',
+        rank: 3,
+        name: 'Abattoir Sweep',
+        summary: 'Both arms down at once, at paired-greatsword weight.',
+        kind: 'talent',
+        /* `Weapon Attack` is load-bearing: it is what lets its two Martial Moves
+           ride this swing. See `moveRides` in moves.js, and REMEMBERED VIOLENCE
+           below. */
+        tags: ['Abomination', 'Master Ability', 'Weapon Attack'],
+        ap: 5,
+        wp: null,
+        stat: 'physique',
+        damage: ['Blunt'],
+        body:
+          'It brings both arms down at once. It makes a {stat} Melee Attack {roll} against **an entity** within **2 meters (6 feet)** of it.\n\n' +
+          'On a hit, both arms land and it deals [[4d4 + 2*stat]] {damage} damage.',
+      },
+      {
+        id: 'flesh-hook',
+        rank: 3,
+        name: 'Flesh Hook',
+        summary: 'A hook thrown 9 meters that drags what it catches back.',
+        kind: 'talent',
+        tags: ['Abomination', 'Master Ability'],
+        ap: 2,
+        wp: 1,
+        stat: 'physique',
+        damage: ['Sharp'],
+        body:
+          'It throws a hook at **an entity** it can see within **9 meters (30 feet)**, making a {stat} Ranged Attack {roll}.\n\n' +
+          'On a hit, it deals [[1d6 + stat]] {damage} damage and drags the target into a free space next to it.',
+      },
+      {
+        /* Named off the term it inflicts rather than off the smell, because a
+           Necromancer knows every Death spell and PESTILENT CLOUD is one of them:
+           two cards called Pestilent, in the same set's own blocks, doing two
+           different things. See the Death family below. */
+        id: 'carrion-reek',
+        rank: 3,
+        name: 'Carrion Reek',
+        summary: 'Anything standing beside it rots at its own Turn Start.',
+        kind: 'talent',
+        tags: ['Abomination', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'The air around it rots. **All enemy entities** within **1 meter (3 feet)** of it suffer Corpse Carrion for as long as they stand there, read against your own {mind}.',
+      },
+      {
+        id: 'remembered-violence',
+        rank: 3,
+        name: 'Remembered Violence',
+        summary: 'Two Martial Moves of any rung, remembered by whatever it was sewn out of.',
+        kind: 'talent',
+        tags: ['Abomination', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        body:
+          'Something in it remembers how to fight. It rose knowing 2 Martial Moves, Novice, Adept or Master, chosen the night it stood up.\n\n' +
+          'It adds one of them to a swing of its own the way you would add one to yours, paid for out of your Willpower.',
+      },
+
+      /* ================================================== what the cleric does */
+      {
+        id: 'hollow-devotion',
+        rank: 3,
+        name: 'Hollow Devotion',
+        summary: 'Three Light or Shadow spells, chosen the night it stood up and never again.',
+        kind: 'talent',
+        tags: ['Undead Cleric', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'It rose knowing 3 spells of Ethereal Light or Ethereal Shadow, Novice or Adept, chosen the night it stood up. It casts them with its own {mind} out of your Willpower.\n\n' +
+          'It has nothing else. It never learns another, and to change what it knows you must destroy it and raise a new one.',
+      },
+    ],
+  },
+  {
+    id: 'spellquill',
+    name: 'Spellquill',
+    /* The eighteenth set, transcribed 2026-09-09 off
+       `data/Source Temp/Hazebound System - Spellquill.pdf` — one source, no
+       workbook and no Ability tab, the way the Necromancer arrived.
+
+       The PDF is a Google Docs export whose **headings were flattened to vector
+       outlines**, so the body text came out of the content streams and every
+       heading (the five rank titles, the four rung labels on the cost table and
+       all seven Power Word names) had to be rendered back to an image and read.
+       Nothing here is guessed at: the transcription is in data/README.md and the
+       working files are noted there.
+
+       -------------------------------------------------------- five into three
+       The sheet has **five ranks** and this site has three, so the same
+       normalisation the Runebearer had on 2026-09-08 applies. Each rung carries
+       two of the sheet's pages, keeping every card name and every card's own
+       words:
+
+         Rank 1   Arcane Scribe + Ephemeral Spell Scrolls
+         Rank 2   Improved Syntax + Arcane Specialist
+         Rank 3   Analitic Sight + Author of Truth
+
+       And the spell ladder normalises with it. The sheet opens Novice at 1,
+       Apprentice at 2, Adept at 4 and Master at 5; **there is no Apprentice
+       rung in this codex** and never has been (see `scrollTier` in scrolls.js),
+       so it is dropped rather than opened onto an empty shelf, and Novice, Adept
+       and Master land on Ranks 1, 2 and 3. The three prices that survive are the
+       sheet's own. Flagged in data/README.md.
+
+       ------------------------------------------------------------- the prices
+       The sheet is the only thing in the pile that prices a labour in **coin**:
+       500 to 2000 Coins worth of Arcane Quartz. Jules asked for Supplies, and
+       the rate is the potion shelf's own — ten coins to a Supply, which is what
+       makes a Healing Potion 200 coins and 20 Supplies. See scrolls.js. */
+    tagline:
+      'A desk, a stick of Arcane Quartz and a steady hand. Any spell in the world, written down for somebody who cannot cast.',
+    /* No plate yet. Drop pictures into data/Spellquill/ and run `npm run art`. */
+    art: null,
+    /* Mind is the roster's column and the sheet's own prerequisite (8
+       Intelligence). Support and Utility are this file's reading of six cards:
+       nothing here casts anything, and what the whole set does is hand the party
+       casts it could not otherwise make. No `spellcasting`, for the same reason
+       the Alchemist carries none — the point of a scroll is that it works in a
+       hand that has never cast a thing. */
+    tags: ['mind', 'support', 'utility'],
+    stat: 'mind',
+    /* Scribing, as data. The seventh shape of spec in the codex and the second
+       whose output is an item, but the first whose output the player *composes*:
+       a potion is a row on a shelf and a scroll is any of 146 spells with any of
+       seven words on it.
+
+         `tiers`          which rungs of the spell codex the rank may write, the
+                          normalised ladder above.
+         `perRest`        "you can craft 2 spell scrolls during a long rest
+                          without hindering its effects." No rank moves it.
+         `wordsPerScroll` 0 until IMPROVED SYNTAX, then 1, then 2 — which is
+                          ANALITIC SIGHT's "you can now include two Power Words
+                          on one spell scroll".
+         `ephemeral`      what one fading leaf costs to throw down where you
+                          stand: `{ ap }`, and nothing else. The Willpower is the
+                          spell's own rung (scrolls.js) and there is no cap on
+                          how many, because the pool is the cap. See the note on
+                          EPHEMERAL SPELL SCROLLS below.
+         `forgiven`       whether AUTHOR OF TRUTH's Willpower forgiveness is
+                          held. How much is Mind + level, the conversion key's
+                          reading of "your Power".
+         `at`             which rest offers it, the same shape `brew`, `swap` and
+                          `reshape` carry. A Short Rest names none of this.
+
+       What a scroll costs is on the rung (scrolls.js), never here. See
+       scribing.js for the night's work. */
+    scribe: {
+      id: 'scribing',
+      label: 'Scribing',
+      noun: 'scroll',
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      perRest: [null, 2, 2, 2],
+      wordsPerScroll: [null, 0, 1, 2],
+      ephemeral: { ap: 2 },
+      forgiven: [null, false, false, true],
+      at: ['long'],
+      note: 'Written at the desk and carried away. Your Long Rest action buys the night’s leaves, and the crate pays for the Quartz.',
+    },
+    blurb:
+      'A Spellquill is not a caster. They are a copyist, and what they copy is the shape of a working: the exact order a spell has to be thought in, set down in ground Arcane Quartz on good parchment so that reading it out loud does the thinking for you. Somebody who has never cast anything in their life can hold a Spellquill’s leaf, say what is on it, and have it happen.\n\n' + // text-style-ok: joins two clauses
+      'They excel at handing the party what the party cannot do. The scrolls are written the night before, out of the same crate everyone travels on, and the morning is when they get passed round: a healing spell into the hands of the one who has never held Willpower, a wall of fire for whoever is standing in the doorway. The scroll is destroyed in the reading, which is the whole economy of the set — a Spellquill is spending Quartz to buy somebody else a turn.\n\n' + // text-style-ok: joins two clauses
+      'Their own hand shows in the syntax. A Power Word worked into the writing bends what comes out of it, and the price of that is paid in the writing rather than the reading: a night spent on a subtle scroll is a morning with less Willpower to spend. Pressed for a spell they have not got, they can throw a leaf down where they stand in fading ink, and it is gone by the time they next sleep.', // text-style-ok: joins two clauses
+    cards: [
+      /* ================================================== Rank 1 · the leaf */
+      {
+        id: 'arcane-scribe',
+        rank: 1,
+        name: 'Arcane Scribe',
+        summary: 'Two spell scrolls on a Long Rest, paid for in Arcane Quartz out of the crate.',
+        kind: 'talent',
+        tags: ['Spellquill', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: the whole `scribe` spec above. `Long Rest` and not
+           `Passive`, the same tag ALCHEMY and ENCHANTING carry, which is what
+           puts the row in the rest window.
+
+           Four changes on the way in.
+
+           The heading is "Rank 1 - Arcane Scribe" and the card is called Arcane
+           Scribe off its own name. A card never names its own rank on this site:
+           the Tags column carries it.
+
+           The introduction ("The Spellquills are individuals capable of writing
+           spell scrolls…") is **not on this card**. It is the rules of a scroll
+           rather than the rules of the set — anybody can read one — so it is
+           printed on the SPELL SCROLL item card in utility.js, which is where a
+           player holding one will look.
+
+           "1 hour" is kept, and it is what makes the two-a-night limit read: two
+           hours of an eight hour night, which is why it does not hinder the rest.
+
+           And the price is converted. "500 Coins worth of Arcane Quartz" is 50
+           Supplies, at the potion shelf's own ten-to-one. The rungs are the
+           normalised three. */
+        body:
+          'You can write a spell onto a blank **Spell Scroll**, known to you or not. Writing one takes **1 hour**, and whenever you take a Long Rest you can use your Long Rest action to write two.\n\n' + // text-style-ok: joins two clauses
+          'A scroll needs parchment, ink and Arcane Quartz, priced by the spell’s rung: **50 Supplies** at Novice, **150** at Adept, **200** at Master. Out of the crate, on the night you write it.\n\n' +
+          'At this rank, only the **Novice** list.',
+      },
+      {
+        id: 'ephemeral-spell-scrolls',
+        rank: 1,
+        name: 'Ephemeral Spell Scrolls',
+        summary: 'Throw down a fading leaf where you stand, for two Action Points and its rung in Willpower.',
+        kind: 'talent',
+        tags: ['Spellquill', 'Novice Talent', 'Ability'],
+        ap: 2,
+        /* The rung's own, which is not knowable until a spell is chosen: 1 at
+           Novice, 2 at Adept, 3 at Master. Same `X` EPHEMERAL ENCHANTMENT and
+           BREW print, and it means the same thing there. See `pays` below. */
+        wp: 'X',
+        stat: 'mind',
+        /* Mechanics as data. `opens` raises the window that asks which spell and
+           which Power Words; `pays` says the window is where the whole cost is
+           settled, because charging the printed 2 at the chip and the rest
+           afterwards would ask the action-or-reaction question twice and take
+           the Action Points off anybody who then closed the shelf. Same pair
+           EPHEMERAL ENCHANTMENT carries. See combatBar.js and ActiveBlock.jsx.
+
+           ---------------------------------------------------- reworked 2026-09-10
+           **This was a Long Rest card and is not one any more.** The sheet reads
+           "at the end of a long rest, you can prepare a number of Ephemeral
+           Spell Scrolls equal to half your Intelligence plus your rank", and it
+           was built that way on 2026-09-09: free, capped at `floor(Mind / 2) +
+           rank`, chosen in a chooser that sat above the rest window's action
+           slot because it was not an action.
+
+           Jules replaced that outright: "rework spellquill so that ephemeral
+           scroll are created on the fly. Not after a long rest. He has an
+           ability that allow him to create one. Creating an ephemeral scroll
+           require 2 action points. The user can then choose to cast it if he can
+           or keep it in inventory or give it to someone. Ephemeral spell
+           crafting also cost 1 willpower for novice 2 for adept and 3 for
+           master."
+
+           So the count is gone with the night: **the Willpower pool is the cap
+           now**, which is what a price at the moment of use always is on this
+           sheet, and inventing a second ceiling on top of it would be inventing
+           design nobody asked for. What survives unchanged is the ink itself.
+           The leaf still expires at the start of the next Long Rest, the sweep
+           that does it is the one already written, and it still reaches a scroll
+           clipped to a belt loop as well as one in the bag. See scribing.js.
+
+           The three destinations in Jules's sentence are the three a scroll has
+           always had, and none of them needed anything new: it goes in the pack,
+           a belt loop is what makes it readable, and the handover hands it over.
+           The window says so in as many words rather than growing a fourth way
+           to do any of them. */
+        opens: 'scribe',
+        pays: 'window',
+        body:
+          'You can write an Ephemeral Spell Scroll on the spot, in fading ink, off any list your rank has opened.\n\n' +
+          'The Willpower is the spell’s rung: **1** at Novice, **2** at Adept and **3** at Master. No Supplies and no Quartz go into one.\n\n' +
+          'Read it, carry it or hand it to somebody else. It works as any other scroll does, and it **expires at the start of your next Long Rest**.\n\n' + // text-style-ok: joins two clauses
+          'Nobody is fooled by one. They are easily identifiable as Ephemeral and no merchant will take one.',
+      },
+
+      /* ============================================ Rank 2 · the power words */
+      {
+        id: 'improved-syntax',
+        rank: 2,
+        name: 'Improved Syntax',
+        summary: 'Adept spells, and a Power Word worked into the writing for Willpower.',
+        kind: 'talent',
+        tags: ['Spellquill', 'Adept Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* The sheet's Rank 2. Its "Apprentice Spell list" becomes Adept, which is
+           the ladder normalisation above: there is no Apprentice rung in this
+           codex.
+
+           The three words it teaches are printed on the card with their costs
+           because they are what the reader is buying, and the seven in all are
+           listed on the shelf the rest window opens. */
+        body:
+          'You can now inscribe spells from the **Adept** list.\n\n' +
+          'You also know how to alter a scroll’s syntax with a **Power Word**. Whenever you write a scroll you may pay a Power Word’s Willpower cost to work it into the writing, one word to a scroll. The price is paid in the writing, so a night’s work leaves you with that much less Willpower in the morning.\n\n' + // text-style-ok: joins two clauses
+          'You know **Unseen** (1), **Repeat** (5) and **Altered** (1).',
+      },
+      {
+        id: 'arcane-specialist',
+        rank: 2,
+        name: 'Arcane Specialist',
+        summary: 'Four more Power Words: longer, surer, cheaper and at full force.',
+        kind: 'talent',
+        tags: ['Spellquill', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* The sheet's Rank 3, which folds onto this rung. A Passive: it teaches
+           four words and asks nothing at the desk that IMPROVED SYNTAX has not
+           already asked.
+
+           The sheet prints "Prerequisite: Level 4" on both its Rank 2 and its
+           Rank 3, which is a copy-paste on the source rather than a design: every
+           other set on the wall climbs 1/4/7/10/16. The normalisation makes the
+           question moot, since both land on Rank 2 and Rank 2 is level 4. Noted
+           in data/README.md. */
+        body:
+          'You learn four more Power Words.\n\n' +
+          '**Enduring** (2) makes a duration half again as long. **Assured** (2) rolls the spell’s attack with advantage and its saving throws with disadvantage. **Swift** (4) takes 3 Action Points off the casting, to a minimum of 1. **Mighty** (2) takes the maximum on every die the spell would roll for damage or healing.', // text-style-ok: joins four sentences
+      },
+
+      /* =============================================== Rank 3 · the authority */
+      {
+        id: 'analitic-sight',
+        rank: 3,
+        name: 'Analitic Sight',
+        summary: 'Master spells, and two Power Words on one leaf.',
+        kind: 'talent',
+        tags: ['Spellquill', 'Master Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* The sheet's Rank 4, name and spelling as written. Its "Adept Spell
+           list" becomes Master under the normalisation, which is the same shift
+           IMPROVED SYNTAX takes one rung down. */
+        body:
+          'You can now inscribe spells from the **Master** list.\n\n' +
+          'You can also fit **two Power Words** onto one scroll. Both are paid for in the writing.',
+      },
+      {
+        id: 'author-of-truth',
+        rank: 3,
+        name: 'Author of Truth',
+        summary: 'Read your own scrolls free, up to your Mind plus your level, once a night.',
+        kind: 'talent',
+        tags: ['Spellquill', 'Master Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* The sheet's Rank 5. "an amount of Willpower equal to your Power" is
+           written out: old Power is the attribute plus the level, this site has
+           no such number, and the conversion key sends every "your Power" to an
+           attribute and a level. That is the Alchemist's IMPROVISED BREWING
+           reading, and the Necromancer's.
+
+           Printed and not wired. It is a discount on a cast the sheet has no
+           tracker row for — the Willpower is forgiven at the moment a scroll is
+           read, which is a use of an *item* rather than of this card, and the
+           budget runs across as many reads as it covers. Flagged in
+           data/README.md as an open question, beside the Power Words themselves.
+
+           The tag is `Long Rest` rather than `Passive` because a Long Rest is
+           what gives it back, which is the same reason a belt item that says so
+           carries one. */
+        body:
+          'When casting a spell from a Spell Scroll you may ignore its Willpower cost.\n\n' +
+          'You can forgive a total of your {mind} plus your level this way, across as many scrolls as it covers. Once it is spent you must take a **Long Rest** before you can do it again.',
+      },
+    ],
+  },
+  {
+    /* The roster's `weaver` slot on the Other shelf, filled. The eighteenth
+       written set, and **the second with no sheet behind it at all**: no Ability
+       tab, no conversion workbook, no old printed page. The designer handed it
+       over in chat on 2026-09-10 and the whole of what was said is transcribed
+       below, because it is the only source of record. The log and the rulings are
+       at the foot of data/README.md.
+
+       ------------------------------------------------------------ what was said
+       In his own words, unedited:
+
+         "use the information you have to make the weaver whcih hte fletcher but
+          for all weapon. Effects you can choose to atctive when you hit with an
+          attack like a smite. Magic empweremnt on weapons."
+
+       Three sentences and a comparison, and the comparison is the design. Read in
+       order: a set that does for every weapon what a Fletcher does for arrows,
+       whose effects are chosen and let go on the hit rather than cast, and whose
+       other half is magic put into the weapon itself.
+
+       ------------------------------------------------------------- the Fletcher
+       **There is no Fletcher in this repository.** Nothing under `data/`, nothing
+       in `talents.js`, nothing in the roster and nothing in the history: the only
+       fletched thing in the codex is the bolt drawn on the Pact of Ordenance's
+       ammunition pips. So the word is read as the designer's own shorthand for a
+       set that prepares an arrow with an effect in it, and what it is doing in
+       that sentence is fixing the *shape* rather than naming a source to
+       transcribe. If a Fletcher sheet exists off-repository, this set is the
+       thing to check against it first. Flagged in data/README.md.
+
+       ----------------------------------------------------------- the six readings
+       Six things the description leaves to be settled, each one settled here and
+       flagged in data/README.md:
+
+         the pool     **its own eighteen weaves, house-written**, rather than the
+                      spell codex. "Effects ... like a smite" is not a spell: a
+                      smite is a fixed thing you spend on a hit, and the spell
+                      codex already arrives on a hit through the Spellblade. So
+                      the set needed a pool of its own and there was none, which
+                      is the largest invention in this file. See weaves.js, which
+                      says so at length and is written to be replaced.
+         all weapons  **no weapon is ever named or bound.** That is the whole of
+                      "but for all weapon", and it is what separates this set from
+                      the Spellblade at every seam: nothing is spent to set up,
+                      nothing is stored, nothing ends at a rest, and a weapon
+                      picked up mid-fight is woven in the hand that picked it up.
+         the hit      **released on any Weapon Attack**, plain or special, which
+                      is the broad reading of the glossary. Neither was named and
+                      the narrow reading would have made half of every weapon in
+                      the codex inert for this set.
+         the miss     **printed, and enforced by the dice.** "when you hit" names a
+                      hit, and unlike the Spellblade this set can keep the promise:
+                      a weave's damage is a link behind the Attack Roll and a chain
+                      stops dead at a failed check, so a weave released on a swing
+                      that missed rolls nothing. The Willpower still goes, because
+                      payment is unconditional on this sheet, and UNRAVEL prints
+                      both halves of that.
+         the attribute **your highest**, which is the Other shelf's own convention
+                      and the Pact of Ordenance's own rule. Not stated either way.
+                      A set that works with every weapon in the game should work
+                      for every character who can hold one, and picking Mind would
+                      have quietly made it a caster's set on a shelf that exists
+                      precisely for the sets that are nobody's.
+         empowerment  **magic weapon at Novice, Empowered from Adept.** "Magic
+                      empweremnt on weapons" is one clause and had to become two
+                      cards, so it is split the way BOUND EDGE and RESONANT EDGE
+                      split the identical clause: the word at the bottom rung and
+                      the die one rung up.
+
+       ------------------------------------------------------- what is mine here
+       All five card names, the tagline, the blurb, every number and the whole of
+       weaves.js. Nothing below traces to a written source, which is the opposite
+       of how every other set in this file was built and is the reason both this
+       comment and weaves.js are as long as they are. Two Crossroads scenes are
+       unwritten.
+
+       No plate and no card pictures. Drop them into `data/Weaver/` and run
+       `npm run art:cards`. */
+    id: 'weaver',
+    name: 'Weaver',
+    tagline: 'Magic run along the edge of whatever you are holding, and let go the moment it lands.',
+    /* No plate yet. Null rather than a path to a file that is not there, for the
+       reason the Runebearer's and the Spellblade's are. */
+    art: null,
+    /* No attribute tag: a weave rolls off whichever attribute its Weaver stands
+       highest in, which is the Other shelf's rule and the Pact of Ordenance's
+       before it. Martial because nothing here happens without a swing;
+       spellcasting because what rides the swing is magic; support for MENDTHREAD
+       and WARDTHREAD, which are two of the eighteen and the reason the set is not
+       only a damage set. */
+    tags: ['martial', 'spellcasting', 'support'],
+    /* The Other shelf, like the roster filed it: scaled on the best of you rather
+       than on one attribute you raise. */
+    stat: 'other',
+    /* The hand, as an ordinary pool. Everything here is loadouts.js's:
+
+         `known`  "2 + your Rank in Weaver", which is [null, 3, 4, 5] and is the
+                  Duelist's own number for a pool of riders rather than the
+                  Spellblade's for a pool of spells. A weave is the cheaper thing,
+                  so more of them are held and each is worth less.
+         `cast`   `'highest'`, the Other shelf's rule. The second pool in the codex
+                  to carry it after the Pact's boons.
+         `swap`   rank-indexed, the shape the Spellblade's carries: DOUBLE WEAVE
+                  hands a Short Rest the swap a Long Rest had.
+
+       No `school`, because a weave has none, and `group: 'tier'` for the reason a
+       Martial Move pool carries it: the rung is the only thing that sorts them,
+       so the chooser cuts the wall Novice, Adept, Master rather than leaving
+       eighteen cards under one heading called Unfiled.
+
+       No `discount` either. DOUBLE WEAVE's Willpower cut is not a discount on a
+       printed cost, it is a term in a price this set works out itself. See
+       `weavePrice` in weaver.js. */
+    loadout: {
+      id: 'weaver-weaves',
+      label: 'Weaves',
+      noun: 'weave',
+      kind: 'weave',
+      group: 'tier',
+      cast: 'highest',
+      known: [null, 3, 4, 5],
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      swap: [null, ['long'], ['long'], ['long', 'short']],
+      section: 'What your weapons carry',
+      note: 'They are released through a Weapon Attack and no other way, and what one costs is worked out on the swing itself.',
+    },
+    /* The eleventh shape of what a set can hand over: a **weaving**. Numbers
+       only, and what they mean is weaver.js's business, which is the same split
+       minions.js, feral.js, pact.js, runes.js and spellblade.js keep.
+
+       **Nothing about it is stored anywhere**, which makes it the cheapest of the
+       eleven to have added: no column, no migration and not even a tracker row,
+       because the set names no weapon and nothing it does outlives the swing that
+       did it. See the note at the top of weaver.js. */
+    weave: {
+      label: 'Weaving',
+      /* TAUT WEAVE is the card that moves the number, so it is the name the
+         source row under the pay button carries. A reader can look up a card. */
+      from: 'Taut Weave',
+      /* TAUT WEAVE, rank-indexed the way every other rider on a set is. */
+      empower: [null, 0, 1, 1],
+      /* UNRAVEL, and DOUBLE WEAVE on top of it: how many may be released on one
+         swing. */
+      weaves: [null, 1, 1, 2],
+      /* DOUBLE WEAVE's other half, what comes off each weave's Willpower. */
+      cut: [null, 0, 0, 1],
+    },
+    blurb:
+      'A Weaver does not enchant a weapon. Enchanting is a night of labour at a fire and what it makes stays made, where a weave is a thread of the Weaver’s own Willpower run along the edge of whatever they happen to be holding, and it lasts exactly as long as it takes to swing. A borrowed axe, a table leg, a knife off a dead man’s belt: all of it takes the thread, because the thread was never in the steel.\n\n' + // text-style-ok: joins two clauses
+      'They excel at arriving with the answer already in hand. Every other caster has to choose between the spell and the swing, and a Weaver does both in one motion: the attack opens the wound and the weave comes out of it, so the Roll that landed the blade is the Roll that landed the magic. What they can release is narrow and there are never many of it prepared, and each one is exactly the sort of thing a hit is worth spending on.\n\n' + // text-style-ok: joins two clauses
+      'The bargain is that nothing at all happens without the hit. A Weaver standing out of reach with a full night of weaving behind them has nothing, and a swing that goes wide takes the Willpower with it. So they walk in, and they decide on the way what this one is worth.', // text-style-ok: joins two clauses
+    cards: [
+      {
+        id: 'threadwork',
+        rank: 1,
+        name: 'Threadwork',
+        summary: 'Weaves equal to 2 plus your rank, released through a weapon and no other way.',
+        kind: 'talent',
+        tags: ['Weaver', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: the whole `loadout` above. `Long Rest` and not
+           `Passive`, the tag every card that re-prepares a hand carries.
+
+           The pool sentence is DEXTEROUS's, with the formula this set was given:
+           "a number of weaves equal to 2 + your Rank in Weaver". The rank as a
+           number in a formula is the one way a card may name it.
+
+           The ladder sentence is FUNGAL INVOCATION's word for word but for the
+           thing it names, which is the other thing a card may say about a rank.
+
+           `stat: 'mind'` and not `other`, because a card's stat is a key and
+           `other` is a shelf. Nothing on this card rolls anything, so the only
+           job the field has is to be a real attribute for the article rule, and
+           the pool's `cast: 'highest'` is what a reader actually sees. */
+        body:
+          'You learn a number of weaves equal to 2 + your Rank in Weaver. You release them through a Weapon Attack and no other way.\n\n' +
+          'Whenever you take a Long Rest, you can use your Long Rest action to change any number of learned weaves.\n\n' +
+          'At Rank 2, you can learn Adept Weaves, and at Rank 3, you gain access to Master Weaves.', // text-style-ok: joins two clauses
+      },
+      {
+        id: 'woven-steel',
+        rank: 1,
+        name: 'Woven Steel',
+        summary: 'Anything you pick up is a magic weapon and carries your weaves.',
+        kind: 'talent',
+        tags: ['Weaver', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: nothing, and that is the point of the card.
+
+           "magic weapon" is the designer's own phrase, carried here for the reason
+           BOUND EDGE carries it: there is no magic-weapon flag in this codex and
+           inventing one to satisfy one card would be a rule with one holder. The
+           words are the table's.
+
+           The second paragraph is the card that costs this set nothing and buys
+           it everything, and it is the whole of "but for all weapon". It is
+           printed rather than left implied because the absence of a setup step is
+           the thing a reader coming from the Spellblade will look for and not
+           find. `weaveRiders` in weaver.js is where the same reading is honoured
+           in code: it narrows to no weapon and no hand. */
+        body:
+          'Every weapon you hold is a magic weapon, and it carries your weaves.\n\n' + // text-style-ok: joins two clauses
+          'Nothing has to be prepared and no weapon has to be chosen. A weapon you pick up in the middle of a fight is woven the moment it is in your hand.',
+      },
+      {
+        id: 'unravel',
+        rank: 1,
+        name: 'Unravel',
+        summary: 'Your attack lets a weave go where it lands, and the Attack Roll is its Roll.',
+        kind: 'talent',
+        tags: ['Weaver', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: `weave.weaves` and `weave.cut` above, resolved in
+           `weavePrice` and offered in the attack's own use prompt beside the
+           Martial Moves and the bound spells. See weaver.js and UsePrompt.jsx.
+
+           The second paragraph is POINT OF IMPACT's, because it is the same
+           sentence about the same seam and the codex says one thing one way. What
+           is dropped from it is the Multicast and Overcast clause: no weave in
+           weaves.js carries a second half, so a card naming two keywords nothing
+           in its pool has would be a rule with nothing to apply to.
+
+           **The third paragraph is the one the Spellblade could not print.** See
+           the miss, above: a weave's damage is a link behind the Attack Roll and a
+           chain stops at a failed check, so the first half of it is enforced. The
+           second half is the sheet's own unconditional payment, said out loud
+           because a player who has just spent 6 Willpower on a swing that went
+           wide is entitled to have read it first. */
+        body:
+          'When you make a Weapon Attack you can release one of your weaves, paying its Willpower.\n\n' +
+          'It is released where the attack lands, and anything it reaches beyond the target is centered there. It needs no Roll of its own: the Attack Roll carries it.\n\n' + // text-style-ok: joins two clauses
+          'A weave released on an attack that misses does nothing, and its Willpower is spent all the same.', // text-style-ok: joins two clauses
+      },
+      {
+        id: 'taut-weave',
+        rank: 2,
+        name: 'Taut Weave',
+        summary: 'The threads pull tight, and everything you swing hits harder.',
+        kind: 'talent',
+        tags: ['Weaver', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: `weave.empower` above, folded into `attackModifiers`
+           in moves.js beside the Colossus's Elevate, the form's die and RESONANT
+           EDGE's, so the extra die is on the printed card before the swing is paid
+           for rather than remembered against it.
+
+           Empowered and not Elevated: one more die of the same kind, which is what
+           the word means on this sheet and is the same reading RESONANT EDGE takes
+           of the same clause. See cardText.js.
+
+           "Every weapon you hold" and not "the weapon in your hands", so the two
+           cards of this pair say the same thing about the same weapons. */
+        body: 'The damage of every weapon you hold is Empowered by 1.',
+      },
+      {
+        id: 'double-weave',
+        rank: 3,
+        name: 'Double Weave',
+        summary: 'Two weaves on one hit, each 1 Willpower cheaper, re-chosen on a Short Rest.',
+        kind: 'talent',
+        tags: ['Weaver', 'Master Talent', 'Short Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: `weave.weaves`, `weave.cut` and the rank-indexed
+           `loadout.swap` above, all three of them.
+
+           "now" is the idiom for a card that only exists because of the rank, off
+           BESTIAL FRENZY and TWINNED STRIKE, and it is doing real work in the
+           first clause: one weave to a swing was UNRAVEL's rule and this is the
+           rule changing.
+
+           The cut has no floor, which is the second in the codex without one after
+           the Spellblade's. A Novice weave costing nothing at Master is the rung
+           doing what the rung is for. */
+        body:
+          'You can now release 2 weaves on the same Weapon Attack, and your weaves cost 1 less Willpower.\n\n' + // text-style-ok: joins two clauses
+          'Whenever you take a Short Rest, you can change any number of learned weaves.',
+      },
+    ],
+  },
+  {
+    /* ---------------------------------------------------------- the Oathbound
+       The nineteenth written set, the sixth slot filled on the Other shelf, and
+       the third in the codex built off a spoken description with no sheet behind
+       it. Handed over in chat on 2026-09-11. The spec is long and is quoted where
+       each piece of it is built; the whole of it, and the eleven readings it left
+       open, are in data/README.md under "The Oathbound, 2026-09-11".
+
+       ------------------------------------------------------------ what it is
+       A set that hands over a **vow**. Everything else follows from which one:
+
+         the vow      five of them, each a creed and three tenets, and the power
+                      comes out of believing it rather than out of anybody granting
+                      it. The tenets are the set. See oaths.js.
+         the magic    "based on that choice, you'll get to learn all the spells of
+                      two sub-schools". The whole of both families, as the rungs
+                      open, nothing chosen and nothing prepared.
+         the bar      Faith, -100 to 100, starting at 50, minus 5 every Long Rest.
+                      Acting on a tenet raises it and acting against one lowers it.
+         the bend     "if your Faith bar is in the positive you have a +1 to
+                      whatever your highest Attribute rolls ... if your Faith is
+                      low because you've been sinning against your tenets, it's the
+                      opposite effect, you have a -1."
+         the Aura     one per vow, an Upkeep, reaching every ally who can see you,
+                      and growing at Rank 2 and Rank 3.
+         Smite        a ranged strike, with advantage, at anything that has broken
+                      one of your tenets.
+         the ground   a Sanctuary consecrated with a Long Rest action from Rank 2,
+                      and a distorted space of its own from Rank 3.
+
+       ----------------------------------------------------- the main readings
+       Each of these is a place the spoken spec had two readings and this file had
+       to pick one. All six are in data/README.md with the reasoning.
+
+         the five     **the vows are mine.** "There is many Oaths ... I'd like you
+                      to make at least ten different ones" built ten, and
+                      2026-09-12 cut them to five: Vindication, Mercy, Protection,
+                      Decay and Renewal. Two of the five were sketched by him:
+                      an Oath of Protection ("you would protect people, you would
+                      make sure they get to safety, and you would not be the one to
+                      initiate violence") and a Life-and-Light one whose tenet is
+                      "to heal the people you pass across injured". Those two are
+                      the Oath of Protection and the Oath of Mercy. The other
+                      three, all fifteen tenets and all five pages of lore are
+                      written here.
+         belief       **nothing grants an Oathbound anything.** "They gain power
+                      from belief. This can be belief in a principle or belief
+                      associated with a deity or powerful being. But by swearing on
+                      something to live on, they gain, and the stronger this
+                      conviction the stronger they are." So there is no patron on
+                      the other end, which is exactly what separates this set from
+                      the Pact of Ordenance: a pact is a debt owed to somebody and
+                      an Oath is a conviction held by you. `swornTo` on each row is
+                      the menu, and it mixes gods, institutions, people and the bare
+                      principle on purpose.
+         the timing   **no Aura fires at your own Turn Start.** "Some effect
+                      triggers make no sense as it would only happen next turn." An
+                      Aura is raised on your turn, so a clause waiting for your next
+                      Turn Start buys nothing for a round. A timed Aura fires at the
+                      Turn Start of whoever it is about, or at your Turn End.
+         the creed    **an Oath is a sub-talent set, and a tenet is a principle.**
+                      "Imagine that Oathbound is like multiple talents inside of a
+                      single talent set", and "the tenets need to be less action
+                      specific, more of an overall creed, so players have real leeway
+                      to play around them". The first draft wrote procedures and job
+                      titles (an Oath of the Anvil, "name the crime out loud before
+                      you answer it"); this one writes beliefs (an Oath of Creation,
+                      "you answer for everything that leaves your hands") with the
+                      concrete instance in its own field. See oaths.js.
+         sworn once   **the vow is chosen when the set is taken and never changes.**
+                      It is an `oath` row in `levelAsks`, the panel on this set opens
+                      on it the moment a rank is bought, and nothing on the sheet
+                      unswears. Handing the rank back is the only way out.
+         the pairs    **two families, not two schools.** "two schools to sub
+                      schools" corrected itself mid-sentence, and the worked
+                      example is "Light and Fire", which are two families in two
+                      different schools. Every vow opens two families and one vow
+                      opens two out of the same school.
+         the bonus    **the bend is on the card, never on the sheet.** "The stat
+                      for your spell will be your Mind plus one" is a fact about
+                      a roll. Nothing on the Character tab moves, so no Health
+                      arrives with a Physique and no Willpower with a Mind. See
+                      the note at the top of oathbound.js.
+         the Aura     **a live value with dice in it**, where his worked example
+                      was a bare Attribute. A rank has to be able to grow it and
+                      there is nothing to grow in a bare stat, so the base is
+                      `1d6 + stat` and two cards Empower it.
+         Smite        **flat across the ranks.** Its growth was never mentioned;
+                      the Aura's was, twice. So the rank money goes on the Aura
+                      and Smite is priced once and left alone.
+         the deed     **5 Faith a deed, and the player names it.** What a deed is
+                      worth was never said. Five is the one number the spec does
+                      give (the nightly loss), so one act in line with a tenet
+                      undoes one night off the road, and a vow kept keeps pace.
+
+       ------------------------------------------------------- what is mine here
+       All ten vows, all thirty tenets, all ten Auras, all eight card names, every
+       number that is not quoted above, the tagline and the blurb.
+
+       No plate and no card pictures for any of the eighteen. Drop them into
+       `data/Oathbound/` and run `npm run art:cards`. */
+    id: 'oathbound',
+    name: 'Oathbound',
+    tagline: 'A vow with three tenets, and a bar that says how well you have kept it.',
+    /* No plate yet. Null rather than a path to a file that is not there, for the
+       reason the Weaver's and the Runebearer's are. */
+    art: null,
+    /* No attribute tag: every card here rolls whichever attribute its holder
+       stands highest in, which is the Other shelf's rule. Spellcasting because
+       two whole families arrive with the vow; support and defense because the
+       Auras and the Sanctuary are mostly other people's numbers; control because
+       four of the ten hold ground rather than clear it. */
+    tags: ['spellcasting', 'support', 'defense', 'control'],
+    /* The Other shelf, like the roster filed it: scaled on the best of you rather
+       than on one attribute you raise. */
+    stat: 'other',
+    /* ------------------------------------------------------------- the DOCTRINE
+       "You'll get to learn all the spells of two sub-schools ... at Rank 1 you
+       would know all the Novice Fire and Light spells, at Rank 2 all the Adept,
+       and so on until you are Rank 3 and you know all the Master."
+
+       A **whole pool**, which is the Necromancer's third loadout shape: the pool
+       is the hand, nothing is stored, nothing is chosen, and a spell added to one
+       of these families tomorrow is a spell every Oathbound of that vow already
+       knows. See `isWhole` in loadouts.js.
+
+       What is new is `families: 'oath'`. Every other pool in the codex names its
+       school and its family outright; this one names *where to ask*, and the vow
+       on the sheet answers. One spec, ten pools. See `oathFamilies` in
+       oathbound.js and `loadoutOf` in loadouts.js, which is the one place the two
+       meet.
+
+       An Oathbound who has sworn nothing has an empty family list, and an empty
+       list refuses the whole codex, so the pool is empty until the vow is taken.
+       That is the correct answer and not an accident: there is no doctrine
+       without an Oath.
+
+       `cast: 'highest'` is "your Oathbound abilities are always scaled off your
+       highest stat", and it is the second half of what makes this set work on the
+       Other shelf. The Faith bend is *not* here: a pool spec has no character to
+       measure one against, so it arrives as a rider at the moment a card is read.
+       See `oathModifiers` in oathbound.js.
+
+       No `swap` and no `research`. There is nothing to change: what you know is
+       what your vow opens. */
+    loadout: {
+      id: 'oathbound-doctrine',
+      label: 'Doctrine',
+      noun: 'spell',
+      kind: 'spell',
+      cast: 'highest',
+      all: true,
+      families: 'oath',
+      group: 'school',
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      section: 'What your Oath opens',
+      note: 'Every spell of both families, as the rungs open. There is nothing here to choose and nothing to prepare.',
+    },
+    /* ------------------------------------------------------------ the twelfth
+       shape of what a set can hand over: a **vow**. Numbers only, and what they
+       mean is oathbound.js's business, which is the same split minions.js,
+       feral.js, pact.js, runes.js, spellblade.js and weaver.js all keep.
+
+       Every number here is quoted in the comment above the set except three, and
+       those three are the ones the spec left open:
+
+         `step`         5, the deed. See "the six readings".
+         `empower`      the Aura's growth, one die at Rank 2 and two at Rank 3.
+         `apCut`        UNWAVERING's Action Point off the raise.
+
+       `restCut`, `empower` and `apCut` are indexed by rank the way every other
+       rank grant in this file is, and `empowerFrom` is indexed the same way so the
+       arrow on the card names the rank's own card rather than the set. */
+    oath: {
+      label: 'Faith',
+      noun: 'Oath',
+      unsworn: 'No Oath sworn',
+      start: 50,
+      floor: -100,
+      ceiling: 100,
+      step: 5,
+      bonus: 1,
+      restCut: [null, 5, 5, 2],
+      empower: [null, 0, 1, 2],
+      empowerFrom: [null, null, 'Unwavering', 'Absolute Conviction'],
+      apCut: [null, 0, 1, 1],
+      apCutFrom: 'Unwavering',
+      apFloor: 1,
+      /* The one card of the nine that wears the vow's own damage type, since it
+         is one card standing in for five. The five Auras print theirs. */
+      smite: 'smite',
+      /* "Give the Oathbound a new ability which is to meditate during a Long
+         Rest. It allows them to regain 10 Faith" (Jules, 2026-09-12). Ten against
+         the night's own five, so a night on it is worth +5 and an Oathbound who
+         meditates every night climbs at half the rate one good deed does. The
+         tenth kind of Long Rest action, and the only one that asks nothing: there
+         is no step, because there is nothing to choose. See oathbound.js. */
+      meditate: { faith: 10, label: 'Meditate on your Oath', card: 'meditation' },
+      sanctuary: {
+        label: 'Sanctuary',
+        rank: 2,
+        greater: 3,
+        card: 'consecration',
+        greaterCard: 'hallowed-ground',
+        /* "Maintaining the sanctuary will take away like eight Willpower points
+           on the next day from the Oathbound." Read as a standing cost on the
+           maximum for as long as the ground is held rather than as a one-morning
+           charge, which is the Necromancer's reading of the same shape and the
+           only one the sheet can keep. Flagged in data/README.md. */
+        willpower: 8,
+      },
+    },
+    blurb:
+      'An Oathbound draws power out of believing something, and nothing else. Some of them believe in a god and some in a bare principle, and the magic cannot tell the difference: what it answers to is how hard the conviction is held. Swearing is the act of putting that belief into words you have to live by, and it is the words, rather than whoever heard them, that do the work.\n\n' +
+      'So an Oath is three sentences long and every one of them is a thing you can fail to do on an ordinary afternoon: tend whatever is hurt in front of you, never throw the first blow, put back what you take. Faith is the measure of how well you have meant it lately. It falls every single night whether or not anything happened, so a vow is kept by doing something about it rather than by having felt strongly once. Above the middle, whatever you are best at is a point better. Below it, a point worse.\n\n' +
+      'They excel at holding a place. The Aura reaches every ally who can see them and does not care how far away that is, the Sanctuary turns a rented room into ground that answers to them, and at their height they can open it from anywhere and drag half a battlefield inside. Two whole families of magic come with the vow, and which two says more about the character than any spell in them.', // text-style-ok: joins two clauses
+    cards: [
+      /* ============================================== the Oathbound's own eight */
+      {
+        id: 'the-oath',
+        rank: 1,
+        name: 'The Oath',
+        summary: 'A vow, three tenets and a bar that bends whatever you are best at.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* Mechanics as data: the whole `oath` spec above, and the card is the
+           printed half of it. Nothing here is parsed out of this prose.
+
+           The range, the start and the nightly loss are all printed because all
+           three are things a player has to plan around. The +1 and the -1 are
+           written as what an Attribute "counts as" rather than as a bonus,
+           because that is what they are: the number the card resolves against
+           moves, and nothing on the Character tab does. */
+        body:
+          'You swear an Oath and take its three tenets as your own. Everything this set gives you is cast with your highest Attribute.\n\n' +
+          'Your Faith runs from -100 to 100 and starts at 50. Acting on a tenet raises it, and acting against one lowers it.\n\n' + // text-style-ok: joins two clauses
+          'Above 0 that Attribute counts as 1 higher. Below 0 it counts as 1 lower. Every Long Rest costs you 5 Faith.',
+      },
+      {
+        id: 'doctrine',
+        rank: 1,
+        name: 'Doctrine',
+        summary: 'Two sub-schools of magic, known in full, as the rungs open.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* Mechanics as data: the `loadout` above. The rung ladder is printed
+           because it is pool access, which is the one thing a card may say about
+           a rank it does not belong to. */
+        body:
+          'Your Oath opens two sub-schools of magic to you, and you know every spell in both of them.\n\n' + // text-style-ok: joins two clauses
+          'Novice Spells at Rank 1, Adept Spells at Rank 2 and Master Spells at Rank 3. There is nothing here to prepare and nothing to choose.',
+      },
+      {
+        id: 'smite',
+        rank: 1,
+        name: 'Smite',
+        summary: 'A strike with advantage at anything that has broken one of your tenets.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Novice Talent', 'Ability'],
+        ap: 4,
+        wp: 6,
+        stat: HIGHEST,
+        /* Sacred is the printed type, and a sworn Oathbound reads it in their
+           vow's own: `oathRiders` lays `damage` on this card and nothing else.
+           Printed rather than left blank so the card says what it deals when it
+           is read in the codex with nobody holding it.
+
+           The advantage is printed and not a rider. A rider would put an arrow in
+           the corner crediting a source, and there is no source: the card is
+           simply made with advantage, the way GIANT SLAYER's is not. */
+        damage: ['Sacred'],
+        body:
+          'You call the weight of your Oath down on **an entity** you can see within **18 meters (60 feet)** that has broken one of your tenets.\n\n' +
+          'Make a {stat} Ranged Attack {roll} with advantage. On a hit, you deal [[4d6 + 4*stat]] {damage} damage.',
+      },
+
+      {
+        id: 'divine-fervor',
+        rank: 1,
+        name: 'Divine Fervor',
+        summary: 'Willpower buys advantage on anything your Oath asks of you.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* "As long as you are doing an action which is in line with one of your
+           tenets, you can spend Willpower to give yourself advantage. So when I do a
+           skill check, you can spend the Willpower to give yourself advantage to a
+           skill check that is in line with your tenets" (Jules, 2026-09-11).
+
+           Wired the way the thirteen background domain skills are, and it is the
+           same sentence with a wider domain: `checkWp` and `checkAdvantage` are what
+           the SKILL CHECK prompt charges and adds, and `speaksToACheck` in checks.js
+           finds the card by its prose. So it appears in that prompt beside a
+           Cartographer's and a Feral Cursed's without a line being added anywhere.
+
+           **The domain is the widest in the codex**, which is the point: a skill
+           says "whenever you make a skill check to read a map" and this says
+           "whenever you are doing what you swore to do". Whether that is true of
+           this attempt is exactly the judgement the thirteen already leave to the
+           table, one size larger.
+
+           2 Willpower where a skill charges 1. Not said, and it is the price of the
+           domain: a skill's covers one kind of attempt and this one covers a whole
+           creed. Flagged in data/README.md.
+
+           "A roll" as well as a skill check, because he said "an action which is in
+           line with one of your tenets" first and narrowed to checks second. The
+           check is the half the sheet can charge for; the rest is the table's, the
+           way BESTIAL SENSE’s is. */
+        grants: {
+          checkWp: 2,
+          checkAdvantage: 1,
+          checkWhen: 'Advantage on anything you are doing in line with one of your tenets.',
+        },
+        body:
+          'Whenever you make a skill check or a roll toward one of your tenets, you can spend 2 Willpower to make it with advantage.\n\n' +
+          'Whether what you are doing is in line with a tenet is your Game Master’s call.',
+      },
+
+      {
+        id: 'meditation',
+        rank: 1,
+        name: 'Meditation',
+        summary: 'A night sitting with your Oath, and 10 Faith back for it.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* Mechanics as data: `oath.meditate` above. "Your Long Rest action" is the
+           site's idiom for spending the night's one slot, off FUNGAL INVOCATION
+           and ARCANE RESEARCH.
+
+           The card does not say "so a night of it nets 5". The night's own toll is
+           on THE OATH and the rest window prints both movements as two lines; a
+           card doing the subtraction for the reader would be one more number to
+           keep in step with a spec. */
+        body:
+          'Whenever you take a Long Rest, you can use your Long Rest action to sit with your Oath and go back over everything you have done since the last time.\n\n' +
+          'You regain 10 Faith.',
+      },
+
+      /* ------------------------------------------------------------- and the Aura
+         The five of them, one per vow, spread in from oaths.js. Every one is a
+         Rank 1 card and a holder holds exactly one: the one their vow names. See
+         `heldOathCards` in oathbound.js, which is what drops the other four, and
+         OATH_AURAS in oaths.js, which is what builds them.
+
+         They are in this array rather than off to one side because a set's cards
+         are what `TALENT_CARDS` folds into the registry, and a card outside it has
+         no art, no {{link}} and no place in a search. Being in the codex and being
+         held are different questions and only the second one is a character's. */
+      ...OATH_AURAS,
+
+      {
+        id: 'consecration',
+        rank: 2,
+        name: 'Consecration',
+        summary: 'A night makes one room yours. Everything you do inside it is rolled with advantage.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Adept Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* "You choose a space and during a Long Rest you make it your Sanctuary
+           ... while you are on these grounds, anything you do has advantage. The
+           limit of the Sanctuary is that it cannot affect anything bigger than a
+           living room."
+
+           "Your Long Rest action" is the site's idiom for spending the night's
+           one slot, off FUNGAL INVOCATION and ARCANE RESEARCH. The size is printed
+           as a room, which is his own comparison rendered in a word the codex
+           already uses for a space.
+
+           The advantage is a rider keyed on this card in riders.js rather than
+           something the sheet applies on its own, for the reason every riders.js
+           entry exists: the sheet cannot know where you are standing. You track
+           the card while you are on the ground and the swing knows. */
+        body:
+          'You can use your Long Rest action to consecrate the ground you rested on, up to the size of a single room.\n\n' +
+          'Everything you do inside your Sanctuary is rolled with advantage. It holds until you consecrate somewhere else.',
+      },
+      {
+        id: 'unwavering',
+        rank: 2,
+        name: 'Unwavering',
+        summary: 'Your Aura is Empowered, and cheaper to raise.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* "When you level up, the strength of your Aura is also increased." The
+           Arcanist's OVERLOAD is the shape: a rank's card that states the boost
+           rather than the boosted card printing its own growth, which would make
+           it print a number it is already showing. `oath.empower[2]` and
+           `oath.apCut[2]` are the arithmetic and this is the sentence. */
+        body: 'Your Aura is Empowered, and raising it costs 1 less Action Point.',
+      },
+      {
+        id: 'hallowed-ground',
+        rank: 3,
+        name: 'Hallowed Ground',
+        summary: 'Your Sanctuary becomes a place of its own, and a night in it is worth a day of advantage.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Master Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* "It becomes a distorted space, so it becomes bigger, and instead of just
+           a consecrated place it becomes something that matches your Oath ...
+           whenever you or your group takes a Long Rest in the Sanctuary, everybody
+           has the Bolster effect on the next day, but maintaining the Sanctuary
+           will take away like eight Willpower points on the next day from the
+           Oathbound."
+
+           Bolster is a real card and this is a {{link}} to it, which is the second
+           in the codex after GUARDIAN ANGEL's: a halo granting advantage on
+           everything for an hour. "For the next day" stretches that hour and is
+           his own word for it, so the duration printed here is the day and the
+           link is what says what the halo does.
+
+           The eight is a standing cost on the maximum rather than a charge one
+           morning, which is the only reading the sheet can actually keep. See the
+           note on `sanctuary.willpower` above. */
+        body:
+          'Your Sanctuary becomes a space of its own, larger than the room that holds it and shaped by your Oath.\n\n' +
+          'Anyone who takes a Long Rest inside it gains the benefits of {{Bolster}} for **1 day**. Holding the ground costs you 8 of your maximum Willpower.',
+      },
+      {
+        id: 'call-to-sanctuary',
+        rank: 3,
+        name: 'Call to Sanctuary',
+        summary: 'Open the way from anywhere and take twenty with you. Your enemies fight you on your ground.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Master Talent', 'Ability'],
+        ap: 5,
+        wp: 10,
+        stat: HIGHEST,
+        /* "Another ability, which allows him to teleport himself and up to twenty
+           entities back to his Sanctuary. If it's an ally they can choose to just
+           be taken, but enemies can make a contested roll, you roll against the
+           enemy roll to see if you succeed in grabbing them to your Sanctuary. The
+           enemy can choose to fail as well. And in the Sanctuary, the enemies have
+           disadvantage on everything."
+
+           The twenty, the contest and the choice to come quietly are all his. The
+           range is not: no distance was named and a teleport with no range at all
+           is a card that can empty a city, so it is the same 18 meters SMITE
+           reaches. Flagged in data/README.md. */
+        body:
+          'You open the way to your Sanctuary for yourself and **up to 20 entities** you can see within **18 meters (60 feet)**.\n\n' +
+          'An ally comes if it wants to. Anything else may come willingly or make a {stat} contested roll {roll} against yours to stay where it is.\n\n' +
+          'An enemy inside your Sanctuary rolls everything with disadvantage.',
+      },
+      {
+        id: 'absolute-conviction',
+        rank: 3,
+        name: 'Absolute Conviction',
+        summary: 'Your Aura is Empowered again, and the nights cost you less.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* The second half of the Aura's growth, and the one thing in the codex
+           that changes the nightly loss. `oath.empower[3]` and `oath.restCut[3]`
+           are the arithmetic.
+
+           The 5 and the 2 are printed because a card that moved a number the
+           player plans their week around and did not say so would be the sheet
+           keeping a secret. */
+        body: 'Your Aura is Empowered again, and a Long Rest costs you 2 Faith instead of 5.',
+      },
+    ],
+  },
+  {
+    /* The twentieth written set, the seventh slot filled on the Other shelf, and
+       the fourth in this file built off a spoken description with no sheet
+       behind it, after the Spellblade, the Weaver and the Oathbound. **Handed
+       over in chat on 2026-09-12 and nowhere else**: no Ability tab, no
+       conversion workbook, no old printed page. The description, cleaned of the
+       transcription's slips:
+
+         "Make the Beastbond now. It works very similarly to the Draconic Ally,
+          with the exception that instead of choosing a dragon the player
+          chooses a mammal predator, a reptile predator or an avian predator.
+          Each of the three types has a different bonus, but is a controlled
+          melee attack during combat. Sturdier than the dragon counterpart.
+          Instead of Dragon's Favor, any time you can justify your companion
+          helping you in a task they give you advantage (to skill checks)."
+
+       So the skeleton is the Draconic Bond's, card for card: a passive that is
+       the bond, a recall, a mark at Adept, a growth at Master that makes a mount,
+       a cry that frightens, a link that lets you see through its eyes. What
+       changed is exactly what the four sentences name, and each is a reading
+       flagged in data/README.md:
+
+         the kind      **one body, three strikes.** The kind is asked in the
+                       naming window where the dragon's colour is, stored in the
+                       same field, and what it decides is which of three Rank 1
+                       attack cards the companion holds. All three are in this
+                       array so the registry, the art and every link resolve, and
+                       `scale` on the card is what gates it: see
+                       `heldMinionCards` in minions.js, which is
+                       `heldOathCards`'s shape read against a
+                       creature's choice. The stat block is the same predator
+                       under all three, because "sturdier" was said of the set and
+                       the bonus was said of the type.
+         the bonus     **a rider on the strike, never a second body.** A mammal's
+                       bite has advantage when its bonded is on the same prey; a
+                       reptile's jaws grapple; an avian comes down from 9 meters
+                       out. Every one is a word the codex already defines.
+         sturdier      **10 Health a level and 5 a Physique**, against the dragon's
+                       5 and 5: a character's own level share and the dragon's
+                       Physique share. 40 Health at level 1 to the dragon's 30, 125
+                       at level 8 to its 75. Its Defense is its Reflex, which comes
+                       out level for level to the same number as the dragon's Grit.
+         the favour    **a passive, free, and read by the Skill Check prompt.** AT
+                       YOUR SIDE carries `grants.checkAdvantage` and is
+                       written to the phrase checks.js reads, so ticking it in the
+                       prompt puts the die on the roll and the receipt in the log.
+                       Whether the companion could plausibly help is the player's
+                       answer, which is the law every check card already keeps.
+         the link      **the trance stays, the spell origin goes.** DRACONIC LINK
+                       lets you cast through the dragon; a wolf is nobody's point
+                       of origin, so the second half is knowing where it is and
+                       how hurt it is, which is what a scout at heel is for.
+
+       ------------------------------------------------------- what is mine here
+       Every card name, the kind names, the tagline, the blurb, every number and
+       both Crossroads lines. The mechanics follow the four sentences; none of
+       the words does. No plate and no card pictures: drop them into
+       `data/Beastbond/` and run `npm run art:cards`. */
+    id: 'beastbond',
+    name: 'Beastbond',
+    tagline: 'A drifter with a predator at heel, which fights where they point and helps wherever a beast can.',
+    /* No plate yet. Null rather than a path to a file that is not there, for the
+       reason the Weaver's and the Oathbound's are. */
+    art: null,
+    /* Level, the Draconic Bond's own tag and for the same reason: what the set
+       buys is the stat block below, and every number in it grows on the level.
+       Martial because the companion is a body on the field that bites; support
+       for the half of the set spent on somebody else's roll (a check, a mark, a
+       wound taken in its stead); control for the jaws and the cry. */
+    tags: ['level', 'martial', 'support', 'control'],
+    stat: 'level',
+    /* The second single body in the codex. Everything here is minions.js's, and
+       the two blocks that draw a draconic ally draw this without a line changed.
+
+       The set names its creature's tag rather than the sheet guessing at one,
+       the way the Draconic Bond's Tags column did: `Beast Companion` on the
+       cards the companion plays and `Beastbond` on the ones its bonded plays. */
+    minion: {
+      id: 'beast-companion',
+      label: 'Beast Companion',
+      noun: 'companion',
+      kin: 'predator',
+      tag: 'Beast Companion',
+      lead: 'A predator has taken to you and will not be sent away. Give it a name, say what kind of hunter it is, and it stands on your Character tab with two blocks of its own.',
+      /* A Physique body where the dragon is a Mind one: 6 / 5 / 4 against its
+         5 / 4 / 7, so it opens on 15 points of attribute to the dragon's 16 and
+         makes them up in Health. Every roll it makes is a Physique roll. */
+      base: { physique: 6, instinct: 5, mind: 4 },
+      /* The dragon's growth with the main attribute swapped: Physique every odd
+         level, Instinct and Mind alternating on the even ones. */
+      growth: { odd: ['physique'], even: ['instinct', 'mind'] },
+      /* "Sturdier than the dragon counterpart." A character's own 10 a level and
+         the dragon's 5 a Physique. See the reading above. */
+      health: { perLevel: 10, perPhysique: 5 },
+      /* Reflex where the dragon answers on Grit: a predator is hit or missed on
+         its body and its speed. Physique plus Instinct comes to the same number
+         as the dragon's Instinct plus Mind at every level, so the two are equally
+         hard to hit and this one has more to lose. */
+      defense: 'reflex',
+      /* The dragon's rule, kept: it cannot go below nothing, and it is a Long
+         Rest that brings it back. */
+      floor: 0,
+      returns: 'long',
+      down: 'Dragged itself clear of the fight. It cannot return until you take a Long Rest.',
+      /* APEX PREDATOR, at Rank 3: "its damage is Elevated by 1". Indexed by rank
+         the way the dragon's is. */
+      elevate: [null, 0, 0, 1],
+      /* The one choice the creature asks for, in the slot the dragon's colour
+         takes. Not a colour and not a damage type: what an option decides here
+         is which Rank 1 strike the companion holds, through `scale` on the
+         card. `noun` is what the block and the window call the choice when
+         it is still open, and `note` is the button's second line, where the
+         dragon's shows its damage type. */
+      scales: {
+        label: 'Kind',
+        noun: 'kind',
+        prompt: 'What kind of predator is it?',
+        hint: 'Its kind decides which strike it brings to a fight. Everything else about it is the same predator.',
+        options: [
+          { id: 'mammal', label: 'Mammal predator', note: 'Hunts as a pair' },
+          { id: 'reptile', label: 'Reptile predator', note: 'Holds what it bites' },
+          { id: 'avian', label: 'Avian predator', note: 'Strikes from the air' },
+        ],
+      },
+    },
+    blurb:
+      'Those who take the Beastbond are never alone on the road again. A predator has taken to them, a wolf or a bear, a crocodile or a great hawk, and the two of them go on as a hunting pair: the companion spends its own Action Points and Reaction Points, draws on its bonded\u2019s Willpower and fights with tooth and claw wherever it is pointed.\n\n' +
+      'They excel wherever two are better than one. A mammal predator hunts as a pair and bites hardest when its bonded is on the same prey. A reptile predator closes its jaws and does not let go. An avian predator comes down out of the sky from 9 meters away. Out of a fight the companion is a nose, a set of eyes and a set of teeth its bonded can call on for almost any task, and a wound it takes can be pulled across and borne instead.\n\n' + // text-style-ok: joins two clauses
+      'A Beastbond\u2019s companion is sturdier than most things that will stand against it, and it only grows more so. Grown to the size of a horse it is a mount as well as a weapon. Its cry at the last leaves a field of enemies frightened of the pair of them, and its bonded can see through its eyes from wherever they stand.', // text-style-ok: joins two clauses
+    cards: [
+      /* ------------------------------------------------------------- Rank 1 */
+      {
+        id: 'hunting-pair',
+        rank: 1,
+        name: 'Hunting Pair',
+        summary: 'A predator that spends its own points, and a life you can take the wounds for.',
+        kind: 'talent',
+        tags: ['Beastbond', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* ONE AND THE SAME, said of a beast. The shadow is the dragon's and a
+           predator has none, so what happens at nothing is that it drags itself
+           clear, and the Long Rest is still what brings it back (`returns` on
+           the spec). "If you die, it dies along with you" was the dragon's, and a
+           bond to a living animal breaks rather than kills: the last sentence is
+           the one line here that is a ruling and not a transcription. */
+        body:
+          'You have bonded with a predator, and on your turn you control it as well as yourself. It spends its own Action Points and Reaction Points, and your Willpower.\n\n' +
+          'Whenever your companion takes damage, you can take any amount of it yourself in its stead.\n\n' +
+          'If it would die, it instead drags itself clear of the fight **until you take a Long Rest**. If you die, the bond breaks and it goes back to the wild.',
+      },
+      /* ---- the three strikes, one held ----
+         "Each of the three types has a different bonus, but is a controlled
+         melee attack during combat." Three cards at the price and the dice of
+         WYRM BOLT, 4 Action Points for 2d4 plus the attribute, so the strike is
+         the dragon's bolt brought to a meter and the bonus is what the meter
+         buys. `scale` on each is the kind that holds it; the two the companion
+         is not are dropped by `heldMinionCards` everywhere its cards are read,
+         and shown side by side only while the kind is still unchosen, so a
+         player choosing can compare them. */
+      {
+        id: 'pack-bite',
+        rank: 1,
+        name: 'Pack Bite',
+        summary: 'Its bite, with advantage when the two of you are on the same prey.',
+        kind: 'talent',
+        tags: ['Beast Companion', 'Novice Ability'],
+        scale: 'mammal',
+        ap: 4,
+        wp: null,
+        stat: 'physique',
+        /* The Fenrat's own PACK TACTICS, read for a pack of two. The condition
+           is prose the sheet does not roll, the same as the Fenrat's: where the
+           bonded stands is nobody's column. */
+        body:
+          'Your companion bites **an entity** within **1 meter (3 feet)** of it.\n\n' +
+          'It makes a {stat} Melee Attack {roll}, with advantage if you are also within **1 meter (3 feet)** of the target.\n\n' +
+          'On a hit, it deals [[2d4 + stat]] {damage:Sharp} damage.',
+      },
+      {
+        id: 'crushing-jaws',
+        rank: 1,
+        name: 'Crushing Jaws',
+        summary: 'Its jaws close and hold. What it bites is grappled.',
+        kind: 'talent',
+        tags: ['Beast Companion', 'Novice Ability'],
+        scale: 'reptile',
+        ap: 4,
+        wp: null,
+        stat: 'physique',
+        /* GRAPPLE's own outcome on a hit rather than on a Roll against Reflex,
+           which is the bonus: the basic action costs 2 and holds nothing else,
+           this costs 4 and bites first. "is grappled" is the lead-in statuses.js
+           reads, so the row lands on the target. Blunt, because the jaws crush. */
+        body:
+          'Your companion clamps its jaws on **an entity** within **1 meter (3 feet)** of it.\n\n' +
+          'It makes a {stat} Melee Attack {roll}.\n\n' +
+          'On a hit, it deals [[2d4 + stat]] {damage:Blunt} damage and the target is grappled by it.',
+      },
+      {
+        id: 'swooping-talons',
+        rank: 1,
+        name: 'Swooping Talons',
+        summary: 'It comes down from 9 meters out and rakes what it lands on.',
+        kind: 'talent',
+        tags: ['Beast Companion', 'Novice Ability'],
+        scale: 'avian',
+        ap: 4,
+        wp: null,
+        stat: 'physique',
+        /* The Ashmaw's POUNCE with wings: declared at range, resolved as a Melee
+           Attack beside the target. The reach is the bonus, and the sentence is
+           the only place the codex says an avian companion flies, which is why
+           it says so in as many words. */
+        body:
+          'Your companion takes to the air and drops onto **an entity** it can see within **9 meters (30 feet)**, landing beside it.\n\n' +
+          'It makes a {stat} Melee Attack {roll}.\n\n' +
+          'On a hit, it deals [[2d4 + stat]] {damage:Sharp} damage.',
+      },
+      {
+        id: 'at-your-side',
+        rank: 1,
+        name: 'At Your Side',
+        summary: 'Advantage on any skill check you can justify your companion helping with.',
+        kind: 'talent',
+        tags: ['Beastbond', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* "Instead of Dragon's Favor, any time you can justify your companion
+           helping you in a task they give you advantage (to skill checks)."
+
+           Written to the phrase checks.js reads ("you make a skill check") and
+           carrying the die it lends, so the Skill Check prompt offers it beside
+           the background skills at no Willpower, the way BESTIAL SENSE is. What
+           it does not carry is the judgement: whether a hawk can help you read a
+           map is the table's, said out loud, which is the law every check card
+           in the codex keeps. See `speaksToACheck`. */
+        grants: { checkAdvantage: 1 },
+        body:
+          'Your companion is never far, and it lends itself to whatever you are trying.\n\n' +
+          'Whenever you make a skill check, if you can justify your companion helping you with the task, you make it with advantage.',
+      },
+      {
+        id: 'call-to-heel',
+        rank: 1,
+        name: 'Call to Heel',
+        summary: 'Send your companion clear of the fight, and call it back to your side.',
+        kind: 'talent',
+        tags: ['Beastbond', 'Novice Talent', 'Ability'],
+        ap: 3,
+        wp: null,
+        stat: 'physique',
+        /* DRACONIC RECALL without the shadow. Keeping clear is the beast's way
+           of being nowhere: off the board, out of reach and untargetable, and
+           the same 3 Action Points bring it back to a free space beside you. */
+        body:
+          'You can have your companion slip away from the fight and keep clear of it; while it does, it stays out of reach and cannot be targeted.\n\n' +
+          'If it is keeping clear, you can use this ability to call it back to a free space next to you.',
+      },
+
+      /* ------------------------------------------------------------- Rank 2 */
+      {
+        id: 'marked-prey',
+        rank: 2,
+        name: 'Marked Prey',
+        summary: 'Whatever your companion hurts, your next attack on it is made with advantage.',
+        kind: 'talent',
+        tags: ['Beastbond', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* DRACONIC MARK, word for word in its mechanic. "marked" is the codex's
+           own term and lights. */
+        body:
+          'Whenever your companion deals damage to **an enemy**, that enemy is marked as your prey **until your next Turn End**.\n\n' +
+          'The next time you make an Attack Roll against it, you can do so with advantage.',
+      },
+      {
+        id: 'go-for-the-throat',
+        rank: 2,
+        name: 'Go for the Throat',
+        summary: 'A lunge for 2d6 plus twice its Physique that leaves the target bleeding.',
+        kind: 'talent',
+        tags: ['Beast Companion', 'Adept Ability'],
+        ap: 4,
+        wp: 2,
+        stat: 'physique',
+        /* DRAGON BREATH's slot and price, brought to one target at a meter: the
+           cone's 2d4 plus twice the attribute against everything becomes 2d6
+           plus twice the attribute against one thing, and Bleed is what a throat
+           does that a cone does not. Every kind holds it. */
+        body:
+          'Your companion lunges for the throat of **an entity** within **1 meter (3 feet)** of it.\n\n' +
+          'It makes a {stat} Melee Attack {roll}.\n\n' +
+          'On a hit, it deals [[2d6 + 2*stat]] {damage:Sharp} damage and the target gains one stack of Bleed.',
+      },
+
+      /* ------------------------------------------------------------- Rank 3 */
+      {
+        id: 'apex-predator',
+        rank: 3,
+        name: 'Apex Predator',
+        summary: 'Your companion grows to the size of a horse, carries you and Elevates its damage.',
+        kind: 'talent',
+        tags: ['Beastbond', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* EMPOWERED BOND, with one clause the dragon never needed: a horse-sized
+           hawk is a mount that flies, and a card that grew it and did not say so
+           would leave the table arguing. The Elevate is `elevate` on the spec. */
+        body:
+          'Your companion has grown to the size of a large horse. It can be used as a mount which can carry up to 300 kg, and an avian companion carries you through the air.\n\n' +
+          'Its damage is Elevated by 1.',
+      },
+      {
+        id: 'hunting-cry',
+        rank: 3,
+        name: 'Hunting Cry',
+        summary: 'A cry heard at 18 meters that leaves enemies frightened of the pair of you.',
+        kind: 'talent',
+        tags: ['Beast Companion', 'Master Ability'],
+        ap: 4,
+        wp: 4,
+        stat: 'physique',
+        /* FRIGHTFUL ROAR, rolled on Physique because that is what the body is
+           built on. The dragon's "While Empowered" is not here: APEX PREDATOR is
+           a Rank 3 card and so is this one, so every companion that can cry has
+           already grown, and the clause would be the rank restating itself. */
+        body:
+          'Your companion lets out a cry that **all enemy entities** within **18 meters (60 feet)** can hear.\n\n' +
+          'It makes a {stat} Roll {roll} against the entities\u2019 Grit.\n\n' +
+          'On a success, they are frightened of you and your companion for the next **2 turns**.',
+      },
+      {
+        id: 'shared-senses',
+        rank: 3,
+        name: 'Shared Senses',
+        summary: 'See through your companion\u2019s eyes, and always know where it is.',
+        kind: 'talent',
+        tags: ['Beastbond', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* DRACONIC LINK's trance, and not its second half. See the reading at
+           the top of the set. */
+        body:
+          'Your bond now lets you see through your companion\u2019s senses by going into a trance; while you do, you lose control of your own body.\n\n' +
+          'In or out of the trance, you always know where your companion is and how badly it is hurt, and it always knows where you are.',
+      },
+    ],
+  },
 ];
+
+/* ------------------------------------------------------------- the roster *
+ * Fourteen sets that have a name and nothing else.
+ *
+ * The designer keeps a roster of every set the game is going to have, four
+ * columns wide and cut by the attribute each one leans on. Nineteen of its
+ * slots are written and sit in the codex above beside the Draconic Bond, which
+ * is on no roster at all (the Alchemist, the Pact of Ordenance, the Runebearer,
+ * the Spellblade, the Necromancer, the Spellquill, the Weaver, the Oathbound
+ * and the Beastbond were placeholders here first). These are the rest, standing
+ * in the codex as placeholders so the wall reads as the whole plan rather than
+ * as the part of it that happens to be finished.
+ *
+ * That wall is a friend's and an admin's. Every other account is shown the
+ * finished part only, which is `roster` in tiers.js and the `roster` option on
+ * `optionsAt` below; the placeholders themselves neither know nor care.
+ *
+ * A placeholder reserves three things and promises nothing:
+ *
+ *   the id     what a saved sheet, a picture folder and a card link will point
+ *              at once the set exists, settled now so it never has to move.
+ *   the name   as the roster spells it, with its typos corrected and nothing
+ *              else touched. See the rulings in data/README.md for the two the
+ *              designer settled by hand.
+ *   the shelf  the column it was filed under, which is the one design fact the
+ *              roster actually carries.
+ *
+ * Everything else is deliberately absent. No tagline of its own, no blurb of its
+ * own, no cards, no loadout, no spec of any kind. A placeholder that guessed at
+ * what a Painseeker does would be this file inventing the game, which is the one
+ * thing it must never do: the sheet is the design, and no sheet has arrived for
+ * any of these.
+ *
+ * `stub: true` is what says so, and it is load-bearing in exactly one place:
+ * `optionsAt` refuses to let a level be spent on one, and `chooseAt` refuses it
+ * again in case anything ever asks around the wall. Whether the tile draws at
+ * all is the account's: a friend or an admin sees it on its own shelf, reading
+ * "Not written yet" where a price would be, and every other account is handed
+ * the written sets alone. That is `roster` in tiers.js and the `roster` option
+ * on `optionsAt`, ruled 2026-09-12; see data/README.md.
+ *
+ * The day a set's Ability tab lands, its placeholder is replaced by the real
+ * entry in the codex above and its line here goes. Nothing else has to change.
+ */
+
+/** What every placeholder says about itself, in one place so it says it once. */
+const STUB_TAGLINE = 'On the roster. Nothing written for it yet.';
+
+const STUB_BLURB =
+  'This set has a name and a shelf, and that is all it has. It is on the roster the designer ' +
+  'keeps and no sheet has been written for it, so there are no cards here, no ranks to read ' +
+  'and nothing a level can be spent on.\n\n' +
+  'What is held for it is the name above, the id underneath it and the attribute it will be ' +
+  'built on. Everything that makes it playable arrives with its own sheet.';
+
+/**
+ * One placeholder, in the shape a written set has and empty in every field that
+ * would otherwise be a guess.
+ *
+ * Written as a call rather than as twenty-three literals, which is the one place
+ * in this file that is not plain data. Plain data here would be the same eight
+ * lines twenty-three times over, and a reader skimming for the one set they came
+ * looking for would have to read all of it to be sure that none of them said
+ * anything different. A call says at a glance that none of them do.
+ */
+function placeholder(id, name, stat) {
+  return {
+    id,
+    name,
+    stub: true,
+    tagline: STUB_TAGLINE,
+    /* No plate, and the same null the Duelist and the Feral Curse carry rather
+       than a path to a file that is not there: the tiles draw the picture as a
+       CSS background and would show nothing either way, but the summary and the
+       presentation page use an `img` and would show a broken one. */
+    art: null,
+    /* The roster's column is the only tag that is known, and it is the attribute
+       the set was filed under. No role: a role is a reading of what the cards do,
+       and there are no cards. The Other column names no attribute at all, so
+       those carry nothing and the filter simply never matches them. */
+    tags: stat === 'other' ? [] : [stat],
+    /* `other` rather than the `level` the Draconic Bond carries. Both land on the
+       Other shelf, but `level` is a claim, and it is the Draconic Bond's own: an
+       ally whose stat block grows on nothing but the character's level. What a
+       Weaver scales on is not known, so this says only which shelf it sits on. */
+    stat,
+    blurb: STUB_BLURB,
+    cards: [],
+  };
+}
+
+/* The roster, column by column and in its own row order, so every shelf reads
+   its written sets first and then the rest of that column top to bottom. */
+const TALENT_PLACEHOLDERS = [
+  /* Physique, rows 1, 5, 7, 8 and 9. Colossus, Berserker and Guardian are rows
+     2, 3 and 6 and are written, and so is the Runebearer, which was row 4 until
+     2026-09-08.
+
+     `Brawlere` is read as Brawler, and `Hamoturgy` as Hemoturgy, which the
+     designer settled on 2026-08-24 against Haemoturgy and Haemothurgy. Both are
+     recorded in data/README.md.
+
+     Dragon Aspect is row 9 and the Draconic Bond is not on the roster at all. It
+     stays exactly where it is on the Other shelf, ruled by the designer the same
+     day: three dragon-shaped entries in the codex for now, and which of them the
+     Draconic Bond turns out to be is a question its own sheet will answer. */
+  placeholder('brawler', 'Brawler', 'physique'),
+  placeholder('hemoturgy', 'Hemoturgy', 'physique'),
+  placeholder('totemic', 'Totemic', 'physique'),
+  placeholder('painseeker', 'Painseeker', 'physique'),
+  placeholder('dragon-aspect', 'Dragon Aspect', 'physique'),
+
+  /* Instinct, rows 5 to 8. Mycomancer, Duelist, Trickster, Cauldron and Feral
+     Curse are rows 1, 2, 3, 4 and 9 and are written.
+
+     Row 4 reads `Cauldron` and the written set is the Cauldron Keeper, which is
+     the name on its own Ability tab and is kept. `SharpShooter` is read as
+     Sharpshooter, the way the codex writes Spellblade and Spellquill. */
+  placeholder('virtuoso', 'Virtuoso', 'instinct'),
+  placeholder('flowing-fist', 'Flowing Fist', 'instinct'),
+  placeholder('sharpshooter', 'Sharpshooter', 'instinct'),
+  placeholder('wilder', 'Wilder', 'instinct'),
+
+  /* Mind, rows 7 to 9. Arcanist, Enchanter and Alchemist are rows 1, 2 and 3 and
+     are written, and so are the Spellblade, which was row 6 until 2026-09-09,
+     the Necromancer, which was row 4 until the day after, and the Spellquill,
+     which was row 5 until the day after that.
+
+     `SpellBlade` is read as Spellblade and `Tachticain` as Tactician. Row 9 reads
+     `Elemental Aspe`, which is the column cutting the cell off rather than a typo,
+     and is read as Elemental Aspect: it is the pair to Dragon Aspect on the
+     Physique shelf.
+
+     `Aclhemist` was read as Alchemist and stood here as a placeholder until
+     2026-08-24, when its own sheet was converted. The Alchemist and the Cauldron
+     Keeper both mix things and sit on different shelves, which is the roster’s own
+     arrangement and is left alone. */
+  placeholder('thaumaturge', 'Thaumaturge', 'mind'),
+  placeholder('tactician', 'Tactician', 'mind'),
+  placeholder('elemental-aspect', 'Elemental Aspect', 'mind'),
+
+  /* Other, two of six rows. Row 3 was `Pactbound`, whose slot the Pact of
+     Ordenance filled on 2026-08-27: the id stays the roster's, the name is the
+     one the designer gave the set in chat. Row 5 was `Weaver`, filled on
+     2026-09-10, and that one kept the roster's name as well as its id. Row 1 was
+     `Beastbond`, filled on 2026-09-12 the same way. The Draconic Bond, the
+     Pact of Ordenance, the Weaver, the Oathbound and the Beastbond are what the
+     shelf holds written.
+
+     Every name here is spelled as the roster spells it. Beastbond and Oathbound
+     were one word each on the sheet and stayed one word each. */
+  placeholder('quartermaster', 'Quartermaster', 'other'),
+  placeholder('weapon-master', 'Weapon Master', 'other'),
+];
+
+/** The whole codex: the written sets, then the roster standing in for the rest. */
+const TALENT_CODEX = [...TALENT_SETS, ...TALENT_PLACEHOLDERS];
 
 /**
  * The sets as everything else sees them, with every card wearing its picture.
@@ -1622,8 +6361,12 @@ const TALENT_SETS = [
  * a card with no picture keeps both fields as null rather than losing them —
  * which is what the plates on the sheet already draw empty. See the note at the
  * top of this file for why it happens here and not on each set by hand.
+ *
+ * Reads the whole codex, written sets and roster placeholders alike. A
+ * placeholder holds no cards, so `withArt` is handed an empty array and hands one
+ * back: there is nothing here that has to know which kind it is looking at.
  */
-export const TALENTS = TALENT_SETS.map((talent) => ({
+export const TALENTS = TALENT_CODEX.map((talent) => ({
   ...talent,
   cards: withArt(talent.cards),
 }));
@@ -1655,6 +6398,41 @@ export function usedTalentTags() {
   return TALENT_TAGS.filter((tag) => ids.has(tag.id));
 }
 
+/** Which shelf a set sits on: the attribute it is built on, or Other. */
+export function talentCategory(talent) {
+  const set = typeof talent === 'string' ? getTalent(talent) : talent;
+  return TALENT_CATEGORIES.find((category) => category.id === set?.stat) ?? OTHER_CATEGORY;
+}
+
+/**
+ * A wall of sets cut into shelves, in the categories' own order.
+ *
+ * Handed whatever the caller was about to draw rather than the codex, so a
+ * filtered wall is shelved by what survived the filter: an empty shelf is left
+ * off entirely instead of printing a heading over nothing. Takes options the way
+ * `optionsAt` hands them over, and anything else carrying a `talent`.
+ *
+ * Five shelves rather than four since 2026-09-09: what the reader already holds
+ * is cut off the top. See HELD_CATEGORY.
+ */
+export function talentShelves(options) {
+  /* Held first, and taken out of the attribute shelf it would otherwise sit on:
+     one set drawn twice on one wall is the reader wondering which of the two
+     tiles is the real one. An option with no `held` on it is somebody handing in
+     a list that is not `optionsAt`'s, and nothing it holds is current. */
+  const held = options.filter((option) => (Number(option?.held) || 0) > 0);
+  const rest = options.filter((option) => !(Number(option?.held) || 0));
+
+  const shelves = TALENT_CATEGORIES.map((category) => ({
+    category,
+    options: rest.filter((option) => talentCategory(option.talent) === category),
+  }));
+
+  return [{ category: HELD_CATEGORY, options: held }, ...shelves].filter(
+    (shelf) => shelf.options.length > 0
+  );
+}
+
 /** The cards a rank *adds* — not everything the track has given so far. */
 export function cardsAtRank(talent, rank) {
   return (talent?.cards ?? []).filter((card) => card.rank === rank);
@@ -1663,6 +6441,57 @@ export function cardsAtRank(talent, rank) {
 /** Everything a character holding this talent at `rank` has earned from it. */
 export function cardsThroughRank(talent, rank) {
   return (talent?.cards ?? []).filter((card) => card.rank <= rank);
+}
+
+/* -------------------------------------------------------- what a card is worth
+ *
+ * A talent card has carried `grants` since the Skill Check action arrived, and
+ * until 2026-09-11 only checks.js read it: a card could say what it cost to tick
+ * onto a roll and nothing else. JUST IN TIME's "your Movement Speed is increased
+ * by 1" was the card that showed what that left out — a rank-2 Guardian's Speed
+ * tile read the same 5.5 metres it had at rank 1.
+ *
+ * So the rider a lineage card carries is now the rider a talent card carries,
+ * in the same shape and read by the same two things. `checkWp` and
+ * `checkAdvantage` sit in the same map and are simply fields nothing on a stat
+ * line asks for: `flat` in characterModel.js picks the fields it wants by name
+ * and `kept` in statMath.js drops a term worth nothing, so a card that grants
+ * only a check rider never appears on a tile.
+ *
+ * **Read through the rank held, not at it.** A rank-3 Guardian still has JUST IN
+ * TIME. This is `cardsThroughRank`'s own rule and the same one
+ * `characterCheckCards` reads by.
+ */
+
+/**
+ * What this character's training does to the sheet's own numbers, one row per
+ * held card that does anything, named after the card.
+ *
+ * Named after the card and not the set, for the reason `lineageGrantSources`
+ * is: a Guardian's Speed hovers to `3 base + 2 half your Instinct + 1 Just In
+ * Time`, and the card is the thing a reader can go and look at.
+ *
+ * Only *flat and unconditional* riders belong here. A Guardian's SHIELD
+ * EXPERTISE also grants a point of Defense and is deliberately not in it: that
+ * point hangs on a shield being in hand, so it rides `martial.grants` and comes
+ * off again the moment the weapon is swapped. See weaponRiders in moves.js.
+ */
+export function talentGrantSources(talents) {
+  const rows = [];
+
+  for (const held of normalizeTalents(talents)) {
+    const talent = getTalent(held.id);
+    if (!talent) continue;
+    for (const card of cardsThroughRank(talent, held.rank)) {
+      if (card.grants) rows.push({ name: card.name, ...card.grants });
+    }
+  }
+  return rows;
+}
+
+/** The same rows summed per field, which is the shape `deriveStats` reads. */
+export function talentGrants(talents) {
+  return sumGrants(talentGrantSources(talents));
 }
 
 /* --------------------------------------------------------- the enchanting spec
@@ -1796,11 +6625,10 @@ export function normalizeTalents(value) {
       rank: Math.min(MAX_TALENT_RANK, Math.max(1, Math.floor(Number(entry.rank) || 1))),
       taken: Array.isArray(entry.taken) ? entry.taken : null,
       // Card ids for a set that lets you choose what it teaches, such as a
-      // Mycomancer's spells. Only ids are kept here, each once; whether they
-      // are legal at the rank held is loadouts.js's business.
-      picks: [...new Set((Array.isArray(entry.picks) ? entry.picks : []).filter(
-        (pick) => typeof pick === 'string' && pick
-      ))],
+      // Mycomancer's spells. Only ids are kept here; whether they are legal at
+      // the rank held is loadouts.js's business, and whether the same id may
+      // appear twice is the set's own. See `cleanPicks`.
+      picks: cleanPicks(id, entry.picks),
       /* What an Enchanter has laid, in the two places their cards put it: WIELDER
          OF WONDER's enchantments on their own person, and ENCHANTING's on the
          things they carry. Repaired for *shape* only, exactly as `picks` is —
@@ -1905,11 +6733,26 @@ export function advancementState(talents, level) {
 /**
  * Every talent set measured against one slot: what taking it there would buy,
  * and — when it would buy nothing — the one sentence the tile should say.
+ *
+ * `all` keeps the sets this character cannot buy at this level, for a reader
+ * rather than a chooser. `roster` keeps the placeholders, and it is the
+ * caller's tier: the chooser passes `can('roster')`, so a friend or an admin
+ * reads the shelf as the whole plan and everybody else reads it as the finished
+ * game. It defaults off, so a caller that forgets to ask shows less rather than
+ * more, which is the way round tiers.js already leans.
  */
-export function optionsAt(list, level, { all = false } = {}) {
+export function optionsAt(list, level, { all = false, roster = false } = {}) {
   const owned = new Map(list.map((entry) => [entry.id, entry]));
 
   const options = TALENTS.map((talent) => {
+    /* A set on the roster with nothing written for it cannot be bought at any
+       level by anybody, so it is refused before its rank is even worked out.
+       There is no rank to name: `rank: null` is the same shape a finished Master
+       set hands back, and the tile prints the reason where a price would go. */
+    if (talent.stub) {
+      return { talent, held: 0, rank: null, ok: false, reason: 'Not written yet.' };
+    }
+
     const held = owned.get(talent.id);
     if (!held) return { talent, held: 0, rank: 1, ok: true };
 
@@ -1933,8 +6776,23 @@ export function optionsAt(list, level, { all = false } = {}) {
 
   /* A wall of sets you cannot take is a wall you read once and never again:
      Master sets that are finished, and ranks the level cannot reach, are left
-     off it. `all` is for the reader that wants the whole codex anyway. */
-  return all ? options : options.filter((option) => option.ok);
+     off it. `all` is for the reader that wants the whole codex anyway.
+
+     A roster placeholder is the exception, and it is kept on purpose for the
+     accounts that see one at all. The other two are about *this* character: a
+     set they have finished, a rank they have not reached yet, and both come back
+     the moment that changes. A placeholder is about the game, it will not come
+     back for anybody, and the whole point of standing it on the wall is that the
+     shelf says what is coming. Ruled by the designer on 2026-08-24; see
+     data/README.md.
+
+     And below `friend` it is not on the wall at all. Jules, 2026-09-12: an
+     unfinished set is for the table's own people, and everybody else is shown
+     the game as it stands. Cut before the `all` split so a reader is held to the
+     same rule as a chooser: the read-only wall is the whole codex as this
+     account is allowed to see it. */
+  const shown = roster ? options : options.filter((option) => !option.talent.stub);
+  return all ? shown : shown.filter((option) => option.ok || option.talent.stub);
 }
 
 /* ---------------------------------------------------- writing the talent list
@@ -1964,11 +6822,36 @@ export function serializeTalents(list) {
  */
 export function setTalentPicks(talents, talentId, picks) {
   const list = normalizeTalents(talents);
-  const clean = [...new Set((Array.isArray(picks) ? picks : []).filter(Boolean))];
 
   return serializeTalents(
-    list.map((entry) => (entry.id === talentId ? { ...entry, picks: clean } : entry))
+    list.map((entry) =>
+      entry.id === talentId ? { ...entry, picks: cleanPicks(talentId, picks) } : entry
+    )
   );
+}
+
+/**
+ * A stored pick list, repaired for shape: strings only, and each id once unless
+ * the set says otherwise.
+ *
+ * **The dedupe is the interesting half.** It has been here since picks existed
+ * and it was right for every pool until the Runebearer stopped saying "no spell
+ * can be inscribed twice" (2026-09-09): a second copy of a rune is a second
+ * firing, so for a set whose loadout carries `repeat` the duplicates *are* the
+ * record and dropping them would silently take a rune off somebody's arm.
+ *
+ * Read off the set rather than passed in, because both callers are repairs that
+ * happen far from any chooser: one on the way in from the column, one on the way
+ * back out to it. talents.js may not import loadouts.js (loadouts.js imports
+ * this file), and it does not need to: the flag is on the spec, and the spec is
+ * in this file.
+ */
+function cleanPicks(talentId, picks) {
+  const list = (Array.isArray(picks) ? picks : []).filter(
+    (pick) => typeof pick === 'string' && pick
+  );
+
+  return getTalent(talentId)?.loadout?.repeat ? list : [...new Set(list)];
 }
 
 
@@ -1996,7 +6879,11 @@ export function chooseAt(talents, level, talentId) {
   }
 
   const talent = getTalent(talentId);
-  if (!talent) return serializeTalents(list);
+  /* A roster placeholder is refused here as well as on the wall. The tile is
+     already locked and its take button already disabled, so this is the model
+     holding the same line the UI does: a level spent on a set with no cards would
+     buy nothing at all and there would be no way to tell from the sheet. */
+  if (!talent || talent.stub) return serializeTalents(list);
   return serializeTalents([...list, { id: talent.id, name: talent.name, rank: 1, taken: [slot] }]);
 }
 

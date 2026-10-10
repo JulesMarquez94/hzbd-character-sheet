@@ -318,6 +318,12 @@ export function shortfallLine(row) {
  *
  * A Catalyst is never refused for being full, because reaching for another swaps
  * it. See addIngredient.
+ *
+ * A row a rank cannot reach carries `gated`, because that refusal is the one
+ * kind the brewer cannot do anything about at the Cauldron: the shelf leaves
+ * those off and says how many in a line, the way every other pool on the sheet
+ * does. Everything else it refuses is live, and a dose given back makes it an
+ * offer again, so it stays on the shelf saying why.
  */
 export function ingredientOptions(draft, limits) {
   if (!limits) return [];
@@ -329,7 +335,7 @@ export function ingredientOptions(draft, limits) {
     const row = { ingredient: ing, held };
 
     if (!limits.tiers.includes(ing.tier)) {
-      return { ...row, ok: false, reason: `${ing.tier} needs a higher rank` };
+      return { ...row, ok: false, gated: true, reason: `${ing.tier} needs a higher rank` };
     }
     if (ing.part === 'essence') {
       if (held > 0) return { ...row, ok: false, reason: 'In already, and Essences cannot repeat' };

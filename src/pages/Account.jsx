@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
 import { supabase } from '../lib/supabaseClient.js';
+import { openPortalUrl } from '../lib/premium.js';
+import { imageSlots } from '../lib/tiers.js';
 
 export default function Account() {
-  const { user, profile, displayName, tierInfo } = useAuth();
+  const { user, profile, displayName, tier, tierInfo } = useAuth();
 
   const [username, setUsername] = useState(profile?.username || displayName);
 
@@ -20,6 +23,45 @@ export default function Account() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+
+  /* The subscription behind the tier, if there is one. Read-only and read-own:
+     the policy on `subscriptions` grants a select and nothing else, so this can
+     report what Stripe last said and can never change it. A `friend` account
+     has no row here at all, which is the difference between a tier that was
+     bought and one that was given. */
+  const [subscription, setSubscription] = useState(null);
+  const [portalBusy, setPortalBusy] = useState(false);
+
+  useEffect(() => {
+    if (!supabase || !user?.id) return undefined;
+
+    let active = true;
+    supabase
+      .from('subscriptions')
+      .select('status, cancel_at_period_end, current_period_end')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (active) setSubscription(data ?? null);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
+
+  async function openPortal() {
+    setPortalBusy(true);
+    setError('');
+    try {
+      window.location.assign(await openPortalUrl());
+    } catch (err) {
+      setError(err.message);
+      setPortalBusy(false);
+    }
+  }
 
   async function saveUsername(e) {
     e.preventDefault();
@@ -60,7 +102,7 @@ export default function Account() {
     }
     setPassword('');
     setConfirm('');
-    setMessage('Access key changed.');
+    setMessage('Password changed.');
   }
 
   return (
@@ -80,14 +122,21 @@ export default function Account() {
             <p className="muted">{user.email}</p>
           </div>
 
-          {/* What kind of account this is. Read-only on purpose: a tier is set
-              by an admin, and the database refuses it any other way. */}
+          {/* What kind of account this is. Read-only on purpose: a tier is
+              derived from a subscription by the webhook, or given by hand in
+              the SQL editor, and the database refuses it any other way. */}
           <div className="form-group" style={{ marginBottom: 0 }}>
             <span className="form-label">Account</span>
             <p className="tier-line">
               <span className={`tier-badge tier-${tierInfo.id}`}>{tierInfo.label}</span>
               <span className="muted">{tierInfo.blurb}</span>
             </p>
+            <SubscriptionLine
+              tier={tier}
+              subscription={subscription}
+              busy={portalBusy}
+              onManage={openPortal}
+            />
           </div>
         </div>
 
@@ -105,11 +154,24 @@ export default function Account() {
             Save Name
           </button>
         </form>
+
+        {/* The shelf has a page of its own, and this is where somebody looking
+            for "where do my uploads live" will look first. */}
+        <div className="frame" style={{ marginTop: '1.1rem' }}>
+          <h3 className="frame-heading">Pictures</h3>
+          <p className="form-hint">
+            Every picture you have uploaded, what it is being used by and how much room is left.
+            This account holds {imageSlots(tier)}.
+          </p>
+          <Link className="btn btn-sm" to="/pictures">
+            Manage pictures
+          </Link>
+        </div>
       </div>
 
       <div className="panel">
         <form className="frame" onSubmit={changePassword}>
-          <h3 className="frame-heading">Change Access Key</h3>
+          <h3 className="frame-heading">Change Password</h3>
 
           <div className="form-group">
             <label className="form-label" htmlFor="new-password">
@@ -141,10 +203,66 @@ export default function Account() {
           </div>
 
           <button className="btn btn-copper btn-sm" type="submit" disabled={busy}>
-            Update Key
+            Update Password
           </button>
         </form>
       </div>
     </main>
+  );
+}
+
+/**
+ * What the tier costs and when it next renews, said under the badge.
+ *
+ * Four things it can say, and the fourth is the one worth building for: a
+ * subscription that is `active` and already cancelled. Stripe keeps it running
+ * to the end of the period that was paid for, so the account is genuinely
+ * Premium and genuinely not renewing, and a page that only knew the tier would
+ * promise a renewal that is not coming.
+ *
+ * Cancelling, changing a card and reading past invoices all happen on Stripe's
+ * own portal rather than here. That is not laziness: the fewer pages of ours
+ * that touch a payment, the fewer there are to get wrong, and a hosted portal
+ * is a cancel button that cannot be made hard to find.
+ */
+function SubscriptionLine({ tier, subscription, busy, onManage }) {
+  if (tier === 'admin') return null;
+
+  if (tier === 'friend') {
+    return (
+      <p className="muted" style={{ marginTop: '0.6rem', fontSize: '0.88rem' }}>
+        Given rather than bought. There is nothing to pay and nothing to cancel.
+      </p>
+    );
+  }
+
+  if (tier !== 'premium') {
+    return (
+      <p className="muted" style={{ marginTop: '0.6rem', fontSize: '0.88rem' }}>
+        <Link to="/premium">See what Premium adds</Link>. Three characters and one campaign are
+        yours either way.
+      </p>
+    );
+  }
+
+  const renews = subscription?.current_period_end
+    ? new Date(subscription.current_period_end).toLocaleDateString()
+    : null;
+
+  return (
+    <div style={{ marginTop: '0.75rem' }}>
+      <p className="muted" style={{ margin: '0 0 0.6rem', fontSize: '0.88rem' }}>
+        {subscription?.status === 'past_due' &&
+          'The last payment did not go through. Stripe is trying again, and nothing has been taken away in the meantime. '}
+        {subscription?.cancel_at_period_end
+          ? `Cancelled. Premium runs until ${renews ?? 'the end of the period you have paid for'}.`
+          : renews
+            ? `Renews on ${renews}.`
+            : 'Active.'}
+      </p>
+      <button type="button" className="btn btn-sm" onClick={onManage} disabled={busy}>
+        {busy ? 'Opening…' : 'Manage Subscription'}
+      </button>
+    </div>
   );
 }

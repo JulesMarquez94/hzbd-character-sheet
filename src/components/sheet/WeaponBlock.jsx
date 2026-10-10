@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import ItemBrowser from './ItemBrowser.jsx';
-import { ItemIcon, ItemTags, SlotGlyph, SlotTools } from './itemParts.jsx';
+import { ItemFoot, ItemIcon, ItemTags, SlotGlyph, SlotTools } from './itemParts.jsx';
 import CostOrbs from '../CostOrbs.jsx';
 import { CardLine } from '../CardText.jsx';
 import { useCardStack } from '../../context/card-stack.js';
-import { WEAPON_SLOTS, heldItem, itemBurden, rarityColor, wieldModifiers } from '../../lib/items.js';
+import { WEAPON_SLOTS, heldItem, rarityColor, wieldModifiers } from '../../lib/items.js';
 import { getCard, itemEnchantments } from '../../lib/weapons.js';
 import { attackModifiers } from '../../lib/moves.js';
+import { pactWeaponId } from '../../lib/pact.js';
+import { cardTitle } from '../../lib/cardText.js';
 
 /**
  * The Inventory tab's weapon block: the two weapons a character has in hand.
@@ -28,6 +30,7 @@ export default function WeaponBlock({
   unequip,
   addToPack,
   onForge,
+  onScribe,
   readOnly = false,
 }) {
   const [browseSlot, setBrowseSlot] = useState(null);
@@ -48,6 +51,11 @@ export default function WeaponBlock({
         /* What this character carries, not what the codex prints: an Enchanter's
            own work on their own blade is on their sheet. See heldItem. */
         const item = heldItem(character, equipment[slot.key]);
+        /* The Pact of Ordenance's weapon, while its set is held. It cannot be
+           put away or replaced: the browser and the remove button both step
+           aside, and the row says why. Which hand holds it is the Character
+           tab's swap to change, and its form changes over a Long Rest. */
+        const bound = Boolean(item) && pactWeaponId(character) === item.id;
 
         return (
           <section className="weapon-panel" key={slot.key}>
@@ -55,6 +63,7 @@ export default function WeaponBlock({
               <WeaponFace
                 item={item}
                 slot={slot}
+                bound={bound}
                 character={character}
                 stack={stack}
                 readOnly={readOnly}
@@ -99,6 +108,7 @@ export default function WeaponBlock({
           }}
           onAdd={addToPack}
           onForge={onForge}
+          onScribe={onScribe}
           onClose={() => setBrowseSlot(null)}
           readOnly={readOnly}
         />
@@ -114,39 +124,65 @@ function listOr(words) {
   return `${words.slice(0, -1).join(', ')} or ${words[words.length - 1]}`;
 }
 
-function WeaponFace({ item, slot, character, stack, readOnly, onBrowse, onRemove }) {
+function WeaponFace({ item, slot, bound = false, character, stack, readOnly, onBrowse, onRemove }) {
   const cards = (item.abilities ?? []).map(getCard).filter(Boolean);
   const enchantments = itemEnchantments(item);
   /* What this weapon does in *this* character's hands: what is worked into it,
      plus whatever an Enchanter is wearing. See wieldModifiers. */
   const modifiers = wieldModifiers(character, item);
-  const burden = itemBurden(item);
 
   return (
     <>
-      <div className="weapon-head" style={{ borderLeftColor: rarityColor(item) }}>
+      <div
+        className={`item-row weapon-row${bound ? ' weapon-row-pact' : ''}`}
+        style={{ borderLeftColor: rarityColor(item) }}
+      >
         <button
           type="button"
-          className="weapon-head-main"
-          onClick={onBrowse}
-          title={readOnly ? item.name : `${item.name} · tap to swap or send to inventory`}
+          className="item-row-tap"
+          /* A pact-bound weapon has no browser to open: nothing replaces it and
+             nothing puts it away. Its tap reads the item instead, which is where
+             its workings and its lore already live. */
+          onClick={bound ? () => stack?.openItem(item) : onBrowse}
+          title={
+            bound
+              ? `${item.name} · pact-bound. It cannot be put away. Swap hands on the Character tab, reshape it over a Long Rest.`
+              : readOnly
+                ? item.name
+                : `${item.name} · tap to swap or send to inventory`
+          }
         >
-          <ItemIcon item={item} />
-          <span className="weapon-head-body">
-            <span className="weapon-head-line">
-              <span className="weapon-name">{item.name}</span>
-              <span className="equip-slot-label">{slot.label}</span>
+          <span className="item-row-top">
+            {/* The smaller tile, and the only item row on the tab that keeps it.
+                A weapon row is two lines and no more (a weapon's numbers are the
+                cards under it, not chips on it), so the bigger tile would be 10
+                pixels of nothing beside the tags -- and this is the block with
+                the least to spare: two panels, four ability boxes and up to six
+                workings in one 640 that must not scroll. Measured: with the row
+                tile at 48, two Grave-Lantern Blades overlap their panels. */}
+            <ItemIcon item={item} />
+            <span className="item-row-ident">
+              <span className="item-row-line">
+                <span className="item-row-name">{item.name}</span>
+                <span className="equip-slot-label">{slot.label}</span>
+                {bound && <span className="pact-chip">Pact-Bound</span>}
+              </span>
+              <ItemTags item={item} />
             </span>
-            <ItemTags item={item} />
           </span>
         </button>
 
-        <SlotTools
-          item={item}
-          onInfo={() => stack?.openItem(item)}
-          onRemove={readOnly ? null : onRemove}
-          removeTitle={`Put ${item.name} away. It goes to your inventory.`}
-        />
+        {/* Weight, price and Burden, the same three a helm states. The Burden
+            used to be printed again down in the workings strip below, which was
+            the only place on the sheet that said it twice. */}
+        <ItemFoot item={item}>
+          <SlotTools
+            item={item}
+            onInfo={() => stack?.openItem(item)}
+            onRemove={readOnly || bound ? null : onRemove}
+            removeTitle={`Put ${item.name} away. It goes to your inventory.`}
+          />
+        </ItemFoot>
       </div>
 
       {/* A block is a fixed 360x640 and never scrolls: an enchanted weapon
@@ -160,10 +196,11 @@ function WeaponFace({ item, slot, character, stack, readOnly, onBrowse, onRemove
             type="button"
             className="ability-box"
             key={card.id}
-            /* Per card, not per weapon: a Trickster's pending AMBUSH and a
-               Duelist's Martial Move both ride the two attacks and not the shield
-               block beside them, and so does the advantage a one-handed weapon is
-               worth. See attackModifiers in moves.js. */
+            /* Per card, not per weapon: a Trickster's pending AMBUSH rides
+               the two attacks and not the shield block beside them, and so does
+               the advantage a one-handed weapon is worth. See attackModifiers in
+               moves.js. A Martial Move is not in it, because one is added to a
+               swing being paid for rather than to a card being read. */
             onClick={() => stack?.openCard(card, attackModifiers(character, card, modifiers))}
             title={`Open the ${card.name} card`}
           >
@@ -172,7 +209,7 @@ function WeaponFace({ item, slot, character, stack, readOnly, onBrowse, onRemove
             </span>
 
             <span className="ability-box-body">
-              <span className="ability-box-name">{card.name}</span>
+              <span className="ability-box-name">{cardTitle(card)}</span>
               <span className="item-tags">
                 {card.tags.map((tag) => (
                   <span className="item-tag" key={tag}>
@@ -192,10 +229,6 @@ function WeaponFace({ item, slot, character, stack, readOnly, onBrowse, onRemove
           <span className="weapon-enchant-head">
             <span className="weapon-enchant-label">
               Enchanted{modifiers.damage.length > 0 ? ` · ${listOr(modifiers.damage)}` : ''}
-            </span>
-            <span className="item-value" style={{ color: 'var(--haze-glow)' }}>
-              <span className="item-value-num">{burden}</span>
-              Burden
             </span>
           </span>
 

@@ -1,0 +1,19 @@
+id,Name,Tags,AP,WP,Main Effect,Source,Image,Old rank
+printout,RUNEWORK,"Runebearer, Novice Talent, Long Rest",,,"You learn to inscribe spells on your own skin. Only a spell that targets yourself or something you can touch can be inscribed, and an inscribed spell cannot be Overcast or Multicast.
+
+Whenever you take a Long Rest, you can use your Long Rest action to inscribe one spell, to remove one, or both.
+
+You cannot inscribe the same spell twice.
+
+Inscribing a spell permanently reduces your maximum Willpower by that spell Willpower cost. Removing the rune gives it back.
+
+At Rank 1 you inscribe Novice Spells, at Rank 3 Adept Spells, and at Rank 5 Master Spells.",sheet,RUNEWORK.jpg,"R1, R3, R5"
+rune-activation,RUNE ACTIVATION,"Runebearer, Novice Talent, Ability",1,,"Once a round, you can fire one of your inscribed spells for 1 Action Point and no Willpower.
+
+A fired rune cannot be fired again until you take a Long Rest.",sheet,RUNE ACTIVATION.jpg,R1
+recharged,RECHARGED,"Runebearer, Novice Talent, Passive",,,"Whenever you take a Short Rest, you can bring back any number of fired runes whose Willpower costs add up to no more than your Physique.",sheet,RECHARGED.jpg,R2
+runic-network,RUNIC NETWORK,"Runebearer, Adept Talent, Passive",,,"You can pay the Upkeep on up to 2 spells at once when you cast them through your runes.
+
+Your maximum Willpower is increased by half your Physique.",sheet,RUNIC NETWORK.jpg,R3
+instinctive-activation,INSTINCTIVE ACTIVATION,"Runebearer, Master Talent, Passive",,,"Firing a rune no longer costs an Action Point, and you can fire 2 runes a round instead of 1.",sheet,INSTINCTIVE ACTIVATION.jpg,R4
+streamlined-patterns,STREAMLINED PATTERNS,"Runebearer, Master Talent, Passive",,,Your maximum Willpower is increased by your full Physique instead of half of it.,sheet,STREAMLINED PATTERNS.jpg,R5

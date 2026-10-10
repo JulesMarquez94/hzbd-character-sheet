@@ -4,15 +4,18 @@ import UsePrompt from './UsePrompt.jsx';
 import { MinionWindow } from './MinionPick.jsx';
 import { BarChip } from './ActiveBlock.jsx';
 import { EffectRow } from './TurnBlock.jsx';
-import { AttrTile, GroupHead, PipRow, ResourceBar, SkullIcon, StatBox } from './parts.jsx';
+import { AttrTile, GroupHead, PointPool, ResourceBar, SkullIcon, StatBox } from './parts.jsx';
 import useFoldedGroups from './useFoldedGroups.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { ATTRIBUTES } from '../../lib/attributes.js';
 import { damageStyle } from '../../lib/cardText.js';
 import { metersToFeet } from '../../lib/characterModel.js';
-import { minionBar, spendUse } from '../../lib/combatBar.js';
+import { minionBar } from '../../lib/combatBar.js';
+import { usePlayCard } from './usePlayCard.js';
 import { dropEffect, normalizeEffects, nudgeEffect } from '../../lib/combatTurn.js';
 import { minionActor, minionSpend, setMinionEffects, setMinionPool } from '../../lib/minions.js';
+import { minionMath } from '../../lib/statMath.js';
+import { viewUrl } from '../../lib/imageViews.js';
 
 /**
  * The two blocks a creature gets on the Character tab, and they only exist when
@@ -94,18 +97,30 @@ const TOP_LINE = [
     key: 'defense',
     label: 'Armor',
     color: 'var(--stat-armor)',
-    info: 'Flat damage reduction. Nothing for a creature: it wears no gear.',
+    info: 'Flat damage reduction. Nothing for most creatures: they wear no gear, and what a body rose in is printed on it and cannot be changed.',
   },
 ];
 
 /* Defense is the one line that is not the character's own formula. The
-   Developpement Notes: "the draconic ally has a Defense equal to its Grit." */
+   Developpement Notes: "the draconic ally has a Defense equal to its Grit."
+   Which stat a body answers on is its own spec's, so the tooltip names it off
+   the spec rather than naming the ally's: an undead knight answers on its Reflex
+   and an abomination on bare Physique. See `minionDerived` in minions.js. */
+const DEFENSE_WORDS = {
+  grit: 'its Grit',
+  reflex: 'its Reflex',
+  physique: 'its Physique',
+  instinct: 'its Instinct',
+  mind: 'its Mind',
+};
+
 const DEFENSE_LINE = [
   {
     key: 'avoid',
     label: 'Defense',
     color: 'var(--focus-cyan)',
-    info: 'How difficult it is to hit. A draconic ally’s is equal to its Grit.',
+    info: 'How difficult it is to hit.',
+    from: 'defense',
   },
   {
     key: 'reflex',
@@ -131,6 +146,11 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
   const [editing, setEditing] = useState(false);
   const { spec, stats } = minion;
   const tone = minion.scale ? damageStyle(minion.scale.damage) : null;
+
+  /* The same hover arithmetic block 2's tiles carry, off the same file. A
+     creature's numbers are derived like a character's, so the reader who has
+     learned to check a Grit by hovering it should not find this block silent. */
+  const math = useMemo(() => minionMath(minion), [minion]);
 
   const move = (pool, value) => {
     const body = setMinionPool(character, minion, pool, value);
@@ -164,7 +184,7 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
       <div className="minion-id">
         <span className="minion-plate">
           {minion.portrait_url ? (
-            <img src={minion.portrait_url} alt="" />
+            <img src={viewUrl(minion.portrait_url, 'face')} alt="" />
           ) : (
             <span className="minion-plate-empty" aria-hidden="true" />
           )}
@@ -181,16 +201,26 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
           </span>
 
           <span className="minion-tags">
-            {minion.scale ? (
-              <span
-                className="minion-chip minion-chip-scale"
-                style={tone ? { '--scale-tone': tone.color } : undefined}
-              >
-                {minion.scale.label} · {minion.scale.damage}
-              </span>
-            ) : (
-              <span className="minion-chip is-open">No colour chosen</span>
-            )}
+            {/* The colour chip, and only for a body that has a colour to choose.
+                Every undead in the codex has none: a ghoul is a ghoul, and
+                "No colour chosen" on one would be an open question nobody can
+                ever answer. Asked of the spec rather than of the row, so the
+                unanswered state still shows for a creature that does. */}
+            {(spec.scales?.options?.length ?? 0) > 0 &&
+              (minion.scale ? (
+                <span
+                  className="minion-chip minion-chip-scale"
+                  style={tone ? { '--scale-tone': tone.color } : undefined}
+                >
+                  {/* A dragon's chip is its colour and its damage; a companion's
+                      choice is a kind with no type behind it, so the chip stops
+                      at the label. */}
+                  {minion.scale.label}
+                  {minion.scale.damage ? ` · ${minion.scale.damage}` : ''}
+                </span>
+              ) : (
+                <span className="minion-chip is-open">No {spec.scales.noun ?? 'colour'} chosen</span>
+              ))}
             <span className="minion-chip">{minion.talent.name}</span>
 
             {/* "If its health reach 0 it instantly is shown as dead, it cannot
@@ -241,6 +271,7 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
               label={label}
               color={color}
               info={info}
+              math={math[key]}
               value={value}
               suffix={isSpeed ? (isImperial ? 'ft' : 'm') : ''}
             />
@@ -250,12 +281,17 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
 
       {/* ---------- AND THE DEFENSES, UNDER THE SAME HEADING ---------- */}
       <div className="attr-row">
-        {DEFENSE_LINE.map(({ key, label, color, info }) => (
+        {DEFENSE_LINE.map(({ key, label, color, info, from }) => (
           <StatBox
             key={key}
             label={label}
             color={color}
-            info={info}
+            info={
+              from === 'defense'
+                ? `${info} This one’s is equal to ${DEFENSE_WORDS[spec.defense ?? 'instinct'] ?? 'its Instinct'}.`
+                : info
+            }
+            math={math[key]}
             value={Math.floor(Number(stats[key]) || 0)}
           />
         ))}
@@ -278,6 +314,7 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
         max={stats.health_max}
         color="var(--stat-health)"
         readOnly={readOnly}
+        math={math.health_max}
         onChange={(value) => move('health', value)}
       />
 
@@ -287,6 +324,7 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
         max={stats.shield_cap}
         color="var(--stat-shield)"
         readOnly={readOnly}
+        math={math.shield_cap}
         onChange={(value) => move('shield', value)}
       />
 
@@ -311,10 +349,22 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
  * and none of them are. Four buttons rather than two, because dropping 22 Health
  * one tap at a time is not a thing anybody does twice.
  */
-function PoolRow({ label, current, max, color, readOnly, onChange }) {
+function PoolRow({ label, current, max, color, readOnly, onChange, math = null }) {
   return (
     <div className="minion-pool">
-      <ResourceBar label={label} current={current} max={max} color={color} title={label} />
+      {/* The bar's own label is the only thing this ever had to say, so it went
+          in `title` as the native tooltip. Once there is a breakdown to print,
+          repeating the label above it would be the bubble saying "Health" over a
+          sum that is plainly a Health, so the words are dropped and the line
+          stands alone. */}
+      <ResourceBar
+        label={label}
+        current={current}
+        max={max}
+        color={color}
+        title={math ? null : label}
+        math={math}
+      />
 
       {!readOnly && (
         <div className="minion-steps">
@@ -360,6 +410,7 @@ export function MinionActionsBlock({ character, minion, patch, readOnly = false 
   const [request, setRequest] = useState(null);
   const [adding, setAdding] = useState(false);
   const stack = useCardStack();
+  const play = usePlayCard({ character, patch });
 
   const groups = useMemo(() => minionBar(character, minion), [character, minion]);
   const total = groups.reduce((sum, group) => sum + group.moves.length, 0);
@@ -376,11 +427,17 @@ export function MinionActionsBlock({ character, minion, patch, readOnly = false 
      Willpower. */
   const actor = minionActor(character, minion);
   const { stats } = minion;
+  const math = useMemo(() => minionMath(minion), [minion]);
 
   function confirmUse(mode, amount, options) {
-    const body = spendUse(request, actor, mode, amount, options);
-    const write = minionSpend(character, minion, body);
-    if (Object.keys(write).length > 0) patch(write);
+    /* Paid, logged and rolled under the creature's own name, because that is who
+       acted: its cards print its numbers and the row is signed by it. The spend
+       still belongs to the bonded character, which is what `write` folds back.
+       One use paid from two sheets is one line at the table. See minions.js. */
+    play(request, mode, amount, options, {
+      actor,
+      write: (body) => minionSpend(character, minion, body),
+    });
     setRequest(null);
   }
 
@@ -402,41 +459,25 @@ export function MinionActionsBlock({ character, minion, patch, readOnly = false 
         </span>
       </div>
 
-      <div className="pool-row">
-        <div className="pool-head">
-          <span className="pool-label">
-            Action Points
-            <span className="pool-count">
-              {minion.ap}/{stats.ap_max}
-            </span>
-          </span>
-        </div>
-        <PipRow
-          current={minion.ap}
-          max={stats.ap_max}
-          variant="ap"
-          readOnly={readOnly}
-          onChange={(value) => pool('ap', value)}
-        />
-      </div>
+      <PointPool
+        label="Action Points"
+        current={minion.ap}
+        max={stats.ap_max}
+        variant="ap"
+        readOnly={readOnly}
+        math={math.ap_max}
+        onChange={(value) => pool('ap', value)}
+      />
 
-      <div className="pool-row">
-        <div className="pool-head">
-          <span className="pool-label">
-            Reaction Points
-            <span className="pool-count">
-              {minion.reaction}/{stats.reaction_max}
-            </span>
-          </span>
-        </div>
-        <PipRow
-          current={minion.reaction}
-          max={stats.reaction_max}
-          variant="reaction"
-          readOnly={readOnly}
-          onChange={(value) => pool('reaction', value)}
-        />
-      </div>
+      <PointPool
+        label="Reaction Points"
+        current={minion.reaction}
+        max={stats.reaction_max}
+        variant="reaction"
+        readOnly={readOnly}
+        math={math.reaction_max}
+        onChange={(value) => pool('reaction', value)}
+      />
 
       {/* Willpower is not a pool of its own: it spends its bonded's. Said here,
           under the two pools that *are* its own, rather than drawn as a third
@@ -449,6 +490,20 @@ export function MinionActionsBlock({ character, minion, patch, readOnly = false 
           played. The line says why rather than leaving a row of dead chips. */}
       {minion.down && (
         <p className="minion-down">{minion.spec.down ?? 'It is down and cannot act.'}</p>
+      )}
+
+      {/* And a body that has to be woken says whether it has been. "Having the
+          undead minion act requires the necromancer to spend two Action Points
+          to use the Command action. They're not autonomous." So the chips are
+          refused until the press has been made, with the reason on the line
+          rather than on each of them: what is missing is one thing, and it is
+          not on this block. `commanded` is null for every creature the question
+          does not apply to, which is every creature but an undead. See
+          `commandedBy` in minions.js. */}
+      {minion.commanded === false && !minion.down && (
+        <p className="minion-down">
+          Not commanded. Spend the Command on your own turn and it can act until your Turn End.
+        </p>
       )}
 
       {/* ---------- WHAT IT CAN PLAY ----------
@@ -474,7 +529,7 @@ export function MinionActionsBlock({ character, minion, patch, readOnly = false 
                     <BarChip
                       key={move.key}
                       move={move}
-                      readOnly={readOnly || minion.down}
+                      readOnly={readOnly || minion.down || minion.commanded === false}
                       onUse={() =>
                         setRequest({
                           name: move.card?.name ?? move.name,
@@ -532,6 +587,10 @@ export function MinionActionsBlock({ character, minion, patch, readOnly = false 
               onOpen={effect.card ? () => stack?.openCard(effect.card) : null}
               onNudge={(delta) => patch(writeEffects(nudgeEffect(effects, effect.id, delta)))}
               onDrop={() => patch(writeEffects(dropEffect(effects, effect.id)))}
+              /* A creature's stats take riders since 2026-09-20, so a row here
+                 says what it did, exactly as one on a character's block does.
+                 See minionDerived in minions.js. */
+              bends={true}
             />
           ))
         )}

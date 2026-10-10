@@ -1,0 +1,2134 @@
+/**
+ * The bestiary: what the party is fighting.
+ *
+ * A creature is not a character and it is not a minion. A character is a row
+ * somebody owns and edits; a minion is a body a talent set hands to a character
+ * and stores on their sheet. A creature is neither. It is **codex data**, shipped
+ * with the site the way spells and weapons are, and the thing the table actually
+ * plays is an *instance* of one, laid down inside an encounter at a level of its
+ * own. See encounters.js, which owns the instance and never the printed page.
+ *
+ * ----------------------------------------------------------------- the source
+ * The shape is transcribed from `data/Source Temp/Hazebound/Creatures/`, which
+ * holds a blank template and one finished creature:
+ *
+ *   LONG CREATURE NAME                Difficulty:   Minion - Level 1 - 10 XP
+ *   Creature Type Details             Speed 3m(10f) / INI +3
+ *      DEF: 8   HP: 8 (3d4)
+ *      STR: 2  AGI: 2  INT: 2  WIT: 5
+ *   Proficiencies:  Sense:  Language:
+ *      AP: 6   RP: 3   WP: 8
+ *   Blightbolt:                                                  ●●●●
+ *     Ranged Attack. 10m(30f) + WIT - 1d4 + Half WIT Decay Damage
+ *   <the lore paragraph, in italic, at the foot>
+ *
+ * ------------------------------------------------------------- a creature scales
+ * Jules, 2026-08-31: "All enemies should have a level scale option... most enemy
+ * should have a strong stat that reach 12 the max at the same time they hit
+ * level 12. Should have the same stat pattern as others. Just for the conversion
+ * to health or willpower is custom value. Then the rest get bonus set at the
+ * creation."
+ *
+ * So **almost nothing about a creature is a printed number any more.** It is a
+ * shape plus a handful of coefficients, and a level turns those into a stat
+ * block. Which means a Blightgeist can be dropped into a level 9 fight and still
+ * be a Blightgeist.
+ *
+ * The curve is **the character's own**, which is what "the same stat pattern as
+ * others" asks for. A character starts at 4 in each attribute, takes +2 and +1
+ * on two different attributes at level 1, and +1 on two different attributes at
+ * every odd level after (see levelPicks.js). Read against a creature's declared
+ * `primary` and `secondary`:
+ *
+ *   primary    4 + 2 + one per odd level from 3
+ *   secondary  4 + 1 + one per odd level from 3
+ *   the third  4
+ *
+ * plus the creature's own `bonus`, which is the "rest set at the creation" half:
+ * a flat spread that makes a Thornmother slow and enormous and a Blightgeist
+ * frail. **A `bonus` of +1 on the primary is what carries it to 12 at level 12**,
+ * where a character without a lineage tops out at 11.
+ *
+ * What stays custom per creature is exactly what Jules named, and no more:
+ *
+ *   health      `perLevel` and `perPhysique`, where a character is 10 and 10
+ *   willpower   `perLevel`, `perMind` and `flat`, where a character is 2, 2, 10
+ *
+ * And one thing that is not an attribute and has to come from somewhere:
+ *
+ *   avoid       Instinct + `avoid_bonus`, which is exactly how a character's
+ *               Defense works (their Instinct plus what they are wearing), so a
+ *               level 12 Minion is not hit automatically. Jules's ruling. A
+ *               creature wearing a full armor family changes what that base is
+ *               made of, exactly as a character's set does: see CREATURE_ARMOR.
+ *
+ * Speed and Armor stay printed, because neither is an attribute and neither
+ * breaks at level 12 the way an unscaled Defense would.
+ *
+ * ------------------------------------------------------- Health is not rolled
+ * Jules, 2026-09-02: "Health is not rolled." A creature's Health is the number
+ * the conversions produce and nothing else. The design sheet printed a hit die
+ * beside it ("HP: 8 (3d4)") and this file used to derive one, so that the count
+ * always averaged the Health; the ruling supersedes the page the way the Minion
+ * reaction rule supersedes its printed RP: 3, and both supersedes are marked
+ * where they happen.
+ *
+ * ---------------------------------------------------------------- three ranks
+ * Jules, 2026-08-31: "There is 3 type of enemies." They are RANKS below, and
+ * they are data rather than three branches in a component:
+ *
+ *   Minion    "Low health enemies that easy to kill... their number is the
+ *              danger. Cannot get reaction."
+ *   General   "Stronger player level strength enemies, function like players
+ *              with willpower and everything."
+ *   Overlord  "whenever a player take a turn they gain 3 reaction points and
+ *              their action bar is 12 by default. Have more health."
+ *
+ * A rank sets the two point pools and one rule about them, and that is the whole
+ * of it: a Minion's Reaction Points are zero and can never be given, an
+ * Overlord's Action Points are twelve and its Reaction Points arrive three at a
+ * time on every player's turn.
+ *
+ * ------------------------------------------------------- environmental wards
+ * "All of them can have passive that are environmental based like a lich which
+ * has a shield that protects it until a pillar is destroyed."
+ *
+ * That is a passive whose condition is a *thing on the table* rather than
+ * anything a sheet can check, so the sheet does not try. A passive carrying
+ * `ward` is drawn with a switch, the instance remembers which of its wards have
+ * been broken, and the Game Master flips it when the pillars come down. `while`
+ * is the sentence that holds while it stands, printed on the row so nobody has
+ * to open the card to be reminded what they are turning off.
+ *
+ * -------------------------------------------------------- what it shrugs off
+ * A passive may also carry `resist` and `vulnerable`, lists of damage types,
+ * which are that card's prose written as numbers: half of what the type deals,
+ * or double. Four passives carry one — the Mire Hex's bog, the Lich's braziers
+ * and the Brams' paint — and three of the four are behind a ward, so breaking
+ * the ward takes the resistance with it. `foeTypes` in encounters.js is what
+ * reads them, and the arithmetic is combatApply.js's, the same halving a
+ * character's own resistance gets. See riders.js for the channel itself.
+ *
+ * ------------------------------------------------------- and forged creatures
+ * Everything above is the codex's. A table can also forge a creature of its own,
+ * which is a row in the database rather than a page in this file, and it has to
+ * answer to `getCreature` like any other because every reader of a creature goes
+ * through that. So there is one mutable map beside the frozen list, filled from
+ * above by src/lib/customCreatures.js. See the note on FORGED for the two rules
+ * that make it safe, one of which is why `creatureCards` takes card objects as
+ * well as ids.
+ *
+ * This file reads nothing and writes nothing. It is a leaf, like spells.js.
+ */
+
+import { withArt } from './cardArt.js';
+
+/** The ceiling a creature climbs to, and the one characters climb to. Repeated
+    rather than imported: this file is a leaf and characterModel.js is not. */
+export const CREATURE_MAX_LEVEL = 12;
+
+/** What every body on the board starts each attribute at. ATTRIBUTE_BASE's twin,
+    repeated for the same reason. */
+const BASE = 4;
+
+/* ------------------------------------------------------------------ the ranks */
+
+/**
+ * The three kinds of enemy, and what each one does with points.
+ *
+ * `reacts: false` is the Minion's whole rule and it is checked in one place
+ * (`creatureStats`), so a Minion cannot be handed Reaction Points by a rank
+ * default, a printed override, an Overlord's grant or a stray write.
+ *
+ * `perPlayerTurn` is the Overlord's grant. It is read by encounters.js when the
+ * table crosses a turn and by nothing else; a rank with a zero there is simply
+ * never asked.
+ */
+export const RANKS = [
+  {
+    id: 'minion',
+    label: 'Minion',
+    note: 'Their number is the danger.',
+    color: 'var(--rank-minion)',
+    ap: 6,
+    reaction: 0,
+    reacts: false,
+    perPlayerTurn: 0,
+    blurb:
+      'Low Health and quick to kill. A Minion carries passives rather than special moves, and it cannot take reactions: it has no Reaction Points and can never be given any.',
+  },
+  {
+    id: 'general',
+    label: 'General',
+    note: 'A body the party fights like one of their own.',
+    color: 'var(--rank-general)',
+    ap: 6,
+    reaction: 6,
+    reacts: true,
+    perPlayerTurn: 0,
+    blurb:
+      'Player strength. A General runs on the clock a character does, six Action Points and six Reaction Points, and spends its own Willpower on everything it knows.',
+  },
+  {
+    id: 'overlord',
+    label: 'Overlord',
+    note: 'The fight itself.',
+    color: 'var(--rank-overlord)',
+    ap: 12,
+    reaction: 12,
+    reacts: true,
+    perPlayerTurn: 3,
+    blurb:
+      'A boss. An Overlord acts on twelve Action Points instead of six, and gains 3 Reaction Points every time a player takes a turn, so it answers the whole party rather than one of them.',
+  },
+];
+
+const RANK_BY_ID = new Map(RANKS.map((rank) => [rank.id, rank]));
+
+/* ---------------------------------------------------------------- conjured */
+
+/**
+ * The one body on the table that is not a creature: a thing a spell made.
+ *
+ * HARD LIGHT's wall, DEVOURING BLOSSOM's flower, GUARDIAN ANGEL's angel and
+ * SHAPE EARTH's pillar all have Health and Defense the card works out off the
+ * caster, and nothing else: no attributes, no turn, no cards. They are put in
+ * an encounter's pile as rows whose `creature` is this stub, so that every
+ * writer keyed on a creature id still resolves, and whose numbers ride on the
+ * row itself. See `addConjured` in encounters.js.
+ *
+ * Deliberately not in RANKS and not in CREATURES: it is not on the bestiary
+ * shelf, it is never added by hand, and no rank rule is about it.
+ */
+export const CONJURED_ID = 'conjured';
+
+export const CONJURED_RANK = {
+  id: 'conjured',
+  label: 'Conjured',
+  note: 'Made by a spell, and gone when it is.',
+  color: 'var(--haze-glow)',
+  ap: 0,
+  reaction: 0,
+  reacts: false,
+  perPlayerTurn: 0,
+  blurb:
+    'A thing a spell made: a wall, a flower, a guardian. It has Health and Defense and nothing else. It takes no turn of its own. It is gone when its Health is, when its caster rests or when its card says so.',
+};
+
+const CONJURED_CREATURE = {
+  id: CONJURED_ID,
+  name: 'Conjured',
+  type: 'Conjured',
+  rank: 'minion',
+  level: 1,
+  primary: 'physique',
+  secondary: 'instinct',
+  health: { perLevel: 0, perPhysique: 0 },
+  willpower: {},
+  speed_m: 0,
+  armor: 0,
+  xp: 0,
+  cards: [],
+  lore: 'Something a spell put on the table. Read the card that made it for what it does.',
+};
+
+/* ------------------------------------------------------------------ the armor */
+
+/**
+ * What a creature is wearing, as one of the three armor families a character
+ * can wear a full set of.
+ *
+ * Jules, 2026-09-02: "Instead of adding a value to armor let the creator choose
+ * light, heavy or spelled. Let them give a bonus." A creature has no armor
+ * slots to fill, so what it has is the *family*, and the family means exactly
+ * what a full set means for a character: it changes what Defense is built from.
+ * See docs/rulebook.md 7.2, and ARMOR_SETS in items.js, which is the same three
+ * rules for the sheet's own gear.
+ *
+ * Repeated here rather than imported, for the reason CREATURE_MAX_LEVEL and
+ * BASE are repeated: this file is a leaf, and items.js reaches weapons.js, which
+ * reaches back here.
+ *
+ * `base` is which of the creature's numbers Defense starts from, and `half` is
+ * Heavy's rider on top of it. The bonus a Game Master types is `avoid_bonus`,
+ * which is added whatever the family: "flat Defense from gear stacks on top of a
+ * set bonus" is the rulebook's own second ruling, and it is the reason a family
+ * is a choice about the *base* rather than a replacement for the whole number.
+ *
+ * A creature wearing nothing at all is the first entry, and it is what every
+ * printed page in this file is: Defense off Instinct, which is what it always
+ * was, so nothing had to be rewritten when the families arrived.
+ */
+export const CREATURE_ARMOR = [
+  {
+    id: 'none',
+    label: 'None',
+    note: 'Hide, scales, or nothing at all.',
+    base: 'instinct',
+    half: false,
+    active: 'Defense is its Instinct.',
+  },
+  {
+    id: 'light',
+    label: 'Light',
+    note: 'Leather and quickness.',
+    base: 'reflex',
+    half: false,
+    active: 'Defense is equal to its Reflex.',
+  },
+  {
+    id: 'heavy',
+    label: 'Heavy',
+    note: 'Plate. What it wears is what saves it.',
+    base: 'instinct',
+    half: true,
+    active: 'Defense is increased by half its Armor.',
+  },
+  {
+    /* The rulebook and items.js both call this family **Magic Armor**; Jules
+       named it "spelled", which is what backgrounds.js calls it on SPELLED ARMOR
+       MASTERY. The codex's own word wins here so that a creature and a character
+       are read against one table, and the disagreement between those two files
+       is left where it is rather than doubled. */
+    id: 'magic',
+    label: 'Magic',
+    note: 'Worked cloth and wards.',
+    base: 'grit',
+    half: false,
+    active: 'Defense is based on its Grit.',
+  },
+];
+
+const ARMOR_BY_ID = new Map(CREATURE_ARMOR.map((armor) => [armor.id, armor]));
+
+/** The armor family a creature (or a family id) wears. None for anything
+    unknown, which is what every printed page in this file wears. */
+export function getCreatureArmor(value) {
+  const id = typeof value === 'string' ? value : value?.armor_set;
+  return ARMOR_BY_ID.get(id) ?? CREATURE_ARMOR[0];
+}
+
+/** The rank a creature (or a rank id) belongs to. Minion for anything unknown. */
+export function getRank(value) {
+  const id = typeof value === 'string' ? value : value?.rank;
+  return RANK_BY_ID.get(id) ?? RANKS[0];
+}
+
+/* ------------------------------------------------------------- the abilities */
+
+/**
+ * Everything a creature plays or simply is.
+ *
+ * Ordinary codex cards, in the codex's own shape, for the reason `minionCards`
+ * gives: hand one to AbilityCard and it prints, hand one to UsePrompt and it
+ * prices itself, hand one to rollPlan and it says what it rolls. A creature
+ * needed no new component and gets no second grammar.
+ *
+ * `kind: 'creature'` for something it plays and `kind: 'passive'` for something
+ * that is simply true of it, which is the split `isPassive` already makes and
+ * the split the action block draws on: the first list is chips you tap, the
+ * second is rows you read.
+ */
+export const CREATURE_CARDS = withArt([
+  /* ------------------------------------------------------------- Blightgeist
+     Both cards transcribed off Creature - Blightgeist.jpg, cost pips included:
+     four green is 4 Action Points, two green and four purple is 2 and 4. */
+  {
+    id: 'blightbolt',
+    name: 'Blightbolt',
+    summary: 'A bolt of ambient rot, thrown at range for Decay damage.',
+    kind: 'creature',
+    tags: ['Creature', 'Minion', 'Undead'],
+    ap: 4,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'Make a {stat} Ranged Attack {roll} against **an entity** you can see within **10 meters (30 feet)**.\n\n' +
+      'On a hit, you deal [[1d4 + 0.5*stat]] {damage} damage.',
+  },
+  {
+    id: 'blight-surge',
+    name: 'Blight Surge',
+    summary: 'A wave of blight that settles on anything that fails to shrug it off.',
+    kind: 'creature',
+    tags: ['Creature', 'Minion', 'Undead'],
+    ap: 2,
+    wp: 4,
+    stat: 'mind',
+    body:
+      '**An entity** you can see within **10 meters (30 feet)** must make a {stat} skill check against 8 or gain [[1d4]] Blight.',
+  },
+
+  /* ---------------------------------------------------------------- Cinderling */
+  {
+    id: 'ember-rake',
+    name: 'Ember Rake',
+    summary: 'A raking swipe of burning cinder.',
+    kind: 'creature',
+    tags: ['Creature', 'Minion', 'Elemental'],
+    ap: 3,
+    stat: 'instinct',
+    damage: ['Fire'],
+    body:
+      'Make an {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of you.\n\n' +
+      'On a hit, you deal [[1d4 + 0.5*stat]] {damage} damage.',
+  },
+  {
+    id: 'death-throes',
+    name: 'Death Throes',
+    summary: 'It bursts when it dies, and takes whatever is beside it.',
+    kind: 'passive',
+    tags: ['Creature', 'Minion', 'Passive'],
+    body:
+      'When this creature drops to 0 Health, it bursts.\n\n' +
+      '**All entities** within **3 meters (10 feet)** of it must make an {instinct} skill check against 10 or take [[2d4]] {damage:Fire} damage.',
+  },
+
+  /* --------------------------------------------------------- Fenrat Skirmisher */
+  {
+    id: 'gnashing-bite',
+    name: 'Gnashing Bite',
+    summary: 'A quick bite from something that never hunts alone.',
+    kind: 'creature',
+    tags: ['Creature', 'Minion', 'Beast'],
+    ap: 3,
+    stat: 'physique',
+    damage: ['Sharp'],
+    body:
+      'Make a {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of you.\n\n' +
+      'On a hit, you deal [[1d4 + 0.5*stat]] {damage} damage.',
+  },
+  {
+    id: 'pack-tactics',
+    name: 'Pack Tactics',
+    summary: 'It fights better with its litter beside it.',
+    kind: 'passive',
+    tags: ['Creature', 'Minion', 'Passive'],
+    /* Who is standing beside the target is a fact about the table, so it is a
+       box in the swing's own prompt rather than a die the sheet hands out. The
+       same `claims` a tracker rider carries, on a creature's passive: the Game
+       Master ticks it on the Fenrat that is actually flanking. See riders.js,
+       and `offeredRides` in moves.js for where a passive's claims are read. */
+    claims: [
+      {
+        id: 'pack',
+        when: 'if another Fenrat is within 1 meter of the target',
+        advantage: 1,
+        only: 'attack',
+        line: 'Advantage on the Attack Roll while the litter has it surrounded',
+      },
+    ],
+    body:
+      'This creature has advantage on its Attack Rolls against **an entity** that another Fenrat is within **1 meter (3 feet)** of.',
+  },
+
+  /* ----------------------------------------------------------- Hollowed Knight */
+  {
+    id: 'grave-cleave',
+    name: 'Grave Cleave',
+    summary: 'A two-handed swing that carries through to a second body.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Undead'],
+    ap: 4,
+    stat: 'physique',
+    damage: ['Sharp'],
+    body:
+      'Make a {stat} Melee Attack {roll} against **up to 2 entities** within **2 meters (6 feet)** of you.\n\n' +
+      'On a hit, you deal [[2d6 + stat]] {damage} damage.',
+  },
+  {
+    id: 'oathbroken-guard',
+    name: 'Oathbroken Guard',
+    summary: 'It steps in front of a blow meant for something else.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Undead'],
+    ap: 2,
+    wp: 3,
+    stat: 'physique',
+    body:
+      'When **an entity** within **2 meters (6 feet)** of you is hit, you take the damage instead and gain [[2*stat]] Shield against it.',
+  },
+  {
+    id: 'hollow-vigil',
+    name: 'Hollow Vigil',
+    summary: 'What was left standing does not go down easily.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Passive'],
+    body:
+      'The first time this creature would drop to 0 Health, it instead drops to 1 and gains [[3*stat]] Shield.',
+    stat: 'physique',
+  },
+
+  /* ------------------------------------------------------------ Mireborn Hexer */
+  {
+    id: 'mire-hex',
+    name: 'Mire Hex',
+    summary: 'A hex that drags at the legs and holds a body in place.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Humanoid'],
+    ap: 3,
+    wp: 4,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'Make a {stat} Roll {roll} against the Grit of **an entity** you can see within **12 meters (40 feet)**.\n\n' +
+      'On a success, you deal [[2d6 + stat]] {damage} damage and it is rooted for **3 turns**.',
+    sub_name: 'Overcast',
+    sub_body:
+      'You can spend an additional 2 Willpower to target **an additional entity** within range.',
+  },
+  {
+    id: 'drown-the-lungs',
+    name: 'Drown the Lungs',
+    summary: 'Bog water, called into a chest that has no room for it.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Humanoid'],
+    ap: 5,
+    wp: 6,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'Make a {stat} Roll {roll} against the Grit of **all entities** in a **4-meter (13-foot)** area centered on a point you can see within **12 meters (40 feet)**.\n\n' +
+      'On a success, you deal [[3d6 + 2*stat]] {damage} damage, or half as much on a failure.',
+  },
+  {
+    id: 'bog-born',
+    name: 'Bog Born',
+    summary: 'The mire is where it came from and where it is strongest.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Passive'],
+    ward: 'While the mire is unburned',
+    while: 'While the mire around it is unburned, it has resistance to Frost and Decay damage, and it moves through mud at full Movement Speed.',
+    /* What the sentence above is worth in numbers, since 2026-09-19. A creature
+       passive carries `resist` and `vulnerable` the way a lineage card carries
+       `grants`, and the apply arithmetic halves what lands. The ward is what
+       switches it off: break the mire and `foeTypes` stops reading this card.
+       The mud is still the table's, as every speed through terrain is. */
+    resist: ['Frost', 'Decay'],
+    body:
+      'While the mire around it is unburned, this creature has resistance to {damage:Frost} and {damage:Decay} damage, and it moves through mud at its full Movement Speed.\n\n' +
+      'Burn the mire and it loses both.',
+  },
+
+  /* ------------------------------------------------------------ Ashmaw Stalker */
+  {
+    id: 'pounce',
+    name: 'Pounce',
+    summary: 'It closes the distance and lands with its whole weight.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Beast'],
+    ap: 4,
+    stat: 'instinct',
+    damage: ['Blunt'],
+    body:
+      'Leap at **an entity** you can see within **12 meters (40 feet)** and land beside it.\n\n' +
+      'Make an {stat} Melee Attack {roll} against it. On a hit, you deal [[2d6 + stat]] {damage} damage and it is knocked prone.',
+  },
+  {
+    id: 'ashmaw-rend',
+    name: 'Rend',
+    summary: 'Two claws into a body that is already down.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Beast'],
+    ap: 3,
+    stat: 'instinct',
+    damage: ['Sharp'],
+    body:
+      'Make an {stat} Melee Attack {roll} against **an entity** within **2 meters (6 feet)** of you, with advantage if it is prone.\n\n' +
+      'On a hit, you deal [[2d6 + stat]] {damage} damage.',
+  },
+  {
+    id: 'blood-scent',
+    name: 'Blood Scent',
+    summary: 'It knows which of you is already hurt.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Passive'],
+    /* A target's Health is on somebody else's block, so the die is a box the
+       Game Master ticks rather than a number this creature's sheet works out.
+       The same call EXECUTE's makes, for the same clause. */
+    claims: [
+      {
+        id: 'hurt',
+        when: 'if the target is below half its Health',
+        advantage: 1,
+        only: 'attack',
+        line: 'Advantage on the Attack Roll against anything already bleeding',
+      },
+    ],
+    body:
+      'This creature knows the Health of every entity within **30 meters (100 feet)**, and it has advantage on Attack Rolls against any of them below half their Health.',
+  },
+
+  /* ---------------------------------------------------------- Vaultkeeper Lich */
+  {
+    id: 'withering-word',
+    name: 'Withering Word',
+    summary: 'One syllable, and something ages a century in a breath.',
+    kind: 'creature',
+    tags: ['Creature', 'Overlord', 'Undead'],
+    ap: 4,
+    wp: 5,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'Make a {stat} Roll {roll} against the Grit of **an entity** you can see within **20 meters (65 feet)**.\n\n' +
+      'On a success, you deal [[4d6 + 2*stat]] {damage} damage and it cannot restore Health for **3 turns**.',
+  },
+  {
+    id: 'call-the-vault',
+    name: 'Call the Vault',
+    summary: 'The dead of the vault stand up where they fell.',
+    kind: 'creature',
+    tags: ['Creature', 'Overlord', 'Undead'],
+    ap: 6,
+    wp: 8,
+    stat: 'mind',
+    body:
+      'Raise **up to 3 Minions** from the bodies in the vault, at a point you can see within **20 meters (65 feet)**.\n\n' +
+      'They act on your Turn and they last **until the fight ends**.',
+  },
+  {
+    id: 'ward-of-the-four-pillars',
+    name: 'Ward of the Four Pillars',
+    summary: 'Four pillars hold a ward, and the ward holds the lich.',
+    kind: 'passive',
+    tags: ['Creature', 'Overlord', 'Passive'],
+    ward: 'While a pillar still stands',
+    /* "this creature takes no damage: every hit is spent on the ward instead."
+       The only card in the codex that stops damage outright rather than halving
+       it, and the whole of what the switch above turns off. Wired 2026-09-20
+       with the damage channel's third setting. */
+    immune: ['All'],
+    while: 'While any of the four pillars still stands, no damage reaches its Health.',
+    body:
+      'While any of the four pillars still stands, this creature takes no damage: every hit is spent on the ward instead.\n\n' +
+      'Bring down all four and the ward falls with them.',
+  },
+
+  /* ----------------------------------------------------------- Thornmother */
+  {
+    id: 'thorn-volley',
+    name: 'Thorn Volley',
+    summary: 'The grove fires, and it fires at everyone.',
+    kind: 'creature',
+    tags: ['Creature', 'Overlord', 'Plant'],
+    ap: 5,
+    wp: 4,
+    stat: 'physique',
+    damage: ['Sharp'],
+    body:
+      'Make a {stat} Ranged Attack {roll} against **all entities** you can see within **15 meters (50 feet)**.\n\n' +
+      'On a hit, you deal [[3d6 + stat]] {damage} damage.',
+  },
+  {
+    id: 'strangling-roots',
+    name: 'Strangling Roots',
+    summary: 'Roots come up under a body and do not let go.',
+    kind: 'creature',
+    tags: ['Creature', 'Overlord', 'Plant'],
+    ap: 4,
+    wp: 6,
+    stat: 'physique',
+    damage: ['Blunt'],
+    body:
+      'Make a {stat} Roll {roll} against the Reflex of **up to 3 entities** you can see within **15 meters (50 feet)**.\n\n' +
+      'On a success, each is rooted and takes [[2d6 + stat]] {damage} damage at every Turn Start until it breaks free.',
+  },
+  {
+    id: 'rooted-in-the-grove',
+    name: 'Rooted in the Grove',
+    summary: 'While the grove lives, so does she.',
+    kind: 'passive',
+    tags: ['Creature', 'Overlord', 'Passive'],
+    ward: 'While the grove burns unchecked',
+    while: 'While the grove is unburned, she restores 20 Health at every Turn Start.',
+    body:
+      'While the grove around her is unburned, this creature restores [[20]] Health at every Turn Start.\n\n' +
+      'Set the grove alight and it stops.',
+  },
+
+  /* ------------------------------------------------------- Emberthrone Tyrant */
+  {
+    id: 'tyrants-breath',
+    name: "Tyrant's Breath",
+    summary: 'A cone of throne-fire, and nowhere in it is safe.',
+    kind: 'creature',
+    tags: ['Creature', 'Overlord', 'Dragon'],
+    ap: 6,
+    wp: 6,
+    stat: 'physique',
+    damage: ['Fire'],
+    body:
+      'Make a {stat} Roll {roll} against the Reflex of **all entities** in a **12-meter (40-foot)** cone in front of you.\n\n' +
+      'On a success, you deal [[5d6 + 2*stat]] {damage} damage, or half as much on a failure.',
+  },
+  {
+    id: 'wing-buffet',
+    name: 'Wing Buffet',
+    summary: 'One beat of the wings, and the front rank is on its back.',
+    kind: 'creature',
+    tags: ['Creature', 'Overlord', 'Dragon'],
+    ap: 3,
+    stat: 'physique',
+    damage: ['Blunt'],
+    body:
+      'Make a {stat} Roll {roll} against the Reflex of **all entities** within **4 meters (13 feet)** of you.\n\n' +
+      'On a success, you deal [[2d6 + stat]] {damage} damage and push it **6 meters (20 feet)** away, knocking it prone.',
+  },
+  {
+    id: 'throne-of-embers',
+    name: 'Throne of Embers',
+    summary: 'It burns hotter the longer the braziers burn.',
+    kind: 'passive',
+    tags: ['Creature', 'Overlord', 'Passive'],
+    ward: 'While a brazier is lit',
+    while: 'While a brazier is lit, its damage is Elevated by 1 and it has resistance to Fire damage.',
+    /* Half of the sentence in numbers. The Elevate is what the throne does to
+       its *own* swings and rides nothing here, because a creature's damage is
+       already scaled on its spec: the resistance is what happens to damage
+       arriving, which is what this channel is. Douse the braziers and the ward
+       takes it off. */
+    resist: ['Fire'],
+    body:
+      'While any of the six braziers is lit, this creature has resistance to {damage:Fire} damage and its damage is Elevated by 1.\n\n' +
+      'Douse them all and both go out with them.',
+  },
+  /* ==================================================================== PAINT
+     The Brams and their paint, 2026-09-10. Ten copies of the painter Abram
+     Hollins, four kinds of Paintling and three commanders, written for the
+     one-shot Nine Blank Canvases and shaped so any table can drop them in.
+     Every copy is oil paint through and through (Paint Body) and hears the
+     other copies think (The Chorus). The man himself is neither, which is the
+     whole puzzle of the one-shot. Shared cards first, then each body's own. */
+  {
+    id: 'paint-body',
+    name: 'Paint Body',
+    summary: 'Oil paint all the way through: it shrugs off blows and burns like a rag.',
+    kind: 'passive',
+    tags: ['Creature', 'Paint', 'Passive'],
+    /* The only creature in the codex that carries both halves, and it has no
+       ward to switch either off: a Bram is paint until it is gone. A club does
+       half and a torch does double. */
+    resist: ['Blunt'],
+    vulnerable: ['Fire'],
+    body:
+      'This creature is oil paint all the way through. It has resistance to {damage:Blunt} damage and is vulnerable to {damage:Fire} damage.\n\n' +
+      'What it bleeds is paint, and what it leaves behind is a stain.',
+  },
+  {
+    id: 'paint-chorus',
+    name: 'The Chorus',
+    summary: 'It hears every other copy think, all day, and they hear it.',
+    kind: 'passive',
+    tags: ['Creature', 'Paint', 'Passive'],
+    body:
+      'This creature hears the thoughts of every other copy of its painter, and they hear its. It knows where each of them is and what each is doing, and a copy can never surprise it.\n\n' +
+      'When it dies, the canvas it climbed off fills back in with its portrait, exactly as it was painted, and every other copy loses one voice from its head.',
+  },
+  {
+    id: 'corrosive-paint',
+    name: 'Corrosive Paint',
+    summary: 'A glob of paint that eats what it lands on.',
+    kind: 'creature',
+    tags: ['Creature', 'Paint'],
+    ap: 3,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'Make a {stat} Ranged Attack {roll} against **an entity** you can see within **9 meters (30 feet)**.\n\n' +
+      'On a hit, you deal [[2d6 + stat]] {damage} damage.',
+  },
+  {
+    id: 'paint-splash',
+    name: 'Splash',
+    summary: 'It throws itself at you.',
+    kind: 'creature',
+    tags: ['Creature', 'Minion', 'Paint'],
+    ap: 3,
+    stat: 'instinct',
+    damage: ['Decay'],
+    body:
+      'Make an {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of you.\n\n' +
+      'On a hit, you deal [[1d4 + 0.5*stat]] {damage} damage.',
+  },
+  {
+    id: 'paint-spit',
+    name: 'Spit',
+    summary: 'A fleck of paint, spat at range.',
+    kind: 'creature',
+    tags: ['Creature', 'Minion', 'Paint'],
+    ap: 3,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'Make a {stat} Ranged Attack {roll} against **an entity** you can see within **6 meters (20 feet)**.\n\n' +
+      'On a hit, you deal [[1d4 + 0.5*stat]] {damage} damage.',
+  },
+  {
+    id: 'paint-palette-knife',
+    name: 'Palette Knife',
+    summary: "A painter's blade, held the way a painter holds it.",
+    kind: 'creature',
+    tags: ['Creature', 'Paint'],
+    ap: 2,
+    stat: 'instinct',
+    damage: ['Sharp'],
+    body:
+      'Make an {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of you.\n\n' +
+      'On a hit, you deal [[1d6 + stat]] {damage} damage.',
+  },
+
+  /* ------------------------------------------------------------ the Face Taker */
+  {
+    id: 'bram-stolen-face',
+    name: 'Stolen Face',
+    summary: "While he wears the painter's face, nothing gets past it.",
+    kind: 'passive',
+    tags: ['Creature', 'Overlord', 'Paint', 'Passive'],
+    ward: 'While he wears the face',
+    while: 'While he wears the face, his Health cannot fall below half. Damage past that is spent on the face.',
+    body:
+      'While this creature wears the stolen face, its Health cannot fall below half of its maximum. Damage that would take it lower is spent on the face instead.\n\n' +
+      'When that happens the face slides off whole and can be worn again by its owner. This creature takes no action on its next turn, gains Shield up to its cap and fights on with Tongues and Paint Flood.',
+  },
+  {
+    id: 'bram-tongues',
+    name: 'Tongues',
+    summary: 'Long tongues of streaked paint, each carrying something different.',
+    kind: 'creature',
+    tags: ['Creature', 'Overlord', 'Paint'],
+    ap: 4,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'Make a {stat} Roll {roll} against the Reflex of **up to 2 entities** within **4 meters (13 feet)** of you.\n\n' +
+      'On a success, you deal [[1d6 + stat]] {damage} damage, and roll [[1d6]] for what the tongue carried: 1 poisoned, 2 blinded **until its next Turn End**, 3 frightened of you for **2 turns**, 4 asleep, 5 one stack of Bleed, 6 knocked prone.',
+  },
+  {
+    id: 'bram-paint-flood',
+    name: 'Paint Flood',
+    summary: 'The whole room, under paint.',
+    kind: 'creature',
+    tags: ['Creature', 'Overlord', 'Paint'],
+    ap: 6,
+    wp: 4,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'Make a {stat} Roll {roll} against the Grit of **all entities** within **6 meters (20 feet)** of you.\n\n' +
+      'On a success, you deal [[2d6 + stat]] {damage} damage, or half as much on a failure.',
+  },
+  {
+    id: 'bram-nine-voices',
+    name: 'Nine Voices',
+    summary: 'He is counting the others, and he can hear when one stops.',
+    kind: 'passive',
+    tags: ['Creature', 'Overlord', 'Paint', 'Passive'],
+    body:
+      'This creature knows where every other copy of its painter is. Whenever one of them dies, it hears the voice stop and gains 3 Reaction Points.\n\n' +
+      'Asked how many voices it hears, it says nine. Every honest copy hears eight.',
+  },
+
+  /* ------------------------------------------------------------ Wriggly Bram */
+  {
+    id: 'bram-wriggle',
+    name: 'Wriggle',
+    summary: 'Legs everywhere, and none of them where you were looking.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 2,
+    wp: 2,
+    stat: 'mind',
+    body:
+      'Make a {stat} Roll {roll} against the Grit of **all entities** within **6 meters (20 feet)** that can see you.\n\n' +
+      'On a success, each has disadvantage on Attack Rolls for **2 turns**.',
+  },
+
+  /* -------------------------------------------------------------- Tumor Bram */
+  {
+    id: 'bram-yes-or-no',
+    name: 'Yes or No',
+    summary: 'Two sounds are all it has left, and both are true.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 1,
+    stat: 'mind',
+    body:
+      'Answer one yes-or-no question put to you with the sound that means yes or the sound that means no.\n\n' +
+      'This creature cannot lie and cannot say anything else.',
+  },
+  {
+    id: 'bram-agony',
+    name: 'Agony',
+    summary: 'It grows back faster than it can be cut.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    body:
+      'This creature never attacks and cannot move from where it lies.\n\n' +
+      'At its Turn Start it restores all Health it has lost since its last Turn Start, unless it took {damage:Decay} damage in between.',
+  },
+
+  /* ------------------------------------------------------------- Bright Bram */
+  {
+    id: 'bram-stitching-strands',
+    name: 'Stitching Strands',
+    summary: 'Strands of dried paint that sew a wound shut.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 4,
+    wp: 2,
+    stat: 'mind',
+    body:
+      '**An entity** you touch restores [[2d6 + 2*stat]] Health and sheds poisoned and Bleed. Each entity can be stitched once an hour.\n\n' +
+      'For every 3 copies of your painter that have died, add [[1d6]] to the Health restored.',
+  },
+  {
+    id: 'bram-dance-of-light',
+    name: 'Dance of Light',
+    summary: 'He sways, and the room goes white.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 4,
+    wp: 3,
+    stat: 'mind',
+    damage: ['Sacred'],
+    body:
+      'Make a {stat} Roll {roll} against the Grit of **all entities** within **6 meters (20 feet)** that can see you.\n\n' +
+      'On a success, you deal [[1d6 + stat]] {damage} damage and each is blinded **until its next Turn End**.',
+  },
+  {
+    id: 'bram-rooted',
+    name: 'Rooted in the Closet',
+    summary: 'He cannot leave, so he sends a piece of himself.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    body:
+      'This creature cannot take the Move or Jump action and cannot be pushed or pulled.\n\n' +
+      'Once a fight, it may spend 3 Action Points to split off a Paintling within **1.5 meters (5 feet)** of itself. The Paintling acts on its own turn and lasts **until the fight ends**.',
+  },
+
+  /* ------------------------------------------------------------- Shadow Bram */
+  {
+    id: 'bram-hypnotic-sway',
+    name: 'Hypnotic Sway',
+    summary: 'Watch the dark move for long enough and you are gone.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 3,
+    wp: 3,
+    stat: 'mind',
+    body:
+      'Make a {stat} Roll {roll} against the Grit of **all entities** within **6 meters (20 feet)** that can see you.\n\n' +
+      'On a success, each falls asleep.',
+  },
+  {
+    id: 'bram-dont-look',
+    name: "Don't Look At Me",
+    summary: 'In the dark it is nowhere until it strikes.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    body:
+      'In darkness this creature is hidden until it attacks, and attacks against it are made with disadvantage as if it stood in partial cover. A light within **3 meters (10 feet)** of it ends both.\n\n' +
+      'If every light goes out and nothing attacks it for a turn, it stops fighting.',
+  },
+
+  /* ---------------------------------------------------------- Bram Who Bites */
+  {
+    id: 'bram-bite',
+    name: 'Bite',
+    summary: 'One of the jaws gets you.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 3,
+    stat: 'physique',
+    damage: ['Sharp'],
+    body:
+      'Make a {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of you.\n\n' +
+      'On a hit, you deal [[2d6 + stat]] {damage} damage and it gains one stack of Bleed.',
+  },
+  {
+    id: 'bram-bite-again',
+    name: 'Bite Again and Again',
+    summary: 'Three jaws, one target, no control.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 4,
+    stat: 'physique',
+    damage: ['Sharp'],
+    body:
+      'Bite **an entity** within **1 meter (3 feet)** of you three times. Each bite is a {stat} Melee Attack {roll}.\n\n' +
+      'On each hit, you deal [[1d6 + stat]] {damage} damage and it gains one stack of Bleed.',
+  },
+  {
+    id: 'bram-countless-jaws',
+    name: 'Countless Jaws',
+    summary: 'Every mouth he has, at once.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 5,
+    wp: 2,
+    stat: 'physique',
+    damage: ['Sharp'],
+    body:
+      'Bite **an entity** within **1 meter (3 feet)** of you five times. Each bite is a {stat} Melee Attack {roll}.\n\n' +
+      'On each hit, you deal [[1d4 + 0.5*stat]] {damage} damage and it gains one stack of Bleed.',
+  },
+  {
+    id: 'bram-reluctant-jaws',
+    name: 'Reluctant Jaws',
+    summary: 'It does not mean to. It bites anyway.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    body:
+      'Any entity that ends its turn within **1 meter (3 feet)** of this creature takes [[1d6]] {damage:Sharp} damage while it apologises. No roll is made and no Bleed follows.\n\n' +
+      'Something that calms it stops this for **1 hour**, and so does the death of three copies of its painter.',
+  },
+
+  /* ------------------------------------------------------------- Scared Bram */
+  {
+    id: 'bram-panic-dance',
+    name: 'Panic Dance',
+    summary: 'His fear is catching.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 3,
+    wp: 3,
+    stat: 'mind',
+    body:
+      'Make a {stat} Roll {roll} against the Grit of **all entities** within **6 meters (20 feet)** that can see you.\n\n' +
+      'On a success, each is frightened of you for **3 turns**.',
+  },
+  {
+    id: 'bram-bolt-hole',
+    name: 'Bolt-hole',
+    summary: 'A wardrobe, a crate, a cupboard. Anything with a door.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    body:
+      'This creature hides in furniture. Inside its bolt-hole it has total cover until it comes out, and nothing can target it.\n\n' +
+      'The bolt-hole has 30 Health and Armor 2. Breaking it open makes the creature hostile.',
+  },
+
+  /* -------------------------------------------------------------- Toxic Bram */
+  {
+    id: 'bram-fling-goop',
+    name: 'Fling Goop',
+    summary: 'Green everywhere, and all of it poison.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 4,
+    wp: 2,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'Make a {stat} Roll {roll} against the Grit of **all entities** within **6 meters (20 feet)** of you.\n\n' +
+      'On a success, you deal [[1d6 + stat]] {damage} damage and each is poisoned.',
+  },
+  {
+    id: 'bram-split',
+    name: 'Split',
+    summary: 'Hit it once and there are three of it.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    body:
+      'The first time this creature takes damage, at its next Turn Start it splits: two Toxic Fragments appear within **1.5 meters (5 feet)** of it and act on their own turns.\n\n' +
+      'Its Health cannot fall below 1 while either Fragment lives.',
+  },
+
+  /* ------------------------------------------------------------ Godhead Bram */
+  {
+    id: 'bram-hypnotic-radiance',
+    name: 'Hypnotic Radiance',
+    summary: 'Look upon him and lower your weapon.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 3,
+    wp: 3,
+    stat: 'mind',
+    body:
+      'Make a {stat} Roll {roll} against the Grit of **an entity** you can see within **9 meters (30 feet)**.\n\n' +
+      'On a success, for **2 turns** it cannot make an Attack Roll against you.',
+  },
+  {
+    id: 'bram-divine-semblance',
+    name: 'Divine Semblance',
+    summary: 'The act is very good. It is still an act.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    body:
+      'While the act holds, an entity that has not seen through it is frightened of this creature for the first **2 turns** of a fight.\n\n' +
+      'Told plainly that it is a painting, it drops the act, and this with it.',
+  },
+
+  /* ----------------------------------------------------------- Abram Hollins */
+  {
+    id: 'bram-true-hand',
+    name: 'True Hand',
+    summary: 'Whatever he paints, he has made.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Passive'],
+    body:
+      'What this creature paints with its own palette becomes real. A door takes it an hour and a small object a day.\n\n' +
+      'It is a man under the paint that weeps from it, and nothing that is true of a Paint Body is true of him.',
+  },
+  {
+    id: 'bram-four-hands',
+    name: 'Four Hands',
+    summary: 'Two more than he was born with, and all of them steady.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Passive'],
+    body:
+      'This creature has four arms. It can hold two things at once and still paint, and the Inventory action costs it nothing.',
+  },
+
+  /* ------------------------------------------------------------ the Paintlings */
+  {
+    id: 'paint-borrowed-eyes',
+    name: 'Borrowed Eyes',
+    summary: 'Whoever it split from is watching through it.',
+    kind: 'passive',
+    tags: ['Creature', 'Minion', 'Paint', 'Passive'],
+    body:
+      'Whoever this creature split from sees through its eyes, and cannot be surprised by anything it has seen.',
+  },
+  {
+    id: 'paint-lamp-shy',
+    name: 'Lamp-shy',
+    summary: 'A piece of the dark that moves.',
+    kind: 'passive',
+    tags: ['Creature', 'Minion', 'Paint', 'Passive'],
+    body:
+      'In darkness this creature is hidden until it attacks. A light within **3 meters (10 feet)** of it ends that.',
+  },
+  {
+    id: 'paint-smother',
+    name: 'Smother',
+    summary: 'It goes for the face.',
+    kind: 'creature',
+    tags: ['Creature', 'Minion', 'Paint'],
+    ap: 3,
+    stat: 'instinct',
+    damage: ['Decay'],
+    body:
+      'Make an {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of you.\n\n' +
+      'On a hit, you deal [[1d4 + 0.5*stat]] {damage} damage.',
+  },
+  {
+    id: 'paint-piece-of-the-whole',
+    name: 'Piece of the Whole',
+    summary: 'Kill the pieces first.',
+    kind: 'passive',
+    tags: ['Creature', 'Minion', 'Paint', 'Passive'],
+    body:
+      'This creature is a piece of a larger copy. While it lives, the Health of the copy it split from cannot fall below 1.',
+  },
+
+  /* ----------------------------------------------------------- the commanders */
+  {
+    id: 'paint-call-the-paintlings',
+    name: 'Call the Paintlings',
+    summary: 'It knocks on the wall and the wall answers.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 5,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'Call **up to 2 Paintlings** off the nearest wet paint, at a point you can see within **9 meters (30 feet)**.\n\n' +
+      'They act on their own turns and last **until the fight ends**.',
+  },
+  {
+    id: 'paint-prime-coat',
+    name: 'Prime Coat',
+    summary: 'A fresh layer over everyone it is fond of.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 3,
+    wp: 2,
+    stat: 'mind',
+    body:
+      '**All allied paint creatures** within **6 meters (20 feet)** of you gain [[stat]] Shield.',
+  },
+  {
+    id: 'paint-knife-sweep',
+    name: 'Knife Sweep',
+    summary: 'One wide stroke through two bodies.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 4,
+    stat: 'physique',
+    damage: ['Sharp'],
+    body:
+      'Make a {stat} Melee Attack {roll} against **up to 2 entities** within **2 meters (6 feet)** of you.\n\n' +
+      'On a hit, you deal [[2d6 + stat]] {damage} damage.',
+  },
+  {
+    id: 'paint-laid-on-thick',
+    name: 'Laid On Thick',
+    summary: 'Layer on layer, and every layer takes a blow.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    stat: 'physique',
+    body:
+      'At its Turn Start this creature gains [[stat]] Shield.\n\n' +
+      'An ally within **1.5 meters (5 feet)** behind it counts as standing in partial cover.',
+  },
+  {
+    id: 'paint-smear',
+    name: 'Smear',
+    summary: 'A handful of paint across the eyes.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 3,
+    stat: 'instinct',
+    damage: ['Decay'],
+    body:
+      'Make an {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of you.\n\n' +
+      'On a hit, you deal [[1d6 + stat]] {damage} damage and it is blinded **until its next Turn End**.',
+  },
+  {
+    id: 'paint-wet-step',
+    name: 'Wet Step',
+    summary: 'It fits through anything and hides in what it spilled.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    body:
+      'This creature moves through any gap a hand fits through, and it can take the Hide action while seen if it is standing in spilled paint.\n\n' +
+      'It leaves wet paint wherever it has stood.',
+  },
+]);
+
+const CARD_BY_ID = new Map(CREATURE_CARDS.map((card) => [card.id, card]));
+
+/** One creature card by id, or null. Named apart from `getCard` on purpose:
+    this file is a leaf and cannot reach the codex registry that holds them all. */
+export function getCreatureCard(id) {
+  return CARD_BY_ID.get(String(id ?? '')) ?? null;
+}
+
+/* -------------------------------------------------------------- the bestiary */
+
+/**
+ * Nine creatures, three of each rank, so every rule above has something on the
+ * board proving it (Jules, 2026-08-31: "Imagine three of each for the test").
+ * The paint faction of 2026-09-10 sits beside them: ten Brams, four Paintlings
+ * and three commanders, written for the one-shot Nine Blank Canvases.
+ *
+ * The Blightgeist is not one of the nine invented: it is the finished creature
+ * off the design sheet, and its `bonus` and coefficients are set so that **at
+ * its own printed level 1 it prints its own page**: STR 2, WIT 5, DEF 8, HP 8
+ * (3d4), WP 8. Everything above level 1 is the curve's.
+ *
+ * `level` is the level the creature is *written* at, and it is only a default:
+ * an encounter sets its own (see `foeLevel` in encounters.js).
+ *
+ * `xp` is XP **per level**, so the Difficulty line reads its own arithmetic at
+ * whatever level it is standing at.
+ */
+export const CREATURES = [
+  /* ================================================================ MINIONS */
+
+  {
+    /* Transcribed from data/Source Temp/Hazebound/Creatures/Creature -
+       Blightgeist.jpg. Two readings are marked here and neither is a choice
+       about what this creature is:
+
+         attributes  the page prints STR 2, AGI 2, INT 2, WIT 5. The live system
+                     runs on three, and the page's own Blightbolt casts off WIT,
+                     so WIT is the caster's attribute and lands on Mind. STR is
+                     Physique and AGI is Instinct. INT has nowhere of its own to
+                     go, and it printed the same 2 as STR, so nothing is lost.
+         reactions   the page prints RP: 3, and a Minion now cannot take
+                     reactions at all. The rule wins over the page: this is 0,
+                     and `creatureStats` is where it is forced.
+
+       At level 1 the numbers below reproduce the page exactly. Checked by
+       `npm run lint:creatures`, which is the only reason to trust that sentence. */
+    id: 'blightgeist',
+    name: 'Blightgeist',
+    rank: 'minion',
+    level: 1,
+    xp: 10,
+    type: 'Small Undead',
+    primary: 'mind',
+    secondary: 'instinct',
+    bonus: { physique: -2, instinct: -3, mind: -1 },
+    health: { perLevel: 4, perPhysique: 2 },
+    willpower: { perLevel: 1, perMind: 1, flat: 2 },
+    avoid_bonus: 6,
+    armor: 0,
+    speed_m: 3,
+    cards: ['blightbolt', 'blight-surge'],
+    /* The foot of the page, with its one em dash restructured into a colon.
+       Punctuation is the only edit allowed on the designer's prose. See
+       docs/text-style.md. */
+    lore:
+      'Blightgeists are eerie manifestations of the ambient blight, clinging to existence with an insidious purpose: to propagate their malevolent blight onto any living beings unfortunate enough to cross their path.',
+  },
+
+  {
+    id: 'cinderling',
+    name: 'Cinderling',
+    rank: 'minion',
+    level: 2,
+    xp: 8,
+    type: 'Small Elemental',
+    primary: 'instinct',
+    secondary: 'physique',
+    bonus: { physique: -1, instinct: -2, mind: -3 },
+    health: { perLevel: 2, perPhysique: 1 },
+    willpower: { perLevel: 0, perMind: 0, flat: 0 },
+    avoid_bonus: 4,
+    armor: 0,
+    speed_m: 5,
+    cards: ['ember-rake', 'death-throes'],
+    lore:
+      'A cinderling is what is left when a fire is put out badly. It has no interest in warmth and no memory of what it burned, only the certainty that it is going out soon and the will to take something with it.',
+  },
+
+  {
+    id: 'fenrat-skirmisher',
+    name: 'Fenrat Skirmisher',
+    rank: 'minion',
+    level: 1,
+    xp: 10,
+    type: 'Small Beast',
+    primary: 'instinct',
+    secondary: 'physique',
+    bonus: { physique: -1, instinct: -1, mind: -3 },
+    health: { perLevel: 1, perPhysique: 1.5 },
+    willpower: { perLevel: 0, perMind: 0, flat: 0 },
+    avoid_bonus: 4,
+    armor: 0,
+    speed_m: 6,
+    cards: ['gnashing-bite', 'pack-tactics'],
+    lore:
+      'Fenrats are the fen made ambulatory. One is a nuisance you kick away. Nine of them have already decided which of you is slowest, and they were counting long before you noticed them.',
+  },
+
+  /* =============================================================== GENERALS */
+
+  {
+    id: 'hollowed-knight',
+    name: 'Hollowed Knight',
+    rank: 'general',
+    level: 4,
+    xp: 110,
+    type: 'Medium Undead',
+    primary: 'physique',
+    secondary: 'instinct',
+    bonus: { physique: 1, instinct: -2, mind: -2 },
+    health: { perLevel: 8, perPhysique: 8 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 6,
+    armor: 4,
+    speed_m: 4,
+    cards: ['grave-cleave', 'oathbroken-guard', 'hollow-vigil'],
+    lore:
+      'The armor is still buckled the way its squire buckled it, the morning of a battle nobody now remembers the name of. Whatever is inside it has kept every habit of the knight and none of the reasons.',
+  },
+
+  {
+    id: 'mireborn-hexer',
+    name: 'Mireborn Hexer',
+    rank: 'general',
+    level: 5,
+    xp: 130,
+    type: 'Medium Humanoid',
+    primary: 'mind',
+    secondary: 'instinct',
+    bonus: { physique: -1, instinct: -1, mind: 1 },
+    health: { perLevel: 6, perPhysique: 6 },
+    willpower: { perLevel: 2, perMind: 2, flat: 10 },
+    avoid_bonus: 4,
+    armor: 0,
+    speed_m: 4,
+    cards: ['mire-hex', 'drown-the-lungs', 'bog-born'],
+    lore:
+      'They were villagers once, on ground that went under and stayed under. What they learned down there they learned from the water, and the water has never once been asked to give something back.',
+  },
+
+  {
+    id: 'ashmaw-stalker',
+    name: 'Ashmaw Stalker',
+    rank: 'general',
+    level: 4,
+    xp: 110,
+    type: 'Large Beast',
+    primary: 'physique',
+    secondary: 'instinct',
+    bonus: { physique: 1, instinct: 1, mind: -2 },
+    health: { perLevel: 8, perPhysique: 8 },
+    willpower: { perLevel: 2, perMind: 2, flat: 6 },
+    avoid_bonus: 4,
+    armor: 1,
+    speed_m: 8,
+    cards: ['pounce', 'ashmaw-rend', 'blood-scent'],
+    lore:
+      'It hunts the burn scars, where the ash holds a scent for weeks and nothing else is patient enough to read one. You will hear it once, behind you, and that will be the only warning it intends to give.',
+  },
+
+  /* =============================================================== OVERLORDS */
+
+  {
+    /* The lich Jules named: "a lich which has a shield that protects it until a
+       pillar is destroyed". Its ward is the first environmental passive in the
+       codex and the shape every other one follows. */
+    id: 'vaultkeeper-lich',
+    name: 'Vaultkeeper Lich',
+    rank: 'overlord',
+    level: 8,
+    xp: 500,
+    type: 'Medium Undead',
+    primary: 'mind',
+    secondary: 'instinct',
+    bonus: { physique: -1, instinct: 0, mind: 1 },
+    health: { perLevel: 14, perPhysique: 14 },
+    willpower: { perLevel: 2, perMind: 3, flat: 10 },
+    avoid_bonus: 6,
+    armor: 2,
+    speed_m: 4,
+    cards: ['withering-word', 'call-the-vault', 'ward-of-the-four-pillars'],
+    lore:
+      'It has not left the vault in four hundred years and does not consider this an imprisonment. Everything it ever wanted is shelved here, catalogued, and it will explain the filing system to you at length before it kills you.',
+  },
+
+  {
+    id: 'thornmother',
+    name: 'Thornmother',
+    rank: 'overlord',
+    level: 9,
+    xp: 650,
+    type: 'Huge Plant',
+    primary: 'physique',
+    secondary: 'mind',
+    /* Instinct 1 at every level: a grove does not dodge. What keeps her alive is
+       eight Armor and two hundred Health, which is the shape of the thing. */
+    bonus: { physique: 1, instinct: -3, mind: 0 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 9,
+    armor: 8,
+    speed_m: 3,
+    cards: ['thorn-volley', 'strangling-roots', 'rooted-in-the-grove'],
+    lore:
+      'The grove is not where she lives. The grove is her, out to the last seedling, and every axe taken to it these two hundred years is a wound she has counted and kept.',
+  },
+
+  {
+    id: 'emberthrone-tyrant',
+    name: 'Emberthrone Tyrant',
+    rank: 'overlord',
+    level: 10,
+    xp: 900,
+    type: 'Huge Dragon',
+    primary: 'physique',
+    secondary: 'mind',
+    bonus: { physique: 1, instinct: 2, mind: 1 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 10 },
+    avoid_bonus: 8,
+    armor: 5,
+    speed_m: 7,
+    cards: ['tyrants-breath', 'wing-buffet', 'throne-of-embers'],
+    lore:
+      'It sits its hoard the way a king sits a throne, which is to say badly and without ever getting up. The braziers around it have been kept lit by hands it no longer bothers to look at.',
+  },
+  /* ==================================================================== PAINT
+     The Brams and their paint, 2026-09-10. See the matching section in
+     CREATURE_CARDS. Every General and the Overlord carry +1 on their primary so
+     they reach 12 at level 12, as the checker asks of every non-Minion. The
+     Brams are written at level 3, the level of the one-shot they were made for;
+     the commanders a little above it, so a shelf sorted by level reads as a
+     ladder. */
+
+  /* ------------------------------------------------------------- the Paintlings */
+  {
+    id: 'paintling',
+    name: 'Paintling',
+    rank: 'minion',
+    level: 1,
+    xp: 8,
+    type: 'Small Paint Offshoot',
+    primary: 'instinct',
+    secondary: 'mind',
+    bonus: { physique: -1, instinct: 0, mind: -3 },
+    health: { perLevel: 3, perPhysique: 3 },
+    willpower: { perLevel: 0, perMind: 0, flat: 0 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 6,
+    cards: ['paint-splash', 'paint-body'],
+    lore:
+      'A fist of wet paint that got up off the floor and decided it was somebody. It has no plan beyond reaching you, and it will reach you.',
+  },
+
+  {
+    id: 'green-paintling',
+    name: 'Green Paintling',
+    rank: 'minion',
+    level: 2,
+    xp: 8,
+    type: 'Small Paint Offshoot',
+    primary: 'instinct',
+    secondary: 'mind',
+    bonus: { physique: -1, instinct: 0, mind: -3 },
+    health: { perLevel: 3, perPhysique: 3 },
+    willpower: { perLevel: 0, perMind: 0, flat: 0 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 6,
+    cards: ['paint-spit', 'paint-borrowed-eyes', 'paint-body'],
+    lore:
+      'One colour, one eye and somebody else behind the eye. Wherever a green paintling sits, the copy it came off is watching the room through it.',
+  },
+
+  {
+    id: 'shadowling',
+    name: 'Shadowling',
+    rank: 'minion',
+    level: 2,
+    xp: 8,
+    type: 'Small Paint Offshoot',
+    primary: 'instinct',
+    secondary: 'mind',
+    bonus: { physique: -1, instinct: 0, mind: -3 },
+    health: { perLevel: 3, perPhysique: 3 },
+    willpower: { perLevel: 0, perMind: 0, flat: 0 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 6,
+    cards: ['paint-smother', 'paint-lamp-shy', 'paint-body'],
+    lore:
+      'A scrap of black paint that hides in the dark it was painted from. You will not see it until it is on your face, and then you will not see anything.',
+  },
+
+  {
+    id: 'toxic-fragment',
+    name: 'Toxic Fragment',
+    rank: 'minion',
+    level: 3,
+    xp: 8,
+    type: 'Small Paint Offshoot',
+    primary: 'mind',
+    secondary: 'instinct',
+    bonus: { physique: -1, instinct: -3, mind: 0 },
+    health: { perLevel: 5, perPhysique: 5 },
+    willpower: { perLevel: 0, perMind: 0, flat: 0 },
+    avoid_bonus: 1,
+    armor: 0,
+    speed_m: 5,
+    cards: ['paint-spit', 'paint-piece-of-the-whole', 'paint-body'],
+    lore:
+      'A third of a green man, still arguing. Toxic Bram comes apart when he is hit, and each piece keeps his temper and a share of his life.',
+  },
+
+  /* ----------------------------------------------------------------- the Brams */
+  {
+    id: 'wriggly-bram',
+    name: 'Wriggly Bram',
+    rank: 'general',
+    level: 3,
+    xp: 120,
+    type: 'Medium Paint Offshoot',
+    primary: 'instinct',
+    secondary: 'mind',
+    bonus: { physique: 0, instinct: 1, mind: 0 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 7,
+    cards: ['corrosive-paint', 'bram-wriggle', 'paint-body', 'paint-chorus'],
+    lore:
+      "The self-portrait titled Confusion: a painter's head and shoulders on a tangle of purple legs, posing. He will tell you he is the real one, and he will drop it the moment you mention the legs. What he wants after that is a friend.",
+  },
+
+  {
+    id: 'tumor-bram',
+    name: 'Tumor Bram',
+    rank: 'general',
+    level: 3,
+    xp: 120,
+    type: 'Large Paint Offshoot',
+    primary: 'physique',
+    secondary: 'mind',
+    bonus: { physique: 1, instinct: -3, mind: 0 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 0,
+    cards: ['bram-yes-or-no', 'bram-agony', 'paint-body', 'paint-chorus'],
+    lore:
+      'The self-portrait titled Agony: a heaving mound with faces surfacing in it. It cannot speak, cannot move and cannot die unless something stops it growing back, and yes, it would like you to.',
+  },
+
+  {
+    id: 'bright-bram',
+    name: 'Bright Bram',
+    rank: 'general',
+    level: 3,
+    xp: 120,
+    type: 'Medium Paint Offshoot',
+    primary: 'mind',
+    secondary: 'physique',
+    bonus: { physique: 0, instinct: -2, mind: 1 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 0,
+    cards: [
+      'bram-stitching-strands',
+      'bram-dance-of-light',
+      'corrosive-paint',
+      'bram-rooted',
+      'paint-body',
+      'paint-chorus',
+    ],
+    lore:
+      'The self-portrait titled Blinding Light: a warm rooted mass that stitches wounds with strands of dried paint and would like to be useful. He is certain he is the real one. He is wrong, and he has never asked anyone to die for it.',
+  },
+
+  {
+    id: 'shadow-bram',
+    name: 'Shadow Bram',
+    rank: 'general',
+    level: 3,
+    xp: 120,
+    type: 'Medium Paint Offshoot',
+    primary: 'instinct',
+    secondary: 'mind',
+    bonus: { physique: 0, instinct: 1, mind: 0 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 6,
+    cards: ['bram-hypnotic-sway', 'corrosive-paint', 'bram-dont-look', 'paint-body', 'paint-chorus'],
+    lore:
+      'The self-portrait titled Darkness. It does not want to be seen and it attacks whatever sees it. Put the lamp out and walk away, and it lets you.',
+  },
+
+  {
+    id: 'bram-who-bites',
+    name: 'Bram Who Bites',
+    rank: 'general',
+    level: 3,
+    xp: 120,
+    type: 'Medium Paint Offshoot',
+    primary: 'physique',
+    secondary: 'instinct',
+    bonus: { physique: 1, instinct: 0, mind: -1 },
+    health: { perLevel: 10, perPhysique: 8 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 5,
+    cards: [
+      'bram-bite',
+      'bram-bite-again',
+      'bram-countless-jaws',
+      'bram-reluctant-jaws',
+      'paint-body',
+      'paint-chorus',
+    ],
+    lore:
+      'The self-portrait titled Rage, in a grey beret, growing jaws along every limb. He is the kindest thing in the building and it hurts to stand near him, and he knows both.',
+  },
+
+  {
+    id: 'scared-bram',
+    name: 'Scared Bram',
+    rank: 'general',
+    level: 3,
+    xp: 120,
+    type: 'Medium Paint Offshoot',
+    primary: 'instinct',
+    secondary: 'mind',
+    bonus: { physique: 0, instinct: 1, mind: 0 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 6,
+    cards: ['bram-panic-dance', 'corrosive-paint', 'bram-bolt-hole', 'paint-body', 'paint-chorus'],
+    lore:
+      'The self-portrait titled Fear, tentacled and grey-blue, in a wardrobe with the door held shut from inside. He remembers being painted, and he remembers painting the one with no face. A coffee gets him out.',
+  },
+
+  {
+    id: 'toxic-bram',
+    name: 'Toxic Bram',
+    rank: 'general',
+    level: 3,
+    xp: 120,
+    type: 'Medium Paint Offshoot',
+    primary: 'mind',
+    secondary: 'instinct',
+    bonus: { physique: 0, instinct: 0, mind: 1 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 5,
+    cards: ['corrosive-paint', 'bram-fling-goop', 'bram-split', 'paint-body', 'paint-chorus'],
+    lore:
+      'The self-portrait titled Treachery, one flat green from hat to boots. He sees through every green paintling in the building, he has a hat he would like you to try on, and he comes apart into three when you hit him.',
+  },
+
+  {
+    id: 'godhead-bram',
+    name: 'Godhead Bram',
+    rank: 'general',
+    level: 3,
+    xp: 130,
+    type: 'Medium Paint Offshoot',
+    primary: 'mind',
+    secondary: 'physique',
+    bonus: { physique: 1, instinct: 0, mind: 1 },
+    health: { perLevel: 12, perPhysique: 12 },
+    willpower: { perLevel: 2, perMind: 2, flat: 10 },
+    avoid_bonus: 2,
+    armor: 0,
+    speed_m: 5,
+    cards: ['bram-hypnotic-radiance', 'corrosive-paint', 'bram-divine-semblance', 'paint-body', 'paint-chorus'],
+    lore:
+      'The self-portrait titled Divine: gilded, four-armed, floating a hand above the bed and speaking in a doubled voice. Tell him he is a painting and he agrees, and offers you money instead.',
+  },
+
+  {
+    id: 'abram-hollins',
+    name: 'Abram Hollins',
+    rank: 'general',
+    level: 3,
+    xp: 120,
+    type: 'Medium Humanoid',
+    primary: 'mind',
+    secondary: 'instinct',
+    bonus: { physique: 0, instinct: 0, mind: 1 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 10 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 6,
+    cards: ['paint-palette-knife', 'bram-true-hand', 'bram-four-hands'],
+    lore:
+      'The painter himself, called Bram: grey beret, red ring, four arms, paint weeping from his skin and no face to speak with. He is the only one of the ten whose brush makes anything real, and he would very much rather not fight you.',
+  },
+
+  /* ------------------------------------------------------------ the commanders */
+  {
+    id: 'gesso-herald',
+    name: 'Gesso Herald',
+    rank: 'general',
+    level: 4,
+    xp: 130,
+    type: 'Medium Paint Offshoot',
+    primary: 'mind',
+    secondary: 'instinct',
+    bonus: { physique: -1, instinct: 0, mind: 1 },
+    health: { perLevel: 8, perPhysique: 8 },
+    willpower: { perLevel: 2, perMind: 2, flat: 10 },
+    avoid_bonus: 2,
+    armor: 0,
+    speed_m: 5,
+    cards: ['paint-call-the-paintlings', 'paint-prime-coat', 'corrosive-paint', 'paint-body'],
+    lore:
+      'A chalk-white figure that was a primed canvas before it was anything else. It knocks on a wet wall and paintlings come off it, and it keeps them coated while they die for it.',
+  },
+
+  {
+    id: 'impasto-warden',
+    name: 'Impasto Warden',
+    rank: 'general',
+    level: 5,
+    xp: 130,
+    type: 'Large Paint Offshoot',
+    primary: 'physique',
+    secondary: 'instinct',
+    bonus: { physique: 1, instinct: -1, mind: -2 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 6 },
+    avoid_bonus: 0,
+    armor: 3,
+    speed_m: 4,
+    cards: ['paint-knife-sweep', 'paint-laid-on-thick', 'paint-body'],
+    lore:
+      'Paint laid on with a knife until it stands up by itself, a hand thick everywhere and thicker across the chest. It holds a doorway the way a wall does, and the small ones shelter behind it.',
+  },
+
+  {
+    id: 'smear-stalker',
+    name: 'Smear Stalker',
+    rank: 'general',
+    level: 4,
+    xp: 120,
+    type: 'Medium Paint Offshoot',
+    primary: 'instinct',
+    secondary: 'mind',
+    bonus: { physique: -1, instinct: 1, mind: 0 },
+    health: { perLevel: 8, perPhysique: 8 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 2,
+    armor: 0,
+    speed_m: 8,
+    cards: ['paint-smear', 'corrosive-paint', 'paint-wet-step', 'paint-body'],
+    lore:
+      'A long streak of paint that runs along the skirting and up the wall, and is standing behind you by the time you have followed it with your eyes. It goes for the eyes, and then it is a stain on the floor again.',
+  },
+
+  /* ----------------------------------------------------------- the Face Taker */
+  {
+    id: 'the-face-taker',
+    name: 'The Face Taker',
+    rank: 'overlord',
+    level: 3,
+    xp: 500,
+    type: 'Medium Paint Offshoot',
+    primary: 'mind',
+    secondary: 'instinct',
+    bonus: { physique: 1, instinct: 0, mind: 1 },
+    health: { perLevel: 14, perPhysique: 14 },
+    willpower: { perLevel: 2, perMind: 3, flat: 10 },
+    avoid_bonus: 2,
+    armor: 2,
+    speed_m: 5,
+    cards: [
+      'paint-palette-knife',
+      'corrosive-paint',
+      'bram-tongues',
+      'bram-paint-flood',
+      'bram-stolen-face',
+      'bram-nine-voices',
+      'paint-body',
+    ],
+    lore:
+      "The self-portrait titled Faceless, wearing the painter's own face, beret and palette, and standing in his salon asking for help. It is the most convincing Bram in the building and the most dangerous, and the face comes off when it has taken enough.",
+  },
+];
+
+const BY_ID = new Map(CREATURES.map((creature) => [creature.id, creature]));
+
+/* ----------------------------------------------------------- forged creatures
+
+   Everything above is codex data, frozen at build time. This is the other half:
+   creatures a table forged for itself, which arrive from the database and have
+   to answer to `getCreature` like any other, because *every* reader of a
+   creature goes through it. An encounter row names a creature by id; the block,
+   the runner, the log and the shelf all resolve that id here. A forged creature
+   that could not be found by id would be a creature nothing could draw.
+
+   So there is one mutable map beside the frozen one, and it is filled from
+   above: see src/lib/customCreatures.js, which is the only writer. This file
+   stays a leaf — it reads nothing, fetches nothing and imports nothing new.
+
+   Two rules about what goes in it:
+
+     the id is prefixed. A forged creature's id is `custom:<row uuid>`, so it can
+     never collide with a printed one and any reader can tell at a glance which
+     half of the bestiary a stored encounter is pointing at.
+
+     the cards are already resolved. A printed creature names its cards by id and
+     `getCreatureCard` finds them, because they are in this file. A forged one can
+     learn *anything a character can play*, which lives in the registry in
+     weapons.js — and weapons.js imports this file, so this file can never import
+     it back. The loader is above both, so it resolves the cards on the way in and
+     what lands here carries card objects rather than ids. `creatureCards` below
+     takes either.
+
+   The map is per session and holds whatever the signed-in account could read. It
+   is emptied and refilled on load rather than merged, so signing in as somebody
+   else cannot leave another account's shelf behind. */
+
+const FORGED = new Map();
+
+/** The prefix every forged creature's id carries. */
+export const FORGED_PREFIX = 'custom:';
+
+/** Whether an id names a forged creature rather than a printed one. */
+export function isForgedId(id) {
+  return String(id ?? '').startsWith(FORGED_PREFIX);
+}
+
+/**
+ * Put the forged creatures this account can read into the registry, replacing
+ * whatever was there. Each one must already carry a prefixed `id` and resolved
+ * `cards`; see `hydrateCreature` in customCreatures.js, which is what builds
+ * them and the only place that should call this.
+ */
+export function registerForged(list = []) {
+  FORGED.clear();
+  for (const creature of list) {
+    if (!creature || !isForgedId(creature.id)) continue;
+    FORGED.set(creature.id, creature);
+  }
+}
+
+/** Empty the forged half. Signing out, and the checkers between cases. */
+export function clearForged() {
+  FORGED.clear();
+}
+
+/** Every forged creature in the registry, in the bestiary's own order. */
+export function forgedCreatures() {
+  return sortCreatures([...FORGED.values()]);
+}
+
+/** One creature by id, or null for a link into nothing. Forged or printed: an
+    id is an id, and every reader of one comes through here. */
+export function getCreature(id) {
+  const key = String(id ?? '');
+  if (key === CONJURED_ID) return CONJURED_CREATURE;
+  return BY_ID.get(key) ?? FORGED.get(key) ?? null;
+}
+
+/** Any level, held inside the twelve every body on the board climbs. */
+export function clampCreatureLevel(level) {
+  return Math.min(CREATURE_MAX_LEVEL, Math.max(1, Math.floor(Number(level) || 1)));
+}
+
+/* --------------------------------------------------------------- the curve */
+
+/**
+ * How many of the character's odd-level attribute grants a level has reached.
+ *
+ * Levels 3, 5, 7, 9 and 11, so five of them by level 12. Level 1 is not one:
+ * its grant is the +2 and the +1, which are counted separately below.
+ */
+function oddGrants(level) {
+  return Math.max(0, Math.floor((clampCreatureLevel(level) - 1) / 2));
+}
+
+/**
+ * A creature's three attributes at a level.
+ *
+ * The character's own growth, read against the creature's declared primary and
+ * secondary: base 4 everywhere, +2 on the primary and +1 on the secondary at
+ * level 1, and one more on each of those two at every odd level after. Then the
+ * creature's own `bonus`, which is the part set when it was written.
+ *
+ * Nothing is clamped at the top. A `bonus` of +1 on the primary puts it at 12 at
+ * level 12, which is what Jules asked for, and a creature written with +3 would
+ * reach 14 and be a deliberate monster rather than a bug.
+ */
+export function creatureAttributes(creature, level) {
+  const climbs = oddGrants(level);
+  const primary = creature?.primary ?? 'physique';
+  const secondary = creature?.secondary ?? 'instinct';
+  const bonus = creature?.bonus ?? {};
+
+  const values = { physique: BASE, instinct: BASE, mind: BASE };
+  values[primary] += 2 + climbs;
+  if (secondary !== primary) values[secondary] += 1 + climbs;
+
+  for (const key of ['physique', 'instinct', 'mind']) {
+    values[key] = Math.max(1, values[key] + Math.floor(Number(bonus[key]) || 0));
+  }
+
+  return values;
+}
+
+/* --------------------------------------------------------------- the numbers */
+
+/**
+ * Everything a creature is at a level, printed and derived together.
+ *
+ * The same shape `deriveStats` hands back for a character and `minionDerived`
+ * for a creature on a leash, so the very same tiles draw all three. That is not
+ * tidiness, it is the readability the whole block is built on: a Grit on an
+ * enemy has to be drawn in the same box as a Grit on the party or nobody can
+ * compare the two mid-fight.
+ *
+ * Four things are the creature's own and everything else is the character's own
+ * arithmetic run against the numbers above:
+ *
+ *   health      `perLevel` per level and `perPhysique` per Physique
+ *   willpower   `perLevel`, `perMind` and a `flat`
+ *   avoid       the armor family's base plus `avoid_bonus`, exactly as a
+ *               character's Defense is a set's base plus what they wear. With no
+ *               family that base is Instinct, which is what it has always been,
+ *               and Heavy adds half the Armor on top. See CREATURE_ARMOR.
+ *   speed/armor printed, because neither is an attribute
+ *
+ * A Minion's Reaction Points are forced to zero last, after everything, because
+ * "cannot get reaction" is a rule about the creature rather than a default about
+ * its rank.
+ */
+export function creatureStats(creature, level = null, extra = null) {
+  const rank = getRank(creature);
+  const lvl = clampCreatureLevel(level ?? creature?.level);
+  const printed = creatureAttributes(creature, lvl);
+  /* What is running on *this one*, folded before anything is derived from it.
+     A creature's numbers were printed and nothing else until 2026-09-20, so a
+     GIANT GROWTH on a goblin doubled nothing and a BREACH lowered no Defense:
+     the riders reached a character's tiles and stopped at the table's edge.
+
+     Handed in rather than read here, because this file is a leaf and riders.js
+     is not. `encounterState` and `minionState` are the two that read it. The
+     shape is `runningRiders`' own, which is also the shape `deriveStats` takes
+     for a character, so the two sides of the table fold the same object. */
+  const attributes = extra?.attributes
+    ? {
+        physique: printed.physique + (Number(extra.attributes.physique) || 0),
+        instinct: printed.instinct + (Number(extra.attributes.instinct) || 0),
+        mind: printed.mind + (Number(extra.attributes.mind) || 0),
+      }
+    : printed;
+  const { physique: p, instinct: i, mind: m } = attributes;
+
+  const health_max = Math.max(
+    1,
+    Math.floor(
+      (Number(creature?.health?.perLevel) || 0) * lvl +
+        (Number(creature?.health?.perPhysique) || 0) * p +
+        (Number(extra?.healthMax) || 0)
+    )
+  );
+
+  const willpower_max = Math.max(
+    0,
+    Math.floor(
+      (Number(creature?.willpower?.perLevel) || 0) * lvl +
+        (Number(creature?.willpower?.perMind) || 0) * m +
+        (Number(creature?.willpower?.flat) || 0) +
+        (Number(extra?.willpowerMax) || 0)
+    )
+  );
+
+  const ap_max = Math.max(0, Math.floor(Number(creature?.ap_max ?? rank.ap) || 0));
+  const printedReaction = Math.max(
+    0,
+    Math.floor(Number(creature?.reaction_max ?? rank.reaction) || 0)
+  );
+
+  /* What it is wearing, and the two numbers that come out of it. Armor is read
+     first because Heavy's rider is taken from the whole of it, which is the
+     rulebook's own ruling for a character and the same one here. */
+  const armor = getCreatureArmor(creature);
+  /* The naming trap this whole codebase carries: a rider's `armor` is the flat
+     reduction, which a creature's row calls `defense`, and a rider's `defense`
+     is how hard it is to hit, which a creature's row calls `avoid`. See the
+     header of CharacterTab.jsx, where the relabel is explained. */
+  const defense = Math.max(0, Math.floor(Number(creature?.armor) || 0) + (Number(extra?.armor) || 0));
+  const reflex = p + i;
+  const grit = i + m;
+  const avoidBase = armor.base === 'reflex' ? reflex : armor.base === 'grit' ? grit : i;
+  const avoid = Math.max(
+    0,
+    avoidBase +
+      Math.floor(Number(creature?.avoid_bonus) || 0) +
+      (armor.half ? Math.floor(defense / 2) : 0) +
+      (Number(extra?.defense) || 0)
+  );
+
+  return {
+    level: lvl,
+    attributes,
+    health_max,
+    shield_cap: Math.floor(health_max / 2),
+    willpower_max,
+    // The DEF on the printed page: how hard it is to hit.
+    avoid,
+    // And the Armor: flat reduction after a hit lands.
+    defense,
+    // Which family it is wearing, so a block can say what its Defense is made of.
+    armor,
+    initiative: i + lvl,
+    /* The one value that keeps its half, exactly as a character's does. The
+       factor multiplies what the flat already moved, which is the order
+       `deriveStats` uses and the order the cards are written in: GIANT GROWTH
+       doubles "its Movement Speed", whatever that had become. */
+    speed_m: Math.max(
+      0,
+      ((Number(creature?.speed_m) || 0) + (Number(extra?.speed) || 0)) *
+        (Number(extra?.speedFactor) || 1)
+    ),
+    ap_max,
+    // A Minion has none and can never be given any. The one place that is true.
+    reaction_max: rank.reacts ? printedReaction : 0,
+    reflex,
+    grit,
+    // What the whole party is worth for killing it, at this level.
+    xp: Math.max(0, Math.floor((Number(creature?.xp) || 0) * lvl)),
+  };
+}
+
+/**
+ * The cards it plays and the cards it simply is, split the codex's own way.
+ *
+ * A printed creature names its cards by id and they are found in this file. A
+ * forged one arrives with the card objects already on it, because what it may
+ * learn is *anything a character can play* and that registry is above this file
+ * (see the note on FORGED). So an entry is taken as it is when it is already a
+ * card, and looked up when it is a string. Nothing else in the codex needs the
+ * second case, and nothing outside customCreatures.js should produce one.
+ */
+export function creatureCards(creature) {
+  return (creature?.cards ?? [])
+    .map((entry) => (entry && typeof entry === 'object' ? entry : getCreatureCard(entry)))
+    .filter(Boolean);
+}
+
+/** What it plays: everything with a price on it. */
+export function creatureMoves(creature) {
+  return creatureCards(creature).filter((card) => card.kind !== 'passive');
+}
+
+/** What is simply true of it, wards included. */
+export function creaturePassives(creature) {
+  return creatureCards(creature).filter((card) => card.kind === 'passive');
+}
+
+/**
+ * The passives whose condition is a thing on the table rather than anything the
+ * sheet can check. Each is drawn with a switch, and the instance remembers which
+ * ones have been broken. See `breakWard` in encounters.js, which is what reads
+ * the memory; this only says which passives have a switch at all.
+ */
+export function creatureWards(creature) {
+  return creaturePassives(creature).filter((card) => Boolean(card.ward));
+}
+
+/* ---------------------------------------------------------------- the shelf */
+
+/** Rank order, then level, then name: the order every list of creatures draws. */
+export function sortCreatures(list) {
+  const rankAt = (creature) => RANKS.findIndex((rank) => rank.id === creature?.rank);
+  return [...list].sort(
+    (a, b) =>
+      rankAt(a) - rankAt(b) ||
+      (a.level ?? 0) - (b.level ?? 0) ||
+      String(a.name).localeCompare(String(b.name))
+  );
+}
+
+/**
+ * The bestiary in its printed order, or one rank of it.
+ *
+ * Both halves: the printed creatures and whatever this account's forged ones are
+ * (see FORGED). One list rather than two, because every caller of this — the
+ * Bestiary tab, the encounter shelf — is asking "what can I put on the table",
+ * and a creature a Game Master made an hour ago is as much of an answer as the
+ * Blightgeist. `forged: true` on the row is how a caller tells them apart.
+ */
+export function bestiary(rank = null) {
+  const all = [...CREATURES, ...FORGED.values()];
+  const list = rank ? all.filter((creature) => creature.rank === rank) : all;
+  return sortCreatures(list);
+}
+
+/**
+ * The line the printed page heads itself with: `Minion - Level 1 - 10 XP`.
+ *
+ * Hyphens rather than the site's own middot, because this one is the design
+ * sheet's own punctuation and the block is a transcription of that sheet. The
+ * level and the XP are both this creature's *at this level*, so the line stays
+ * true wherever it is standing.
+ */
+export function difficultyLine(creature, level = null) {
+  const rank = getRank(creature);
+  const stats = creatureStats(creature, level);
+  return `${rank.label} - Level ${stats.level} - ${stats.xp} XP`;
+}
