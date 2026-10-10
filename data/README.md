@@ -17738,11 +17738,37 @@ Warcraft frame, with all of it readable.
   anyone carrying a condition since 2026-09-19.
 - **Checked** by a section in `lint:plan`.
 
+### Renew is the caster's roll, the same day
+
+The first pass left the Turn Start heals out, on the reading that the target
+rolls them. Jules: "Renew is rolled by the caster not the one affected by it."
+That was also the oldest open item on delivered rows (number 6 under "What a
+card inflicts"): a RENEW on a goblin read "1d6 + the goblin's Mind".
+
+- **The row carries the caster.** `castEffect` writes `by` on the row: the
+  caster's name, attributes, the stat the card was cast off and their Healer
+  step (`castBy` in combatBar.js, cleaned by `normalizeBy` in combatTurn.js).
+  The step an unconscious target lent the cast is taken back off, and asked
+  again at each tick.
+- **Every reader rolls with it.** `rowRoller` in turnTriggers.js hands back the
+  holder wearing the caster's numbers, and the Turn Start reminder, the row's
+  own Roll button and the Game Master's foe row all read through it. So Lark's
+  Renew on Kaelen heals 1d6 + Lark's Mind, 1d8 if Lark is a Healer, and 1d10 at
+  a Turn Start that finds Kaelen down.
+- **The log says whose roll it is**: "Lark Vess's Renew".
+- `cardGist` learned the Healer step for this, so the "is this healing" reading
+  moved from rollPlan.js to cardText.js (`purposeOf`, `valuePurpose`), which
+  both can import.
+- A row laid before this, or typed by hand, has no `by` and reads the holder as
+  it always did.
+- **Checked** by a section in `lint:combat`.
+
 ### Left open
 
-- **Renew's Turn Start heals** are rolled on the target's own sheet off the
-  card, so the caster's Healer does not reach them. Carrying the step on the
-  laid row is the fix if it should.
+- **The press is still the holder's.** The tick comes due at the target's Turn
+  Start, so the button is on the target's turn prompt (or the Game Master's,
+  for a foe), with the caster's numbers in it. Moving the press itself to the
+  caster's sheet means the caster hearing every other body's turn start.
 - **"Yourself or an ally".** The step lands on any healing the Healer throws,
   an enemy's included. Nobody heals an enemy often enough to have asked.
 - **An ally's Health is now visible to the party** on a player's sheet. A sheet

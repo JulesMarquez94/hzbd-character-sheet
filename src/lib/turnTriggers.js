@@ -155,10 +155,14 @@ function effectTriggers(effect, character, when) {
      to pay. See statuses.js. */
   const status = statusOf(effect.status);
   const theirs = (lines) => (status ? lines.filter((line) => !CASTERS.test(line)) : lines);
-  const body = card ? theirs(matches(cardGist(card, { character }), when)) : [];
+  /* With the caster's numbers where the row carries them: a RENEW's Turn Start
+     heal is "1d6 + the caster's Mind", and a Healer's 1d8. See rowRoller. */
+  const roller = rowRoller(effect, character);
+  const read = { character: roller.who, modifiers: roller.modifiers };
+  const body = card ? theirs(matches(cardGist(card, read), when)) : [];
   /* The second half, which is where every Upkeep lives. Resolved the same way
      the main body is, so a toll written as a live number reads as one. */
-  const half = card && !status ? matches(cardGist(card, { character, part: 'sub' }), when) : [];
+  const half = card && !status ? matches(cardGist(card, { ...read, part: 'sub' }), when) : [];
   /* And what the condition itself does at a boundary, in the glossary's words:
      a stack of Bleed has no card sentence of its own to read. */
   const said = status?.at ? matches(status.at, when) : [];
@@ -171,6 +175,9 @@ function effectTriggers(effect, character, when) {
     id: effect.id,
     name: effect.name,
     from: effect.from,
+    /* Who rolls it, when that is somebody other than the holder: the throw is
+       named as theirs. See useClauseRolls.js. */
+    by: roller.by && roller.by !== character?.name ? roller.by : null,
     card: effect.card,
     status: effect.status ?? null,
     turns: effect.turns,
@@ -180,6 +187,43 @@ function effectTriggers(effect, character, when) {
        reading the boundary off its own prose is what keeps it off this list,
        rather than a rule written here about which card it is. */
     toll: half.length > 0 ? tollOf(card) : null,
+  };
+}
+
+/**
+ * Whose numbers a row's dice are rolled with: `{ who, modifiers, by }`.
+ *
+ * Jules, 2026-10-10: "Renew is rolled by the caster not the one affected by
+ * it." A row a cast laid carries the caster's attributes and Healer step on
+ * `by` (see `normalizeBy` in combatTurn.js), so a RENEW on Kaelen heals 1d6
+ * plus the caster's Mind at Kaelen's Turn Start, Elevated if the caster is a
+ * Healer and Elevated again if Kaelen is down when it comes round. `who` is the
+ * holder wearing the caster's numbers, so anything else a reader asks of the
+ * body (its Health, its tracker) is still the holder's.
+ *
+ * A row with no `by` (typed by hand, or laid before 2026-10-10) is read with
+ * the holder's numbers, which is what every row did until then. `by` comes back
+ * as the caster's name, or null.
+ */
+export function rowRoller(effect, holder) {
+  const by = effect?.by;
+  if (!by?.name) return { who: holder, modifiers: null, by: null };
+
+  const who = { ...(holder ?? {}) };
+  for (const key of ['physique', 'instinct', 'mind', 'level', 'speed_m']) who[key] = by[key];
+
+  /* Down is decided at the tick. A foe handed in as its tracker alone has no
+     Health to read, and no number is not the same as none left. */
+  const health = holder?.health;
+  const down = typeof health === 'number' && health <= 0;
+
+  return {
+    who,
+    modifiers: {
+      ...(by.stat ? { stat: by.stat } : {}),
+      healElevate: (Number(by.healElevate) || 0) + (down ? Number(by.healDown) || 0 : 0),
+    },
+    by: by.name,
   };
 }
 

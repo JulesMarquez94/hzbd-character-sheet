@@ -1006,6 +1006,9 @@ function withMending(modifiers, targets = []) {
   return {
     ...modifiers,
     healElevate: (Number(modifiers?.healElevate) || 0) + step,
+    /* Which part of that was this moment's, so a row the cast leaves behind
+       keeps only the caster's own step. See `castBy` in combatBar.js. */
+    healDowned: step,
     sources: mergeSources(modifiers?.sources ?? [], [
       sourceRow(`Healer · ${down.name ?? 'the target'} is unconscious`, { healElevate: step }, 'healer'),
     ]),

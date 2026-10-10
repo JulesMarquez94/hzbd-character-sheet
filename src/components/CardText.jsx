@@ -1,8 +1,14 @@
 import { Fragment, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { attributeOf, castArticles, castStat, damageStyle, resolveValue } from '../lib/cardText.js';
+import {
+  attributeOf,
+  castArticles,
+  castStat,
+  damageStyle,
+  resolveValue,
+  valuePurpose,
+} from '../lib/cardText.js';
 import { getKeyword, keywordPattern } from '../lib/keywords.js';
-import { valuePurpose } from '../lib/rollPlan.js';
 
 /**
  * Card and item rules text, rendered the way the printed cards read.

@@ -1209,6 +1209,9 @@ export function castEffect(request, actor = null) {
      end rather than asked for. A card that asks nothing gets no field at all.
      See `answersFrom` in riders.js and AnswerWindow.jsx. */
   const values = answersFrom(card, actor);
+  /* And the caster's own numbers, for a card whose dice come round again: a
+     RENEW's Turn Start heal is the caster's roll, wherever the row ends up. */
+  const by = castBy(request, actor);
 
   return {
     name: shortName(card, request.name),
@@ -1217,6 +1220,35 @@ export function castEffect(request, actor = null) {
     until: duration.until,
     from: request.source ?? '',
     ...(values ? { values } : {}),
+    ...(by ? { by } : {}),
+  };
+}
+
+/**
+ * Who cast this, as the numbers the row's dice are rolled with later, or null
+ * for a card with no live value on it or nobody to cast it.
+ *
+ * Read off the same modifiers the cast was paid with, so a Healer's step rides
+ * along. The one more step a downed target lent the cast is taken back off: it
+ * belonged to that moment, and the tick asks again. See `withMending` in
+ * moves.js and `normalizeBy` in combatTurn.js.
+ */
+function castBy(request, actor) {
+  const card = request?.card;
+  const mods = request?.modifiers ?? {};
+  const who = mods.actor ?? actor;
+  if (!who?.name || !/\[\[/.test(`${card?.body ?? ''} ${card?.sub_body ?? ''}`)) return null;
+
+  return {
+    name: who.name,
+    physique: who.physique,
+    instinct: who.instinct,
+    mind: who.mind,
+    level: who.level,
+    speed_m: who.speed_m,
+    stat: castStat(mods.stat ?? card?.stat ?? 'instinct', who),
+    healElevate: (Number(mods.healElevate) || 0) - (Number(mods.healDowned) || 0),
+    healDown: Number(mods.healDown) || 0,
   };
 }
 

@@ -316,13 +316,13 @@ Five tabs, all auto-saving (edits batch for ~0.7s, then write; the top bar shows
 - **Inventory**: a bag across the top, then five blocks. Armor down the body, the two weapons in
   hand, the trinkets you wear, the five belt loops and the inventory itself across two blocks,
   down to one on a phone. Every slot opens the codex; every row of the inventory asks where the
-  thing goes. Two meters count what you are carrying. Magic Burden counts the worked magic on
-  you against Level + Mind + 10 and refuses anything past it. Weight counts everything you own,
-  pack included, against ten kilos a point of Physique plus whatever your bag adds, and refuses
+  thing goes. Two meters count what you are carrying. Magic Burden counts the worked magic on you
+  against Level + Mind + 10 and refuses anything past it. Weight counts everything you own (pack
+  included) against ten kilos a point of Physique plus whatever your bag adds, and refuses
   nothing: past your capacity your Movement Speed is halved, and 30% past it you cannot move at
   all. **Make an Enchanted Item** on the codex browser's head builds a piece out of one base and
-  any number of workings, names it, gives it a picture and hands it over as a pasteable code,
-  and **Write a Spell Scroll** beside it does the same for a scroll: any spell in the codex, any
+  any number of workings, names it, gives it a picture and hands it over as a pasteable code, and
+  **Write a Spell Scroll** beside it does the same for a scroll: any spell in the codex, any
   Power Words on it, named and coded. Every row of the pack can also be **handed to somebody at
   your table**.
 - **Lore**: portrait, concept line, appearance, personality, backstory, allies.

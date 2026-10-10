@@ -40,7 +40,9 @@ export function useClauseRolls(character, patch) {
         ...spec,
         shape: 'value',
         kind: spec.kind === 'roll' ? 'damage' : spec.kind,
-        name: row.name,
+        /* A row somebody else cast is their roll, with their numbers already in
+           the clause, and the log says so: "Lark Vess's Renew". */
+        name: row.by ? `${row.by}’s ${row.name}` : row.name,
         note: character?.name ?? '',
         log: true,
       });

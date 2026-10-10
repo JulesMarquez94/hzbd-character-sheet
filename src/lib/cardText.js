@@ -432,6 +432,56 @@ export function cardProse(text) {
   return String(text ?? '').replace(/\*\*/g, '');
 }
 
+/* ------------------------------------------------------- what a value is for
+ * The reading `rollPlan` names a throw by, kept here because the gist below
+ * needs it as well and rollPlan.js already imports this file. A throw is
+ * named for the word right after its dice ("{damage} damage", "Health",
+ * "Shield"), then for the sentence it sits in, then it is just a Roll.
+ */
+
+/** What the dice are for, when the words after them say. */
+const AFTER = [
+  [/^\s*(?:\{damage(?::[A-Za-z]+)?\}\s*)?damage\b/i, 'damage'],
+  [/^\s*(?:\{damage(?::[A-Za-z]+)?\}\s*)?Health\b/i, 'healing'],
+  [/^\s*Shield\b/i, 'shield'],
+];
+
+/** What the dice are for: the word after them, then the sentence, then nothing. */
+export function purposeOf(after, sentence) {
+  for (const [pattern, kind] of AFTER) {
+    if (pattern.test(after)) return kind;
+  }
+  if (/\bdamage\b/i.test(sentence)) return 'damage';
+  /* "healing [[1d6 + level]]" puts the word in front of the dice, which is why
+     the sentence is asked at all: Bandage Roll is the one card in the codex that
+     says what it is for before saying how much. */
+  if (/\bhealing\b|\bheals?\b|\bHealth\b/i.test(sentence)) return 'healing';
+  return 'roll';
+}
+
+/** The sentence a position sits in, lowercased. */
+export function sentenceAround(text, at) {
+  const from = Math.max(
+    text.lastIndexOf('.', at) + 1,
+    text.lastIndexOf('\n', at) + 1
+  );
+  const dot = text.indexOf('.', at);
+  return text.slice(from, dot < 0 ? text.length : dot + 1).toLowerCase();
+}
+
+/**
+ * What one live value in a stretch of card text is for, by the same reading the
+ * plan uses. `at` is where the token starts in `text` and `length` is how long
+ * it is.
+ *
+ * For the two places that print a value one token at a time and have to know
+ * whether the Healer's step belongs on it: CardText.jsx and `cardGist`.
+ */
+export function valuePurpose(text, at, length) {
+  const raw = String(text ?? '');
+  return purposeOf(cardProse(raw.slice(at + length)), cardProse(sentenceAround(raw, at)));
+}
+
 /* ------------------------------------------------------------- what it costs
  * A card prints its own Action Points and the codex never changes them. What a
  * *holder* costs it is another matter, and this is where the two meet.
@@ -590,6 +640,10 @@ export function cardGist(card, { character = null, modifiers = null, part = 'bod
   const empower = Number(modifiers?.empower) || 0;
   const elevate = Number(modifiers?.elevate) || 0;
   const bonus = Number(modifiers?.bonus) || 0;
+  /* And the Healer's step, which only grows dice that restore Health. A Turn
+     Start heal is read off this line, so a caster's Healer reaches the Renew
+     they left on somebody. See turnTriggers.js. */
+  const healElevate = Number(modifiers?.healElevate) || 0;
   const choice = modifiers?.choice ?? null;
   /* And "your highest" is whoever's card this is: an ally's Wyrm Bolt reads the
      ally's best attribute, the same way its numbers are the ally's. */
@@ -598,9 +652,14 @@ export function cardGist(card, { character = null, modifiers = null, part = 'bod
 
   return castArticles(cardProse(part === 'sub' ? card?.sub_body : card?.body), stat)
     .replace(/\{\{([^}]+)\}\}/g, '$1')
-    .replace(/\[\[([^\]]+)\]\]/g, (_, expression) =>
-      resolveValue(expression, who, stat, { empower, elevate, bonus }).text
-    )
+    .replace(/\[\[([^\]]+)\]\]/g, (whole, expression, at, text) => {
+      const mends = healElevate > 0 && valuePurpose(text, at, whole.length) === 'healing';
+      return resolveValue(expression, who, stat, {
+        empower,
+        elevate: elevate + (mends ? healElevate : 0),
+        bonus,
+      }).text;
+    })
     .replace(/\{([a-zA-Z]+(?::[A-Za-z]+)?)\}/g, (whole, word) => gistToken(word, context) ?? whole)
     // Paragraphs become sentences in a row, and the stray spaces a spent token
     // leaves behind ("deal 1d6 + 8 in  damage") close up.

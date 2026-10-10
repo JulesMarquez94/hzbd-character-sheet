@@ -1,4 +1,11 @@
-import { attributeOf, cardProse, castStat, resolveValue } from './cardText.js';
+import {
+  attributeOf,
+  cardProse,
+  castStat,
+  purposeOf,
+  resolveValue,
+  sentenceAround,
+} from './cardText.js';
 import { isWeaponAttack } from './tricks.js';
 
 /**
@@ -47,13 +54,6 @@ import { isWeaponAttack } from './tricks.js';
 
 /** A check or a value, wherever one appears in a card's text. */
 const LINK = /\{roll(?::([a-zA-Z]+))?\}|\[\[([^\]]+)\]\]/g;
-
-/** What the dice are for, when the words after them say. */
-const AFTER = [
-  [/^\s*(?:\{damage(?::[A-Za-z]+)?\}\s*)?damage\b/i, 'damage'],
-  [/^\s*(?:\{damage(?::[A-Za-z]+)?\}\s*)?Health\b/i, 'healing'],
-  [/^\s*Shield\b/i, 'shield'],
-];
 
 /**
  * A value the card lands more than once, and how many times.
@@ -287,18 +287,9 @@ export function healsAnything(card, character = null) {
   return rollPlan(card, character, null, { half: true }).some((link) => link.kind === 'healing');
 }
 
-/**
- * What one live value in a stretch of card text is for, by the same reading the
- * plan uses: the words after it, then its sentence. `at` is where the token
- * starts in `text` and `length` is how long it is.
- *
- * For the renderer, which prints a value one token at a time and has to know
- * whether the Healer's step belongs on it. See CardText.jsx.
- */
-export function valuePurpose(text, at, length) {
-  const raw = String(text ?? '');
-  return purposeOf(cardProse(raw.slice(at + length)), cardProse(sentenceAround(raw, at)));
-}
+/* `valuePurpose`, the same reading for one value at a time, lives in
+   cardText.js beside `cardGist`, which needs it too. */
+export { valuePurpose } from './cardText.js';
 
 /* --------------------------------------------------------------- the reading */
 
@@ -339,19 +330,6 @@ function repeatsOf(sentence) {
     if (pattern.test(sentence)) return times;
   }
   return 1;
-}
-
-/** What the dice are for: the word after them, then the sentence, then nothing. */
-function purposeOf(after, sentence) {
-  for (const [pattern, kind] of AFTER) {
-    if (pattern.test(after)) return kind;
-  }
-  if (/\bdamage\b/i.test(sentence)) return 'damage';
-  /* "healing [[1d6 + level]]" puts the word in front of the dice, which is why
-     the sentence is asked at all: Bandage Roll is the one card in the codex that
-     says what it is for before saying how much. */
-  if (/\bhealing\b|\bheals?\b|\bHealth\b/i.test(sentence)) return 'healing';
-  return 'roll';
 }
 
 /**
@@ -574,13 +552,4 @@ export function rollKind(card, { half = false } = {}) {
     return kindOf(card, sentenceAround(text, at));
   }
   return null;
-}
-
-function sentenceAround(text, at) {
-  const from = Math.max(
-    text.lastIndexOf('.', at) + 1,
-    text.lastIndexOf('\n', at) + 1
-  );
-  const dot = text.indexOf('.', at);
-  return text.slice(from, dot < 0 ? text.length : dot + 1).toLowerCase();
 }

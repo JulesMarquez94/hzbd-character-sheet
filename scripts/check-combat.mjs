@@ -1237,6 +1237,40 @@ section('healing and moving clear what the glossary says they clear');
   check('paying for a Move takes Prone off', stood.effects, []);
 }
 
+section('a delivered row rolls with the caster’s numbers');
+{
+  /* Jules, 2026-10-10: "Renew is rolled by the caster not the one affected by
+     it." The cast writes its numbers on the row, and the target's Turn Start
+     reads them: the caster's Mind, and the caster's Healer. */
+  const lark = { name: 'Lark', level: 3, physique: 2, instinct: 2, mind: 4, effects: [] };
+  const request = (modifiers) => ({ name: 'Renew', source: 'Renew', card: card('renew'), modifiers });
+  const lay = (row, holder) => ({
+    ...holder,
+    effects: normalizeEffects(JSON.parse(JSON.stringify(layEffect([], { ...row, from: lark.name })))),
+  });
+  const tick = (holder) => clauseThrow(turnTriggers(holder, 'start').rows[0]?.clauses?.[0] ?? '');
+  const kaelen = { name: 'Kaelen', level: 3, physique: 5, instinct: 3, mind: 1, health: 20 };
+
+  const plain = lay(castEffect(request({}), lark), kaelen);
+  check('the row carries who cast it', plain.effects[0].by?.name, 'Lark');
+  check('and survives the trip over the log', plain.effects[0].by?.mind, 4);
+  check('the tick is the caster’s Mind, not the holder’s', [tick(plain)?.dice, tick(plain)?.flat], [['1d6'], 4]);
+  check('and named as the caster’s roll', turnTriggers(plain, 'start').rows[0]?.by, 'Lark');
+
+  const healer = lay(castEffect(request({ healElevate: 1, healDown: 1 }), lark), kaelen);
+  check('a Healer’s Renew ticks Elevated', tick(healer)?.dice, ['1d8']);
+  check('twice over a holder who is down', tick({ ...healer, health: 0 })?.dice, ['1d10']);
+
+  const downed = lay(castEffect(request({ healElevate: 2, healDown: 1, healDowned: 1 }), lark), kaelen);
+  check('the step a downed target lent the cast stays with the cast', tick(downed)?.dice, ['1d8']);
+
+  check(
+    'a row with nobody behind it reads the holder, as it always did',
+    tick({ ...kaelen, effects: [{ id: 'r', name: 'Renew', card: 'renew', turns: 2 }] })?.flat,
+    1
+  );
+}
+
 section('a condition row reads the target’s boundary and not the caster’s');
 {
   const who = { name: 'Goblin', instinct: 4, physique: 4, mind: 3 };

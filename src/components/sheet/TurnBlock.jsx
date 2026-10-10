@@ -14,7 +14,7 @@ import { asksOf, effectLine, openAsks, riderLine } from '../../lib/riders.js';
 import { statusOf } from '../../lib/statuses.js';
 import { RESTS, restPrice } from '../../lib/rest.js';
 import { rollPlan } from '../../lib/rollPlan.js';
-import { turnTriggers } from '../../lib/turnTriggers.js';
+import { rowRoller, turnTriggers } from '../../lib/turnTriggers.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
 import { useDiceTray } from '../../context/dice-tray.js';
@@ -216,9 +216,11 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
   function rollEffect(effect, links) {
     void (async () => {
       for (const link of links) {
+        /* A row somebody else cast is their roll, and the log names it so. */
+        const by = rowRoller(effect, character).by;
         const result = await tray.present({
           ...link,
-          name: effect.name,
+          name: by && by !== character?.name ? `${by}’s ${effect.name}` : effect.name,
           note: character?.name ?? '',
           log: true,
         });
@@ -233,7 +235,9 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
     if (!tray || readOnly) return null;
     const card = getCard(effect.card);
     if (!card) return null;
-    const links = rollPlan(card, character).filter((link) => link.shape === 'value');
+    /* With the caster's numbers where the row carries them. See rowRoller. */
+    const roller = rowRoller(effect, character);
+    const links = rollPlan(card, roller.who, roller.modifiers).filter((link) => link.shape === 'value');
     return links.length > 0 ? links : null;
   }
 

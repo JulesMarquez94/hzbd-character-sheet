@@ -442,10 +442,50 @@ export function normalizeEffects(value) {
       // And LIFE LINK's roll call, written by the caster on every row of one cast.
       // Present only where there is one. See lifeLink.js.
       ...(normalizeLink(raw.link) ? { link: normalizeLink(raw.link) } : {}),
+      // And who cast it, as the numbers its dice are rolled with. Present only
+      // on a row a cast laid. See normalizeBy.
+      ...(normalizeBy(raw.by) ? { by: normalizeBy(raw.by) } : {}),
     });
   }
 
   return effects.slice(0, EFFECT_LIMIT);
+}
+
+/** The attributes a card's live values read, and the most any of them can be. */
+const BY_NUMBERS = ['physique', 'instinct', 'mind', 'level', 'speed_m'];
+const BY_MAX = 99;
+
+/**
+ * Who cast a row, as the numbers its dice are rolled with, or null.
+ *
+ * Jules, 2026-10-10: "Renew is rolled by the caster not the one affected by
+ * it." A RENEW laid on Kaelen heals "again at the Turn Start of the target's
+ * next 2 turns", and the row used to be read with the holder's numbers: 1d6
+ * plus Kaelen's Mind, and none of the caster's Healer. So the cast writes its
+ * own numbers on the row (see `castBy` in combatBar.js) and every reader of the
+ * row's dice rolls with them: the Turn Start reminder, the row's Roll button
+ * and the Game Master's prompt for a foe. See `rowRoller` in turnTriggers.js.
+ *
+ * Attributes rather than a resolved number, because a card may read two of
+ * them in one sentence. `healElevate` is the caster's own Healer step and
+ * `healDown` the one more it lends over a body that is down, which is decided
+ * at the tick rather than at the cast.
+ */
+function normalizeBy(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const name = String(raw.name ?? '').slice(0, EFFECT_NAME_MAX).trim();
+  if (!name) return null;
+
+  const out = { name };
+  for (const key of BY_NUMBERS) {
+    const value = Number(raw[key]) || 0;
+    // Speed keeps its halves, which is the one place a card reads one.
+    out[key] = Math.max(0, Math.min(BY_MAX, key === 'speed_m' ? value : Math.floor(value)));
+  }
+  if (['physique', 'instinct', 'mind'].includes(raw.stat)) out.stat = raw.stat;
+  out.healElevate = Math.max(0, Math.min(9, Math.floor(Number(raw.healElevate) || 0)));
+  out.healDown = Math.max(0, Math.min(9, Math.floor(Number(raw.healDown) || 0)));
+  return out;
 }
 
 /**
@@ -591,6 +631,8 @@ export function addEffect(effects, entry) {
       // moved since this went down. See the note on the effects above.
       stirred: false,
       ...(normalizeLink(entry?.link) ? { link: normalizeLink(entry.link) } : {}),
+      // See normalizeEffects: who cast it, as the numbers its dice roll with.
+      ...(normalizeBy(entry?.by) ? { by: normalizeBy(entry.by) } : {}),
     },
     ...normalizeEffects(effects),
   ];

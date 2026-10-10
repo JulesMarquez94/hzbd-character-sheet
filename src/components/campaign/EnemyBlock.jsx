@@ -23,6 +23,7 @@ import { asksOf, openAsks } from '../../lib/riders.js';
 import { answerEffect, dropEffect, normalizeEffects, nudgeEffect } from '../../lib/combatTurn.js';
 import { newChain } from '../../lib/logChain.js';
 import { rollPlan } from '../../lib/rollPlan.js';
+import { rowRoller } from '../../lib/turnTriggers.js';
 import { getCard } from '../../lib/weapons.js';
 import { viewUrl } from '../../lib/imageViews.js';
 import {
@@ -644,7 +645,12 @@ function FoeActions({ foe, patch, readOnly, combat = null }) {
        enemy holds delivered rows too, and a player's Wall of Fire is the
        player's spell however long it burns here. See foeOwns in encounters.js. */
     const modifiers = foeOwns(foe, card.id) ? foeModifiers(actor) : { actor };
-    const links = rollPlan(card, actor, modifiers).filter((link) => link.shape === 'value');
+    /* And a row a player's cast laid here is rolled with that player's numbers,
+       which the row carries. See rowRoller in turnTriggers.js. */
+    const roller = effect.by ? rowRoller(effect, actor) : null;
+    const links = (
+      roller ? rollPlan(card, roller.who, roller.modifiers) : rollPlan(card, actor, modifiers)
+    ).filter((link) => link.shape === 'value');
     return links.length > 0 ? links : null;
   }
 
