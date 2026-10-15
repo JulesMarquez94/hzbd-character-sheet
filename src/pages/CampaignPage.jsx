@@ -13,6 +13,10 @@ import { CardStackProvider } from '../components/CardStack.jsx';
 import CampaignDetails from '../components/campaign/CampaignDetails.jsx';
 import BestiaryTab from '../components/campaign/BestiaryTab.jsx';
 import EncounterTab from '../components/campaign/EncounterTab.jsx';
+import CalendarTab from '../components/campaign/CalendarTab.jsx';
+import CalendarBlock from '../components/campaign/CalendarBlock.jsx';
+import { foldAnswer, normalizeCalendar, waitingCalls } from '../lib/calendar.js';
+import { listRestAnswers } from '../lib/campaignLog.js';
 import {
   addMember,
   getCampaign,
@@ -36,16 +40,20 @@ import '../components/sheet/sheet.css';
 import './Campaigns.css';
 
 /**
- * Four tabs, and two of them are the Game Master's alone.
+ * Five tabs, and three of them are the Game Master's alone.
  *
  * The Bestiary and the Encounters are not hidden out of tidiness: half of what
  * is on an encounter is the answer to "how much has the boss got left", and
  * Jules's ruling of 2026-08-31 is that the players do not get to read that yet.
  * The schema keeps the same line (see the encounters policies), so this is a tab
  * that is absent rather than a tab that is empty.
+ *
+ * The Calendar is the Game Master's for a plainer reason: it is the controls.
+ * What the players read of it is a block, on their own sheets and on the
+ * Overview here, switched on from the tab. See CalendarTab.jsx.
  */
 const TABS = ['Overview', 'Details'];
-const DM_TABS = ['Bestiary', 'Encounters'];
+const DM_TABS = ['Calendar', 'Bestiary', 'Encounters'];
 
 /** localStorage can throw where site data is blocked; a preference is not
     worth a white screen. Same key the sheet reads, so the two agree. */
@@ -188,6 +196,34 @@ export default function CampaignPage() {
     [flush, canEdit, campaign]
   );
 
+  /* The calendar, changed off its newest self.
+
+     Everything that writes the calendar hands in a function from the calendar
+     as it stands to the one it should become, and this applies it to the newest
+     copy there is rather than to the one the caller rendered with. Two writes in
+     one breath are the ordinary case here, not the edge: a Game Master moving
+     the day while a player's answer is being folded in. Read through a ref so
+     the second sees the first, and so nothing that holds this function is
+     rebuilt every time the campaign row changes. A change that hands back null
+     changes nothing. See src/lib/calendar.js. */
+  const campaignRef = useRef(campaign);
+  useEffect(() => {
+    campaignRef.current = campaign;
+  });
+  const patchRef = useRef(patch);
+  useEffect(() => {
+    patchRef.current = patch;
+  });
+
+  const changeCalendar = useCallback((change) => {
+    const held = campaignRef.current;
+    if (!held) return;
+    const next = change(normalizeCalendar(held.calendar));
+    if (!next) return;
+    campaignRef.current = { ...held, calendar: next };
+    patchRef.current({ calendar: next });
+  }, []);
+
   // Never lose the last keystrokes when navigating away.
   useEffect(() => {
     return () => {
@@ -233,6 +269,45 @@ export default function CampaignPage() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, loading, canEdit, Boolean(campaign)]);
+
+  /* And who has taken the rests the Game Master called, folded into the rest
+     log as the answers land. Only here, because only the Game Master may write
+     the campaign row: each sheet writes its answer to the table log as itself,
+     and this page carries it across. Read on the way in as well as heard live,
+     for the answers given while this page was shut; folding is idempotent, so
+     a row read twice lands once. See foldAnswer in calendar.js. */
+  useEffect(() => {
+    if (loading || !canEdit || !campaign) return undefined;
+
+    let active = true;
+    const fold = (row) => changeCalendar((latest) => foldAnswer(latest, row));
+    const catchUp = () => {
+      const open = waitingCalls(campaignRef.current?.calendar).map((call) => call.id);
+      if (open.length === 0) return;
+      listRestAnswers(id, open)
+        .then((rows) => active && rows.forEach(fold))
+        .catch(() => {});
+    };
+
+    catchUp();
+
+    const off = subscribeToTable({
+      table: 'campaign_events',
+      filter: `campaign_id=eq.${id}`,
+      onChange: (payload) => {
+        if (payload.eventType !== 'INSERT') return;
+        const row = payload.new;
+        if (row?.kind === 'rest' && row.data?.call && row.character_id) fold(row);
+      },
+      onResync: catchUp,
+    });
+
+    return () => {
+      active = false;
+      off();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, loading, canEdit, Boolean(campaign), changeCalendar]);
 
   /* The roster, live: a player redeeming the join code appears on every open
      copy of this page without a reload. */
@@ -288,6 +363,8 @@ export default function CampaignPage() {
 
   /* ---------------------------------------------------------- the blocks */
 
+  const calendarOn = normalizeCalendar(campaign?.calendar).enabled;
+
   /* One block per member and one per creature they control: the party block is
      the sheet's blocks 1 and 2 folded together, and a creature's block is the
      sheet's own first minion page, read only. Drawn off the character as the
@@ -322,8 +399,12 @@ export default function CampaignPage() {
        empty state with the join code on it rather than a log of nothing. */
     if (list.length > 0) list.push({ id: 'log', kind: 'log' });
 
+    /* And the calendar, when the Game Master has it switched on: the same block
+       every linked sheet grows, so the clock stands beside the party. */
+    if (list.length > 0 && calendarOn) list.push({ id: 'calendar', kind: 'calendar' });
+
     return list;
-  }, [members]);
+  }, [members, calendarOn]);
 
   const byId = useMemo(() => new Map(blocks.map((block) => [block.id, block])), [blocks]);
 
@@ -388,6 +469,11 @@ export default function CampaignPage() {
           <LogBlock campaignId={id} title="Table Log" actorFor={actorFor} canClear={canEdit} />
         );
       }
+      if (block.kind === 'calendar') {
+        /* The Game Master reads it with their own events still on it. A player
+           reading the Overview reads what their sheet's block reads. */
+        return <CalendarBlock calendar={campaign?.calendar} gm={canEdit} />;
+      }
       if (block.kind === 'minion') {
         return (
           <MinionStatsBlock
@@ -401,7 +487,7 @@ export default function CampaignPage() {
       }
       return <PartyBlock character={block.shown} math={block.math} unit={unit} />;
     },
-    [byId, id, actorFor, unit, canEdit]
+    [byId, id, actorFor, unit, canEdit, campaign?.calendar]
   );
 
   const describeBlock = useCallback(
@@ -410,6 +496,9 @@ export default function CampaignPage() {
       if (!block) return { name: String(blockId), note: null };
       if (block.kind === 'log') {
         return { name: 'Table Log', note: 'Everything that has happened at this table' };
+      }
+      if (block.kind === 'calendar') {
+        return { name: 'Calendar', note: 'The day, what is coming and the rests called' };
       }
       if (block.kind === 'minion') {
         return {
@@ -652,6 +741,10 @@ export default function CampaignPage() {
             creature's card is dealt exactly like a player's: an enemy's Withering
             Word opens against the *enemy*, which is what `modifiers.actor` on
             each chip carries. See EnemyBlock.jsx. */}
+        {tab === 'Calendar' && canEdit && (
+          <CalendarTab campaign={campaign} members={members} change={changeCalendar} />
+        )}
+
         {tab === 'Bestiary' && canEdit && (
           <CardStackProvider character={null}>
             <BestiaryTab

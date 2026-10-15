@@ -39,7 +39,7 @@ import { layingAffordable } from '../../lib/rest.js';
  * Nothing here writes. Every choice goes into the rest window's `talents` draft,
  * is priced into its plan, and is only committed by "Yes, rest".
  */
-export default function EnchantAction({ character, talents, kind, onClose, onDraft }) {
+export default function EnchantAction({ character, talents, kind, onClose, onDraft, pay = null }) {
   /* Which item is being worked on, or null while the list is up. */
   const [onItem, setOnItem] = useState(null);
   const stack = useCardStack();
@@ -167,7 +167,7 @@ export default function EnchantAction({ character, talents, kind, onClose, onDra
           held={laidOn({ talents }, onItem.id).map((entry) => entry.id)}
           room={cap}
           priced
-          afford={(enchantment) => layingAffordable(character, kind, talents, enchantment)}
+          afford={(enchantment) => layingAffordable(character, kind, talents, enchantment, pay)}
           onClose={() => setOnItem(null)}
           onPick={(enchantment) => {
             onDraft(layOn(talents, onItem.id, enchantment.id));

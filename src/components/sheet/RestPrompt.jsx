@@ -57,8 +57,16 @@ import { setTalentPicks } from '../../lib/talents.js';
  * everything else the rest does; only "Yes, rest" commits any of it. Backing out
  * of the rest is an evening's work not done, with the Supplies still in the
  * crate. Clearing the slot rolls the draft back the same way.
+ *
+ * ------------------------------------------------------------ a rest called
+ * The same window opens for a rest the Game Master called from the campaign
+ * calendar, with two more things handed in: `pay`, which is how the call is
+ * paid (its own Supplies a night, nothing, or coins in their place), and
+ * `called`, which is what the window says about where the rest came from. The
+ * night is otherwise exactly the player's: the same lines, the same action slot
+ * and the same "Yes, rest". See RestCall.jsx.
  */
-export default function RestPrompt({ kind, character, onRest, onClose }) {
+export default function RestPrompt({ kind, character, onRest, onClose, pay = null, called = null }) {
   const rest = getRest(kind);
   const stack = useCardStack();
 
@@ -139,6 +147,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
   const plan = useMemo(
     () =>
       restPlan(character, kind, picked, prepared, brews, reshaped, {
+        pay,
         revived,
         raised,
         scribes,
@@ -148,6 +157,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
     [
       character,
       kind,
+      pay,
       picked,
       prepared,
       brews,
@@ -251,14 +261,17 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
             <Gated
               className="btn btn-copper btn-sm"
               onClick={() => {
-                /* The write, and beside it what this rest was spent on. Only
-                   the table log reads the second argument, and a caller that
-                   ignores it is a caller that behaves exactly as it did. */
-                onRest(plan.patch, { action: action?.label ?? null });
+                /* The write, and beside it what this rest was spent on and
+                   what it cost. Only the table log reads the second argument,
+                   and a caller that ignores it is a caller that behaves exactly
+                   as it did. */
+                onRest(plan.patch, { action: action?.label ?? null, paid: plan.paid });
                 onClose();
               }}
               why={
-                !plan.affordable
+                plan.coinsShort > 0
+                  ? `This rest costs ${formatNumber(plan.coinsShort)} more coins than your purse holds. Nothing about the rest happens until you can pay, or the Game Master changes the price.`
+                  : !plan.affordable
                   ? `This rest needs ${plan.short} more Supplies than the crate holds. Restock, or take a labour off above. Nothing about the rest happens until you do.`
                   : /* And a night's action half answered, which used to be taken
                        anyway: a raising with no name was quietly dropped and the
@@ -283,12 +296,26 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
           action={action}
           character={character}
           kind={kind}
+          pay={pay}
           onTake={take}
           onRead={(card) => stack?.openCard(card)}
         />
       ) : (
         <div className="rest-prompt">
           <p className="rest-blurb">{rest.blurb}</p>
+
+          {/* Where a called rest came from, before what it does: the price
+              below is the Game Master's, and a reader who did not press a rest
+              button should be told why one is open. */}
+          {called && (
+            <p className="rest-called">
+              <b>Called by the Game Master</b>
+              {called.table ? ` at ${called.table}` : ''}
+              {called.title ? `: ${called.title}` : ''}.
+              {called.count > 1 ? ` Rest ${called.round} of ${called.count}.` : ''}
+              {called.note ? ` ${called.note}` : ''}
+            </p>
+          )}
 
           <span className="fx-label">What it does</span>
           <ul className="rest-lines">
@@ -300,16 +327,39 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
             ))}
           </ul>
 
-          <div className={`rest-crate${plan.affordable ? '' : ' is-short'}`}>
+          <div className={`rest-crate${plan.short > 0 ? ' is-short' : ''}`}>
             <span className="rest-crate-label">Supplies after</span>
             <span className="rest-crate-value">
               {plan.affordable
                 ? `${formatNumber(character.supplies)} to ${formatNumber(plan.supplies)}`
-                : `${formatNumber(character.supplies)}, and ${formatNumber(plan.short)} short`}
+                : plan.short > 0
+                  ? `${formatNumber(character.supplies)}, and ${formatNumber(plan.short)} short`
+                  : formatNumber(character.supplies)}
             </span>
           </div>
 
-          {!plan.affordable && (
+          {/* And the purse, for a rest paid in coin. The same shape as the crate
+              above, since it is the same question about a different pool. */}
+          {pay?.mode === 'coins' && (
+            <div className={`rest-crate${plan.coinsShort > 0 ? ' is-short' : ''}`}>
+              <span className="rest-crate-label">Coins after</span>
+              <span className="rest-crate-value">
+                {plan.coinsShort > 0
+                  ? `${formatNumber(character.wealth)}, and ${formatNumber(plan.coinsShort)} short`
+                  : `${formatNumber(character.wealth)} to ${formatNumber(plan.coins)}`}
+              </span>
+            </div>
+          )}
+
+          {plan.coinsShort > 0 && (
+            <p className="rest-refused" role="alert">
+              <b>You cannot afford this.</b> The Game Master priced this rest in coin, and your purse
+              does not hold enough. Nothing here happens: no coins move, nothing is restored and
+              nothing ends. Find {formatNumber(plan.coinsShort)} more coins, or tell the Game Master.
+            </p>
+          )}
+
+          {!plan.affordable && plan.short > 0 && (
             <p className="rest-refused" role="alert">
               <b>You cannot afford this.</b> A rest is paid for out of the crate, and yours does not
               hold enough. Nothing here happens: no Supplies move, nothing is restored and nothing
@@ -438,6 +488,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
         <BrewRest
           character={character}
           kind={kind}
+          pay={pay}
           state={step.state}
           brews={brews}
           onDraft={setBrews}
@@ -449,6 +500,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
         <ScribeRest
           character={character}
           kind={kind}
+          pay={pay}
           state={step.state}
           draft={scribes}
           onDraft={setScribes}
@@ -461,6 +513,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
           character={character}
           talents={talents}
           kind={kind}
+          pay={pay}
           onDraft={setPrepared}
           onClose={() => setStepId(null)}
         />
@@ -609,7 +662,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
  * A labour is picked at an amount, so its amounts are the buttons; everything
  * else opens its own step and is picked by the row.
  */
-function ActionMenu({ actions, action, character, kind, onTake, onRead }) {
+function ActionMenu({ actions, action, character, kind, pay = null, onTake, onRead }) {
   const groups = [];
   for (const row of actions) {
     const group = groups.find((entry) => entry.from === row.from);
@@ -661,7 +714,7 @@ function ActionMenu({ actions, action, character, kind, onTake, onRead }) {
                         /* Priced against the crate *after* the rest itself, so a
                            chip you could never pay for is offered dead rather
                            than failing at the last button. */
-                        const affordable = labourAffordable(character, kind, option);
+                        const affordable = labourAffordable(character, kind, option, pay);
 
                         return (
                           <Gated

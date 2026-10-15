@@ -49,6 +49,37 @@ export default function LogProvider({ characterId, canWrite = false, children })
     });
   }, [characterId, read]);
 
+  /* And the campaign rows themselves, for the calendar on each: the Game Master
+     moving the day, adding to the agenda or calling a rest reaches this sheet
+     without a reload. One channel with an `in` filter, joined on the ids so a
+     calendar changing does not tear it down. See CalendarBlock and RestCall. */
+  const ids = tables
+    .map((table) => table.id)
+    .sort()
+    .join(',');
+
+  useEffect(() => {
+    if (!characterId || !ids) return undefined;
+
+    return subscribeToTable({
+      table: 'campaigns',
+      filter: `id=in.(${ids})`,
+      onChange: (payload) => {
+        if (payload.eventType === 'DELETE') return;
+        const row = payload.new;
+        if (!row?.id) return;
+        setTables((was) =>
+          was.map((table) =>
+            table.id === row.id
+              ? { ...table, name: row.name ?? table.name, calendar: row.calendar ?? table.calendar }
+              : table
+          )
+        );
+      },
+      onResync: read,
+    });
+  }, [characterId, ids, read]);
+
   const value = useMemo(
     () => ({
       tables,

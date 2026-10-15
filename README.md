@@ -412,6 +412,45 @@ code either since it expires at *your* next Long Rest.
 
 The whole trade is on the table log, so the party sees it go past.
 
+### The campaign calendar
+
+A campaign keeps its own clock. The Game Master's **Calendar** tab sets the in-world date of Day
+1 (any date at all) and moves the table forward a day at a time or many at once.
+Nothing counts down on its own: every countdown is worked out from today, so one press moves every
+countdown on every sheet at the table.
+
+The **agenda** is what the table is counting down to: a festival, a deadline, a ship that sails.
+Each event has a date and a note, and the Game Master can keep one to themselves. They sit on a
+timeline and in a list on the tab.
+
+A switch on the tab puts a **Calendar block** on every linked character's sheet, beside the
+table's log and fight blocks: today and its date, the next five things on the agenda with the
+days left until each, the last rest called and the whole rest log behind a button. The same block
+stands on the campaign's Overview.
+
+**Rests are called, not taken for anybody.** A sheet is the only writer of its own numbers, so
+the Game Master calls a rest, Short or Long, for whoever they pick, with a title and a note for
+the log. It is paid one of three ways: the rest's own Supplies (the rules' default), nothing at
+all, or coins a night in place of the Supplies. Coins can name a roof from the rulebook (8.2): a
+common room, a good house (1 Karma on top) or a fine house (1 Karma and Shield equal to Mind),
+each at its printed price or any price the Game Master sets.
+
+Moving several days with a Long Rest asks how the nights are taken: **one rest paid for every
+night**, or **a rest per night in a row** (seven at most), each its own window with its own Long
+Rest action and its own price.
+
+On each named sheet a panel stands up with the rest, its price and the note. **Rest** opens the
+same rest window the Turn block does, with the Game Master's price in it, so the player reads
+every line before anything is written; **Not this time** turns it down. A row of rests asks again
+after each one until the last is taken or the player stops. A sheet that was shut finds the call
+the next time it opens. Only the newest call is offered, so a player back from a week away is not
+asked to sleep three nights in a row: the older one reads as missed.
+
+The **rest log** keeps every call: the day, the rest, where, the price, the note and who took it.
+It lives on the campaign row rather than the table log, so clearing the log or the ninety-day
+sweep never takes it. The Game Master's page folds each answer in as it lands, and a call nobody
+has answered yet can be withdrawn.
+
 ### The Temporary Effects tracker
 
 The bottom of the Character tab holds what is **running on you**: a name, how many of your turns it
@@ -501,7 +540,7 @@ npm run preview  # serve the production build
 npm run lint     # eslint
 ```
 
-Nineteen checkers prove things eslint cannot. Each takes `--list` to print every case it walked
+Twenty-one checkers prove things eslint cannot. Each takes `--list` to print every case it walked
 rather than only what it found:
 
 ```bash
@@ -525,4 +564,5 @@ npm run lint:legal     # no checkout can ship pointing at an unfinished contract
 npm run lint:crossroads # every id in the Crossroads pool names something real
 npm run lint:walkthrough # every step of the Walkthrough points at a rule that exists
 npm run lint:images    # picture slots, the three shapes and the crop clamp
+npm run lint:calendar  # the clock adds up, every called rest is answered once and priced as called
 ```

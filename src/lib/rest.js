@@ -71,8 +71,10 @@ import {
   clamp,
   formatNumber,
   grantRows,
+  karmaCap,
   levelForXp,
   newLedgerId,
+  shieldCapFor,
 } from './characterModel.js';
 import { restHealth } from './grants.js';
 import { TURN_SECONDS, normalizeEffects } from './combatTurn.js';
@@ -148,6 +150,42 @@ export const RESTS = {
 
 export function getRest(kind) {
   return RESTS[kind] ?? null;
+}
+
+/**
+ * Where you sleep, when it is not the road. The rulebook's own table (8.2):
+ *
+ *   "A rest on the road costs your own Supplies. A rest under a roof is paid
+ *   for in coin instead, and a better roof gives a better night."
+ *
+ * Prices are per person per night and replace the rest's Supplies. What a roof
+ * gives on top is a Long Rest's alone: a bed for an hour gives nothing extra.
+ * The Game Master sets the price when they call the rest, so `coins` here is
+ * the printed one the calendar offers first, not a law. See calendar.js.
+ */
+export const ROOFS = {
+  common: { id: 'common', label: 'A common room', coins: 100, karma: 0, shieldMind: false },
+  good: { id: 'good', label: 'A good house', coins: 400, karma: 1, shieldMind: false },
+  fine: { id: 'fine', label: 'A fine house', coins: 1200, karma: 1, shieldMind: true },
+};
+
+/**
+ * How a rest is being paid for, read once for the plan and for every check
+ * that prices something inside it.
+ *
+ * `pay` is null for a rest the player took from their own Turn block, which is
+ * the rules' default: the rest's own Supplies, one night. A rest the Game Master
+ * called carries its own `{ mode, coins, roof, nights, title }`. See calendar.js.
+ */
+function payFor(pay) {
+  const mode = ['supplies', 'free', 'coins'].includes(pay?.mode) ? pay.mode : 'supplies';
+  return {
+    mode,
+    nights: Math.max(1, Math.floor(Number(pay?.nights) || 1)),
+    coins: mode === 'coins' ? Math.max(0, Math.floor(Number(pay?.coins) || 0)) : 0,
+    roof: mode === 'coins' ? (ROOFS[pay?.roof] ?? null) : null,
+    title: typeof pay?.title === 'string' ? pay.title : '',
+  };
 }
 
 /**
@@ -255,11 +293,17 @@ function restHealthDetail(gives, rows, kind) {
  * Everything that prices a rest goes through here: the plan, and the two
  * affordability checks that offer a chip dead rather than letting it fail at the
  * last button.
+ *
+ * In Supplies only. A rest the Game Master called free, or paid for in coin,
+ * takes nothing out of the crate, and one called for several nights takes the
+ * price once a night. See `payFor`.
  */
-export function restPrice(character, kind) {
+export function restPrice(character, kind, pay = null) {
   const rest = getRest(kind);
   if (!rest) return 0;
-  return Math.max(0, rest.supplies - restCut(character).amount);
+  const held = payFor(pay);
+  if (held.mode !== 'supplies') return 0;
+  return Math.max(0, rest.supplies - restCut(character).amount) * held.nights;
 }
 
 /* ------------------------------------------------------------- the labours */
@@ -742,11 +786,15 @@ export function raisePlan(character, kind, raised) {
  * first and that everything already chosen in this window is paid for too. The
  * same law `labourAffordable` reads by: the choice you could never pay for is
  * offered dead rather than left to fail at the last button.
+ *
+ * `pay` on this and the three checks at the foot of the file is the called
+ * rest's, so a night the Game Master paid for in coin leaves the whole crate to
+ * the work. See `restPrice`.
  */
-export function layingAffordable(character, kind, prepared, enchantment) {
+export function layingAffordable(character, kind, prepared, enchantment, pay = null) {
   const held = Math.max(0, Math.floor(Number(character?.supplies) || 0));
   const already = changeCost(enchantChanges(character?.talents, prepared ?? character?.talents));
-  return held - restPrice(character, kind) - already - layingCost(enchantment) >= 0;
+  return held - restPrice(character, kind, pay) - already - layingCost(enchantment) >= 0;
 }
 
 /**
@@ -778,6 +826,13 @@ export function layingAffordable(character, kind, prepared, enchantment) {
  * printed, because a line saying 0 Supplies came out of the crate is a line about
  * nothing. Everything else a night does happens exactly as it does at a campfire.
  * See useTriggers.js.
+ *
+ * `pay` is a rest the Game Master called from the campaign calendar, and says
+ * how it is paid: `{ mode, coins, roof, nights, title }`. The rest's own
+ * Supplies (once a night), nothing, or coins a night out of the purse in place
+ * of the Supplies, with whatever the roof gives on top of a Long Rest. Null is a
+ * rest the player took for themselves, which is exactly what it always was. See
+ * `payFor` and calendar.js.
  */
 export function restPlan(
   character,
@@ -788,6 +843,7 @@ export function restPlan(
   reshaped = null,
   {
     free = false,
+    pay = null,
     revived = [],
     raised = null,
     scribes = [],
@@ -832,14 +888,18 @@ export function restPlan(
     return delta;
   };
 
-  const price = free ? 0 : restPrice(character, kind);
+  const paying = payFor(pay);
+  const mode = free ? 'free' : paying.mode;
+  const nights = paying.nights;
+  const each = mode === 'supplies' ? restPrice(character, kind) : 0;
+  const price = each * nights;
   const discount = restCut(character);
-  const cut = rest.supplies - price;
+  const cut = rest.supplies - each;
 
   // A rest nobody paid for takes nothing out of the crate and says nothing
   // about it. See `free` in the note above.
-  if (!free) {
-    move(-price, rest.label);
+  if (mode === 'supplies') {
+    move(-price, paying.title ? `${paying.title} · ${rest.label}` : rest.label);
     lines.push({
       key: 'cost',
       label: `${price} Supplies`,
@@ -849,12 +909,87 @@ export function restPlan(
       detail:
         supplies < 0
           ? `The crate holds ${formatNumber(held)}. You cannot pay for this rest.`
-          : cut > 0
-            ? `Out of the crate. ${rest.supplies} less ${cut}, which is ${listOut(discount.names)}.`
-            : 'Out of the crate.',
+          : [
+              nights > 1 ? `${nights} nights at ${each} a night.` : null,
+              cut > 0
+                ? `Out of the crate. ${rest.supplies} less ${cut}, which is ${listOut(discount.names)}.`
+                : 'Out of the crate.',
+            ]
+              .filter(Boolean)
+              .join(' '),
       tone: supplies >= 0 ? 'cost' : 'warn',
     });
   }
+
+  /* A rest the Game Master waved through does say so, unlike the cup above:
+     the player did not choose it, and a missing cost line would read as the
+     window forgetting one. */
+  if (!free && paying.mode === 'free') {
+    lines.push({
+      key: 'cost',
+      label: 'No Supplies',
+      detail: 'The Game Master called this rest free.',
+      tone: 'gain',
+    });
+  }
+
+  /* ---- coins: a roof instead of the road ----
+     The rulebook's own trade (8.2): a rest under a roof is paid in coin
+     *instead* of Supplies, per person per night. Refused exactly the way the
+     crate refuses: a purse that cannot cover it is a rest that did not happen,
+     and the line says how short it is. */
+  let wealth = Math.max(0, Math.floor(Number(character?.wealth) || 0));
+  const purse = wealth;
+  let coinsShort = 0;
+  let coinsPaid = 0;
+
+  if (mode === 'coins') {
+    const total = paying.coins * nights;
+    const where = paying.title || paying.roof?.label || '';
+    coinsPaid = total;
+    wealth -= total;
+
+    if (wealth < 0) {
+      coinsShort = -wealth;
+    } else if (total > 0) {
+      ledger = appendLedger(
+        { ...character, ledger },
+        {
+          id: newLedgerId(),
+          ts: new Date().toISOString(),
+          kind: 'wealth',
+          delta: -total,
+          note: where ? `${where} · ${rest.label}` : rest.label,
+          balance: wealth,
+        }
+      );
+    }
+
+    lines.push({
+      key: 'coins',
+      label: total > 0 ? `${formatNumber(total)} coins` : 'No coins',
+      detail:
+        wealth < 0
+          ? `Your purse holds ${formatNumber(purse)}. You cannot pay for this rest.`
+          : total === 0
+            ? 'The Game Master set no price.'
+            : [
+                nights > 1 ? `${nights} nights at ${formatNumber(paying.coins)} a night.` : null,
+                `Out of your purse${
+                  paying.title
+                    ? `, for ${paying.title}`
+                    : paying.roof
+                      ? `, for ${paying.roof.label.toLowerCase()}`
+                      : ''
+                }. No Supplies.`,
+              ]
+                .filter(Boolean)
+                .join(' '),
+      tone: wealth >= 0 ? 'cost' : 'warn',
+    });
+  }
+
+  const paid = { supplies: price, coins: coinsPaid };
 
   for (const labour of labours) {
     const delta = labour.gain ? labour.amount : -labour.amount;
@@ -1011,19 +1146,30 @@ export function restPlan(
     }
   }
 
-  const affordable = short === 0;
+  const affordable = short === 0 && coinsShort === 0;
 
   // A refused rest writes nothing at all. The lines above still describe what
   // it *would* have done, which is what the window needs in order to say why.
   if (affordable) {
     patch.supplies = supplies;
     patch.ledger = ledger;
+    if (mode === 'coins') patch.wealth = wealth;
   }
 
   /* Everything below only happens if the crate covered it. A rest nobody can
      pay for restores nothing and ends nothing: it did not happen. */
   if (!affordable) {
-    return { rest, lines, patch: {}, supplies: held, affordable, short };
+    return {
+      rest,
+      lines,
+      patch: {},
+      supplies: held,
+      affordable,
+      short,
+      coins: purse,
+      coinsShort,
+      paid,
+    };
   }
 
   /* ---- and what is in the pack that was not there last night ----
@@ -1161,6 +1307,53 @@ export function restPlan(
         label: `Shield ${shield} to 0`,
         detail: 'Nothing you were soaking with lasts the night.',
         tone: 'end',
+      });
+    }
+  }
+
+  /* ---- and what the roof gave on top ----
+     A Long Rest's alone, and only under a roof the Game Master named (8.2): a
+     good house is worth a point of Karma, a fine one that and a morning's Shield
+     equal to your Mind. Read after the Shield above has gone to nothing, because
+     the fine house's is the Shield you *wake* with. Karma keeps its own cap of
+     one per level, so a full pill says so rather than quietly not moving. */
+  const roof = kind === 'long' && mode === 'coins' ? paying.roof : null;
+
+  if (roof?.karma > 0) {
+    const cap = karmaCap(character);
+    const karma = Math.max(0, Math.floor(Number(character?.karma) || 0));
+    const next = Math.min(cap, karma + roof.karma);
+
+    if (next > karma) {
+      patch.karma = next;
+      lines.push({
+        key: 'roof-karma',
+        label: `Karma ${karma} to ${next}`,
+        detail: `${roof.label}. A night under a better roof.`,
+        tone: 'gain',
+      });
+    } else {
+      lines.push({
+        key: 'roof-karma',
+        label: `Karma stays at ${karma}`,
+        detail: `${roof.label}, but Karma is capped at one per level and you hold all ${cap}.`,
+        tone: 'keep',
+      });
+    }
+  }
+
+  if (roof?.shieldMind) {
+    const mind = Math.max(0, Math.floor(Number(character?.mind) || 0));
+    const wake = Math.min(mind, shieldCapFor(character));
+    const before = patch.shield ?? Math.max(0, Math.floor(Number(character?.shield) || 0));
+
+    if (wake > before) {
+      patch.shield = wake;
+      lines.push({
+        key: 'roof-shield',
+        label: `Shield ${before} to ${wake}`,
+        detail: `${roof.label}. You start the day with Shield equal to your Mind.`,
+        tone: 'gain',
       });
     }
   }
@@ -1428,7 +1621,7 @@ export function restPlan(
     });
   }
 
-  return { rest, lines, patch, supplies, affordable, short };
+  return { rest, lines, patch, supplies, affordable, short, coins: wealth, coinsShort, paid };
 }
 
 /**
@@ -1436,10 +1629,10 @@ export function restPlan(
  * is paid for first. The chip that would overdraw the crate is offered dead
  * rather than left to fail at the last button.
  */
-export function labourAffordable(character, kind, option) {
+export function labourAffordable(character, kind, option, pay = null) {
   if (option.gain) return true;
   const held = Math.max(0, Math.floor(Number(character?.supplies) || 0));
-  return held - restPrice(character, kind) - option.amount >= 0;
+  return held - restPrice(character, kind, pay) - option.amount >= 0;
 }
 
 /**
@@ -1450,8 +1643,8 @@ export function labourAffordable(character, kind, option) {
  * alchemy.js — which may not import this file, so the number goes down with the
  * call rather than being looked up there.
  */
-export function brewingAffordable(character, kind, brews, state, item) {
-  return brewAffordable(character, restPrice(character, kind), brews, state, item);
+export function brewingAffordable(character, kind, brews, state, item, pay = null) {
+  return brewAffordable(character, restPrice(character, kind, pay), brews, state, item);
 }
 
 /**
@@ -1461,6 +1654,6 @@ export function brewingAffordable(character, kind, brews, state, item) {
  * The fourth of the same shape, and the second place the price of a rest crosses
  * into a file that may not import this one. See `brewingAffordable`.
  */
-export function scribingAffordable(character, kind, draft, state, card) {
-  return scribeAffordable(character, restPrice(character, kind), draft, state, card);
+export function scribingAffordable(character, kind, draft, state, card, pay = null) {
+  return scribeAffordable(character, restPrice(character, kind, pay), draft, state, card);
 }

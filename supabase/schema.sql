@@ -383,6 +383,12 @@ alter table public.characters add column if not exists card_uses   jsonb not nul
 -- Where an unfinished Walkthrough stopped, so the dashboard can offer the way
 -- back to it. Null for every finished character. See src/lib/walkthrough.js.
 alter table public.characters add column if not exists creation    jsonb;
+-- Which rest the Game Master called at each table this sheet has answered,
+-- keyed by campaign: { "<campaign id>": { call, done, declined } }. `done` is
+-- how many of the call's rests were taken, since a call may be several in a
+-- row. Written by the sheet itself when it takes or declines one, so a reload
+-- or a second tab never offers the same night twice. See src/lib/calendar.js.
+alter table public.characters add column if not exists table_calls jsonb not null default '{}'::jsonb;
 
 create index if not exists characters_user_id_idx on public.characters (user_id);
 
@@ -599,12 +605,28 @@ create table if not exists public.campaigns (
   -- grid: {"left": [id, id], "right": [id, id]}. See normalizeTrays.
   overview_trays   jsonb not null default '{}'::jsonb,
 
+  -- The table's own clock and what is on it, written by the Game Master alone
+  -- (the dm update policy below already says so) and read by everyone seated:
+  --   { enabled, start: "1204-03-01", day: 14,
+  --     events: [{ id, date, title, note, shown }],
+  --     rests:  [{ id, ts, day, rest, nights, count, pay, title, note,
+  --                to, names, answers, withdrawn }] }
+  -- `start` is the in-world date of Day 1 and `day` is the day the table is on,
+  -- so today is start + day - 1 and every countdown is worked out rather than
+  -- stored. `rests` is the rest log: each rest the Game Master called, who it
+  -- was called for and who took it. It lives here rather than on the table log
+  -- so a cleared log and the ninety-day sweep cannot take it. A player's sheet
+  -- answers a call through its own client, never by writing here. See
+  -- src/lib/calendar.js.
+  calendar      jsonb not null default '{}'::jsonb,
+
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
 
 -- For databases created before these columns existed.
 alter table public.campaigns add column if not exists overview_trays jsonb not null default '{}'::jsonb;
+alter table public.campaigns add column if not exists calendar       jsonb not null default '{}'::jsonb;
 
 create index if not exists campaigns_dm_user_id_idx on public.campaigns (dm_user_id);
 

@@ -199,6 +199,10 @@ export const BLANK_CHARACTER = {
   inventory_order: [],
   inventory_columns: 3,
   inventory_trays: {},
+  // Which rest the Game Master called at each table this sheet has answered:
+  // { "<campaign id>": { call, done, declined } }. The guard that keeps one call
+  // from being taken twice. calendar.js owns the shape.
+  table_calls: {},
 };
 
 /* -------------------------------------------------------------- block order */

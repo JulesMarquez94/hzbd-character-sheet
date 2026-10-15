@@ -17774,3 +17774,75 @@ card inflicts"): a RENEW on a goblin read "1d6 + the goblin's Mind".
 - **An ally's Health is now visible to the party** on a player's sheet. A sheet
   was already public to read, which is the ruling this leans on, but it is the
   first time the fight shows it.
+
+## The campaign calendar, 2026-10-15
+
+Jules asked for a Game Master's calendar on the campaign side that switches on
+a block on every linked sheet: a start day, a timeline, agenda dates the
+players count down to, and control of short and long rests, free or paid in
+coin at a tavern, with a title and a note so there is a rest log players can
+read. Then, on the shape of it: "the date is really world days. The campaign
+day one corresponds to the day set by the DM, which can be any date. Then he
+manually moves forward days, one at a time or in bulk. The long rest feature
+triggers the players to take their own and pay the price: the default one or
+a set one. When moving several days forward the DM can trigger a long rest
+with multiple cost, or multiple long rests in a row." Every tier.
+
+- **The clock is two numbers.** `campaigns.calendar` holds `start` (the date of
+  Day 1) and `day` (the day the table is on). Today is worked out, and so is
+  every countdown, so one press of the Game Master's Move Forward moves all of
+  them on every sheet. Dates are `YYYY-MM-DD` read as UTC days. See
+  src/lib/calendar.js.
+- **The Calendar tab** is the Game Master's (CalendarTab.jsx): the switch, the
+  date of Day 1, the day (typed only to put a mistake right), Move Forward, the
+  agenda on a line and in a list, and the rest log.
+- **Move Forward** takes a number of days and, if wanted, a rest: Long or
+  Short, for whoever is ticked, paid with their own Supplies, free, or coins a
+  night (optionally under one of the rulebook's three roofs, which brings its
+  printed price and its extras). A Long Rest over several days asks which of
+  the two things the Game Master meant: one rest paid for every night, or a
+  rest per night in a row, seven at most. The move and the call are each
+  announced on the table log.
+- **The block** (CalendarBlock.jsx) grows on the Character tab as
+  `calendar:<campaign>` while the switch is on, and stands on the Overview too:
+  today, the next five shown events with their countdowns, the last rest and
+  the rest log in a dialog.
+- **A rest is called, and the sheet takes it.** The call is a row on the
+  campaign's calendar; RestCall.jsx stands a panel up on each sheet it names
+  and opens the Turn block's own rest window with the Game Master's price in
+  it (`pay` on `restPlan`). The sheet writes the rest and `table_calls` (what it
+  answered, per table) in one patch, and posts a `rest` row carrying the call
+  and which night of a row it was. Only the newest call naming a sheet is
+  offered; an older unanswered one reads as missed.
+- **The rest log is the campaign row's.** The Game Master's page folds each
+  answer off the table log into `answers` on the call as it lands, and reads
+  the ones it missed when it opens (`foldAnswer`, `listRestAnswers`). Clearing
+  the table log or the ninety-day sweep cannot take it. A call can be withdrawn
+  before everybody answers it.
+- **Coins in `restPlan`.** Priced a night at a time, out of `wealth` with a coin
+  ledger row named after the call, refused like the crate refuses when the
+  purse is short. A good house is 1 Karma (held to the cap of one per level),
+  a fine house that and Shield equal to Mind on waking. Long Rests only. The
+  four affordability checks take the same `pay`, so a night paid in coin leaves
+  the whole crate to the work. A rest the player takes for themselves is
+  unchanged.
+- **Schema.** Two columns: `campaigns.calendar` and `characters.table_calls`.
+  Re-run supabase/schema.sql. Until it is, the sheet reads its tables without
+  a calendar rather than losing its log blocks, and a character save drops the
+  missing column as it already does for any other.
+- **Checked** by `npm run lint:calendar` (scripts/check-calendar.mjs): the date
+  arithmetic, the agenda, every state a call can be in, the fold, the pricing
+  and the log words.
+
+### Left open
+
+- **Who pays at an inn** is each character, per person per night, as the
+  rulebook says. One character paying for the party is not offered.
+- **A purse that cannot pay** refuses the rest. Falling back to Supplies is not
+  offered; the Game Master can call it again as free.
+- **Days only.** A Short Rest does not move the clock and nothing tracks hours.
+- **Players' own rest buttons** still work at a table with a calendar. A switch
+  that hands rests to the Game Master alone, the way a fight is the table's,
+  was in the overview and was not built.
+- **Two Game Master tabs** writing the calendar at once: the later write wins
+  the whole column, the same limit the Overview's arrangement has.

@@ -624,7 +624,13 @@ const PANELLED = new Set(['init-call', 'initiative', 'your-turn']);
 /** What each kind of row is worth saying, as the verb in front of the title. */
 const KNOCK = {
   use: (row) => row.data?.verb ?? 'used',
-  rest: () => 'took a',
+  rest: (row) =>
+    row.data?.move === 'rest-call'
+      ? 'called a'
+      : row.data?.move === 'rest-declined'
+        ? 'passed on the'
+        : 'took a',
+  calendar: () => 'moved the calendar to',
   effect: () => 'laid',
   apply: (row) => row.data?.verb ?? 'dealt',
   summon: (row) => (row.data?.move === 'gone' ? 'took off the table' : 'conjured'),
@@ -662,6 +668,15 @@ export function noticeOf(row, { mine = [] } = {}) {
   if (!row?.kind || row.kind === 'roll') return null;
   if (row.kind === 'turn' && PANELLED.has(row.data?.move)) return null;
   if (row.kind === 'give' && row.data?.move === 'offer' && mine.includes(row.data?.to)) return null;
+  /* A rest the Game Master called stands in its own panel on every sheet it
+     names, the way an offer does. See RestCall.jsx. */
+  if (
+    row.kind === 'rest' &&
+    row.data?.move === 'rest-call' &&
+    (row.data?.to ?? []).some((id) => mine.includes(id))
+  ) {
+    return null;
+  }
 
   const verb = KNOCK[row.kind]?.(row) ?? '';
 

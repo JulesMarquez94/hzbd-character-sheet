@@ -57,7 +57,7 @@ import { listAnd, scrollSupplies } from '../../lib/scrolls.js';
  * Nothing here writes. Every choice goes into the rest window's own draft, is
  * priced into its plan, and only "Yes, rest" commits any of it.
  */
-export default function ScribeRest({ character, kind, state, draft, onDraft, onClose }) {
+export default function ScribeRest({ character, kind, state, draft, onDraft, onClose, pay = null }) {
   const stack = useCardStack();
   /* Which leaf's words are open. One at a time: the list is seven words with a
      line of prose each, and two open at once is a window that scrolls past its
@@ -157,7 +157,7 @@ export default function ScribeRest({ character, kind, state, draft, onDraft, onC
           /* Priced against the crate *after* the rest itself and after everything
              already on the desk, so a spell you could never pay for is offered
              dead rather than left to fail at the last button. */
-          const canPay = scribingAffordable(character, kind, draft, state, card);
+          const canPay = scribingAffordable(character, kind, draft, state, card, pay);
           const allowed = !full && canPay;
           const already = rows.filter((row) => row.spell.id === card.id).length;
 

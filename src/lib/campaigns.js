@@ -30,6 +30,8 @@ const CAMPAIGN_FIELDS = [
   'overview_order',
   'overview_columns',
   'overview_trays',
+  // The clock, the agenda and the rest log. See src/lib/calendar.js.
+  'calendar',
 ];
 
 function pickCampaignFields(patch) {

@@ -19,7 +19,7 @@ import { isWeaponAttack } from './tricks.js';
  * An event is written down the way a card is: a name, a line under it and the
  * receipt behind it.
  *
- *   kind     'use', 'rest' or 'turn'. What sort of thing happened.
+ *   kind     'use', 'rest', 'turn' or 'calendar'. What sort of thing happened.
  *   actor    the name that did it, copied at the time. See the schema: a
  *            character can be renamed or deleted and the log still has to read.
  *   title    what was done: "Fireball", "Long Rest", "Turn 3".
@@ -61,15 +61,30 @@ import { isWeaponAttack } from './tricks.js';
 export async function listTables(characterId) {
   if (!supabase || !characterId) return [];
 
-  const { data, error } = await supabase
+  /* The calendar rides along, because the sheet grows a block off it and
+     answers the rests called on it (see calendar.js). Asked for by name, so a
+     database that has not been given the column yet would refuse the whole
+     read and take every log block with it: that case reads again without it,
+     and the sheet simply has no calendar until schema.sql is run. */
+  let { data, error } = await supabase
     .from('campaign_members')
-    .select('campaign_id, campaigns ( id, name )')
+    .select('campaign_id, campaigns ( id, name, calendar )')
     .eq('character_id', characterId);
+  if (error) {
+    ({ data, error } = await supabase
+      .from('campaign_members')
+      .select('campaign_id, campaigns ( id, name )')
+      .eq('character_id', characterId));
+  }
   if (error) throw error;
 
   return (data ?? [])
     .filter((row) => row.campaigns)
-    .map((row) => ({ id: row.campaign_id, name: row.campaigns.name }));
+    .map((row) => ({
+      id: row.campaign_id,
+      name: row.campaigns.name,
+      calendar: row.campaigns.calendar ?? {},
+    }));
 }
 
 /* ---------------------------------------------------------------- the feed */
@@ -458,11 +473,28 @@ function verbFor(card) {
   return 'used';
 }
 
-/** A rest taken, as an event. What it cost is on the plan, not worked out here. */
-export function restEvent(kind, character, { action = null, supplies = 0 } = {}) {
+/**
+ * A rest taken, as an event. What it cost is on the plan, not worked out here.
+ *
+ * A rest the Game Master called carries the call it answers, and which of a
+ * row of rests it was (`round`, out of `of`). That pair is what the Game
+ * Master's page folds back into the rest log, so the log can say who slept.
+ * See foldAnswer in calendar.js.
+ */
+export function restEvent(
+  kind,
+  character,
+  { action = null, supplies = 0, coins = 0, call = null, round = 1, of = 1, title = '' } = {}
+) {
   const label = kind === 'long' ? 'Long Rest' : 'Short Rest';
   const detail = [
-    supplies > 0 ? `${supplies} Supplies` : 'No Supplies',
+    title || null,
+    of > 1 ? `${round} of ${of}` : null,
+    coins > 0
+      ? `${new Intl.NumberFormat('en-US').format(coins)} coins`
+      : supplies > 0
+        ? `${supplies} Supplies`
+        : 'No Supplies',
     action ? `spent the night on ${action}` : null,
   ]
     .filter(Boolean)
@@ -473,8 +505,108 @@ export function restEvent(kind, character, { action = null, supplies = 0 } = {})
     actor: character?.name ?? '',
     title: label,
     detail,
-    data: { rest: kind, action, supplies, portrait: portraitOf(character) },
+    data: {
+      rest: kind,
+      action,
+      supplies,
+      ...(coins > 0 ? { coins } : {}),
+      ...(call ? { call, round, of } : {}),
+      portrait: portraitOf(character),
+    },
   };
+}
+
+/**
+ * A rest the Game Master called, as the table hears it.
+ *
+ * The call itself lives on the campaign row (see calendar.js), which is what a
+ * sheet answers from. This row is the announcement: the table reads that the
+ * party was sent to bed, and where. `to` rides along so the sheets it names can
+ * stay quiet about it in the corner, since their own panel already says so.
+ *
+ * `words` is the call as calendar.js says it, handed in rather than worked out
+ * here, so the log never has a second opinion on what a call is called.
+ */
+export function restCallEvent(call, { words = '', pay = '', names = [] } = {}) {
+  const label = call?.rest === 'short' ? 'Short Rest' : 'Long Rest';
+  const shown = names.slice(0, 4);
+  const more = names.length - shown.length;
+
+  return {
+    kind: 'rest',
+    actor: 'The table',
+    title: label,
+    detail: [
+      call?.title || null,
+      words && words !== label ? words : null,
+      pay || null,
+      names.length > 0 ? `for ${listAnd(shown)}${more > 0 ? ` and ${more} more` : ''}` : null,
+    ]
+      .filter(Boolean)
+      .join(' · '),
+    data: {
+      move: 'rest-call',
+      call: call?.id ?? null,
+      rest: call?.rest ?? 'long',
+      nights: call?.nights ?? 1,
+      count: call?.count ?? 1,
+      to: call?.to ?? [],
+    },
+  };
+}
+
+/** "Not this time": a character passing on a rest the Game Master called. */
+export function restDeclinedEvent(character, call) {
+  return {
+    kind: 'rest',
+    actor: character?.name ?? '',
+    title: call?.rest === 'short' ? 'Short Rest' : 'Long Rest',
+    detail: [call?.title || null, 'Not this time'].filter(Boolean).join(' · '),
+    data: {
+      move: 'rest-declined',
+      call: call?.id ?? null,
+      rest: call?.rest ?? 'long',
+      portrait: portraitOf(character),
+    },
+  };
+}
+
+/**
+ * The calendar moved forward, as the table hears it. `when` is the new date in
+ * words, worked out by calendar.js, or '' for a calendar with no Day 1 yet.
+ */
+export function calendarMovedEvent({ day = 1, days = 1, when = '' } = {}) {
+  return {
+    kind: 'calendar',
+    actor: 'The table',
+    title: `Day ${day}`,
+    detail: [when || null, `${days} ${days === 1 ? 'day' : 'days'} passed`]
+      .filter(Boolean)
+      .join(' · '),
+    data: { move: 'day', day, days },
+  };
+}
+
+/**
+ * Every answer the table log holds to the given calls, oldest first.
+ *
+ * The Game Master's page reads this when it opens, for the answers that landed
+ * while nobody was listening, and folds them into the rest log. Folding is
+ * idempotent (see foldAnswer in calendar.js), so a row read twice lands once.
+ */
+export async function listRestAnswers(campaignId, calls = []) {
+  if (!campaignId || calls.length === 0) return [];
+  const sb = requireSupabase();
+
+  const { data, error } = await sb
+    .from('campaign_events')
+    .select('*')
+    .eq('campaign_id', campaignId)
+    .eq('kind', 'rest')
+    .in('data->>call', calls)
+    .order('seq', { ascending: true });
+  if (error) throw error;
+  return data ?? [];
 }
 
 /**
@@ -1120,7 +1252,12 @@ export function eventStamp(event) {
 /** The sentence a row prints: who, what they did to it, and what it was. */
 export function eventWords(event) {
   if (event?.kind === 'use') return event.data?.verb ?? 'used';
+  // "The table called a Long Rest", "Kaelen passed on the Long Rest".
+  if (event?.kind === 'rest' && event.data?.move === 'rest-call') return 'called a';
+  if (event?.kind === 'rest' && event.data?.move === 'rest-declined') return 'passed on the';
   if (event?.kind === 'rest') return 'took a';
+  // "The table moved the calendar to Day 15".
+  if (event?.kind === 'calendar') return 'moved the calendar to';
   /* Only ever read for a row standing on its own: a throw nested under its use
      is drawn by the chain and takes the step's name rather than a sentence. */
   if (event?.kind === 'roll') return 'rolled';

@@ -1254,6 +1254,10 @@ for a used breastplate is the Game Master's call.
 There are two rests. Both are taken from the Character tab, and the sheet shows you
 everything a rest is about to change before you confirm it.
 
+At a table, the Game Master can also call a rest from the campaign's Calendar tab, paid for
+the way they choose: your own Supplies, nothing or coins under a roof (see 8.2). It stands
+up on your sheet with its price, and you take it through the same window.
+
 | | Short Rest | Long Rest |
 | --- | --- | --- |
 | Time | 1 hour | 8 hours |

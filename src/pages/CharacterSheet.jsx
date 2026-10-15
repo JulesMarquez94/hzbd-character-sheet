@@ -16,6 +16,7 @@ import SiteMenu from '../components/SiteMenu.jsx';
 import CharacterTab from '../components/sheet/CharacterTab.jsx';
 import FightProvider from '../components/campaign/FightProvider.jsx';
 import HandoverCall from '../components/campaign/HandoverCall.jsx';
+import RestCall from '../components/campaign/RestCall.jsx';
 import LogCall from '../components/campaign/LogCall.jsx';
 import LogProvider from '../components/campaign/LogProvider.jsx';
 import ReactionCall from '../components/campaign/ReactionCall.jsx';
@@ -495,6 +496,13 @@ export default function CharacterSheet({ creating = false }) {
         quietly puts back anything this sheet offered and nobody took. Renders
         nothing at a table where neither has happened. See HandoverCall.jsx. */}
     <HandoverCall character={character} patch={patch} canEdit={canEdit} />
+    {/* And a rest the Game Master called from the campaign calendar, when it
+        names this sheet. A panel and two answers; taking it opens the very rest
+        window the Turn block opens, with the Game Master's price in it. Handed
+        the sheet as it is *read*, because that is what the Turn block's rest
+        window is handed. Renders nothing at a table with no call standing. See
+        RestCall.jsx. */}
+    <RestCall character={shown} patch={patch} canEdit={canEdit} />
     {/* The reaction window's knock: somebody at the table acted, their roll is
         gated, and this sheet has Reaction Points to answer with. Tapping the
         banner opens the window below, which is itself the hold on their roll.

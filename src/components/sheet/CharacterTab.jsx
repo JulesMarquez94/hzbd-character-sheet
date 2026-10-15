@@ -4,6 +4,8 @@ import FeralBlock from './FeralBlock.jsx';
 import LedgerModal from './LedgerModal.jsx';
 import FightBlock from '../campaign/FightBlock.jsx';
 import LogBlock from '../campaign/LogBlock.jsx';
+import CalendarBlock from '../campaign/CalendarBlock.jsx';
+import { normalizeCalendar, normalizeTableCalls } from '../../lib/calendar.js';
 import LoadoutBlock from './LoadoutBlock.jsx';
 import { MinionActionsBlock, MinionStatsBlock } from './MinionBlock.jsx';
 import PactBlock from './PactBlock.jsx';
@@ -245,6 +247,14 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
          whenever the membership is, so the arrangement never reshuffles
          because a fight started. See FightBlock.jsx. */
       ...tables.map((table) => `fight:${table.id}`),
+      /* And the table's calendar, but only while its Game Master has it
+         switched on: this is the block the switch puts here. Unlike the two
+         above it comes and goes inside a session, the way a raised body's
+         blocks do, so a stored order keeps its place for the day it returns.
+         See CalendarBlock.jsx. */
+      ...tables
+        .filter((table) => normalizeCalendar(table.calendar).enabled)
+        .map((table) => `calendar:${table.id}`),
     ],
     [character, tables]
   );
@@ -295,6 +305,14 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
         const camp = tables.find((row) => row.id === table[1]);
         return camp
           ? { name: camp.name, note: 'What has happened at this table' }
+          : { name: String(id), note: null };
+      }
+
+      const dated = /^calendar:(.+)$/.exec(String(id));
+      if (dated) {
+        const camp = tables.find((row) => row.id === dated[1]);
+        return camp
+          ? { name: `${camp.name} · Calendar`, note: 'The day, what is coming and the rests called' }
           : { name: String(id), note: null };
       }
 
@@ -781,6 +799,22 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
       tables.map((table) => [
         `fight:${table.id}`,
         <FightBlock campaignId={table.id} title={table.name} characterId={character.id} />,
+      ])
+    ),
+
+    /* And the table's calendar, while the Game Master has it on. A reading:
+       answering a rest it calls is the panel's job, at the side of the screen.
+       `guard` is what this sheet itself answered, so its own night reads as
+       taken even before the Game Master's page has folded it in. */
+    ...Object.fromEntries(
+      tables.map((table) => [
+        `calendar:${table.id}`,
+        <CalendarBlock
+          calendar={table.calendar}
+          title={table.name}
+          characterId={character.id}
+          guard={normalizeTableCalls(character.table_calls)[table.id] ?? null}
+        />,
       ])
     ),
 

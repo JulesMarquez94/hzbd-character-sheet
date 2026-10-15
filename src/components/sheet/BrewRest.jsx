@@ -37,7 +37,7 @@ import { getCard } from '../../lib/weapons.js';
  * Nothing here writes. Every choice goes into the rest window's `brews` draft, is
  * priced into its plan, and only "Yes, rest" commits any of it.
  */
-export default function BrewRest({ character, kind, state, brews, onDraft, onClose }) {
+export default function BrewRest({ character, kind, state, brews, onDraft, onClose, pay = null }) {
   const stack = useCardStack();
   if (!state) return null;
 
@@ -139,7 +139,7 @@ export default function BrewRest({ character, kind, state, brews, onDraft, onClo
           /* Priced against the crate *after* the rest itself and after everything
              already in the still, so a recipe you could never pay for is offered
              dead rather than left to fail at the last button. */
-          const canPay = brewingAffordable(character, kind, brews, state, item);
+          const canPay = brewingAffordable(character, kind, brews, state, item, pay);
           const allowed = !full && canPay;
           const already = brews.filter((id) => id === item.id).length;
 

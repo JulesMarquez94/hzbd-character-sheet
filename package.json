@@ -30,6 +30,7 @@
     "lint:roster": "node scripts/check-roster.mjs",
     "lint:images": "node scripts/check-images.mjs",
     "lint:codex": "node scripts/check-codex-art.mjs",
+    "lint:calendar": "node scripts/check-calendar.mjs",
     "sb:login": "npx supabase@2 login",
     "sb:link": "npx supabase@2 link",
     "sb:secrets": "npx supabase@2 secrets set",
