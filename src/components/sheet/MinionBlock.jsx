@@ -406,7 +406,7 @@ const CLOSED_ON_ARRIVAL = ['basic'];
  * what it does have is its own list of what is running, on its own row, counted
  * down by its bonded's Start Turn.
  */
-export function MinionActionsBlock({ character, minion, patch, readOnly = false }) {
+export function MinionActionsBlock({ character, minion, patch, readOnly = false, preview = false }) {
   const [request, setRequest] = useState(null);
   const [adding, setAdding] = useState(false);
   const stack = useCardStack();
@@ -529,21 +529,28 @@ export function MinionActionsBlock({ character, minion, patch, readOnly = false 
                     <BarChip
                       key={move.key}
                       move={move}
-                      readOnly={readOnly || minion.down || minion.commanded === false}
+                      /* A preview is a body nobody has raised, so nothing on it
+                         can be played, but every card on it can be read: the tap
+                         deals the card with the body's own numbers, which is
+                         what the bestiary's block does for a creature the reader
+                         cannot play. See MinionPreview.jsx. */
+                      readOnly={!preview && (readOnly || minion.down || minion.commanded === false)}
                       onUse={() =>
-                        setRequest({
-                          name: move.card?.name ?? move.name,
-                          source: move.source,
-                          ap: move.ap,
-                          wp: move.wp,
-                          variable: move.variable,
-                          converts: move.converts,
-                          opens: move.opens,
-                          card: move.card,
-                          modifiers: move.modifiers,
-                          note: move.note,
-                          extra: move.extra,
-                        })
+                        preview
+                          ? stack?.openCard(move.card, move.modifiers)
+                          : setRequest({
+                              name: move.card?.name ?? move.name,
+                              source: move.source,
+                              ap: move.ap,
+                              wp: move.wp,
+                              variable: move.variable,
+                              converts: move.converts,
+                              opens: move.opens,
+                              card: move.card,
+                              modifiers: move.modifiers,
+                              note: move.note,
+                              extra: move.extra,
+                            })
                       }
                     />
                   ))}

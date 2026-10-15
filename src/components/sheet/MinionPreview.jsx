@@ -39,10 +39,15 @@ import { useUnit } from '../../context/units.js';
  *   `patch`       a no-op. Nothing here is stored — see minionKindRows — so
  *                 there is nothing to write, and every control that would write
  *                 is gone with `readOnly` anyway.
+ *
+ * And one thing is *not* gone with it, since 2026-10-15: the chips. Read-only
+ * left every one of them dead, so a reader could see that a skeleton carries a
+ * Bone Bow and had no way to read what a Bone Bow does. `preview` makes each
+ * chip deal its card with the body's own numbers, the way the bestiary's block
+ * deals a creature's card when it cannot be played.
  */
 export default function MinionPreview({ bodies, character, lead = null }) {
   const [open, setOpen] = useState(null);
-  const unit = useUnit();
 
   if (!bodies || bodies.length === 0) return null;
 
@@ -80,39 +85,52 @@ export default function MinionPreview({ bodies, character, lead = null }) {
       </div>
 
       {shown && (
-        <Modal
-          title={shown.spec.label}
-          size="page"
-          accent={PICK_ACCENTS.talent}
-          onClose={() => setOpen(null)}
-        >
-          <p className="pick-lead">
-            {shown.spec.kin ? `A ${shown.spec.kin}.` : ''} At your own level {shown.level}, and
-            these are the two blocks it takes on your Character tab once it is standing.
-          </p>
-
-          <div className="minion-page">
-            <section className="sheet-cell">
-              <MinionStatsBlock
-                character={character}
-                minion={{ ...shown, commanded: null }}
-                patch={STILL}
-                readOnly
-                unit={unit}
-              />
-            </section>
-            <section className="sheet-cell">
-              <MinionActionsBlock
-                character={character}
-                minion={{ ...shown, commanded: null }}
-                patch={STILL}
-                readOnly
-              />
-            </section>
-          </div>
-        </Modal>
+        <MinionPreviewWindow body={shown} character={character} onClose={() => setOpen(null)} />
       )}
     </div>
+  );
+}
+
+/**
+ * One body behind its door: the two blocks it would stand up as, read-only.
+ *
+ * Its own export since 2026-10-15, because the row above is not the only door.
+ * The Raise the Dead window is where a Necromancer actually decides between a
+ * ghoul and a wraith, and its tiles printed a price and a line of card names
+ * with no way to read the stat block behind them. It opens this, so the body
+ * you raise reads the same as the body the Abilities tab shows you.
+ */
+export function MinionPreviewWindow({ body, character, onClose }) {
+  const unit = useUnit();
+
+  return (
+    <Modal title={body.spec.label} size="page" accent={PICK_ACCENTS.talent} onClose={onClose}>
+      <p className="pick-lead">
+        {body.spec.kin ? `A ${body.spec.kin}.` : ''} At your own level {body.level}, and these are
+        the two blocks it takes on your Character tab once it is standing.
+      </p>
+
+      <div className="minion-page">
+        <section className="sheet-cell">
+          <MinionStatsBlock
+            character={character}
+            minion={{ ...body, commanded: null }}
+            patch={STILL}
+            readOnly
+            unit={unit}
+          />
+        </section>
+        <section className="sheet-cell">
+          <MinionActionsBlock
+            character={character}
+            minion={{ ...body, commanded: null }}
+            patch={STILL}
+            readOnly
+            preview
+          />
+        </section>
+      </div>
+    </Modal>
   );
 }
 

@@ -675,16 +675,21 @@ const LINEAGE_CODEX = [
       own('Draconic', {
         id: 'draconic-scales',
         name: 'Draconic Scales',
-        summary: 'Resistance to one damage type, named by the colour of your scales.',
+        summary: 'Defense +1, and resistance to one damage type named by the colour of your scales.',
         choice: SCALE_COLOUR,
         /* The first grant in the codex whose value is the holder's own answer.
            Every other one is a constant on the card, and this one cannot be: the
            type is the colour of the scales, picked at level 1 and stored in
            `choices`. Resolved by `answered` below, beside the one function that
-           reads a lineage answer. */
-        grants: { resist: 'choice' },
+           reads a lineage answer.
+
+           And a Defense since 2026-10-15, Jules: "the draconic resilience racial
+           should also give 1 defense and say it does so". Defense, which is how
+           hard you are to hit, and not Armor: the same rider MINERAL SKIN and
+           SCALEY carry, and `answered` spreads it through untouched. */
+        grants: { resist: 'choice', defense: 1 },
         body:
-          'You gain resistance to {choice} damage.\n\n' +
+          'Your Defense is increased by 1. You gain resistance to {choice} damage.\n\n' +
           'Your scales say which: red is {damage:Fire}, white {damage:Cold}, blue {damage:Lightning}, black {damage:Decay}, purple {damage:Psychic} and yellow {damage:Sacred}.',
       }),
       own('Draconic', {
@@ -1031,9 +1036,10 @@ function answered(card, choices) {
  *
  * Whatever a card declares lands in the map whether or not anything reads it
  * yet, so wiring the next one is a `grants` on the card and, if the stat is not
- * already summed through `flat`, one word where it is. Six ride it today: WIND
- * GRACE and WILD SWIFTNESS a Speed each, MINERAL SKIN and SCALEY a Defense,
- * INNER TIDE a Willpower, and the three rate cards their Health per level.
+ * already summed through `flat`, one word where it is. These ride it today: WIND
+ * GRACE and WILD SWIFTNESS a Speed each, MINERAL SKIN, SCALEY and DRACONIC
+ * SCALES a Defense, INNER TIDE a Willpower, and the three rate cards their
+ * Health per level.
  *
  * **Only the flat fields are summed here.** A rate is not a lump — two cards
  * saying "instead of 10" do not make 27 — and `restHealth` is not a number at

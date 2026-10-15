@@ -730,6 +730,21 @@ export function minionActor(character, minion) {
 }
 
 /**
+ * Every creature of this character's that could answer an action right now.
+ *
+ * "The minion always uses his own action point and reaction point", so a
+ * creature holding a Reaction Point can react when its bonded has none left,
+ * and the reaction window has to know about it or the owner never sees the
+ * knock. Standing, holding a point, and woken if it is a body that has to be:
+ * the same three things the creature's own block refuses its chips on.
+ */
+export function reactingMinions(character) {
+  return minionState(character).filter(
+    (minion) => !minion.down && minion.commanded !== false && (Number(minion.reaction) || 0) > 0
+  );
+}
+
+/**
  * What this creature does to the cards it plays: whose numbers they print, what
  * its damage is made of, and how far its ranks have Elevated it.
  *

@@ -4,9 +4,10 @@ import UsePrompt from '../sheet/UsePrompt.jsx';
 import { BarChip } from '../sheet/ActiveBlock.jsx';
 import { usePlayCard } from '../sheet/usePlayCard.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
-import { quickBar } from '../../lib/combatBar.js';
+import { minionBar, quickBar } from '../../lib/combatBar.js';
 import { claimReaction, reactEvent } from '../../lib/campaignLog.js';
 import { newChain } from '../../lib/logChain.js';
+import { minionActor, minionSpend, reactingMinions } from '../../lib/minions.js';
 
 /**
  * The reaction, chosen: what the banner opens into.
@@ -33,6 +34,14 @@ import { newChain } from '../../lib/logChain.js';
  * be is the table's question, and the prompt each chip opens still offers both
  * ways and still refuses what the pools cannot pay. Nothing here invents a
  * second way to play a card.
+ *
+ * ------------------------------------------------------------ and their pets
+ * A creature reacts out of its own Reaction Points, and until 2026-10-15 this
+ * window never showed one: a companion's reaction was not visible to its owner.
+ * So every creature holding a point gets a row of its own under the owner's,
+ * built by `minionBar` and played as its block plays it, with `minionActor` in
+ * the prompt and `minionSpend` sending the point back to the creature's row.
+ * The owner's own row only shows while the owner has a point to spend.
  *
  * ------------------------------------------------------------ one, and only one
  * An action gets one reaction. Every other reader's banner clears the moment
@@ -92,14 +101,22 @@ export default function ReactionWindow({ call, character, patch, onClose }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const groups = useMemo(() => quickBar(character), [character]);
+  /* Whose reaction this is: null for the character, or the creature that is
+     playing it. Set with the request, so the prompt and the spend both know. */
+  const [body, setBody] = useState(null);
 
-  function pick(entry) {
+  const own = (Number(character?.reaction) || 0) > 0;
+  const groups = useMemo(() => (own ? quickBar(character) : []), [character, own]);
+  const pets = useMemo(() => reactingMinions(character), [character]);
+  const actor = body ? minionActor(character, body) : null;
+
+  function pick(entry, minion = null) {
     /* Movement resolves last, which means it never holds the stack: the roll
        is released the moment it is picked, and the Move plays out as an
        ordinary use. */
     if ((entry.card?.tags ?? []).includes('Movement')) said('pass');
 
+    setBody(minion);
     setRequest({
       name: entry.card?.name ?? entry.name,
       source: entry.source,
@@ -124,7 +141,14 @@ export default function ReactionWindow({ call, character, patch, onClose }) {
     /* The hold survives the window closing: it lifts when the reaction's own
        dice settle, which is the stack resolving in order. */
     pendingRef.current = true;
-    play(request, mode, amount, options, { afterSettled: () => said('done') });
+    play(request, mode, amount, options, {
+      /* A creature's reaction is paid and signed the way its own block pays
+         and signs: its point off its row, the Willpower off its bonded's. */
+      ...(body
+        ? { actor, write: (patchBody) => minionSpend(character, body, patchBody) }
+        : {}),
+      afterSettled: () => said('done'),
+    });
     onClose();
   }
 
@@ -175,15 +199,47 @@ export default function ReactionWindow({ call, character, patch, onClose }) {
               </div>
             </section>
           ))}
+
+          {/* And each creature that has a point of its own, as one row: the
+              shape the Game Master's shelf gives each enemy. See ReactionShelf. */}
+          {pets.map((minion) => (
+            <section className="bar-group" key={`minion:${minion.id}`}>
+              <div className="block-head">
+                <span className="stat-category-label">{minion.title}</span>
+                <span className="block-count">
+                  {minion.reaction} of {minion.stats.reaction_max} Reaction Points
+                </span>
+              </div>
+              {minionBar(character, minion).map((group) => (
+                <div className="bar-chips" key={group.id}>
+                  {group.moves.map((entry) => (
+                    <BarChip
+                      key={entry.key}
+                      move={entry}
+                      readOnly={false}
+                      onUse={() => pick(entry, minion)}
+                    />
+                  ))}
+                </div>
+              ))}
+            </section>
+          ))}
+
+          {groups.length === 0 && pets.length === 0 && (
+            <p className="pick-line">Nobody here has a Reaction Point left.</p>
+          )}
         </div>
       )}
 
       {request && (
         <UsePrompt
           request={request}
-          character={character}
+          character={actor ?? character}
           reaction
-          onCancel={() => setRequest(null)}
+          onCancel={() => {
+            setRequest(null);
+            setBody(null);
+          }}
           onConfirm={confirm}
         />
       )}

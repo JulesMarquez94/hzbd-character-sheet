@@ -14737,6 +14737,36 @@ button.tgt-chip:disabled {
   color: var(--text-muted);
 }
 
+/* A tile and the door to its stat block, as one grid cell. The tile takes the
+   height so every row of tiles stays level, and the door sits under it. See
+   MinionPreviewWindow. */
+.raise-kind-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.raise-kind-wrap > .raise-kind {
+  flex: 1 1 auto;
+}
+
+.raise-kind-peek {
+  align-self: flex-start;
+  padding: 0.1rem 0.15rem;
+  border: none;
+  background: none;
+  font-size: 0.66rem;
+  color: var(--family-death);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.raise-kind-peek:hover,
+.raise-kind-peek:focus-visible {
+  color: var(--text-silver);
+}
+
 /* The corpse: three answers side by side, one of them a rank's. */
 .raise-corpses {
   display: grid;

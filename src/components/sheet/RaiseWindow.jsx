@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Modal from '../Modal.jsx';
 import PortraitField from '../images/PortraitField.jsx';
+import { MinionPreviewWindow } from './MinionPreview.jsx';
 import TagFilter from './TagFilter.jsx';
 import { poolTags, useTagFilter } from './useTagFilter.js';
 import { PoolWall } from './LoadoutPick.jsx';
@@ -48,6 +49,23 @@ export default function RaiseWindow({ character, row, draft, onDraft, onClose })
      print its own Mind. Worked out once for the whole window. */
   const bodies = useMemo(() => minionKindRows(character, state.talent), [character, state.talent]);
   const body = chosen ? bodies.find((one) => one.kind?.id === chosen.kind.id) ?? null : null;
+
+  /* The kind whose stat block is open, if any. "I want to open each body's stat
+     block there before choosing it" (Jules, 2026-10-15): each tile has a door
+     to the same two blocks the Abilities tab's preview opens. A body your rank
+     has not reached yet is read at its own rung, so its cards are the ones it
+     would rise with rather than none. */
+  const [peek, setPeek] = useState(null);
+  const peeked = useMemo(() => {
+    const kind = offers.find((offer) => offer.kind.id === peek)?.kind;
+    if (!kind) return null;
+    const rung = Math.max(state.rank, Math.floor(Number(kind.rank) || 1));
+    return (
+      minionKindRows(character, state.talent, { rank: rung }).find(
+        (one) => one.kind?.id === kind.id
+      ) ?? null
+    );
+  }, [peek, offers, character, state.talent, state.rank]);
 
   const spells = chosen ? undeadSpellPool(chosen.kind, CARDS) : null;
   const moves = chosen ? undeadMovePool(chosen.kind, CARDS) : null;
@@ -120,38 +138,55 @@ export default function RaiseWindow({ character, row, draft, onDraft, onClose })
           const on = chosen?.kind.id === offer.kind.id;
 
           return (
-            <button
-              type="button"
-              key={offer.kind.id}
-              className={`raise-kind${on ? ' is-on' : ''}${offer.ok ? '' : ' is-shut'}`}
-              disabled={!offer.ok}
-              title={offer.ok ? `Raise ${offer.kind.label.toLowerCase()}` : offer.reason}
-              onClick={() =>
-                /* A different body is a different set of questions, so its
-                   answers go with it rather than being carried over: two Novice
-                   spells chosen for a magus are not two spells a ghoul knows. */
-                set({ kind: offer.kind.id, spells: [], moves: [] })
-              }
-            >
-              <span className="raise-kind-head">
-                <span className="raise-kind-name">{offer.kind.label}</span>
-                <span className="raise-kind-cost">{offer.cost}</span>
-              </span>
-
-              {shown && (
-                <span className="raise-kind-stats">
-                  {shown.stats.health_max} Health · Defense {shown.stats.avoid}
-                  {shown.stats.defense > 0 ? ` · ${shown.stats.defense} Armor` : ''}
+            <div className="raise-kind-wrap" key={offer.kind.id}>
+              <button
+                type="button"
+                className={`raise-kind${on ? ' is-on' : ''}${offer.ok ? '' : ' is-shut'}`}
+                disabled={!offer.ok}
+                title={offer.ok ? `Raise ${offer.kind.label.toLowerCase()}` : offer.reason}
+                onClick={() =>
+                  /* A different body is a different set of questions, so its
+                     answers go with it rather than being carried over: two Novice
+                     spells chosen for a magus are not two spells a ghoul knows. */
+                  set({ kind: offer.kind.id, spells: [], moves: [] })
+                }
+              >
+                <span className="raise-kind-head">
+                  <span className="raise-kind-name">{offer.kind.label}</span>
+                  <span className="raise-kind-cost">{offer.cost}</span>
                 </span>
-              )}
 
-              <span className="raise-kind-note">
-                {offer.ok ? whatItDoes(offer.kind, shown) : offer.reason}
-              </span>
-            </button>
+                {shown && (
+                  <span className="raise-kind-stats">
+                    {shown.stats.health_max} Health · Defense {shown.stats.avoid}
+                    {shown.stats.defense > 0 ? ` · ${shown.stats.defense} Armor` : ''}
+                  </span>
+                )}
+
+                <span className="raise-kind-note">
+                  {offer.ok ? whatItDoes(offer.kind, shown) : offer.reason}
+                </span>
+              </button>
+
+              {/* Beside the tile rather than inside it, because a tile is a
+                  button and a button cannot hold another. Live on a shut tile
+                  too: reading what the Master rung is for costs nothing. */}
+              <button
+                type="button"
+                className="raise-kind-peek"
+                onClick={() => setPeek(offer.kind.id)}
+                title={`Read the ${offer.kind.label} stat block`}
+              >
+                Read its stat block
+              </button>
+            </div>
           );
         })}
       </div>
+
+      {peeked && (
+        <MinionPreviewWindow body={peeked} character={character} onClose={() => setPeek(null)} />
+      )}
 
       {state.over > 0 && (
         <p className="pick-notice is-warning">

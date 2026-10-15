@@ -109,14 +109,15 @@
  * ------------------------------------------------------------- and the flags
  * Six things the tab leaves open. None is guessed at here.
  *
- *   1. **Arcane Marshal and Cartographer are the same card twice.** Both cells
- *      read "a skill check to read or draw a map, or to retrace a route you
- *      have walked once before, or find a location", word for word. Cartographer
- *      is a mapmaker and that is plainly its text; an Arcane Marshal is not, and
- *      the name says arcane law. Both are printed as written rather than one
- *      being rewritten to suit its name, so the duplication stays visible where
- *      it can be fixed. Arcane Marshal is offered by the Investigator and the
- *      Erudit, where its *name* belongs.
+ *   1. ~~**Arcane Marshal and Cartographer are the same card twice.**~~
+ *      **Closed 2026-10-15.** Both cells read "a skill check to read or draw a
+ *      map, or to retrace a route you have walked once before, or find a
+ *      location", word for word, and it was plainly Cartographer's text. Jules
+ *      ruled Arcane Marshal's own: "advantage on arcane research and
+ *      investigation on crime for willpower". So it is the thirteen's sentence
+ *      with that domain, and Cartographer keeps the map. Arcane Marshal is
+ *      offered by the Investigator and the Erudit, which is where the new
+ *      domain belongs.
  *   2. **Unseen Spellwork asks for "a Cunning skill check", and Cunning is not
  *      an attribute.** The three are Physique, Instinct and Mind, and Cunning is
  *      the name of another skill on the same tab. Printed as written.
@@ -240,7 +241,7 @@ const SKILL = { kind: 'skill', ap: null, wp: null };
  * charges the Willpower and adds the advantage die. See CheckPick.jsx.
  *
  * **Whether it applies is the player's answer and not the sheet's.** No column
- * anywhere says that this attempt is about a map, so ARCANE MARSHAL is offered
+ * anywhere says that this attempt is about a map, so CARTOGRAPHER is offered
  * with its own domain printed under it and the player is the one who decides
  * whether they are reading one. That is the same judgement the table was making
  * out loud before any of this was wired.
@@ -261,14 +262,14 @@ function insight({ id, name, tags = [], domain, summary }) {
 
 /* ----- the thirteen domains ----- */
 
-/* Flag 1: this cell is Cartographer's, word for word. Left as printed. */
+/* Flag 1, closed: its own domain since 2026-10-15. Jules: "advantage on arcane
+   research and investigation on crime for willpower". */
 const ARCANE_MARSHAL = insight({
   id: 'arcane-marshal',
   name: 'Arcane Marshal',
-  tags: ['Lore'],
-  summary: 'Advantage on reading a map, retracing a route or finding a location.',
-  domain:
-    'to read or draw a map, or to retrace a route you have walked once before, or find a location',
+  tags: ['Lore', 'Insight'],
+  summary: 'Advantage on researching the arcane or investigating a crime.',
+  domain: 'to research the arcane or investigate a crime',
 });
 
 const CARTOGRAPHER = insight({

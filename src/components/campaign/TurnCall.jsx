@@ -71,7 +71,7 @@ import { subscribeToTable } from '../../lib/realtime.js';
  * all unless the sheet is yours: `canEdit` is false for a viewer, so nothing
  * is subscribed and nothing is written.
  */
-export default function TurnCall({ character, patch, canEdit = false, initiative = null }) {
+export default function TurnCall({ character, shown = null, patch, canEdit = false }) {
   const { tables, log } = useCampaignLog();
   const tray = useDiceTray();
   // { key, round, campaignId, triggers }
@@ -101,9 +101,9 @@ export default function TurnCall({ character, patch, canEdit = false, initiative
      actually depends on. `patch` and `character` are new on every render of the
      sheet, and re-subscribing on each of those would tear the channel down
      several times a second while somebody types. */
-  const stateRef = useRef({ character, patch, canEdit });
+  const stateRef = useRef({ character, shown, patch, canEdit });
   useEffect(() => {
-    stateRef.current = { character, patch, canEdit };
+    stateRef.current = { character, shown, patch, canEdit };
   });
 
   useEffect(() => {
@@ -197,9 +197,14 @@ export default function TurnCall({ character, patch, canEdit = false, initiative
 
         /* Through this body's own Armor and Shield, onto this body's own
            pools, with the ledger naming who did it. The landings arrive as
-           rolled — Armor is the target's business, so it is done here. */
+           rolled — Armor is the target's business, so it is done here.
+
+           Against the sheet as it is *read*, because the ceiling a heal stops
+           at is the maximum on the tile: the Health a VIGOR restores is above
+           the stored column by exactly what VIGOR added to it, and the stored
+           row capped it back down. The pools are the same on both. */
         landLinked(
-          held.character,
+          held.shown ?? held.character,
           {
           kind: row.data?.kind,
           landings: target.landings,
@@ -262,14 +267,18 @@ export default function TurnCall({ character, patch, canEdit = false, initiative
   /* What the roll adds: the Initiative the sheet is actually wearing, worked
      attributes and all, handed in by the page. The stored column is the
      fallback for a caller that hands nothing. */
-  const initFlat = Math.floor(Number(initiative ?? character?.initiative) || 0);
+  const initFlat = Math.floor(Number(shown?.initiative ?? character?.initiative) || 0);
 
   /* The roll-and-take half of the rows on the cover, and the Upkeep's keep-or-
      drop, shared with the Turn block's own prompt so a boundary reads the same
-     from both. */
+     from both. A clause taken lands on the sheet as it is read, for the reason
+     a delivered heal does above. */
   /* Its own `tray` is the same one this component already holds, so it is left
      where it is: one surface, read from one place. */
-  const { landed, busy, throwClause, takeIt } = useClauseRolls(character, canEdit ? patch : null);
+  const { landed, busy, throwClause, takeIt } = useClauseRolls(
+    shown ?? character,
+    canEdit ? patch : null
+  );
   const { upkeep, canPay, pay, drop: dropRow } = useUpkeep(character, canEdit ? patch : null);
 
   /**

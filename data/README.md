@@ -3287,6 +3287,12 @@ Draconic Bond](#three-things-for-the-designer) stands as it was. It is
 DRACONIC SCALES that holds the lineage's half of it now, not CHROMATIC
 RESISTANCE.
 
+**DRACONIC SCALES gives 1 Defense as well, since 2026-10-15.** Jules: "the
+draconic resilience racial should also give 1 defense and say it does so". The
+card says "Your Defense is increased by 1." ahead of the resistance and carries
+`defense: 1` beside `resist: 'choice'`, the same rider MINERAL SKIN and SCALEY
+carry. Defense, not Armor.
+
 ### One id had to change, a third time
 
 **DRAGON BREATH is `dragon-breath-lineage`.** The Draconic Bond already prints a
@@ -3364,8 +3370,10 @@ commas dropped per `docs/text-style.md`.
 Six things the tab leaves open, all recorded over the codex rather than guessed
 at here:
 
-1. **Arcane Marshal and Cartographer carry the same cell**, word for word. It is
-   plainly Cartographer's text. Both are printed as written.
+1. ~~**Arcane Marshal and Cartographer carry the same cell**, word for word. It is
+   plainly Cartographer's text. Both are printed as written.~~ **Closed
+   2026-10-15:** Arcane Marshal is advantage on a skill check to research the
+   arcane or investigate a crime, for 1 Willpower. Cartographer keeps the map.
 2. **Unseen Spellwork asks for "a Cunning skill check"**, and Cunning is a skill
    on the same tab rather than one of the three attributes.
 3. **Three armor masteries change a stat the sheet does not yet add.** All three
@@ -3604,7 +3612,8 @@ transcription bug and none was changed.
 1. **Arcane Marshal and Cartographer carry the same effect, word for word**, in
    General Rules · Skills: both are "read or draw a map, or retrace a route you
    have walked once before, or find a location". Arcane Marshal presumably wanted
-   something arcane.
+   something arcane. **Answered 2026-10-15:** arcane research and investigating a
+   crime. See the skills section above.
 2. **THRILLED's second clause looks unfinished.** "Your Action Points and Reaction
    Points maximum are increased to 7 and you start with Action Points each turn."
    A number is missing after "with", and the sheet applies the ceiling only.

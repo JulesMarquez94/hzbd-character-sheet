@@ -10,6 +10,7 @@ import {
   syncDerived,
 } from '../lib/characterModel.js';
 import { openChoices, pruneToLevel } from '../lib/levelPicks.js';
+import { reactingMinions } from '../lib/minions.js';
 import { subscribeToTable } from '../lib/realtime.js';
 import { UnitContext } from '../context/units.js';
 import SiteMenu from '../components/SiteMenu.jsx';
@@ -334,6 +335,11 @@ export default function CharacterSheet({ creating = false }) {
      closes over the stored row, never this one. */
   const shown = useMemo(() => liveCharacter(character), [character]);
 
+  /* And the creatures that could answer an action with a point of their own,
+     which the reaction banner knocks for as well as for the character. See
+     reactingMinions. */
+  const reactors = useMemo(() => reactingMinions(shown), [shown]);
+
   /* The creation screen hands over to the sheet with a note in the navigation
      state, and the note is the offer: a character just finished on this device
      is asked whether it should be kept. The offer is read straight off the
@@ -468,16 +474,13 @@ export default function CharacterSheet({ creating = false }) {
         the order reaches this sheet, and then a panel stands at the side of the
         screen. The turn is started here by this sheet, off an announcement on
         the table log, because nobody else may write to it. See TurnCall.jsx. */}
-    {/* The Initiative rides in beside the sheet because the panel rolls with
-        it and the stored column is a bake of the same number: an Enchanter
-        wearing 1 Instinct for the hour rolls the Initiative they are actually
-        wearing. Everything else the panel does reads the stored row. */}
-    <TurnCall
-      character={character}
-      patch={patch}
-      canEdit={canEdit}
-      initiative={shown.initiative}
-    />
+    {/* The sheet as it is read rides in beside the stored row for two
+        things. The panel rolls the Initiative an Enchanter wearing 1 Instinct
+        for the hour is actually wearing, and a hit or a heal lands against the
+        maximum on the tile, so the Health a VIGOR restores is not capped back
+        to the stored column. Everything else the panel does reads the stored
+        row. */}
+    <TurnCall character={character} shown={shown} patch={patch} canEdit={canEdit} />
     {/* And the Feral Curse's own question, whenever this sheet loses Health or
         spends Willpower. Renders nothing for everybody who holds no set that
         turns them into anything, which is nearly everybody. Handed the sheet as
@@ -507,14 +510,14 @@ export default function CharacterSheet({ creating = false }) {
         gated, and this sheet has Reaction Points to answer with. Tapping the
         banner opens the window below, which is itself the hold on their roll.
         See ReactionCall.jsx and ReactionWindow.jsx. */}
+    {/* A creature with a point of its own can answer when its owner cannot,
+        so the banner knocks for either, and says who is holding what. */}
     <ReactionCall
       needFight
-      ready={canEdit && (Number(shown.reaction) || 0) > 0}
+      ready={canEdit && ((Number(shown.reaction) || 0) > 0 || reactors.length > 0)}
       ignore={(row) => row.character_id === character.id}
       onReact={setReacting}
-      line={`You have ${Number(shown.reaction) || 0} Reaction ${
-        (Number(shown.reaction) || 0) === 1 ? 'Point' : 'Points'
-      }.`}
+      line={reactionLine(shown, reactors)}
     />
     {reacting && (
       <ReactionWindow
@@ -763,4 +766,20 @@ export default function CharacterSheet({ creating = false }) {
     </LogProvider>
     </UnitContext.Provider>
   );
+}
+
+/**
+ * The banner's last line: who here has a Reaction Point, and how many.
+ *
+ * "You have 1 Reaction Point." for a character alone, and the creatures that
+ * hold points of their own named after it: "You have none and Ember has 1
+ * Reaction Point."
+ */
+function reactionLine(shown, reactors) {
+  const points = (n) => `${n} Reaction ${n === 1 ? 'Point' : 'Points'}`;
+  const own = Number(shown?.reaction) || 0;
+  const theirs = reactors.map((minion) => `${minion.title} has ${points(minion.reaction)}`);
+  const parts = [own > 0 || theirs.length === 0 ? `You have ${points(own)}` : 'You have none', ...theirs];
+  const last = parts.pop();
+  return `${parts.length > 0 ? `${parts.join(', ')} and ${last}` : last}.`;
 }

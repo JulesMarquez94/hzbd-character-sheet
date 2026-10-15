@@ -982,20 +982,34 @@ export function syncDerived(character) {
   // computed cap — so keep the promise instead of letting it stick at 25.
   if (Number(character.shield_max) !== derived.shield_cap) next.shield_max = derived.shield_cap;
 
+  /* The pools are held against the maximum the sheet *shows*, which is not the
+     stored column. VIGOR raises maximum Health for an hour and restores that
+     much, and held against the stored maximum the Health was pulled straight
+     back to where it started on the very write that gave it: "you can't go
+     higher than your original health pool". Same for a LIFE DRAUGHT and for an
+     hour-long enchantment's Willpower. So the columns are written off `derived`
+     and the pools are clamped off `live`, and when the row runs out the maximum
+     comes down and takes the pool with it. See liveCharacter. */
+  const live = deriveStats(
+    { ...character, level },
+    characterGrants(character).ephemeral,
+    effectRiders(character?.effects, { who: character })
+  );
+
   // Health may sit anywhere in [−max, max]; the rest bottom out at 0.
-  const hp = clamp(character.health, -derived.health_max, derived.health_max);
+  const hp = clamp(character.health, -live.health_max, live.health_max);
   if (hp !== (Number(character.health) || 0)) next.health = hp;
 
-  const shield = clamp(character.shield, 0, derived.shield_cap);
+  const shield = clamp(character.shield, 0, live.shield_cap);
   if (shield !== (Number(character.shield) || 0)) next.shield = shield;
 
-  const willpower = clamp(character.willpower, 0, derived.willpower_max);
+  const willpower = clamp(character.willpower, 0, live.willpower_max);
   if (willpower !== (Number(character.willpower) || 0)) next.willpower = willpower;
 
-  const ap = clamp(character.ap, 0, derived.ap_max);
+  const ap = clamp(character.ap, 0, live.ap_max);
   if (ap !== (Number(character.ap) || 0)) next.ap = ap;
 
-  const reaction = clamp(character.reaction, 0, derived.reaction_max);
+  const reaction = clamp(character.reaction, 0, live.reaction_max);
   if (reaction !== (Number(character.reaction) || 0)) next.reaction = reaction;
 
   /* Karma's ceiling is the level itself, so it is capped off the level computed
