@@ -138,15 +138,21 @@ export default function FiefTab({ campaign, members, canEdit, userId, mayFound, 
 
   /* The board is fetched only once a town stands, and only by a reader on this tab. */
   const [Stage, setStage] = useState(null);
-  const [stageFailed, setStageFailed] = useState(false);
+  /* Why there is no board, if there is not: 'load' or 'webgl'. */
+  const [stageFailed, setStageFailed] = useState(null);
   useEffect(() => {
     if (!town) return undefined;
     let live = true;
     import('./FiefStage.jsx')
-      .then((m) => live && setStage(() => m.default))
+      .then((m) => {
+        /* Nothing comes back when main.jsx is already reloading the page for a
+           new deploy; the message below shows for the moment that takes. */
+        if (!m?.default) throw new Error('The board did not arrive.');
+        if (live) setStage(() => m.default);
+      })
       .catch((error) => {
         console.warn('The Fief board did not load.', error);
-        if (live) setStageFailed(true);
+        if (live) setStageFailed('load');
       });
     return () => {
       live = false;
@@ -449,12 +455,23 @@ export default function FiefTab({ campaign, members, canEdit, userId, mayFound, 
               placing={placing}
               selected={selected}
               onPick={pick}
-              onFail={() => setStageFailed(true)}
+              onFail={(kind) => setStageFailed(kind)}
               label={`${town.fief.name} on a hex island: ${plural(st.buildings.length, 'building')}, ${plural(st.houses.length, 'hex', 'hexes')} of houses and ${num(st.pop)} people.`}
             />
           ) : (
             <div className="fief-stage fief-stage-empty">
-              {stageFailed ? 'This browser cannot draw the board. The panels beside it hold every order.' : 'Laying out the island...'}
+              {stageFailed === 'webgl'
+                ? 'This browser cannot draw the board. The panels beside it hold every order.'
+                : stageFailed
+                  ? (
+                    <span className="fief-missing">
+                      <span>The board did not load. The site was probably updated while this page was open.</span>
+                      <button type="button" className="btn btn-copper btn-sm" onClick={() => window.location.reload()}>
+                        Reload the page
+                      </button>
+                    </span>
+                  )
+                  : 'Laying out the island...'}
             </div>
           )}
           {status && <p className={`fief-said is-${status.tone || 'plain'}`}>{status.text}</p>}

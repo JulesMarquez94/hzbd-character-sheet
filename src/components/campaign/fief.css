@@ -191,6 +191,26 @@
   min-height: 320px;
 }
 
+.fief-missing {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 16px;
+  text-align: center;
+  color: var(--text-silver);
+}
+
+.fief-stage-empty .fief-missing {
+  position: static;
+}
+
+.fief-missing p {
+  margin: 0;
+}
+
 .fief-said {
   margin: 0;
   padding: 8px 12px;

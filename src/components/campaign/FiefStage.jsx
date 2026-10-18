@@ -341,6 +341,10 @@ function signature(town) {
  * has open. `onPick(hex, pointerType)` hands a click back, with null for a click
  * off the island.
  */
+/**
+ * `onFail(kind)` is told why there is no board: 'webgl' for a browser that
+ * cannot draw one, 'load' for models that did not arrive, which a reload fixes.
+ */
 export default function FiefStage({ town, view = 'town', placing = null, selected = null, onPick, onHover, onFail, label }) {
   const wrap = useRef(null);
   const canvas = useRef(null);
@@ -357,8 +361,8 @@ export default function FiefStage({ town, view = 'town', placing = null, selecte
     } catch (error) {
       /* No WebGL at all. Said after this render rather than inside it. */
       queueMicrotask(() => {
-        setFailed(true);
-        onFail?.(error);
+        setFailed('webgl');
+        onFail?.('webgl', error);
       });
       return undefined;
     }
@@ -411,8 +415,8 @@ export default function FiefStage({ town, view = 'town', placing = null, selecte
       .catch((error) => {
         console.warn('The Fief board could not load its models.', error);
         if (live) {
-          setFailed(true);
-          onFail?.(error);
+          setFailed('load');
+          onFail?.('load', error);
         }
       });
 
@@ -595,7 +599,26 @@ export default function FiefStage({ town, view = 'town', placing = null, selecte
         }}
       />
       {!kit && !failed && <div className="fief-loading">Laying out the island...</div>}
-      {failed && <div className="fief-loading">This browser cannot draw the board. The panels beside it hold every order.</div>}
+      {failed && <BoardMissing kind={failed} />}
+    </div>
+  );
+}
+
+/**
+ * Where the board should be, when it is not. A browser with no WebGL is told
+ * the panels still work; anything else is nearly always a page opened before
+ * the site was last updated, and a reload is the whole fix.
+ */
+export function BoardMissing({ kind }) {
+  if (kind === 'webgl') {
+    return <div className="fief-loading">This browser cannot draw the board. The panels beside it hold every order.</div>;
+  }
+  return (
+    <div className="fief-missing">
+      <p>The board did not load. The site was probably updated while this page was open.</p>
+      <button type="button" className="btn btn-copper btn-sm" onClick={() => window.location.reload()}>
+        Reload the page
+      </button>
     </div>
   );
 }
