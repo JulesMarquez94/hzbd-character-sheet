@@ -779,8 +779,51 @@
   font-variant-numeric: tabular-nums;
 }
 
+.fief-islands {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
+  gap: 8px;
+}
+
+.fief-island {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  text-align: center;
+  background: rgba(9, 17, 21, 0.45);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 8px;
+  color: var(--text-silver);
+  font: inherit;
+  cursor: pointer;
+}
+
+.fief-island:hover,
+.fief-island.is-on {
+  border-color: var(--copper);
+}
+
+.fief-island.is-on {
+  background: rgba(200, 138, 75, 0.12);
+}
+
+.fief-island b {
+  font-family: var(--font-headings);
+}
+
+.fief-island span {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.fief-map {
+  display: block;
+  max-width: 100%;
+}
+
 .fief-found {
-  max-width: 720px;
+  max-width: 960px;
   margin: 0 auto;
   display: grid;
   gap: 10px;

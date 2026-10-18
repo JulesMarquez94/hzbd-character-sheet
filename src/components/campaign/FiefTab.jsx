@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BuildPanel, BuildingPanel, GmPanel, HexPanel, HousePanel, PersonPanel, ProjectPanel, TownPanel } from './FiefPanels.jsx';
 import { CAT, RES, foundFief, keepName, num, plural, wallRun } from '../../lib/fief.js';
-import { hk, unk } from '../../lib/fiefIsland.js';
+import { DEFAULT_ISLAND, ISLANDS, hk, unk } from '../../lib/fiefIsland.js';
+import FiefMap from './FiefMap.jsx';
 import { keyAt } from '../../lib/fiefLooks.js';
 import { addDays, dateWords } from '../../lib/calendar.js';
 import { listShopWords, postEvent, shopBuyEvent } from '../../lib/campaignLog.js';
@@ -63,6 +64,7 @@ function purchases(rows) {
 
 function Founding({ canEdit, mayFound, calendarOn, onFound, goCalendar }) {
   const [name, setName] = useState('Ashford');
+  const [island, setIsland] = useState(DEFAULT_ISLAND);
   return (
     <section className="camp-panel fief-found">
       <h3 className="camp-panel-title">The Fief</h3>
@@ -84,17 +86,37 @@ function Founding({ canEdit, mayFound, calendarOn, onFound, goCalendar }) {
       )}
       {canEdit && mayFound && calendarOn && (
         <div className="fief-edit">
+          <span className="form-label" id="fief-island-label">
+            Where it stands
+          </span>
+          <div className="fief-islands" role="radiogroup" aria-labelledby="fief-island-label">
+            {ISLANDS.map((isl) => (
+              <button
+                key={isl.id}
+                type="button"
+                role="radio"
+                aria-checked={island === isl.id}
+                className={`fief-island${island === isl.id ? ' is-on' : ''}`}
+                onClick={() => setIsland(isl.id)}
+              >
+                <FiefMap island={isl.id} width={200} label={`${isl.name}: ${isl.about}`} />
+                <b>{isl.name}</b>
+                <span>{isl.about}</span>
+              </button>
+            ))}
+          </div>
+          <p className="form-hint">The island cannot be changed once the town stands on it.</p>
           <label className="form-label" htmlFor="fief-name">
             The town&apos;s name
           </label>
           <div className="fief-row">
             <input id="fief-name" className="form-input" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
-            <button type="button" className="btn btn-copper btn-sm" disabled={!name.trim()} onClick={() => onFound(name.trim())}>
+            <button type="button" className="btn btn-copper btn-sm" disabled={!name.trim()} onClick={() => onFound(name.trim(), island)}>
               Found the town
             </button>
           </div>
           <p className="form-hint">
-            It starts as a Town Hall with its Advisor and Foreman, a first ring of streets, a farm and about 36 people,
+            It starts as a Town Hall with its Advisor and Foreman, a first ring of streets, a farm and 10 people,
             founded on today&apos;s date.
           </p>
         </div>
@@ -282,7 +304,7 @@ export default function FiefTab({ campaign, members, canEdit, userId, mayFound, 
         mayFound={mayFound}
         calendarOn={calendar.enabled}
         goCalendar={goCalendar}
-        onFound={(name) => changeFief(() => foundFief(name, today))}
+        onFound={(name, island) => changeFief(() => foundFief(name, today, island))}
       />
     );
   }
@@ -350,7 +372,7 @@ export default function FiefTab({ campaign, members, canEdit, userId, mayFound, 
       <header className="fief-top camp-panel">
         <div className="fief-name">
           <span className="fief-eyebrow">
-            {keepName(keep.level)} · {dateOf(today)}
+            {keepName(keep.level)} · {town.island.name} · {dateOf(today)}
           </span>
           <h2>{town.fief.name}</h2>
         </div>
@@ -487,7 +509,7 @@ export default function FiefTab({ campaign, members, canEdit, userId, mayFound, 
                   {town.projName(p)}
                 </button>
                 <span className="fief-small fief-muted">
-                  {p.started ? (p.stalled ? 'stalled' : `${p.done} of ${plural(p.days, 'day')}`) : 'waiting in line'} · ready {dateOf(schedule[p.id]?.end ?? today)} · {p.by || 'the town'}
+                  {p.started ? (p.stalled ? 'stalled' : `${Math.round((p.done / p.days) * 100)}% built${schedule[p.id]?.slow ? ', short of builders' : ''}`) : 'waiting in line'} · ready {dateOf(schedule[p.id]?.end ?? today)} · {p.by || 'the town'}
                 </span>
               </li>
             ))}

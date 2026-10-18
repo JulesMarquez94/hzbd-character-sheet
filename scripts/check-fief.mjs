@@ -36,7 +36,7 @@ import {
   upCost,
   wallRun,
 } from '../src/lib/fief.js';
-import { ALL, RIVER, RIVER_EDGES, fitMask, hk, ring, seaEdges, terr } from '../src/lib/fiefIsland.js';
+import { ALL, ISLANDS, STEP, fitCrossing, fitMask, hdist, hk, inmap, islandOf, nb, ring } from '../src/lib/fiefIsland.js';
 import { keyPeopleOf } from '../src/lib/fiefPeople.js';
 import { restPlan } from '../src/lib/rest.js';
 import { normalizePay, payWords } from '../src/lib/calendar.js';
@@ -51,32 +51,82 @@ const check = (ok, what) => {
 };
 const say = (line) => notes.push(`     ${line}`);
 
-/* ------------------------------------------------------------------ the island */
+/* ------------------------------------------------------------------ the islands */
 
-const counts = {};
-for (const h of ALL) {
-  const t = terr(h) || 'grass';
-  counts[t] = (counts[t] || 0) + 1;
+check(ALL.length === 331, `an island is 331 hexes (it is ${ALL.length})`);
+check(ISLANDS.length === 6, 'there are six islands to found a town on');
+for (const spec of ISLANDS) {
+  const isl = islandOf(spec.id);
+  const name = spec.name;
+  const counts = {};
+  for (const h of ALL) {
+    const t = isl.terr(h) || 'grass';
+    counts[t] = (counts[t] || 0) + 1;
+  }
+  say(`${name}: ${Object.entries(counts).map(([t, n]) => `${n} ${t}`).join(', ')}`);
+  let shores = true;
+  let rivers = true;
+  let steps = true;
+  for (const h of ALL) {
+    const t = isl.terr(h);
+    if (t === 'C' && !fitMask('coast', isl.seaEdges(h))) shores = false;
+    if (t !== 'S' && t !== 'C' && t !== 'V' && isl.seaEdges(h).length) shores = false;
+    if (t === 'V' && !fitMask('river', isl.riverEdges[hk(h)] ?? [])) rivers = false;
+    if (t !== 'H') {
+      for (let i = 0; i < 6; i += 1) {
+        const n = nb(h, i);
+        if (inmap(n) && isl.terr(n) !== 'H' && Math.abs(isl.level(h) - isl.level(n)) > STEP) steps = false;
+      }
+    }
+  }
+  check(shores, `${name}: every shore is one the kit can draw`);
+  check(rivers, `${name}: every river hex is one the kit can draw`);
+  check(steps, `${name}: no two neighbours stand more than a terrace apart, so a street can climb anywhere`);
+  check(ring(1).every((h) => !isl.terr(h) && isl.level(h) === 0), `${name}: the Keep is ringed by flat grass, so its first streets can be laid`);
+  for (const [site, what] of [['F', 'woods'], ['H', 'heights'], ['S', 'water for the docks']]) {
+    check(ALL.some((h) => isl.siteOK(site, h)), `${name}: there are ${what}`);
+  }
+  const town = foldFief(foundFief('Test', 1, spec.id), [], 1);
+  check(town.state.buildings.some((b) => b.type === 'farm'), `${name}: a town founded here gets its farm`);
+  for (const type of ['woodcutter', 'quarry', 'fisher', 'docks', 'hunter', 'mine']) {
+    check(!!town.nearestFree(type, [0, 0]), `${name}: a ${CAT[type].name} has somewhere to go`);
+  }
+  for (const h of ALL) {
+    if (isl.riverAxis(h) < 0) continue;
+    const axis = isl.riverAxis(h);
+    for (const cross of [0, 1, 2].filter((c) => c !== axis)) {
+      if (!fitCrossing(isl.riverEdges[hk(h)], cross)) findings.push(`${name}: the straight river at ${hk(h)} has no crossing tile for axis ${cross}`);
+    }
+  }
 }
-const PLAN = { grass: 164, S: 44, C: 7, V: 10, F: 69, H: 37 };
-check(ALL.length === 331, `the island is 331 hexes (it is ${ALL.length})`);
-for (const [t, n] of Object.entries(PLAN)) check(counts[t] === n, `${t} covers ${n} hexes as the plan says (it covers ${counts[t] ?? 0})`);
 
-for (const h of ALL) {
-  const t = terr(h);
-  if (t === 'C') check(!!fitMask('coast', seaEdges(h)), `the shore at ${hk(h)} is one the kit can draw`);
-  if (t === '' && seaEdges(h).length) findings.push(`grass at ${hk(h)} touches the sea without being shore`);
+/* A street over the river: on Two Banks a building on the far bank is reached by a bridge. */
+{
+  const fief = foundFief('Bridgeford', 1, 'rivercross');
+  const town = createTown(fief);
+  town.apply({ seq: 1, day: 1, kind: 'award', data: { wood: 600, stone: 600 }, actor: 'GM', character_id: null });
+  const isl = town.island;
+  const far = ALL.filter((h) => !isl.terr(h) && h[0] >= 4 && hdist(h, [0, 0]) <= 6 && !town.placeWhy('park', h))
+    .sort((p, q) => hdist(p, [0, 0]) - hdist(q, [0, 0]))[0];
+  const path = far ? town.streetPath(far, 4) : null;
+  check(!!far && !!path && path.some((h) => h.length > 2), 'Two Banks: a building on the far bank is reached over a bridge');
+  if (far) {
+    town.apply({ seq: 2, day: 1, kind: 'build', data: { type: 'park', at: far }, actor: 'Kael', character_id: 'c-kael' });
+    const spans = Object.keys(town.state.bridges);
+    check(spans.length >= 1 && spans.every((k) => isl.terr(k.split(',').map(Number)) === 'V'), 'and the bridge is laid on the river and kept as one');
+    check(town.state.log.some((l) => /bridge/.test(l.text)), 'and the log says a bridge was laid');
+    const span = spans[0]?.split(',').map(Number);
+    check(span && town.roadEdges(span).length === 2, 'and a bridge joins the streets along its own line only');
+  }
 }
-for (const h of RIVER) check(!!fitMask('river', RIVER_EDGES[hk(h)]), `the river at ${hk(h)} is one the kit can draw`);
-check(ring(1).every((h) => !terr(h)), 'the Keep is ringed by grass, so its first streets can be laid');
 
 /* ---------------------------------------------------------------- the founding */
 
-const FIEF = foundFief('Ashford', 1);
+const FIEF = foundFief('Ashford', 1, 'seaward');
 const founded = foldFief(FIEF, [], 1);
 check(founded.keep().level === 1, 'a town is founded with a Town Hall');
 check(founded.state.buildings.some((b) => b.id === 'f1' && b.type === 'farm'), 'and its first Farm, named f1');
-check(founded.state.pop === FOUNDING.pop, `and ${FOUNDING.pop} people`);
+check(founded.state.pop === FOUNDING.pop && FOUNDING.pop === 10, `and ${FOUNDING.pop} people`);
 check(founded.holds() >= founded.state.pop, 'who all have food and room on the first day');
 check(founded.state.houses.length === Math.ceil(FOUNDING.pop / FIEF.rules.perHouse), 'with houses enough for them');
 const roles = founded.people().map((p) => p.role);
@@ -197,8 +247,8 @@ check(townRestWords(0).length > 0, 'a rest with no Tavern still says what it giv
  * run short of it and comfort when they run short of room. Not clever, just
  * never idle, so a tuning that lets this reach the Castle early is too fast.
  */
-function greedy(limit = 365) {
-  const town = createTown(FIEF);
+function greedy(fief = FIEF, limit = 365) {
+  const town = createTown(fief);
   const orders = [];
   let n = 0;
   let castle = null;
@@ -215,6 +265,30 @@ function greedy(limit = 365) {
     return at && !town.placeWhy(type, at) && !town.shortOf(town.cut(CAT[type].cost)) && order('build', { type, at });
   };
   const NEAR = { fisher: [5, -5], farm: [1, 4], hunter: [-6, 6], woodcutter: [-5, 4], quarry: [0, -5], mine: [-2, -4], docks: [7, -1], park: [-1, 2], fountain: [-2, 3], temple: [2, -3], cemetery: [-6, 2] };
+  /* A site further than a street reaches is reached the way a player reaches
+     it: a park laid on the way, which lays its street a little further out. A
+     site that is only too dear is saved for, never walked towards. */
+  const toward = (type) => {
+    const far = town.nearestFree(type, [0, 0]);
+    if (!far || town.shortOf(town.cut(CAT.park.cost))) return false;
+    let best = null;
+    for (const h of ALL) {
+      if (town.placeWhy('park', h)) continue;
+      const d = hdist(h, far);
+      if (!best || d < best.d) best = { h, d };
+    }
+    return !!best && order('build', { type: 'park', at: best.h });
+  };
+  const site = (type) => {
+    if (town.shortOf(town.cut(CAT[type].cost))) return true;
+    let best = null;
+    for (const h of ALL) {
+      if (town.placeWhy(type, h)) continue;
+      const d = hdist(h, [0, 0]);
+      if (!best || d < best.d) best = { h, d };
+    }
+    return best ? order('build', { type, at: best.h }) : toward(type);
+  };
 
   for (let guard = 0; guard < limit; guard += 1) {
     const S = town.staffing();
@@ -236,26 +310,43 @@ function greedy(limit = 365) {
       else if (S.idle > 2) {
         const want = ['wood', 'stone', 'metal', 'empyrium'].sort((a, b) => short(b) - short(a))[0];
         const type = { wood: 'woodcutter', stone: 'quarry', metal: 'mine', empyrium: 'docks' }[want];
-        if (!build(type, NEAR[type])) build('woodcutter', NEAR.woodcutter);
+        /* An island short of a site trades for what it lacks instead. */
+        if (!site(type) && !(town.standing('docks') ? false : site('docks'))) build('woodcutter', NEAR.woodcutter);
       } else {
         const up = town.state.buildings.find((b) => CAT[b.type].crew && !CAT[b.type].shop && !town.tierWhy(b) && !town.upgradeOf(b.id) && !town.shortOf(town.cut(upCost(b.type, b.level + 1).cost)));
         if (up) order('upgrade', { building: up.id });
       }
     }
-    if (next && (next.empyrium ?? 0) > town.state.stock.empyrium && town.state.stock.goods >= 5) order('trade', { res: 'empyrium', n: 20 });
+    if (next && town.standing('docks')) {
+      for (const res of ['empyrium', 'metal', 'stone', 'wood']) {
+        const lack = (next[res] ?? 0) - town.state.stock[res];
+        if (lack > 0 && town.state.stock.goods >= town.state.rules.goods[res]) order('trade', { res, n: Math.min(lack, 50) });
+      }
+    }
     town.passDay();
   }
   return { town, orders, castle };
 }
 
 const run = greedy();
-const days = run.castle === null ? null : run.castle - FIEF.founded;
-say(`The greedy player raised the Castle ${days === null ? 'never, in a year' : `on day ${days}`}, with ${run.town.state.pop} people and ${run.town.state.buildings.length} buildings`);
-check(days === null || days >= 90, `the Castle is 90 days away or more (the greedy player made it in ${days})`);
-check(days !== null && days <= 365, 'and it can be reached inside a year');
+for (const spec of ISLANDS) {
+  const fief = spec.id === 'seaward' ? FIEF : foundFief('Pace', 1, spec.id);
+  const played = spec.id === 'seaward' ? run : greedy(fief);
+  const days = played.castle === null ? null : played.castle - fief.founded;
+  say(`${spec.name}: the greedy player raised the Castle ${days === null ? 'never, in a year' : `on day ${days}`}, with ${played.town.state.pop} people`);
+  check(days === null || days >= 90, `${spec.name}: the Castle is 90 days away or more (the greedy player made it in ${days})`);
+  check(days !== null && days <= 365, `${spec.name}: and it can be reached inside a year`);
+}
 {
   const again = foldFief(FIEF, run.orders, run.town.state.day);
   check(JSON.stringify(again.state) === JSON.stringify(run.town.state), "the book the greedy player wrote replays into the town they played");
+}
+{
+  /* A town of ten can build from its first day without starving. */
+  const t = createTown(FIEF);
+  t.apply({ seq: 1, day: 1, kind: 'build', data: { type: 'woodcutter', at: t.nearestFree('woodcutter', [-5, 4]) }, actor: 'Kael', character_id: 'c-kael' });
+  for (let d = 0; d < 10; d += 1) t.passDay();
+  check(t.state.pop >= FOUNDING.pop && t.state.buildings.some((b) => b.type === 'woodcutter'), 'a town of ten builds its first workplace and does not shrink doing it');
 }
 
 /* --------------------------------------------------------------------- the words */
@@ -273,5 +364,6 @@ if (findings.length) {
   for (const f of findings) console.error(`  - ${f}`);
   if (!LIST) process.exit(1);
 } else {
-  console.log(`check-fief: the island, the book, the hand and the pace hold. ${notes.filter((n) => n.startsWith('     ')).map((n) => n.trim()).join(' ')}`);
+  const paces = notes.map((n) => /raised the Castle on day (\d+)/.exec(n)?.[1]).filter(Boolean).map(Number);
+  console.log(`check-fief: six islands, the book, the hand and the pace hold. The greedy player raised the Castle in ${Math.min(...paces)} to ${Math.max(...paces)} days (--list for each island).`);
 }

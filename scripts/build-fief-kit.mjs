@@ -18,6 +18,16 @@
  * so a model added to a look is a model this has to be run again for, and the
  * board says which name it could not find.
  *
+ * ------------------------------------------------------------ the green
+ * The hex pack's ground reads its colour off one swatch of its atlas, a yellow
+ * running down to olive, and on a board that yellow reads as straw. Jules,
+ * 2026-10-18: "find a better texture for the ground uh, that looks better in
+ * terms of grass". So every hex-pack model that samples that swatch (the tiles,
+ * the hills, the mountains' grass and nothing else) is pointed at the atlas's
+ * own green swatch instead, at the same place down its gradient. The wheat, the
+ * roofs and the flags never read it and are untouched. `hex_grass_pale` is the
+ * same tile pointed higher up the green, for the patches of a paler shade.
+ *
  *   node scripts/build-fief-kit.mjs [path/to/data]
  *
  * The data folder defaults to ./data, then to the sheet's old checkout beside
@@ -60,9 +70,31 @@ function walk(dir, deep, out = new Map()) {
 
 const FOUND = PACKS.map((p) => ({ ...p, files: walk(path.join(ROOT, p.pack, p.models), !!p.deep) }));
 
+/** Names the looks ask for that are a kit model read another way: the source and the shade. */
+const VARIANTS = { hex_grass_pale: { from: 'hex_grass', shade: 'pale' } };
+
 function find(name) {
-  for (const p of FOUND) if (p.files.has(name)) return { file: p.files.get(name), atlas: p.id };
+  const variant = VARIANTS[name];
+  const stem = variant ? variant.from : name;
+  for (const p of FOUND) if (p.files.has(stem)) return { file: p.files.get(stem), atlas: p.id, shade: variant?.shade ?? 'green' };
   return null;
+}
+
+/* The yellow ground swatch, and the green one it is pointed at, in atlas UVs. */
+const YELLOW = { u: [0, 0.125], v: [0.5, 0.75] };
+const GREEN = { u: 0.5, v: 0.25, h: 0.25 };
+const SHADES = { green: 1, pale: 0.5 };
+
+function regreen(uv, shade) {
+  const squeeze = SHADES[shade];
+  for (let i = 0; i < uv.length; i += 2) {
+    const u = uv[i];
+    const v = uv[i + 1];
+    if (u < YELLOW.u[0] || u >= YELLOW.u[1] || v < YELLOW.v[0] || v >= YELLOW.v[1]) continue;
+    const down = (v - YELLOW.v[0]) / (YELLOW.v[1] - YELLOW.v[0]);
+    uv[i] = GREEN.u + (u - YELLOW.u[0]);
+    uv[i + 1] = GREEN.v + down * squeeze * GREEN.h;
+  }
 }
 
 /* ---------------------------------------------------------- reading a glTF */
@@ -210,6 +242,7 @@ for (const name of names) {
     continue;
   }
   const m = readModel(hit.file);
+  if (hit.atlas === 'hex') regreen(m.uv, hit.shade);
   const verts = m.pos.length / 3;
   const lo = [Infinity, Infinity, Infinity];
   const hi = [-Infinity, -Infinity, -Infinity];

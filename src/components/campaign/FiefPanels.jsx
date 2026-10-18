@@ -18,7 +18,7 @@ import {
   townRestWords,
   upCost,
 } from '../../lib/fief.js';
-import { TERRAIN, ALL, hk, terr } from '../../lib/fiefIsland.js';
+import { ALL, hk } from '../../lib/fiefIsland.js';
 import { CUSTOM_MODELS, TEMPLATES, personName } from '../../lib/fiefPeople.js';
 import { ranksOn, shelfOf } from '../../lib/fiefShop.js';
 
@@ -227,8 +227,8 @@ export function TownPanel({ town, onOpen }) {
         <p className="fief-small">
           {S.building} building, {Math.round(S.working)} at work and {Math.round(S.idle)} idle.{' '}
           {S.share < 1
-            ? `Short of hands: every building works at ${Math.round(S.share * 100)}%. More people or fewer buildings fix it.`
-            : 'Nobody is assigned; the town spreads its workers by itself.'}
+            ? `Short of hands: the food comes first and the builders next, and every other building works at ${Math.round(S.share * 100)}%.`
+            : 'Nobody is assigned: the food comes first, the builders next and the rest spread by themselves.'}
         </p>
         <dl className="fief-kv">
           <div className="fief-kv-row">
@@ -543,7 +543,7 @@ export function BuildingPanel({ town, b, gm, mayOrder, acting, purse, order, edi
       )}
 
       {c.site && !town.hasSite(b) && (
-        <p className="fief-small fief-warn">It no longer touches its {TERRAIN[c.site].name.toLowerCase().replace('the ', '')}, so it stands idle.</p>
+        <p className="fief-small fief-warn">It no longer touches its {town.island.names[c.site].name.toLowerCase().replace('the ', '')}, so it stands idle.</p>
       )}
 
       {isKeep && (
@@ -855,21 +855,23 @@ export function HousePanel({ town, house, onClose }) {
 
 export function HexPanel({ town, at, onClose }) {
   const k = hk(at);
-  const t = terr(at);
+  const t = town.island.terr(at);
   if (town.state.roads[k]) {
+    const bridge = town.state.bridges[k] !== undefined;
     return (
       <div className="fief-panel-body">
-        <Head eyebrow="A street" title="Street" onClose={onClose} />
+        <Head eyebrow="A street" title={bridge ? 'Bridge' : 'Street'} onClose={onClose} />
         <p>
           Streets lay themselves: when a building goes up beyond the streets, the shortest way to it is paved for free.
-          A building must be within {REACH} hexes of one. Lamps light every other hex.
+          A building must be within {REACH} hexes of one.{' '}
+          {bridge ? 'This one crosses the river on a bridge, where the river runs straight.' : 'Lamps light every other hex.'}
         </p>
       </div>
     );
   }
-  const x = TERRAIN[t];
+  const x = town.island.names[t];
   if (!x) return null;
-  const count = ALL.filter((h) => terr(h) === t).length;
+  const count = ALL.filter((h) => town.island.terr(h) === t).length;
   return (
     <div className="fief-panel-body">
       <Head eyebrow="The island" title={x.name} onClose={onClose} />
@@ -888,7 +890,7 @@ export function ProjectPanel({ town, project, mayOrder, order, schedule, dateOf,
       <p>
         Ordered by {project.by || 'the town'} on {dateOf(project.ordered)}.{' '}
         {project.started
-          ? `${project.done} of ${plural(project.days, 'day')} done${project.stalled ? ', stalled for want of builders' : ''}.`
+          ? `${Math.round((project.done / project.days) * 100)}% built of ${plural(project.days, 'day')}' work${project.stalled ? ', stalled for want of builders' : when?.slow ? ', going slower with fewer than its six builders' : ''}.`
           : 'It starts when a project slot is free.'}{' '}
         Ready on {dateOf(when?.end ?? town.state.day)}.
       </p>

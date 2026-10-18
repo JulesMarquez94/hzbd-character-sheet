@@ -1,16 +1,18 @@
 import {
   ALL,
+  DEFAULT_ISLAND,
   DIRS,
+  ISLAND_IDS,
   RADIUS,
+  STEP,
   TERRAIN,
   hdist,
   hk,
   hsh,
   inmap,
+  islandOf,
   nb,
   ring,
-  siteOK,
-  terr,
   touches,
   unk,
 } from './fiefIsland.js';
@@ -132,9 +134,13 @@ export const RES = ['wood', 'stone', 'metal', 'empyrium', 'goods'];
 /** How far a new building may stand from the street network. */
 export const REACH = 4;
 
-/** The town as it is founded: a Town Hall, its first streets and a field. */
+/**
+ * The town as it is founded: a Town Hall, its first streets, a field and the
+ * handful who came with the grant. Jules, 2026-10-18: "they want the village to
+ * start smaller with only like about 10 people."
+ */
 export const FOUNDING = {
-  pop: 36,
+  pop: 10,
   stock: { wood: 60, stone: 20, metal: 0, empyrium: 0, goods: 5 },
   farm: [1, 3],
 };
@@ -294,6 +300,9 @@ export function normalizeFief(value) {
     v: 1,
     name: words(raw.name, NAME_MAX) || 'Ashford',
     founded,
+    /* Which of the six islands the town stands on, picked at the founding and
+       never changed after: every building in the book stands on its ground. */
+    island: ISLAND_IDS.includes(raw.island) ? raw.island : DEFAULT_ISLAND,
     rules: normalizeRules(raw.rules),
     events: (Array.isArray(raw.events) ? raw.events : []).map(normalizeEvent).filter(Boolean).slice(0, EVENTS_MAX),
     cards: recordOf(raw.cards, normalizeCard),
@@ -304,8 +313,8 @@ export function normalizeFief(value) {
 }
 
 /** The founding, as the Game Master writes it. */
-export function foundFief(name, day, rules = DEFAULT_RULES) {
-  return normalizeFief({ name, founded: day, rules });
+export function foundFief(name, day, island = DEFAULT_ISLAND, rules = DEFAULT_RULES) {
+  return normalizeFief({ name, founded: day, island, rules });
 }
 
 /** A row off the order book, held to what the replay can read. Null if unreadable. */
@@ -391,6 +400,9 @@ export function wallRun(a, b) {
  */
 export function createTown(fiefValue) {
   const fief = normalizeFief(fiefValue);
+  const isl = islandOf(fief.island);
+  const terr = isl.terr;
+  const siteOK = isl.siteOK;
   const st = {
     name: fief.name,
     founded: fief.founded ?? 1,
@@ -398,6 +410,9 @@ export function createTown(fiefValue) {
     pop: FOUNDING.pop,
     stock: { ...FOUNDING.stock },
     roads: {},
+    /* The streets that cross a river, by the axis they cross it on. A bridge is
+       a street too, and lives in `roads` as well. */
+    bridges: {},
     buildings: [],
     houses: [],
     projects: [],
@@ -468,28 +483,63 @@ export function createTown(fiefValue) {
   const projectSlots = () => keep().level;
 
   /**
-   * Nobody is assigned. Projects take their builders first, then the hands
-   * spread over every building by themselves, and a town short of hands works
-   * every building at the same share. Jules, 2026-10-18: "the assignment things
-   * shouldn't be a thing".
+   * Nobody is assigned. Jules, 2026-10-18: "the assignment things shouldn't be
+   * a thing". The hands go out by themselves, in this order:
+   *
+   *   the food      enough to feed everybody here and a little more, the
+   *                 hands that feed most going first. A town that sent its
+   *                 farmers to the woods would starve and empty, and fewer
+   *                 people would mean fewer farmers again, all the way down.
+   *   the builders  up to six to a project, never more than half the hands.
+   *                 A project short of them goes slower rather than stopping.
+   *   the rest      spread over every place still short of hands, all at the
+   *                 same share.
    */
   function staffing() {
-    let free = workers();
+    const all = workers();
+    let free = all;
     const out = { builders: {}, crew: {}, idle: 0, building: 0, working: 0, jobs: 0, share: 1 };
-    for (const p of running()) {
-      const g = Math.min(st.rules.builders, free);
-      out.builders[p.id] = g;
-      free -= g;
-      out.building += g;
-    }
-    for (const b of st.buildings) out.jobs += crewCap(b);
-    out.share = out.jobs ? Math.min(1, free / out.jobs) : 1;
+    const caps = new Map();
     for (const b of st.buildings) {
       const cap = crewCap(b);
-      if (cap) out.crew[b.id] = cap * out.share;
+      if (!cap) continue;
+      caps.set(b.id, cap);
+      out.jobs += cap;
     }
-    out.working = Math.min(free, out.jobs);
-    out.idle = Math.max(0, free - out.jobs);
+
+    const want = st.pop * 1.1 + 2;
+    const feeders = st.buildings
+      .filter((b) => caps.has(b.id) && CAT[b.type].food)
+      .sort((x, y) => CAT[y.type].food - CAT[x.type].food || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0));
+    let fed = 0;
+    for (const b of feeders) {
+      if (fed >= want || free <= 0) break;
+      const per = CAT[b.type].food;
+      const n = Math.min(caps.get(b.id), free, Math.ceil((want - fed) / per));
+      out.crew[b.id] = n;
+      free -= n;
+      fed += n * per;
+    }
+
+    let room = Math.floor(all / 2);
+    for (const p of running()) {
+      const g = Math.min(st.rules.builders, free, room);
+      out.builders[p.id] = g;
+      free -= g;
+      room -= g;
+      out.building += g;
+    }
+
+    let short = 0;
+    for (const [id, cap] of caps) short += cap - (out.crew[id] || 0);
+    out.share = short ? Math.min(1, free / short) : 1;
+    for (const [id, cap] of caps) {
+      const rest = cap - (out.crew[id] || 0);
+      if (rest > 0) out.crew[id] = (out.crew[id] || 0) + rest * out.share;
+    }
+    for (const n of Object.values(out.crew)) out.working += n;
+    out.working = Math.round(out.working);
+    out.idle = Math.max(0, all - out.building - out.working);
     return out;
   }
 
@@ -559,34 +609,96 @@ export function createTown(fiefValue) {
   /* ------------------------------------------------------------ the streets */
 
   const passable = (h, o) => inmap(h) && !o[hk(h)] && !terr(h);
+  /** Whether two neighbours are near enough in height to walk between: one terrace at most. */
+  const stepOK = (a, b) => Math.abs(isl.level(a) - isl.level(b)) <= STEP;
+
+  /**
+   * Whether a hex touches the street network: a street beside it on its own
+   * terrace or one step off it, or a bridge it stands at the end of. A bridge
+   * is only reached along its own line, never from the riverbank beside it.
+   */
+  function netTouch(h, net = streetSet()) {
+    for (let i = 0; i < 6; i += 1) {
+      const n = nb(h, i);
+      const k = hk(n);
+      if (!net[k]) continue;
+      const axis = st.bridges[k];
+      if (axis !== undefined ? axis === i % 3 : stepOK(h, n)) return true;
+    }
+    return false;
+  }
+
+  /** Which edges of a street hex join the network, which is the tile drawn on it. */
+  function roadEdges(h) {
+    const k = hk(h);
+    if (st.bridges[k] !== undefined) return [st.bridges[k], st.bridges[k] + 3];
+    const net = streetSet();
+    const out = [];
+    for (let i = 0; i < 6; i += 1) {
+      const n = nb(h, i);
+      const nk = hk(n);
+      if (!net[nk]) continue;
+      const axis = st.bridges[nk];
+      if (axis !== undefined ? axis === i % 3 : stepOK(h, n)) out.push(i);
+    }
+    return out;
+  }
 
   /**
    * Streets lay themselves: the shortest way from a new building to the street
-   * network, over free grass. [] when it already touches one, null when no way
-   * is short enough.
+   * network, over free grass, a terrace at a time, and over a river on a bridge
+   * where the river runs straight. [] when it already touches one, null when no
+   * way is short enough. A bridge hex comes back as [q, r, axis].
    */
   function streetPath(h, limit = 99, o = occ()) {
     const net = streetSet();
-    if (touches(h, (n) => net[hk(n)])) return [];
+    if (netTouch(h, net)) return [];
     const start = hk(h);
     const prev = {};
+    const via = {};
     const seen = { [start]: 1 };
+    const finish = (end) => {
+      const path = [];
+      for (let c = end; c !== start; c = prev[c]) path.push(via[c] === undefined ? unk(c) : [...unk(c), via[c]]);
+      return path;
+    };
     let front = [h];
     for (let d = 0; d < limit && front.length; d += 1) {
       const next = [];
       for (const at of front) {
+        const ak = hk(at);
         for (let i = 0; i < 6; i += 1) {
           const n = nb(at, i);
           const k = hk(n);
-          if (seen[k] || !passable(n, o)) continue;
-          seen[k] = 1;
-          prev[k] = hk(at);
-          if (touches(n, (m) => net[hk(m)] && hk(m) !== start)) {
-            const path = [];
-            for (let c = k; c !== start; c = prev[c]) path.push(unk(c));
-            return path;
+          if (seen[k]) continue;
+          if (passable(n, o) && stepOK(at, n)) {
+            seen[k] = 1;
+            prev[k] = ak;
+            if (netTouch(n, net)) return finish(k);
+            next.push(n);
+            continue;
           }
-          next.push(n);
+          /* A bridge: straight across a river hex onto the far bank. */
+          if (terr(n) !== 'V' || o[k] || net[k] || isl.level(at) > STEP) continue;
+          const axis = isl.riverAxis(n);
+          if (axis < 0 || axis === i % 3) continue;
+          const m = nb(n, i);
+          const mk = hk(m);
+          if (seen[mk] || !inmap(m) || isl.level(m) > STEP) continue;
+          if (net[mk] && st.bridges[mk] === undefined) {
+            seen[k] = 1;
+            prev[k] = ak;
+            via[k] = i % 3;
+            return finish(k);
+          }
+          if (!passable(m, o)) continue;
+          seen[k] = 1;
+          seen[mk] = 1;
+          prev[k] = ak;
+          via[k] = i % 3;
+          prev[mk] = k;
+          if (netTouch(m, net)) return finish(mk);
+          next.push(m);
         }
       }
       front = next;
@@ -595,8 +707,25 @@ export function createTown(fiefValue) {
   }
 
   function layStreet(path) {
-    for (const h of path ?? []) st.roads[hk(h)] = 1;
+    for (const h of path ?? []) {
+      const k = hk(h);
+      st.roads[k] = 1;
+      if (h.length > 2) st.bridges[k] = h[2];
+    }
     changed();
+  }
+
+  /** "A street of 3 hexes and a bridge were laid to it." */
+  function streetWords(path) {
+    if (!path?.length) return '';
+    const spans = path.filter((h) => h.length > 2).length;
+    const land = path.length - spans;
+    const bits = [];
+    if (land) bits.push(`a street of ${plural(land, 'hex', 'hexes')}`);
+    if (spans) bits.push(spans === 1 ? 'a bridge' : `${spans} bridges`);
+    const said = listJoin(bits);
+    const verb = bits.length > 1 || spans > 1 ? 'were' : 'was';
+    return ` ${said[0].toUpperCase()}${said.slice(1)} ${verb} laid to it.`;
   }
 
   /** Why a building cannot go on a hex, or null when it can. */
@@ -613,9 +742,9 @@ export function createTown(fiefValue) {
     if (t === 'H') return 'That is high ground. Build at its foot.';
     if (t === 'F') return 'That is forest. Build beside it.';
     if (t === 'C' && type !== 'fisher' && type !== 'docks') return 'The shore is kept for fishers and the Trade docks.';
-    if (type === 'farm' && touches(h, (n) => terr(n) === 'S')) return 'A field wants open grass, away from the sea.';
+    if (type === 'farm' && touches(h, (n) => terr(n) === 'S')) return `A field wants open grass, away from ${isl.names.S.name.toLowerCase()}.`;
     if (c.site && !touches(h, (n) => siteOK(c.site, n))) {
-      const ground = c.site === 'W' ? 'the sea or the river' : `the ${TERRAIN[c.site].name.replace('The ', '').toLowerCase()}`;
+      const ground = c.site === 'W' ? `${isl.names.S.name.toLowerCase()} or the river` : `the ${isl.names[c.site].name.replace('The ', '').toLowerCase()}`;
       return `A ${c.name} must touch ${ground}.`;
     }
     if (c.needs && !standing(c.needs)) return `The ${c.name} needs a ${CAT[c.needs].name} in the town first.`;
@@ -681,7 +810,7 @@ export function createTown(fiefValue) {
     for (const h of ALL) {
       const k = hk(h);
       if (!passable(h, o) || st.roads[k]) continue;
-      if (!touches(h, (n) => net[hk(n)])) continue;
+      if (!netTouch(h, net)) continue;
       const d = hdist(h, [0, 0]) + (hsh(h) % 100) / 1000 + (terr(h) === 'C' ? 3 : 0);
       if (d < bd) {
         bd = d;
@@ -765,9 +894,12 @@ export function createTown(fiefValue) {
   function schedule(extra) {
     const out = {};
     const frees = [];
+    const S = staffing();
     for (const p of running()) {
-      const e = st.day + (p.days - p.done);
-      out[p.id] = { start: st.day - p.done, end: e };
+      /* At the pace the builders it has today can keep. */
+      const rate = Math.min(1, (S.builders[p.id] || 0) / st.rules.builders);
+      const e = st.day + Math.ceil((p.days - p.done) / Math.max(rate, 0.1) - 1e-9);
+      out[p.id] = { start: st.day - Math.floor(p.done), end: e, slow: rate < 1 };
       frees.push(e);
     }
     while (frees.length < projectSlots()) frees.push(st.day);
@@ -802,7 +934,7 @@ export function createTown(fiefValue) {
     pay(cost, -1);
     layStreet(path ?? []);
     const p = newProject({ id, type, q: h[0], r: h[1], days: CAT[type].days, by: who, paid: cost });
-    const street = path?.length ? ` A street of ${plural(path.length, 'hex', 'hexes')} was laid to it.` : '';
+    const street = streetWords(path);
     addLog(`${who} ordered a ${CAT[type].name}.${street} ${begins(p)}`, 'order');
     return { ok: p };
   }
@@ -1008,8 +1140,9 @@ export function createTown(fiefValue) {
 
     for (const p of [...st.projects]) {
       if (!p.started) continue;
-      if ((S.builders[p.id] || 0) >= st.rules.builders) {
-        p.done += 1;
+      const rate = Math.min(1, (S.builders[p.id] || 0) / st.rules.builders);
+      if (rate > 0) {
+        p.done = Math.min(p.days, Math.round((p.done + rate) * 10000) / 10000);
         p.stalled = false;
         if (p.done >= p.days) text += ` ${complete(p)}`;
       } else {
@@ -1247,6 +1380,9 @@ export function createTown(fiefValue) {
   return {
     state: st,
     fief,
+    island: isl,
+    netTouch,
+    roadEdges,
     apply,
     passDay,
     // what stands where

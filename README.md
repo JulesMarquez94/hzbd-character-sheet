@@ -480,11 +480,20 @@ line, the item into the pack) and sends the receipt to the town. See `ShopCall.j
 Game Master calls can say the party sleeps in the town; the call carries the best open Tavern's
 tier and the sheet's own rest applies its Karma and its Shield.
 
+**Six islands**, picked at the founding and kept in `campaigns.fief.island`. Each is a shape
+function in `src/lib/fiefIsland.js` (sea, heights, woods, a river and the grass terraces), run
+through one pipeline that keeps the Keep's core flat, makes every shore and river one the kit can
+draw and holds every terrace within a step of its neighbours, so a street can climb anywhere. A
+street crosses a straight river on the kit's bridge. The founding screen draws each island flat
+with `FiefMap.jsx`; `lint:fief` holds all six to the same rules and the same 90-day pace.
+
 The board is the one three.js scene on the site besides the dice, and it is fetched only by the
 tab. Its models are baked by `node scripts/build-fief-kit.mjs` from the KayKit packs (CC0, by
 Kay Lousberg) in the gitignored `data/` folder into `public/models/fief/`: one `kit.bin` with
 every node transform applied, a `kit.json` index and the four atlases, with the licences beside
-them. Run it again after adding a model to a look in `src/lib/fiefLooks.js`.
+them. Run it again after adding a model to a look in `src/lib/fiefLooks.js`. The bake also points
+the hex pack's ground at its atlas's green swatch rather than its yellow one, and makes
+`hex_grass_pale` for the paler patches.
 
 ### The Temporary Effects tracker
 

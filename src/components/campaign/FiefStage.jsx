@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { CAT, REACH, wallRun } from '../../lib/fief.js';
-import { ALL, axial, hgt, hk, inmap, terr, world } from '../../lib/fiefIsland.js';
+import { ALL, DEFAULT_ISLAND, axial, hk, inmap, islandOf, world } from '../../lib/fiefIsland.js';
 import { CR, footOf, ghostPieces, setBoxes, townPieces } from '../../lib/fiefLooks.js';
 
 /**
@@ -180,7 +180,10 @@ function hexGeometry(cells, lift, rad, sides = null) {
   return geo;
 }
 
-const terrainTop = (h) => (terr(h) === 'S' ? TOP_SEA : hgt(h));
+/* The island the board is drawing, set by each effect before it draws. */
+let ISL = islandOf(DEFAULT_ISLAND);
+const hgt = (h) => ISL.hgt(h);
+const terrainTop = (h) => (ISL.terr(h) === 'S' ? TOP_SEA : ISL.hgt(h));
 
 function outline(h, color, lift = 0.04) {
   const [x, z] = world(h);
@@ -323,6 +326,8 @@ function signature(town) {
     st.buildings.map((b) => [b.id, b.type, b.q, b.r, b.level, b.ruined ? 1 : 0, b.type === 'custom' ? town.modelOf(b) : 0, town.upgradeOf(b.id) ? 1 : 0]),
     st.houses.map((q) => [q.q, q.r]),
     Object.keys(st.roads).sort(),
+    st.bridges,
+    town.island.id,
     st.projects.map((p) => [p.id, p.done, p.days, p.started ? 1 : 0, p.stalled ? 1 : 0]),
     st.day,
   ]);
@@ -433,6 +438,7 @@ export default function FiefStage({ town, view = 'town', placing = null, selecte
   useEffect(() => {
     const R = rig.current;
     if (!R || !kit || !town) return;
+    ISL = town.island;
     const sig = signature(town);
     if (sig !== R.sig) {
       R.sig = sig;
@@ -494,6 +500,7 @@ export default function FiefStage({ town, view = 'town', placing = null, selecte
   useEffect(() => {
     const R = rig.current;
     if (!R || !kit || !town) return;
+    ISL = town.island;
     dispose(R.overlay, R.scene);
     const g = new THREE.Group();
     const type = placing?.type ?? null;
@@ -602,5 +609,5 @@ function lineEnds(town, from, h) {
 
 function keyFor(town, h) {
   const k = hk(h);
-  return town.occ()[k] ?? (town.state.roads[k] || terr(h) ? `hex:${k}` : null);
+  return town.occ()[k] ?? (town.state.roads[k] || town.island.terr(h) ? `hex:${k}` : null);
 }

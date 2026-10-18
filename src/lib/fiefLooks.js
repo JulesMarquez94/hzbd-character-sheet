@@ -1,6 +1,6 @@
 import { CAT } from './fief.js';
 import { CUSTOM_MODELS } from './fiefPeople.js';
-import { ALL, CLEARING, RIVER_EDGES, SQ3, WALL_RING, fitMask, hdist, hgt, hk, hsh, nb, seaEdges, terr, touches, unk, world } from './fiefIsland.js';
+import { ALL, DEFAULT_ISLAND, SQ3, STEP, WALL_RING, fitCrossing, fitMask, hdist, hk, hsh, inmap, islandOf, nb, noise, touches, unk, world } from './fiefIsland.js';
 
 /**
  * What the Fief looks like: which KayKit model stands for every building at
@@ -22,7 +22,22 @@ import { ALL, CLEARING, RIVER_EDGES, SQ3, WALL_RING, fitMask, hdist, hgt, hk, hs
  * The look grows with the tier the way the kit lets it: the kit's own building
  * for the trade, and more of that trade's goods on the free corners of the hex.
  * A corner is free when it faces neither a street nor away from the camera.
+ *
+ * ------------------------------------------------------------ the ground
+ * Every hex stands on its island's terrace, with the kit's grass base stretched
+ * under it so a raised hex reads as a block of earth. A street climbing one
+ * terrace in a straight line is the kit's road ramp, free grass at the edge of
+ * a terrace is the kit's slope, and a street over a straight river is the
+ * kit's crossing with its bridge on it. The grass is the atlas's green rather
+ * than its yellow, two shades of it in patches (see build-fief-kit.mjs).
  */
+
+/* The island being drawn. Set at the top of every call that draws a town and
+   read by the helpers below it, which all run inside that one call. */
+let ISL = islandOf(DEFAULT_ISLAND);
+const terr = (h) => ISL.terr(h);
+const hgt = (h) => ISL.hgt(h);
+const lvl = (h) => ISL.level(h);
 
 const HAL = 0.2;
 const RSB = 0.25;
@@ -41,6 +56,11 @@ function fitS(m, w, lo = 0.8, hi = 2.0) {
   return Math.max(lo, Math.min(hi, w / Math.max(b[0], b[1])));
 }
 const main = (m, w, ox = 0, oz = 0) => [m, fitS(m, w), ox, oz];
+/** A scale that makes a model this wide, with no clamp: for the small dress of the ground. */
+function fitW(m, w) {
+  const b = BOX[m];
+  return b ? w / Math.max(b[0], b[1], 0.01) : 1;
+}
 
 /** Every building and tier. `main` is [model, scale, offset x, offset z]; `wares` stand on the free corners. */
 export const KLOOK = {
@@ -160,75 +180,191 @@ function vtx(cx, cz, v, rad, y) {
   return [cx + Math.cos(a) * rad, y, cz + Math.sin(a) * rad];
 }
 
+/** The kit's grass base under a hex raised to `y`, so a terrace reads as a block of earth. */
+function lift(list, x, y, z) {
+  if (y > 0.001) list.push(['hex_grass_bottom', x, y - 1, z, 0, y, 1]);
+}
+
+/** Grass comes in two shades, in patches rather than hex by hex. */
+function grassOf(h) {
+  const [x, z] = world(h);
+  return noise(x / 5, z / 5, 21) > 0.6 ? 'hex_grass_pale' : 'hex_grass';
+}
+
+/** The ground a lower neighbour offers a slope or a ramp down to: land, the shore or a bridge. */
+const lowLand = (n) => inmap(n) && !['S', 'H', 'X'].includes(terr(n));
+
+/**
+ * A street that climbs one terrace in a straight line is the kit's road ramp,
+ * turned so its low edge meets the street below. Null for anything else.
+ */
+function rampOf(h, es) {
+  if (es.length !== 2 || (es[0] + 3) % 6 !== es[1]) return null;
+  const lv = lvl(h);
+  const lowAt = es.filter((e) => Math.abs(lvl(nb(h, e)) - (lv - STEP)) < 0.01);
+  const flatAt = es.filter((e) => Math.abs(lvl(nb(h, e)) - lv) < 0.01);
+  if (lowAt.length !== 1 || flatAt.length !== 1) return null;
+  return { k: (((3 - lowAt[0]) % 6) + 6) % 6 };
+}
+
+/** Free grass at the edge of a terrace slopes down to the lowest land beside it. Null for flat ground. */
+function slopeOf(h) {
+  const lv = lvl(h);
+  if (lv < STEP) return null;
+  for (const e of [1, 2, 0, 5, 3, 4]) {
+    const n = nb(h, e);
+    if (lowLand(n) && Math.abs(lvl(n) - (lv - STEP)) < 0.01) return { k: (((3 - e) % 6) + 6) % 6 };
+  }
+  return null;
+}
+
 /** Every hex a kit tile, its roads, river and coast picked by which neighbours it joins. */
-function groundPieces(list, town, net, o) {
+function groundPieces(list, town, o) {
   const st = town.state;
+  const sloped = new Set();
   for (const h of ALL) {
     const k = hk(h);
-    const w = world(h);
+    const [x, z] = world(h);
     const t = terr(h);
     const y = hgt(h);
+    const lv = lvl(h);
     if (t === 'S') {
-      list.push(['hex_water', w[0], 0, w[1], 0]);
+      list.push(['hex_water', x, 0, z, 0]);
       continue;
     }
     if (t === 'V') {
-      const f = fitMask('river', RIVER_EDGES[k]);
-      list.push([f ? `hex_river_${f[0]}` : 'hex_water', w[0], 0, w[1], f ? f[1] : 0]);
+      const water = ISL.riverEdges[k] ?? [];
+      const axis = st.bridges[k];
+      const cross = axis === undefined ? null : fitCrossing(water, axis);
+      if (cross) {
+        list.push([`hex_river_crossing_${cross[0]}`, x, 0, z, cross[1]]);
+        list.push([`building_bridge_${cross[0]}`, x, 0, z, cross[1]]);
+        continue;
+      }
+      const f = fitMask('river', water);
+      list.push([f ? `hex_river_${f[0]}` : 'hex_water', x, 0, z, f ? f[1] : 0]);
       continue;
     }
     if (t === 'C') {
-      const f = fitMask('coast', seaEdges(h));
-      list.push([`hex_coast_${f[0]}`, w[0], 0, w[1], f[1]]);
+      const f = fitMask('coast', ISL.seaEdges(h));
+      list.push([`hex_coast_${f[0]}`, x, 0, z, f[1]]);
       continue;
     }
     const b = o[k] ? town.bById(o[k]) : null;
     const tile = b && !b.ruined && KLOOK[b.type] ? KLOOK[b.type](b.level, hsh(h)).tile : null;
     if (st.roads[k]) {
-      const es = [];
-      for (let i = 0; i < 6; i += 1) if (net[hk(nb(h, i))]) es.push(i);
+      const es = town.roadEdges(h).sort((p, q) => p - q);
+      const ramp = rampOf(h, es);
+      if (ramp) {
+        list.push(['hex_road_A_sloped_low', x, lv - STEP, z, ramp.k]);
+        lift(list, x, lv - STEP, z);
+        continue;
+      }
       const f = es.length ? fitMask('road', es) : ['M', 0];
-      list.push([`hex_road_${f[0]}`, w[0], 0, w[1], f[1]]);
+      list.push([`hex_road_${f[0]}`, x, lv, z, f[1]]);
+      lift(list, x, lv, z);
       continue;
     }
     if (tile) {
-      list.push([tile, w[0], 0, w[1], 0]);
+      list.push([tile, x, lv, z, 0]);
+      lift(list, x, lv, z);
       continue;
     }
-    list.push(['hex_grass', w[0], y, w[1], 0]);
-    if (y > 0) list.push(['hex_grass_bottom', w[0], y - 1, w[1], 0, y, 1]);
+    if (!t && !o[k]) {
+      const slope = slopeOf(h);
+      if (slope) {
+        sloped.add(k);
+        list.push(['hex_grass_sloped_low', x, lv - STEP, z, slope.k]);
+        lift(list, x, lv - STEP, z);
+        continue;
+      }
+    }
+    list.push([t === 'H' ? 'hex_grass' : grassOf(h), x, y, z, 0]);
+    lift(list, x, y, z);
   }
+  return sloped;
 }
 
-/** The land's own dress: mountains and hills on the heights, the woods, a lone tree or rock in the grass. */
-function sceneryPieces(list, town, o) {
+const TUFTS = ['Grass_1_A_Color1', 'Grass_1_B_Color1', 'Grass_2_A_Color1', 'Grass_2_B_Color1'];
+const BUSHES = ['Bush_1_A_Color1', 'Bush_2_A_Color1', 'Bush_3_A_Color1', 'Bush_4_A_Color1'];
+const STONES = ['Rock_1_A_Color1', 'Rock_2_A_Color1', 'Rock_3_A_Color1'];
+const WATERWEED = ['waterlily_A', 'waterlily_B', 'waterplant_A', 'waterplant_B', 'waterplant_C'];
+
+/** A point on a hex, by a number per hex: where a tuft or a stone lands. */
+function scatter(h, n) {
+  const a = ((hash32(h, n) % 360) * Math.PI) / 180;
+  const r = 0.25 + ((hash32(h, n + 17) % 100) / 100) * 0.5;
+  return [Math.cos(a) * r, Math.sin(a) * r];
+}
+const hash32 = (h, n) => ((hsh(h) * 2654435761) ^ (n * 40503)) >>> 0;
+
+/** The land's own dress: mountains and hills on the heights, the woods, and grass, bushes, stones and weed. */
+function sceneryPieces(list, town, o, sloped) {
   const st = town.state;
-  const nearClearing = (h) => CLEARING.some((c) => hdist(h, unk(c)) <= 2);
+  const nearClearing = (h) => ISL.clearing.some((c) => hdist(h, unk(c)) <= 2);
   for (const h of ALL) {
     const k = hk(h);
     const t = terr(h);
-    const w = world(h);
+    const [x, z] = world(h);
     const hh = hsh(h);
     const y = hgt(h);
     const k0 = hh % 6;
+    const d = hdist(h, [0, 0]);
     if (o[k] || st.roads[k]) continue;
     if (t === 'H') {
       let pick = ['mountain_A_grass_trees', 'mountain_B_grass', 'mountain_C_grass_trees', 'hills_A_trees', 'mountain_B_grass_trees', 'hills_C_trees'][hh % 6];
-      if (hdist(h, [0, 0]) <= 7 && hh % 2) pick = ['hills_B_trees', 'hill_single_A', 'hills_C'][hh % 3];
-      list.push([pick, w[0], y, w[1], k0]);
+      if (d <= 7 && hh % 2) pick = ['hills_B_trees', 'hill_single_A', 'hills_C'][hh % 3];
+      list.push([pick, x, y, z, k0]);
     } else if (t === 'F') {
       if (nearClearing(h) || hh % 7 === 0) {
         const near = nearClearing(h);
         [['tree_pine_orange_large', -0.4, -0.25, 0.15], ['tree_pine_yellow_medium', 0.4, 0.05, 0.17], [near ? 'tree_dead_large' : 'tree_pine_orange_medium', 0, 0.55, near ? HAL : 0.16]].forEach((p) =>
-          list.push([p[0], w[0] + p[1], y, w[1] + p[2], k0, 1, p[3]])
+          list.push([p[0], x + p[1], y, z + p[2], k0, 1, p[3]])
         );
       } else {
-        list.push([['trees_A_large', 'trees_B_large', 'trees_A_medium', 'trees_B_medium'][hh % 4], w[0], y, w[1], k0, 1, 1.1]);
+        list.push([['trees_A_large', 'trees_B_large', 'trees_A_medium', 'trees_B_medium'][hh % 4], x, y, z, k0, 1, 1.1]);
       }
-    } else if (!t && hdist(h, [0, 0]) > WALL_RING && hh % 3 === 0) {
-      const nearHigh = touches(h, (n) => terr(n) === 'H');
-      if (nearHigh || hh % 2) list.push([hh % 4 ? 'tree_dead_large' : 'tree_dead_medium', w[0] + 0.2, y, w[1] - 0.1, k0, 1, HAL]);
-      else list.push([['tree_single_A', 'tree_single_B', 'rock_single_A', 'trees_A_small'][hh % 4], w[0], y, w[1], k0, 1, 1.3]);
+      if ((hh >> 6) % 3 === 0) {
+        const [ox, oz] = scatter(h, 3);
+        const m = BUSHES[(hh >> 9) % BUSHES.length];
+        list.push([m, x + ox, y, z + oz, k0, 1, fitW(m, 0.42)]);
+      }
+    } else if (t === 'S' || t === 'V') {
+      /* Weed and lilies where the water meets the land. */
+      if (t === 'S' && !touches(h, (n) => inmap(n) && terr(n) !== 'S')) continue;
+      if ((hh >> 4) % (t === 'V' ? 3 : 4) !== 0 || st.bridges[k] !== undefined) continue;
+      const [ox, oz] = scatter(h, 5);
+      const m = WATERWEED[(hh >> 7) % WATERWEED.length];
+      list.push([m, x + ox * 0.9, -0.18, z + oz * 0.9, k0, 1, fitW(m, 0.45)]);
+    } else if (t === 'C') {
+      if ((hh >> 5) % 5 === 0) {
+        const [ox, oz] = scatter(h, 7);
+        list.push(['rock_single_B', x + ox, 0, z + oz, k0, 1, fitW('rock_single_B', 0.32)]);
+      }
+    } else if (!t && !sloped.has(k)) {
+      if (d > WALL_RING && hh % 3 === 0) {
+        const nearHigh = touches(h, (n) => terr(n) === 'H');
+        if (nearHigh || hh % 2) list.push([hh % 4 ? 'tree_dead_large' : 'tree_dead_medium', x + 0.2, y, z - 0.1, k0, 1, HAL]);
+        else list.push([['tree_single_A', 'tree_single_B', 'rock_single_A', 'trees_A_small'][hh % 4], x, y, z, k0, 1, 1.3]);
+        continue;
+      }
+      /* Tufts of grass on most open hexes, a bush or a stone on a few. */
+      const tufts = d <= 2 ? 0 : 1 + ((hh >> 3) % 3);
+      for (let j = 0; j < tufts; j += 1) {
+        if ((hh >> (j + 2)) % 2) continue;
+        const [ox, oz] = scatter(h, 11 + j);
+        const m = TUFTS[(hh >> (4 + j)) % TUFTS.length];
+        list.push([m, x + ox, y, z + oz, (k0 + j) % 6, 1, fitW(m, 0.3)]);
+      }
+      if (d > 3 && (hh >> 8) % 9 === 0) {
+        const [ox, oz] = scatter(h, 23);
+        const m = BUSHES[(hh >> 11) % BUSHES.length];
+        list.push([m, x + ox, y, z + oz, k0, 1, fitW(m, 0.4)]);
+      } else if (d > 3 && (hh >> 10) % 13 === 0) {
+        const [ox, oz] = scatter(h, 29);
+        const m = STONES[(hh >> 12) % STONES.length];
+        list.push([m, x + ox, y, z + oz, k0, 1, fitW(m, 0.28)]);
+      }
     }
   }
 }
@@ -266,6 +402,7 @@ function cornersFor(h, net) {
 
 function cemeteryPieces(list, h, t, net) {
   const [x, z] = world(h);
+  const y0 = lvl(h);
   const hh = hsh(h);
   let gate = -1;
   for (const e of [1, 2, 0, 3, 5, 4]) {
@@ -276,30 +413,30 @@ function cemeteryPieces(list, h, t, net) {
   }
   for (let e = 0; e < 6; e += 1) {
     const a = (e * Math.PI) / 3;
-    list.push([e === gate ? 'arch_gate' : 'fence', x + Math.cos(a) * 0.98, 0, z + Math.sin(a) * 0.98, -(e + 1.5), e === gate ? 1 : 0.85, 0.25]);
+    list.push([e === gate ? 'arch_gate' : 'fence', x + Math.cos(a) * 0.98, y0, z + Math.sin(a) * 0.98, -(e + 1.5), e === gate ? 1 : 0.85, 0.25]);
   }
   for (let v = 0; v < 6; v += 1) {
     const p = vtx(x, z, v, 1.13, 0);
-    list.push(['fence_pillar', p[0], 0, p[2], 0, 0.9, 0.25]);
+    list.push(['fence_pillar', p[0], y0, p[2], 0, 0.9, 0.25]);
   }
   const rows = t >= 2
     ? [[-0.55, 0.45], [0.0, 0.5], [0.55, 0.35], [-0.5, -0.05], [0.45, -0.15]]
     : [[-0.55, -0.45], [0.0, -0.55], [0.55, -0.4], [-0.6, 0.15], [-0.05, 0.05], [0.55, 0.2], [-0.35, 0.65], [0.25, 0.65]];
   rows.forEach((r, i) => {
     const m = ['grave_A', 'gravestone', 'grave_B', 'gravemarker_A', 'gravestone', 'grave_A', 'gravemarker_B', 'grave_B'][(hh + i) % 8];
-    list.push([m, x + r[0], 0, z + r[1], 1.5 + (((hh >> i) % 3) - 1) * 0.05, 1, m.includes('marker') ? HAL * 1.3 : HAL]);
+    list.push([m, x + r[0], y0, z + r[1], 1.5 + (((hh >> i) % 3) - 1) * 0.05, 1, m.includes('marker') ? HAL * 1.3 : HAL]);
   });
-  list.push(['post_lantern', x - 0.35, 0, z - 0.2 + (t >= 2 ? 0.6 : 0), 1.5, 1, HAL]);
+  list.push(['post_lantern', x - 0.35, y0, z - 0.2 + (t >= 2 ? 0.6 : 0), 1.5, 1, HAL]);
   if (t >= 2) {
-    list.push(['crypt', x + 0.05, 0, z - 0.45, (((1 - (gate < 0 ? 1 : gate)) % 6) + 6) % 6, 1, 0.13]);
-    list.push(['coffin', x + 0.62, 0, z + 0.05, 0.3, 1, HAL]);
+    list.push(['crypt', x + 0.05, y0, z - 0.45, (((1 - (gate < 0 ? 1 : gate)) % 6) + 6) % 6, 1, 0.13]);
+    list.push(['coffin', x + 0.62, y0, z + 0.05, 0.3, 1, HAL]);
   } else {
-    list.push(['coffin', x + 0.65, 0, z + 0.5, 0.3, 1, HAL]);
+    list.push(['coffin', x + 0.65, y0, z + 0.5, 0.3, 1, HAL]);
   }
   if (t >= 3) {
-    list.push(['shrine_candles', x - 0.62, 0, z - 0.42, 0, 1, 0.22]);
-    list.push(['tree_dead_large_decorated', x - 0.7, 0, z + 0.2, hh % 6, 1, HAL]);
-    list.push(['lantern_standing', x + 0.75, 0, z - 0.6, 0, 1, HAL * 1.3]);
+    list.push(['shrine_candles', x - 0.62, y0, z - 0.42, 0, 1, 0.22]);
+    list.push(['tree_dead_large_decorated', x - 0.7, y0, z + 0.2, hh % 6, 1, HAL]);
+    list.push(['lantern_standing', x + 0.75, y0, z - 0.6, 0, 1, HAL * 1.3]);
   }
 }
 
@@ -349,7 +486,7 @@ function wallPieces(list, h, wallAt, gate) {
     if (!pair) pair = [e, (e + 3) % 6];
     const f = fitMask('wall', pair);
     const name = f[0] === 'straight' ? (gate ? 'wall_straight_gate' : 'wall_straight') : f[0] === 'corner_A' ? (gate ? 'wall_corner_A_gate' : 'wall_corner_A_outside') : 'wall_corner_B_outside';
-    list.push([name, x, 0, z, f[1], 1.4, 1]);
+    list.push([name, x, lvl(h), z, f[1], 1.4, 1]);
     left = left.filter((v) => !pair.includes(v));
   }
 }
@@ -359,13 +496,13 @@ function lampPieces(list, town, net, o) {
   for (const k of Object.keys(town.state.roads).sort()) {
     const h = unk(k);
     const [x, z] = world(h);
-    if (o[k] || (h[0] * 31 + h[1] * 17) % 2 || hdist(h, [0, 0]) < 2) continue;
+    if (o[k] || town.state.bridges[k] !== undefined || (h[0] * 31 + h[1] * 17) % 2 || hdist(h, [0, 0]) < 2) continue;
     const avoid = [];
     for (let i = 0; i < 6; i += 1) if (net[hk(nb(h, i))] || o[hk(nb(h, i))]) avoid.push(i);
     const e = [1, 0, 2, 5, 3, 4].find((v) => !avoid.includes(v));
     if (e === undefined) continue;
     const a = (e * Math.PI) / 3;
-    list.push(['post_lantern', x + Math.cos(a) * 0.72, 0, z + Math.sin(a) * 0.72, -1.5 - e, 1, HAL]);
+    list.push(['post_lantern', x + Math.cos(a) * 0.72, lvl(h), z + Math.sin(a) * 0.72, -1.5 - e, 1, HAL]);
   }
 }
 
@@ -374,6 +511,7 @@ function lampPieces(list, town, net, o) {
  * on each hex is, so the board can pick a hex by what stands on it.
  */
 export function townPieces(town) {
+  ISL = town.island;
   const st = town.state;
   const list = [];
   const heights = {};
@@ -382,7 +520,7 @@ export function townPieces(town) {
   const wallAt = {};
   for (const b of st.buildings) if (town.isWall(b) && !b.ruined) wallAt[hk([b.q, b.r])] = 1;
 
-  groundPieces(list, town, net, o);
+  const sloped = groundPieces(list, town, o);
   for (const b of st.buildings) {
     const h = [b.q, b.r];
     const k = hk(h);
@@ -415,18 +553,19 @@ export function townPieces(town) {
     const frac = p.started ? p.done / p.days : 0;
     for (const c of p.cells ?? [[p.q, p.r]]) {
       const [x, z] = world(c);
-      if (p.cells) list.push(['Wood_Planks_Stack_Small', x - 0.25, 0, z, 1, 1, RSB], ['ladder', x + 0.3, 0, z + 0.2, 0.5, 1, 1.0]);
+      if (p.cells) list.push(['Wood_Planks_Stack_Small', x - 0.25, lvl(c), z, 1, 1, RSB], ['ladder', x + 0.3, lvl(c), z + 0.2, 0.5, 1, 1.0]);
       else placeLook(list, 'site', 1, c, net, { frac, queued: !p.started });
       heights[hk(c)] = 0.8;
     }
   }
   lampPieces(list, town, net, o);
-  sceneryPieces(list, town, o);
+  sceneryPieces(list, town, o, sloped);
   return { list, heights };
 }
 
 /** The see-through building that follows the mouse while placing. */
 export function ghostPieces(town, type, h, model) {
+  ISL = town.island;
   const list = [];
   const net = town.streetSet();
   if (type === 'custom') customLook(list, model, h, net);
@@ -439,7 +578,7 @@ export function ghostPieces(town, type, h, model) {
  * at every tier and every house colour, plus the tiles picked by mask.
  */
 export function everyModel() {
-  const names = new Set(['hex_water', 'hex_grass', 'hex_grass_bottom', 'post_lantern', 'Wood_Planks_Stack_Small', 'ladder', 'arch_gate', 'fence', 'fence_pillar', 'crypt', 'coffin', 'shrine_candles', 'tree_dead_large_decorated', 'lantern_standing']);
+  const names = new Set(['hex_water', 'hex_grass', 'hex_grass_pale', 'hex_grass_bottom', 'hex_grass_sloped_low', 'hex_road_A_sloped_low', 'hex_river_crossing_A', 'hex_river_crossing_B', 'building_bridge_A', 'building_bridge_B', 'rock_single_B', ...TUFTS, ...BUSHES, ...STONES, ...WATERWEED, 'post_lantern', 'Wood_Planks_Stack_Small', 'ladder', 'arch_gate', 'fence', 'fence_pillar', 'crypt', 'coffin', 'shrine_candles', 'tree_dead_large_decorated', 'lantern_standing']);
   for (const c of 'ABCDEFGHIJKLM') names.add(`hex_road_${c}`);
   for (const c of 'ABCDEFGHIJKL') names.add(`hex_river_${c}`);
   for (const c of 'ABCD') names.add(`hex_coast_${c}`);
@@ -479,7 +618,7 @@ export function keyAt(town, h) {
   const k = hk(h);
   const o = town.occ()[k];
   if (o) return o;
-  return town.state.roads[k] || terr(h) ? `hex:${k}` : null;
+  return town.state.roads[k] || town.island.terr(h) ? `hex:${k}` : null;
 }
 
 /** The hex a key stands on, and the building it is, for the outline and the tier pips. */

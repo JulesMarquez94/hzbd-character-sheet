@@ -1360,10 +1360,30 @@ grows when the Game Master moves the days forward.
 buildings to raise, shops to buy from, goods to trade and people to talk to. What it gives a
 character comes through those and through a night under its roof.
 
+#### Where it stands
+
+The Game Master picks the island when the town is founded, from six, and it cannot be
+changed after. Each is drawn on the founding screen as it will look on the board.
+
+| Island | What it is like |
+| --- | --- |
+| **Seaward** | The sea to the east, heights at the back, woods to the west and a river running down to the shore |
+| **Two Banks** | A river straight through the middle, so the town grows on both banks and its streets cross on bridges. A bay to the south |
+| **The High Valley** | Heights on three sides, terraces climbing to them and a mountain lake with a stream running into it |
+| **The Point** | A point of land between two seas, with the mainland woods and heights to the north and a ridge down the spine |
+| **The Deep Wood** | Deep woods round a clearing, a stream winding through them to a bay and a rocky outcrop in the north |
+| **Lakeside** | A lake north of the town fed by a river, heights to the west, woods to the south-east and the land rising south |
+
+The ground is not flat. Grass stands on terraces at three heights, never more than one step
+apart, and the town can build on any of them. A street climbs a terrace at a time. Where a
+street meets a river that runs straight, it crosses on a bridge; where the river bends it
+cannot be crossed. On an island with a lake, the lake does what the sea does: the fishers
+and the Trade docks work it.
+
 #### How a town grows
 
-A town is founded as a **Town Hall** with a first ring of streets, a farm and about 36
-people. From there, three numbers decide how big it gets:
+A town is founded as a **Town Hall** with a first ring of streets, a farm and 10 people.
+From there, three numbers decide how big it gets:
 
 - **Food.** Farms, fishers and hunters feed the town. Food is never stored or spent; it is
   how many people the town can feed.
@@ -1373,10 +1393,19 @@ people. From there, three numbers decide how big it gets:
   life keeps. While there is room, new people arrive every day; when there is not, some
   leave and the log says whether it was for want of food or of a better life.
 
-About half the people work. **Nobody is assigned**: every project takes six builders first,
-and the rest spread over the buildings by themselves. A town short of hands works every
-building at the same share, which the town panel shows. The working buildings fill the
-stores, and the stores pay for the next building or the next tier.
+About half the people work. **Nobody is assigned**: the hands go out by themselves, in this
+order:
+
+1. **The food.** Enough hands to feed everybody in the town and a little more, the fishers
+   first because each one feeds the most.
+2. **The builders.** Up to six for each project, but never more than half the town's hands.
+   A project with fewer builders goes slower, and one with none stops.
+3. **Everything else.** The hands left over spread over every other workplace, all at the
+   same share, which the town panel shows.
+
+So a town with more workplaces than workers runs some of them short, but it never starves
+itself to staff them. The working buildings fill the stores, and the stores pay for the next
+building or the next tier.
 
 Houses are not built. A hex of them grows by itself beside the street nearest the Keep
 whenever the town needs room, and each holds about 20 people.
@@ -1448,14 +1477,15 @@ ordered:
 
 - **Place a building.** Pick it from the Build list, and the hexes where it can go turn
   green. It must stand within 4 hexes of a street, and the shortest way to it is paved for
-  free: streets lay themselves. Nothing is built on the water, the high ground or the
-  forest, and the shore is kept for fishers and the Trade docks.
+  free: streets lay themselves, a terrace at a time and over a straight river on a bridge.
+  Nothing is built on the water, the high ground or the forest, and the shore is kept for
+  fishers and the Trade docks.
 - **Raise a tier**, from the building's own card.
 - **Lay a run of wall**, from one click to the next.
 - **Trade goods** at the Trade docks.
 
-A project waits in line until the Keep has a slot free, then builds a day at a time while it
-has its six builders. A project cancelled before work starts gives back everything; after
+A project waits in line until the Keep has a slot free, then builds every day: a full day's
+work with six builders, and that share of a day with fewer. A project cancelled before work starts gives back everything; after
 that, half. Every order is signed with the character who placed it and written in the
 town's log. If two players spend the same wood at once, the second order is refused. The log
 says why on every screen.
