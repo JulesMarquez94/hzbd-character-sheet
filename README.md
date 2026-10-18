@@ -451,6 +451,41 @@ It lives on the campaign row rather than the table log, so clearing the log or t
 sweep never takes it. The Game Master's page folds each answer in as it lands, and a call nobody
 has answered yet can be withdrawn.
 
+### The Fief
+
+A campaign can hold a **town** the whole table shares, on its own **Fief** tab: a hex island of
+KayKit miniatures with the town on it and the card for whatever is picked beside it. A timeline
+and the town's log sit underneath. A Game Master with a Premium account founds it, with the
+calendar on because the town runs on its days. From then on every seated player orders in it at
+any tier. The rules are in the rulebook (8.4); the plan is the Fief Town Plan artifact.
+
+**Nobody stores the town.** Two records, each written by the only party allowed to write it:
+
+- `campaigns.fief` is the Game Master's: the founding day, the town's name, the events pinned
+  ahead, the rewritten cards, the people they added and the items they stocked.
+- `fief_orders` is everybody's: one insert-only row per move. A building ordered, a tier raised,
+  a run of wall, goods traded and a receipt for a purchase are anybody's; a destroy, a gift, a
+  rule change and a custom building are the Game Master's alone. A trigger stamps who wrote each row, and there is no update
+  or delete policy.
+
+Every screen replays the orders day by day from the founding to the calendar's today
+(`foldFief` in `src/lib/fief.js`) and gets the same town. An order that cannot be paid for on its
+day (two players spending the same wood) is refused inside the replay, the same way everywhere,
+with the reason in the town's log. A building is named after the order that raised it, so a rule
+changed earlier in the book never moves a card the Game Master rewrote.
+
+**The town never writes a sheet.** A purchase is the one move a sheet has to make: the shop
+writes the choice to the table log and the buyer's own sheet pays it (coins out with a ledger
+line, the item into the pack) and sends the receipt to the town. See `ShopCall.jsx`. A rest the
+Game Master calls can say the party sleeps in the town; the call carries the best open Tavern's
+tier and the sheet's own rest applies its Karma and its Shield.
+
+The board is the one three.js scene on the site besides the dice, and it is fetched only by the
+tab. Its models are baked by `node scripts/build-fief-kit.mjs` from the KayKit packs (CC0, by
+Kay Lousberg) in the gitignored `data/` folder into `public/models/fief/`: one `kit.bin` with
+every node transform applied, a `kit.json` index and the four atlases, with the licences beside
+them. Run it again after adding a model to a look in `src/lib/fiefLooks.js`.
+
 ### The Temporary Effects tracker
 
 The bottom of the Character tab holds what is **running on you**: a name, how many of your turns it
@@ -540,7 +575,7 @@ npm run preview  # serve the production build
 npm run lint     # eslint
 ```
 
-Twenty-one checkers prove things eslint cannot. Each takes `--list` to print every case it walked
+Twenty-two checkers prove things eslint cannot. Each takes `--list` to print every case it walked
 rather than only what it found:
 
 ```bash
@@ -565,4 +600,5 @@ npm run lint:crossroads # every id in the Crossroads pool names something real
 npm run lint:walkthrough # every step of the Walkthrough points at a rule that exists
 npm run lint:images    # picture slots, the three shapes and the crop clamp
 npm run lint:calendar  # the clock adds up, every called rest is answered once and priced as called
+npm run lint:fief      # the island is the kit's, the order book replays the same and the Castle is 90 days away
 ```

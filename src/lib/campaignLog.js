@@ -1231,6 +1231,72 @@ export function giftReturnedEvent(character, { chain, name }) {
   };
 }
 
+/* ---------------------------------------------------------- the town's shops */
+
+/**
+ * A purchase at a shop in the party's town, over the log, for the reason a gift
+ * goes over it: the shop is on the campaign page, the purse is on the sheet,
+ * and nobody writes a sheet but the sheet. Three moves on one `data.chain`:
+ *
+ *   buy       the buyer chose it at the shop, on the Fief tab. Written by them.
+ *   paid      their own sheet took the coins and put it in the pack.
+ *   refused   their own sheet could not: the purse was short.
+ *
+ * The sheet settles a buy without a second press, the way a refused gift goes
+ * back in the pack by itself: the choice was made at the shop and there is no
+ * decision left in it. See ShopCall.jsx. What travels in `data.gift` is the
+ * parcel handover.js already knows how to put in a pack.
+ */
+export function shopBuyEvent(character, { chain, campaign, building, shop, gift, name, price }) {
+  return {
+    kind: 'shop',
+    actor: character?.name ?? '',
+    title: name,
+    detail: `${Number(price).toLocaleString('en-US')} coins at ${shop}`,
+    data: { move: 'buy', chain, campaign, building, shop, gift, name, price, portrait: portraitOf(character) },
+  };
+}
+
+/** Paid: the coins came out of their own purse and the thing went in the pack. */
+export function shopPaidEvent(character, { chain, name, price, shop }) {
+  return {
+    kind: 'shop',
+    actor: character?.name ?? '',
+    title: `${name} bought`,
+    detail: `${Number(price).toLocaleString('en-US')} coins at ${shop}`,
+    data: { move: 'paid', chain, name, price, shop, portrait: portraitOf(character) },
+  };
+}
+
+/** Refused: the purse could not cover it, and nothing moved. */
+export function shopRefusedEvent(character, { chain, name, why }) {
+  return {
+    kind: 'shop',
+    actor: character?.name ?? '',
+    title: `${name} not bought`,
+    detail: why,
+    data: { move: 'refused', chain, name, portrait: portraitOf(character) },
+  };
+}
+
+/**
+ * The newest purchases at one table, for the sheet catching up on what it was
+ * asked to pay for while it was shut. Safe to act on, because a buy that was
+ * settled carries its `paid` or `refused` on its own chain.
+ */
+export async function listShopWords(campaignId, { limit = 60 } = {}) {
+  const sb = requireSupabase();
+  const { data, error } = await sb
+    .from('campaign_events')
+    .select('*')
+    .eq('campaign_id', campaignId)
+    .eq('kind', 'shop')
+    .order('seq', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
 /* ------------------------------------------------------------- reading it */
 
 /** "17:42" for today, "Aug 29, 17:42" for anything older. */
@@ -1273,6 +1339,8 @@ export function eventWords(event) {
   // "Kaelen offers Longsword", and the three answers say themselves in the
   // title the way the stack's do: "Longsword taken", "Longsword declined".
   if (event?.kind === 'give') return event.data?.move === 'offer' ? 'offers' : '';
+  // "Kaelen is buying Healing Potion", then "Healing Potion bought" in the title.
+  if (event?.kind === 'shop') return event.data?.move === 'buy' ? 'is buying' : '';
   return '';
 }
 

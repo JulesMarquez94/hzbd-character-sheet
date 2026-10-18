@@ -124,6 +124,7 @@ import {
   withoutScrolls,
 } from './scribing.js';
 import { usesRest } from './uses.js';
+import { townRest } from './fiefRest.js';
 
 /** What each rest costs and what it gives back. */
 export const RESTS = {
@@ -184,6 +185,10 @@ function payFor(pay) {
     nights: Math.max(1, Math.floor(Number(pay?.nights) || 1)),
     coins: mode === 'coins' ? Math.max(0, Math.floor(Number(pay?.coins) || 0)) : 0,
     roof: mode === 'coins' ? (ROOFS[pay?.roof] ?? null) : null,
+    /* A night in the party's own town, with its Tavern's tier as the call
+       stamped it. Whatever the pay, because the town is where you sleep and not
+       how you settle the bill. See fiefRest.js. */
+    town: pay?.town && typeof pay.town === 'object' ? townRest(pay.town.tavern) : null,
     title: typeof pay?.title === 'string' ? pay.title : '',
   };
 }
@@ -1318,41 +1323,54 @@ export function restPlan(
      the fine house's is the Shield you *wake* with. Karma keeps its own cap of
      one per level, so a full pill says so rather than quietly not moving. */
   const roof = kind === 'long' && mode === 'coins' ? paying.roof : null;
+  /* And the town's Tavern, for a Long Rest the Game Master called in the town:
+     a Karma point from tier 2, and from tier 3 a morning's Shield of five times
+     the level. Never stacked with a roof: one night is one better night, so it
+     gives the larger Karma of the two and wakes with the larger Shield. */
+  const inn = kind === 'long' ? paying.town : null;
+  const innKarma = inn?.karma ?? 0;
+  const karmaBy = innKarma > (roof?.karma ?? 0) ? 'town' : roof?.karma > 0 ? 'roof' : null;
 
-  if (roof?.karma > 0) {
+  if (karmaBy) {
+    const gain = karmaBy === 'town' ? innKarma : roof.karma;
+    const why = karmaBy === 'town' ? `The Tavern at tier ${inn.tavern}. A night in your own town` : `${roof.label}. A night under a better roof`;
     const cap = karmaCap(character);
     const karma = Math.max(0, Math.floor(Number(character?.karma) || 0));
-    const next = Math.min(cap, karma + roof.karma);
+    const next = Math.min(cap, karma + gain);
 
     if (next > karma) {
       patch.karma = next;
       lines.push({
-        key: 'roof-karma',
+        key: `${karmaBy}-karma`,
         label: `Karma ${karma} to ${next}`,
-        detail: `${roof.label}. A night under a better roof.`,
+        detail: `${why}.`,
         tone: 'gain',
       });
     } else {
       lines.push({
-        key: 'roof-karma',
+        key: `${karmaBy}-karma`,
         label: `Karma stays at ${karma}`,
-        detail: `${roof.label}, but Karma is capped at one per level and you hold all ${cap}.`,
+        detail: `${why}, but Karma is capped at one per level and you hold all ${cap}.`,
         tone: 'keep',
       });
     }
   }
 
-  if (roof?.shieldMind) {
-    const mind = Math.max(0, Math.floor(Number(character?.mind) || 0));
-    const wake = Math.min(mind, shieldCapFor(character));
+  const fromRoof = roof?.shieldMind ? Math.max(0, Math.floor(Number(character?.mind) || 0)) : 0;
+  const fromInn = (inn?.shieldPerLevel ?? 0) * Math.max(0, Math.floor(Number(character?.level) || 0));
+  if (roof?.shieldMind || fromInn > 0) {
+    const byInn = fromInn > fromRoof;
+    const wake = Math.min(byInn ? fromInn : fromRoof, shieldCapFor(character));
     const before = patch.shield ?? Math.max(0, Math.floor(Number(character?.shield) || 0));
 
     if (wake > before) {
       patch.shield = wake;
       lines.push({
-        key: 'roof-shield',
+        key: byInn ? 'town-shield' : 'roof-shield',
         label: `Shield ${before} to ${wake}`,
-        detail: `${roof.label}. You start the day with Shield equal to your Mind.`,
+        detail: byInn
+          ? `The Tavern at tier ${inn.tavern}. You start the day with a Shield of five times your level.`
+          : `${roof.label}. You start the day with Shield equal to your Mind.`,
         tone: 'gain',
       });
     }

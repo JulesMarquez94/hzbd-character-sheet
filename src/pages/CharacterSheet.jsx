@@ -18,6 +18,7 @@ import CharacterTab from '../components/sheet/CharacterTab.jsx';
 import FightProvider from '../components/campaign/FightProvider.jsx';
 import HandoverCall from '../components/campaign/HandoverCall.jsx';
 import RestCall from '../components/campaign/RestCall.jsx';
+import ShopCall from '../components/campaign/ShopCall.jsx';
 import LogCall from '../components/campaign/LogCall.jsx';
 import LogProvider from '../components/campaign/LogProvider.jsx';
 import ReactionCall from '../components/campaign/ReactionCall.jsx';
@@ -506,6 +507,11 @@ export default function CharacterSheet({ creating = false }) {
         window is handed. Renders nothing at a table with no call standing. See
         RestCall.jsx. */}
     <RestCall character={shown} patch={patch} canEdit={canEdit} />
+    {/* And whatever this sheet chose off a shop's shelf in the party's town,
+        paid for here because only the sheet may take its own coins: the purse,
+        the pack and a receipt to the town. No panel, since the choice was made
+        at the shop. Renders nothing. See ShopCall.jsx. */}
+    <ShopCall character={character} patch={patch} canEdit={canEdit} />
     {/* The reaction window's knock: somebody at the table acted, their roll is
         gated, and this sheet has Reaction Points to answer with. Tapping the
         banner opens the window below, which is itself the hold on their roll.

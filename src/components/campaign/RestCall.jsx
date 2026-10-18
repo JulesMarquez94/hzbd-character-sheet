@@ -8,6 +8,7 @@ import {
   openCall,
   payWords,
   roofWords,
+  townWords,
 } from '../../lib/calendar.js';
 import { postEvent, restDeclinedEvent, restEvent } from '../../lib/campaignLog.js';
 import './calendar.css';
@@ -62,7 +63,11 @@ export default function RestCall({ character, patch, canEdit = false }) {
   const { call, done, table } = waiting;
   const round = done + 1;
   const pay = { ...call.pay, nights: call.nights, title: call.title };
-  const extra = call.rest === 'long' && call.pay.mode === 'coins' ? roofWords(call.pay.roof) : '';
+  /* What the night gives on top. A rest in the town is the Tavern's, which a
+     roof never adds to: see restPlan. */
+  const extra =
+    (call.rest === 'long' && townWords(call.pay)) ||
+    (call.rest === 'long' && call.pay.mode === 'coins' ? roofWords(call.pay.roof) : '');
 
   if (taking === call.id) {
     return (

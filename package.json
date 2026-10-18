@@ -31,6 +31,7 @@
     "lint:images": "node scripts/check-images.mjs",
     "lint:codex": "node scripts/check-codex-art.mjs",
     "lint:calendar": "node scripts/check-calendar.mjs",
+    "lint:fief": "node scripts/check-fief.mjs",
     "sb:login": "npx supabase@2 login",
     "sb:link": "npx supabase@2 link",
     "sb:secrets": "npx supabase@2 secrets set",

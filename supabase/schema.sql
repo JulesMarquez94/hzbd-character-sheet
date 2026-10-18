@@ -620,6 +620,15 @@ create table if not exists public.campaigns (
   -- src/lib/calendar.js.
   calendar      jsonb not null default '{}'::jsonb,
 
+  -- The town the party holds, written by the Game Master alone and read by
+  -- everyone seated. Empty until the town is founded:
+  --   { v, name, founded, island, rules, events, cards, people, stock }
+  -- What the players do to it is not here: every build, tier and trade is a row
+  -- of fief_orders below, and every screen replays the orders into the same
+  -- town. This holds only what the Game Master owns: when it was founded, the
+  -- rules, what is coming, and the cards they rewrote. See src/lib/fief.js.
+  fief          jsonb not null default '{}'::jsonb,
+
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
@@ -627,6 +636,7 @@ create table if not exists public.campaigns (
 -- For databases created before these columns existed.
 alter table public.campaigns add column if not exists overview_trays jsonb not null default '{}'::jsonb;
 alter table public.campaigns add column if not exists calendar       jsonb not null default '{}'::jsonb;
+alter table public.campaigns add column if not exists fief           jsonb not null default '{}'::jsonb;
 
 create index if not exists campaigns_dm_user_id_idx on public.campaigns (dm_user_id);
 
@@ -1025,6 +1035,122 @@ drop trigger if exists campaign_events_trim on public.campaign_events;
 create trigger campaign_events_trim
   after insert on public.campaign_events
   for each row execute function public.trim_campaign_events();
+
+
+-- ----------------------------------------------------------------------------
+--  THE FIEF'S ORDER BOOK
+--  Every move made on the town the party shares: a building ordered, a tier
+--  raised, a project cancelled, goods traded. One row each, never changed.
+--
+--  Nobody writes the town itself. The Game Master writes the founding and the
+--  rules on campaigns.fief, everybody seated adds rows here, and every screen
+--  replays the same rows day by day into the same town (foldFief in
+--  src/lib/fief.js). An order that cannot be paid for on its day is refused
+--  inside that replay, so every screen refuses it the same way.
+--
+--  Its own table rather than more kinds on campaign_events, because that log
+--  can be cleared and is swept after ninety days, and a town replayed from a
+--  book with pages missing is a different town.
+-- ----------------------------------------------------------------------------
+create table if not exists public.fief_orders (
+  id           uuid primary key default gen_random_uuid(),
+  -- The order orders are read in, for the same reason campaign_events has one:
+  -- two players ordering in the same millisecond must still land in some order,
+  -- and every reader must agree which.
+  seq          bigint generated always as identity,
+
+  campaign_id  uuid not null references public.campaigns  on delete cascade,
+  -- Null for the Game Master's own orders. Set null on a deleted sheet: the
+  -- building it ordered still stands.
+  character_id uuid references public.characters on delete set null,
+  user_id      uuid not null references auth.users on delete cascade,
+
+  -- The campaign day the order was placed on, from the calendar. The replay
+  -- applies it on that day, before the day passes.
+  day          int  not null,
+  -- Anybody's: 'build' | 'upgrade' | 'rebuild' | 'cancel' | 'wall' | 'trade' |
+  -- 'buy' (a receipt, written by the buyer's own sheet once it has paid).
+  -- The Game Master's alone, refused by the replay from a sheet: 'destroy' |
+  -- 'award' | 'custom' | 'rules'. Text rather than an enum, so a new kind is a
+  -- deploy and not a migration.
+  kind         text not null,
+  -- The name that ordered it, copied at the time, so a renamed or deleted sheet
+  -- still reads in the town's log.
+  actor        text not null default '',
+  -- What was ordered: { type, at: [q, r] } for a build, { building } for a
+  -- tier, { from, to } for a run of wall, { res, n } for a trade, { project }
+  -- for a cancel. See apply() in src/lib/fief.js.
+  data         jsonb not null default '{}'::jsonb,
+
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists fief_orders_book_idx
+  on public.fief_orders (campaign_id, seq);
+
+alter table public.fief_orders enable row level security;
+
+-- The same claim the table log makes, for the same reason: the actor is taken
+-- from the session, and a character is one you own and one that sits at this
+-- table. An order with no character on it is the Game Master's.
+create or replace function public.claim_fief_actor()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  is_dm boolean;
+begin
+  if auth.uid() is null then
+    raise exception 'Sign in to order anything in a town.';
+  end if;
+
+  new.user_id = auth.uid();
+
+  select c.dm_user_id = auth.uid() into is_dm
+  from public.campaigns c where c.id = new.campaign_id;
+
+  if new.character_id is not null then
+    if not exists (select 1 from public.characters ch
+                   where ch.id = new.character_id
+                     and (ch.user_id = auth.uid() or public.is_admin())) then
+      raise exception 'Only a character you own can order in a town.';
+    end if;
+    if not exists (select 1 from public.campaign_members m
+                   where m.campaign_id = new.campaign_id
+                     and m.character_id = new.character_id) then
+      raise exception 'That character does not sit at this table.';
+    end if;
+  elsif not (coalesce(is_dm, false) or public.is_admin()) then
+    raise exception 'Only the Game Master can order for the town itself.';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists fief_orders_claim_actor on public.fief_orders;
+create trigger fief_orders_claim_actor
+  before insert on public.fief_orders
+  for each row execute function public.claim_fief_actor();
+
+drop policy if exists "fief_orders: table read" on public.fief_orders;
+create policy "fief_orders: table read" on public.fief_orders
+  for select using (
+    public.is_campaign_member(campaign_id)
+    or exists (select 1 from public.campaigns c
+               where c.id = fief_orders.campaign_id
+                 and (c.dm_user_id = auth.uid() or public.is_admin()))
+  );
+
+drop policy if exists "fief_orders: table insert" on public.fief_orders;
+create policy "fief_orders: table insert" on public.fief_orders
+  for insert with check (
+    public.is_campaign_member(campaign_id)
+    or exists (select 1 from public.campaigns c
+               where c.id = fief_orders.campaign_id
+                 and (c.dm_user_id = auth.uid() or public.is_admin()))
+  );
+
+-- No update and no delete, ever. A cancelled project is a 'cancel' order, and a
+-- town that is wound up is a campaign that is deleted, which the cascade takes.
 
 
 -- ----------------------------------------------------------------------------
@@ -1775,6 +1901,9 @@ alter table public.encounters       replica identity full;
 -- And the creatures a table forged, so an edit to one reaches a bestiary open
 -- elsewhere rather than waiting for a reload.
 alter table public.custom_creatures replica identity full;
+-- And the town's order book, so a building ordered on one screen goes up on
+-- every other screen at the table.
+alter table public.fief_orders      replica identity full;
 -- And your own profile row, which is how a tier bought on Stripe's page reaches
 -- the tab you left open. The webhook writes profiles.role a second or two after
 -- the checkout redirects; without this the badge would say Free until a reload.
@@ -1788,7 +1917,7 @@ declare
 begin
   foreach t in array array['characters', 'abilities', 'inventory_items',
                           'campaigns', 'campaign_members', 'campaign_events',
-                          'encounters', 'custom_creatures', 'profiles'] loop
+                          'encounters', 'custom_creatures', 'profiles', 'fief_orders'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t

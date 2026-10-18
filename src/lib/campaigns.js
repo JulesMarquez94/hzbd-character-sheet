@@ -32,6 +32,9 @@ const CAMPAIGN_FIELDS = [
   'overview_trays',
   // The clock, the agenda and the rest log. See src/lib/calendar.js.
   'calendar',
+  // The town: its founding, its rules and the Game Master's cards. What the
+  // players do to it is the fief_orders book, not this. See src/lib/fief.js.
+  'fief',
 ];
 
 function pickCampaignFields(patch) {

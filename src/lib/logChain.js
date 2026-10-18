@@ -370,6 +370,8 @@ const UNDER = new Set(['roll', 'verdict', 'apply', 'effect', 'react', 'summon'])
  */
 function underneath(row) {
   if (row?.kind === 'give') return row.data?.move !== 'offer';
+  // A purchase the same way: the buy is the action, paid or refused its answer.
+  if (row?.kind === 'shop') return row.data?.move !== 'buy';
   return UNDER.has(row?.kind);
 }
 
@@ -635,6 +637,7 @@ const KNOCK = {
   apply: (row) => row.data?.verb ?? 'dealt',
   summon: (row) => (row.data?.move === 'gone' ? 'took off the table' : 'conjured'),
   give: (row) => (row.data?.move === 'offer' ? 'offers' : ''),
+  shop: (row) => (row.data?.move === 'buy' ? 'is buying' : ''),
 };
 
 /**

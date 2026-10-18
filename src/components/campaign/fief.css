@@ -1,0 +1,791 @@
+/* The Fief tab. The board on the left with the timeline under it, the card for
+   whatever is picked on the right. One column on a phone, board first. */
+
+.fief {
+  display: grid;
+  gap: 14px;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding-bottom: 40px;
+}
+
+.fief-top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px 24px;
+  align-items: center;
+}
+
+.fief-name h2 {
+  font-family: var(--font-headings);
+  font-size: 1.5rem;
+  color: var(--text-bright);
+  margin: 2px 0 0;
+}
+
+.fief-eyebrow {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--copper-bright);
+}
+
+.fief-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0;
+}
+
+.fief-stats dt {
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.fief-stats dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-silver);
+}
+
+.fief-stats small {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.fief-gain {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--success-mint);
+  font-weight: 600;
+}
+
+.fief-acting {
+  min-width: 180px;
+}
+
+/* The board and the timeline down the left, the card down the right. On a
+   phone it is one column in reading order: the board, the card, the timeline. */
+.fief-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+  grid-template-areas:
+    'main side'
+    'time side';
+  gap: 14px;
+  align-items: start;
+}
+
+.fief-layout > .fief-main {
+  grid-area: main;
+}
+
+.fief-layout > .fief-side {
+  grid-area: side;
+}
+
+.fief-layout > .fief-timeline {
+  grid-area: time;
+}
+
+.fief-main {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.fief-side {
+  position: sticky;
+  top: 12px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+@media (max-width: 1000px) {
+  .fief-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'main'
+      'side'
+      'time';
+  }
+
+  .fief-side {
+    position: static;
+    max-height: none;
+  }
+
+  .fief-top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.fief-viewbar,
+.fief-sidetabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.fief-sidetabs {
+  margin-bottom: 10px;
+}
+
+.fief-seg {
+  background: var(--bg-black);
+  color: var(--text-muted);
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fief-seg.is-on {
+  color: var(--text-bright);
+  border-color: var(--copper);
+  background: rgba(200, 138, 75, 0.15);
+}
+
+/* ------------------------------------------------------------------ the board */
+
+.fief-stage {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #1b1830;
+  border: 1px solid var(--hairline);
+}
+
+.fief-canvas {
+  display: block;
+  width: 100%;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.fief-loading,
+.fief-stage-empty {
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-align: center;
+  padding: 16px;
+}
+
+.fief-loading {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fief-stage-empty {
+  min-height: 320px;
+}
+
+.fief-said {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.86rem;
+  background: rgba(9, 17, 21, 0.6);
+  border-left: 3px solid var(--text-muted);
+}
+
+.fief-said.is-ok {
+  border-left-color: var(--success-mint);
+}
+
+.fief-said.is-bad {
+  border-left-color: var(--danger-rose);
+}
+
+.fief-said.is-info {
+  border-left-color: var(--level-amber);
+}
+
+/* ------------------------------------------------------------------ the panels */
+
+.fief-panel-body {
+  display: grid;
+  gap: 10px;
+}
+
+.fief-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.fief-title {
+  font-family: var(--font-headings);
+  font-size: 1.15rem;
+  color: var(--text-bright);
+  margin: 2px 0 0;
+}
+
+.fief-lvl {
+  margin-left: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--level-amber);
+  border: 1px solid rgba(255, 179, 0, 0.4);
+  border-radius: 10px;
+  padding: 1px 8px;
+  vertical-align: middle;
+}
+
+.fief-x {
+  background: none;
+  border: 0;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fief-sub {
+  border-top: 1px solid var(--hairline);
+  padding-top: 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.fief-sub h4,
+.fief-edit h4 {
+  font-family: var(--font-headings);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.fief-small {
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.fief-muted {
+  color: var(--text-muted);
+}
+
+.fief-warn {
+  color: var(--danger-rose);
+}
+
+.fief-strong {
+  font-weight: 700;
+  margin: 0;
+}
+
+.fief-lore {
+  font-style: italic;
+  margin: 0;
+}
+
+.fief-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.fief-row .form-input {
+  flex: 1 1 160px;
+}
+
+.fief-grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 10px;
+}
+
+.fief-grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px 10px;
+}
+
+.fief-edit {
+  display: grid;
+  gap: 6px;
+}
+
+.fief-check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.82rem;
+}
+
+.fief-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--text-silver);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-align: left;
+}
+
+.fief-kv {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.fief-kv-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.82rem;
+}
+
+.fief-kv-row dt {
+  color: var(--text-muted);
+}
+
+.fief-kv-row dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.fief-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-black);
+}
+
+.fief-bar i {
+  display: block;
+  height: 100%;
+}
+
+.fief-bar .is-build {
+  background: var(--level-amber);
+}
+
+.fief-bar .is-work {
+  background: var(--vital-green);
+}
+
+.fief-bar .is-idle {
+  background: var(--text-muted);
+}
+
+/* the Build list */
+
+.fief-ghead {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper-bright);
+  margin: 6px 0 4px;
+}
+
+.fief-blist {
+  display: grid;
+  gap: 4px;
+}
+
+.fief-bitem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 8px;
+  text-align: left;
+  background: rgba(9, 17, 21, 0.45);
+  border: 1px solid var(--hairline);
+  border-radius: 5px;
+  padding: 7px 9px;
+  color: var(--text-silver);
+  font: inherit;
+  cursor: pointer;
+}
+
+.fief-bitem:hover:not(:disabled),
+.fief-bitem.is-on {
+  border-color: var(--copper);
+}
+
+.fief-bitem:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.fief-bname {
+  font-weight: 700;
+}
+
+.fief-bmeta {
+  grid-column: 1 / -1;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.fief-block {
+  grid-column: 1 / -1;
+  font-size: 0.72rem;
+  color: var(--danger-rose);
+}
+
+.fief-costs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.fief-cost {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--bg-black);
+  color: var(--text-silver);
+  white-space: nowrap;
+}
+
+.fief-cost.is-short {
+  color: var(--danger-rose);
+}
+
+.fief-cost.is-cut {
+  color: var(--success-mint);
+}
+
+.res-wood .fief-cost,
+.fief-cost.res-wood,
+.fief-stats .res-wood dt {
+  color: #c9955a;
+}
+
+.fief-cost.res-stone,
+.fief-stats .res-stone dt {
+  color: #aeb8be;
+}
+
+.fief-cost.res-metal,
+.fief-stats .res-metal dt {
+  color: #86aecb;
+}
+
+.fief-cost.res-empyrium,
+.fief-stats .res-empyrium dt {
+  color: var(--haze-lilac);
+}
+
+.fief-cost.res-goods,
+.fief-stats .res-goods dt {
+  color: #e6c36a;
+}
+
+.fief-cost.is-short.res-wood,
+.fief-cost.is-short.res-stone,
+.fief-cost.is-short.res-metal,
+.fief-cost.is-short.res-empyrium,
+.fief-cost.is-short.res-goods {
+  color: var(--danger-rose);
+}
+
+/* people */
+
+.fief-people {
+  display: grid;
+  gap: 4px;
+}
+
+.fief-person {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  background: rgba(9, 17, 21, 0.45);
+  border: 1px solid var(--hairline);
+  border-radius: 5px;
+  padding: 6px 9px;
+  color: var(--text-silver);
+  font: inherit;
+  cursor: pointer;
+}
+
+.fief-person:hover,
+.fief-person:focus-visible {
+  border-color: var(--copper);
+}
+
+.fief-person b {
+  display: block;
+  font-size: 0.86rem;
+}
+
+.fief-job {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.fief-av {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #111;
+  object-fit: cover;
+}
+
+.fief-pcard {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.fief-pcard p {
+  margin: 4px 0 0;
+}
+
+.fief-portrait {
+  width: 112px;
+  height: 140px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid var(--hairline);
+  display: block;
+}
+
+.fief-portrait.is-empty {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  border-style: dashed;
+  color: var(--text-muted);
+  background: repeating-linear-gradient(135deg, rgba(148, 167, 176, 0.06) 0 8px, transparent 8px 16px);
+}
+
+.fief-portrait.is-empty span {
+  font-family: var(--font-headings);
+  font-size: 1.6rem;
+  color: var(--text-silver);
+}
+
+.fief-portrait.is-empty em {
+  font-size: 0.64rem;
+  font-style: normal;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fief-bpic {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--hairline);
+}
+
+/* shops */
+
+.fief-shelfbox summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  padding: 4px 0;
+}
+
+.fief-shelf {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.fief-shelf li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 5px 8px;
+  border-left: 3px solid var(--success-mint);
+  background: rgba(9, 17, 21, 0.45);
+  border-radius: 2px;
+  font-size: 0.8rem;
+}
+
+.fief-it em {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.fief-rk {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--copper-bright);
+}
+
+.fief-pr {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--stat-coin);
+  white-space: nowrap;
+}
+
+.fief-tag {
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--haze-lilac);
+  color: var(--haze-lilac);
+  border-radius: 3px;
+  padding: 0 5px;
+}
+
+.fief-bought h5 {
+  margin: 4px 0;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.fief-bought ul {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 0.78rem;
+}
+
+.fief-bought .is-refused {
+  color: var(--danger-rose);
+}
+
+.fief-bought .is-waiting {
+  color: var(--level-amber);
+}
+
+.fief-conv {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.82rem;
+}
+
+.fief-confirm {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--danger-red);
+  border-radius: 4px;
+  font-size: 0.82rem;
+}
+
+.fief-events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 0.8rem;
+}
+
+.fief-events li {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  align-items: center;
+}
+
+/* the timeline and the log */
+
+.fief-timeline {
+  display: grid;
+  gap: 8px;
+}
+
+.fief-timeline .camp-panel-title {
+  margin: 6px 0 0;
+}
+
+.fief-projects {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.fief-projects li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+}
+
+.fief-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 3px;
+  font-size: 0.8rem;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.fief-log li {
+  padding: 3px 8px;
+  border-left: 2px solid var(--hairline);
+}
+
+.fief-log li.is-order,
+.fief-log li.is-buy {
+  border-left-color: var(--copper);
+}
+
+.fief-log li.is-gm {
+  border-left-color: var(--haze-lilac);
+}
+
+.fief-log li.is-refused {
+  border-left-color: var(--danger-rose);
+  color: var(--danger-rose);
+}
+
+.fief-log-day {
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-right: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fief-found {
+  max-width: 720px;
+  margin: 0 auto;
+  display: grid;
+  gap: 10px;
+}
+
+.fief-credit {
+  margin-top: 12px;
+}

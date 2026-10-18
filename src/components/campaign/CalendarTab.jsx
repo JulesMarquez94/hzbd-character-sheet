@@ -31,6 +31,7 @@ import {
 import { calendarMovedEvent, postEvent, restCallEvent } from '../../lib/campaignLog.js';
 import { formatNumber } from '../../lib/characterModel.js';
 import { ROOFS } from '../../lib/rest.js';
+import { townRestWords } from '../../lib/fiefRest.js';
 import './calendar.css';
 
 /**
@@ -63,14 +64,16 @@ import './calendar.css';
  * an announcement on the table log; each sheet named in it takes the rest
  * itself. See RestCall.jsx.
  */
-export default function CalendarTab({ campaign, members, change }) {
+/* `tavern` is the tier of the best open Tavern in the party's town, or null for
+   a table with no town. It is what a rest called in the town is stamped with. */
+export default function CalendarTab({ campaign, members, change, tavern = null }) {
   const cal = useMemo(() => normalizeCalendar(campaign?.calendar), [campaign?.calendar]);
   const table = useMemo(() => [{ id: campaign.id }], [campaign.id]);
 
   return (
     <div className="camp-details cal-tab">
       <ClockPanel cal={cal} change={change} />
-      <MovePanel cal={cal} change={change} table={table} members={members} />
+      <MovePanel cal={cal} change={change} table={table} members={members} tavern={tavern} />
       <AgendaPanel cal={cal} change={change} />
 
       <section className="camp-panel">
@@ -184,12 +187,15 @@ const PAY_CHOICES = [
   { id: 'coins', label: 'Coins', note: 'A price a night, each, in place of the Supplies.' },
 ];
 
-function MovePanel({ cal, change, table, members }) {
+function MovePanel({ cal, change, table, members, tavern }) {
   const [days, setDays] = useState('1');
   const [rest, setRest] = useState('none');
   const [taken, setTaken] = useState('nights'); // 'nights' | 'row'
   const [mode, setMode] = useState('supplies');
   const [roof, setRoof] = useState('common');
+  /* Whether the party sleeps in its own town tonight. Off until asked, because
+     a party is away from home more often than it is in it. */
+  const [inTown, setInTown] = useState(false);
   const [coins, setCoins] = useState(String(ROOFS.common.coins));
   /* Who is *left out*, rather than who is in, so a character who joins while
      the panel is open is asked along with everybody else. */
@@ -215,10 +221,13 @@ function MovePanel({ cal, change, table, members }) {
   const count = asRow ? moving : 1;
 
   const price = Math.min(COINS_MAX, Math.max(0, Math.floor(Number(coins) || 0)));
-  const pay =
-    mode === 'coins'
+  const town = tavern !== null && rest === 'long' && inTown ? { tavern } : null;
+  const pay = {
+    ...(mode === 'coins'
       ? { mode, coins: price, roof: rest === 'long' && roof ? roof : null }
-      : { mode, coins: 0, roof: null };
+      : { mode, coins: 0, roof: null }),
+    ...(town ? { town } : {}),
+  };
 
   const calling = rest !== 'none';
   const ready = calling ? to.length > 0 : moving > 0;
@@ -385,6 +394,19 @@ function MovePanel({ cal, change, table, members }) {
               </label>
             ))}
           </fieldset>
+
+          {tavern !== null && rest === 'long' && (
+            <fieldset className="cal-choice">
+              <legend className="form-label">Where they sleep</legend>
+              <label className="cal-radio">
+                <input type="checkbox" checked={inTown} onChange={(event) => setInTown(event.target.checked)} />
+                The party rests in the town
+              </label>
+              <p className="form-hint">
+                {inTown ? townRestWords(tavern) : 'Away from the town, a rest is an ordinary rest.'}
+              </p>
+            </fieldset>
+          )}
 
           {mode === 'coins' && (
             <div className="cal-fields">

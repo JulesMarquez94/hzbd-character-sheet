@@ -15,6 +15,9 @@ import BestiaryTab from '../components/campaign/BestiaryTab.jsx';
 import EncounterTab from '../components/campaign/EncounterTab.jsx';
 import CalendarTab from '../components/campaign/CalendarTab.jsx';
 import CalendarBlock from '../components/campaign/CalendarBlock.jsx';
+import FiefTab from '../components/campaign/FiefTab.jsx';
+import { foldFief, normalizeFief } from '../lib/fief.js';
+import { listOrders, placeOrder } from '../lib/fiefStore.js';
 import { foldAnswer, normalizeCalendar, waitingCalls } from '../lib/calendar.js';
 import { listRestAnswers } from '../lib/campaignLog.js';
 import {
@@ -51,6 +54,11 @@ import './Campaigns.css';
  * The Calendar is the Game Master's for a plainer reason: it is the controls.
  * What the players read of it is a block, on their own sheets and on the
  * Overview here, switched on from the tab. See CalendarTab.jsx.
+ *
+ * The Fief is everybody's once it stands, because the town is the whole
+ * table's: every seated player orders in it and shops in it. Until it is
+ * founded it is the Game Master's alone, as the button that founds it. See
+ * FiefTab.jsx.
  */
 const TABS = ['Overview', 'Details'];
 const DM_TABS = ['Calendar', 'Bestiary', 'Encounters'];
@@ -160,7 +168,8 @@ export default function CampaignPage() {
      (the campaign row has to arrive first) and a Game Master who deep-linked
      themselves onto a tab that did not exist yet must not be stranded on it. A
      tab that is not on offer reads as the Overview. */
-  const tabs = canEdit ? [...TABS, ...DM_TABS] : TABS;
+  const founded = normalizeFief(campaign?.fief).founded !== null;
+  const tabs = canEdit ? [...TABS, 'Fief', ...DM_TABS] : founded ? [...TABS, 'Fief'] : TABS;
   const tab = tabs.includes(chosenTab) ? chosenTab : 'Overview';
 
   const flush = useCallback(async () => {
@@ -222,6 +231,19 @@ export default function CampaignPage() {
     if (!next) return;
     campaignRef.current = { ...held, calendar: next };
     patchRef.current({ calendar: next });
+  }, []);
+
+  /* The town, changed off its newest self the way the calendar is: every
+     write the Game Master makes to the Fief (a card rewritten, a person added,
+     an event pinned) hands in a function from the fief as it stands. What the
+     players do to the town is not written here; it is the order book below. */
+  const changeFief = useCallback((change) => {
+    const held = campaignRef.current;
+    if (!held) return;
+    const next = change(normalizeFief(held.fief));
+    if (!next) return;
+    campaignRef.current = { ...held, fief: next };
+    patchRef.current({ fief: next });
   }, []);
 
   // Never lose the last keystrokes when navigating away.
@@ -360,6 +382,51 @@ export default function CampaignPage() {
       onResync: refetchMembers,
     });
   }, [memberCharIds, refetchMembers]);
+
+  /* The town's order book, read once and heard live, for everybody at the
+     table: every screen folds the same rows into the same town. A row this page
+     wrote itself arrives twice, once from the insert and once from the channel,
+     so rows are kept by id. See src/lib/fief.js. */
+  const [fiefOrders, setFiefOrders] = useState([]);
+  const addOrder = useCallback((row) => {
+    if (!row?.id) return;
+    setFiefOrders((was) => (was.some((o) => o.id === row.id) ? was : [...was, row]));
+  }, []);
+  const submitOrder = useCallback(
+    async (order) => {
+      const row = await placeOrder(id, order);
+      addOrder(row);
+      return row;
+    },
+    [id, addOrder]
+  );
+  useEffect(() => {
+    if (loading || !founded) return undefined;
+    let active = true;
+    const read = () =>
+      listOrders(id)
+        .then((rows) => active && setFiefOrders(rows))
+        .catch(() => {});
+    read();
+    const off = subscribeToTable({
+      table: 'fief_orders',
+      filter: `campaign_id=eq.${id}`,
+      onChange: (payload) => {
+        if (payload.eventType === 'INSERT') addOrder(payload.new);
+      },
+      onResync: read,
+    });
+    return () => {
+      active = false;
+      off();
+    };
+  }, [id, loading, founded, addOrder]);
+
+  const fiefToday = normalizeCalendar(campaign?.calendar).day;
+  const town = useMemo(
+    () => (founded ? foldFief(campaign?.fief, fiefOrders, fiefToday) : null),
+    [founded, campaign?.fief, fiefOrders, fiefToday]
+  );
 
   /* ---------------------------------------------------------- the blocks */
 
@@ -580,7 +647,7 @@ export default function CampaignPage() {
      column and the same brief, which is the whole of what "the same size as a
      spell summary" asks for. It is also the width the block itself opens at,
      so the dialog lands about where the shelf edges are. See BestiaryTab. */
-  const canvasColumns = tab === 'Overview' ? columns : tab === 'Encounters' ? 4 : 3;
+  const canvasColumns = tab === 'Overview' ? columns : tab === 'Encounters' || tab === 'Fief' ? 4 : 3;
 
   return (
     <div
@@ -742,7 +809,27 @@ export default function CampaignPage() {
             Word opens against the *enemy*, which is what `modifiers.actor` on
             each chip carries. See EnemyBlock.jsx. */}
         {tab === 'Calendar' && canEdit && (
-          <CalendarTab campaign={campaign} members={members} change={changeCalendar} />
+          <CalendarTab
+            campaign={campaign}
+            members={members}
+            change={changeCalendar}
+            tavern={town ? town.tavernTier() : null}
+          />
+        )}
+
+        {tab === 'Fief' && (
+          <FiefTab
+            campaign={campaign}
+            members={members}
+            canEdit={canEdit}
+            userId={userId}
+            mayFound={can('fief')}
+            town={town}
+            calendar={normalizeCalendar(campaign.calendar)}
+            changeFief={changeFief}
+            submit={submitOrder}
+            goCalendar={() => setTab('Calendar')}
+          />
         )}
 
         {tab === 'Bestiary' && canEdit && (

@@ -1240,12 +1240,15 @@ the pressure they are designed to create.
 
 Every item on the website has a printed cost in coins, and that is its price in the game.
 
-The website has no shop. Buying is a conversation with the Game Master: find somebody
-selling what you want, agree the price and then record it on your sheet. Take the coins
-off in your coin ledger, and add the item to your pack from the Inventory tab, where the
-codex browser lists everything in the game. Items your Game Master has made up can be
-added as a written entry. Selling works the same way in reverse. What somebody will pay
-for a used breastplate is the Game Master's call.
+Away from a town of your own, buying is a conversation with the Game Master: find
+somebody selling what you want, agree the price and then record it on your sheet. Take
+the coins off in your coin ledger, and add the item to your pack from the Inventory tab,
+where the codex browser lists everything in the game. Items your Game Master has made up
+can be added as a written entry. Selling works the same way in reverse. What somebody
+will pay for a used breastplate is the Game Master's call.
+
+When the party holds a town, its shops sell from the codex at the printed price. Your own
+sheet takes the coins and puts the item in your pack (see 8.4).
 
 ---
 
@@ -1255,8 +1258,9 @@ There are two rests. Both are taken from the Character tab, and the sheet shows 
 everything a rest is about to change before you confirm it.
 
 At a table, the Game Master can also call a rest from the campaign's Calendar tab, paid for
-the way they choose: your own Supplies, nothing or coins under a roof (see 8.2). It stands
-up on your sheet with its price, and you take it through the same window.
+the way they choose: your own Supplies, nothing or coins under a roof (see 8.2). When the
+party holds a town, the call can say the party rests in it (see 8.4). It stands up on your
+sheet with its price, and you take it through the same window.
 
 | | Short Rest | Long Rest |
 | --- | --- | --- |
@@ -1343,6 +1347,173 @@ comes of it.
 
 > **Designer's note.** Everything in this section is a proposal except the idea of it.
 > Every number here can be changed.
+
+### 8.4 The fief
+
+A campaign can hold a **town**: a fief the whole party shares, on a hex island of its own.
+It lives on the campaign page's Fief tab. The Game Master founds it, which takes a Premium
+account and the campaign calendar switched on, and from then on every player at the table
+can order in it at any account tier. The town runs on the calendar, a day at a time, so it
+grows when the Game Master moves the days forward.
+
+**The town never changes a character's numbers.** It is its own thing: resources to manage,
+buildings to raise, shops to buy from, goods to trade and people to talk to. What it gives a
+character comes through those and through a night under its roof.
+
+#### How a town grows
+
+A town is founded as a **Town Hall** with a first ring of streets, a farm and about 36
+people. From there, three numbers decide how big it gets:
+
+- **Food.** Farms, fishers and hunters feed the town. Food is never stored or spent; it is
+  how many people the town can feed.
+- **Quality of life.** The Keep, the Temple, the Casern, parks, squares and fountains raise
+  it, and every point keeps 10 people.
+- **People.** The town holds the smaller of what its food feeds and what its quality of
+  life keeps. While there is room, new people arrive every day; when there is not, some
+  leave and the log says whether it was for want of food or of a better life.
+
+About half the people work. **Nobody is assigned**: every project takes six builders first,
+and the rest spread over the buildings by themselves. A town short of hands works every
+building at the same share, which the town panel shows. The working buildings fill the
+stores, and the stores pay for the next building or the next tier.
+
+Houses are not built. A hex of them grows by itself beside the street nearest the Keep
+whenever the town needs room, and each holds about 20 people.
+
+#### The Keep
+
+The Keep is the heart of the town and it has three levels: the **Town Hall**, the **Keep**
+and the **Castle**. Its level sets three things: how many projects are built at once (one,
+two or three), what the stores hold (600, 1,500 and 3,000 of each material, with a fifth of
+that in empyrium) and the highest tier any other building may reach. Raising it to the
+Keep costs 600 wood and 400 stone and takes 12 days. The Castle costs 1,500 wood, 1,500
+stone, 400 metal and 80 empyrium and takes 24 days, and brings a Chief of the guard.
+
+#### Resources
+
+| Resource | Where it comes from | What it is for |
+| --- | --- | --- |
+| **Food** | Farms, fishers and hunters | How many people the town can feed |
+| **Wood** | The Woodcutter, beside the forest | Almost every building |
+| **Stone** | The Quarry, at the foot of the high ground | Walls, towers, the Temple and the Keep |
+| **Metal** | The Mine, at the foot of the high ground | The shops, the Casern and the Castle |
+| **Empyrium** | Trade only | The Enchanter and the Castle |
+| **Goods** | Ships at the Trade docks, and the Game Master | Traded for the others |
+
+At a Trade docks with a dockhand at work, goods trade one for one for wood, stone or metal,
+or five for one empyrium.
+
+#### The buildings
+
+Every building on this list has **tiers 1 to 3**, and no tier can pass the Keep's level.
+Each tier costs double the one before and takes two more days. At tier 2 and 3 a building
+takes more hands and so makes more; a comfort gives more quality of life; a shop sells a
+higher rank.
+
+| Building | Stands | What it does | Hands at tier 1, 2 and 3 | Costs at tier 1 |
+| --- | --- | --- | --- | --- |
+| **Farm** | On open grass, away from the sea | Each hand feeds 6 | 6, 12, 18 | 40 wood, 2 days |
+| **Fisher** | Beside the sea or the river | Each hand feeds 12 | 3, 6, 9 | 30 wood, 1 day |
+| **Hunter's hut** | Beside the forest | Each hand feeds 8 | 2, 4, 6 | 30 wood, 1 day |
+| **Woodcutter** | Beside the forest | Each hand cuts 2 wood a day | 4, 8, 12 | 30 wood, 1 day |
+| **Quarry** | Beside the high ground | Each hand cuts 2 stone a day | 4, 8, 12 | 60 wood, 2 days |
+| **Mine** | Beside the high ground | Each hand brings up 1 metal a day | 3, 6, 9 | 90 wood and 90 stone, 4 days |
+| **Trade docks** | On the shore | Each hand unloads 2 goods a day, and goods trade here | 2, 4, 6 | 150 wood and 60 stone, 5 days |
+| **Market** | Needs a Trade docks in the town | Sells everyday items | 1, 2, 3 | 120 wood and 90 stone, 4 days |
+| **Armor smith** | Anywhere | Sells armor and weapons | 1, 2, 3 | 60 wood, 90 stone and 40 metal, 4 days |
+| **Alchemist** | Anywhere | Sells potions | 1, 2, 3 | 90 wood, 60 stone and 20 metal, 4 days |
+| **Enchanter** | Anywhere | Takes commissions for enchantments | 1, 2, 3 | 90 wood, 120 stone, 60 metal and 10 empyrium, 6 days |
+| **Tavern** | Anywhere | A better night when the party rests in the town | 2, 3, 4 | 120 wood and 60 stone, 4 days |
+| **Temple** | Anywhere | 10, 20 or 30 quality of life | 2, 3, 4 | 60 wood, 150 stone and 20 metal, 6 days |
+| **Casern** | Anywhere | 5, 10 or 15 quality of life, and a raid takes only half | 4, 8, 12 | 90 wood, 120 stone and 30 metal, 5 days |
+| **Cemetery** | Anywhere | The dead work: every project costs 10, 15 or 20% less | 1, 2, 3 | 40 wood and 60 stone, 3 days |
+| **Park** | Anywhere | 4, 8 or 12 quality of life | None | 30 wood, 2 days |
+| **Square** | Anywhere, and it counts as a street | 4, 8 or 12 quality of life | None | 20 wood and 60 stone, 2 days |
+| **Fountain** | Anywhere | 6, 12 or 18 quality of life | None | 90 stone and 10 metal, 3 days |
+
+A building that takes hands does nothing until somebody works there: a shop with no hands
+is closed and a temple with no priest gives no quality of life.
+
+**Walls and towers do not upgrade.** A wall is laid as a straight run along one of the six
+hex lines, at 10 stone a hex and a day for every 4 hexes, and where it crosses a street it
+leaves a gate. A tower costs 60 stone and 10 metal and counts as wall. Its lookouts see the
+Game Master's hidden events three days before they land. When the walls close a ring round
+the Keep, a raid takes nothing at all.
+
+#### Ordering
+
+Every move on the town is one of four, and each one is paid for from the stores when it is
+ordered:
+
+- **Place a building.** Pick it from the Build list, and the hexes where it can go turn
+  green. It must stand within 4 hexes of a street, and the shortest way to it is paved for
+  free: streets lay themselves. Nothing is built on the water, the high ground or the
+  forest, and the shore is kept for fishers and the Trade docks.
+- **Raise a tier**, from the building's own card.
+- **Lay a run of wall**, from one click to the next.
+- **Trade goods** at the Trade docks.
+
+A project waits in line until the Keep has a slot free, then builds a day at a time while it
+has its six builders. A project cancelled before work starts gives back everything; after
+that, half. Every order is signed with the character who placed it and written in the
+town's log. If two players spend the same wood at once, the second order is refused. The log
+says why on every screen.
+
+#### People and cards
+
+Most of the town is a number. Every key building comes with its **key person**, the one the
+party talks to: a Head farmer at the farm, a Harbormaster at the docks, a High priest at the
+Temple. The Keep has an Advisor who knows the ledgers and a Foreman who runs every build.
+The Castle adds a Chief of the guard. Every building and every person has a card with
+their name and a few lines about them. The Game Master can rename and rewrite any card, give
+it a picture and move a person to another building.
+
+#### Shops
+
+A shop sells by rank, and its tier is how far up it reaches: **novice at tier 1, adept at
+tier 2 and master at tier 3**. Each sells from the codex at the printed price:
+
+- the **Market** sells everyday items, bags and trinkets
+- the **Armor smith** sells armor and weapons
+- the **Alchemist** sells potions
+- the **Enchanter** takes commissions. A commission is a written note in your pack, and the
+  Game Master lays the enchantment on the item you choose
+
+The Game Master can put anything else on any shop's shelf with a price of their own, and can
+raise a building of their own and make it a shop.
+
+To buy, open the shop on the Fief tab and press Buy. **Your own sheet pays**: it takes the
+coins out of your purse with a line in your coin ledger and puts the item in your pack, the
+moment it is open. If the purse is short, nothing moves and the table log says so.
+
+#### Resting in the town
+
+When the Game Master calls a Long Rest and ticks that the party rests in the town, the best
+open Tavern decides what the night is worth:
+
+| Tavern | What every character gets, on top of the Long Rest |
+| --- | --- |
+| None, or tier 1 | Nothing more than a meal and a bed |
+| Tier 2 | **1 Karma** |
+| Tier 3 | 1 Karma, and you start the day with a **Shield of five times your level** |
+
+A night in the town and a roof (see 8.2) never add together: the night gives one Karma point
+at most, and the larger of the two Shields. Karma is still capped at one per level. A Short
+Rest in the town gives nothing on top.
+
+#### The Game Master's hand
+
+The Game Master can do things in the town no player can: pin an event ahead on the calendar
+(a raid, tribute, a caravan or refugees arriving, hidden or shown), give the town resources
+or take them away, change the town's rules from today on, add people from a list of
+templates or of their own, raise custom buildings with their own name, text and model, and
+destroy a building. A destroyed building is rubble, and rubble rebuilds at half the price in
+half the days.
+
+> **Designer's note.** The buildings, the tiers, the shop ranks, quality of life and what
+> the Tavern gives are rulings. The yields, the costs, the crews and the days are proposals
+> for playtesting.
 
 ---
 

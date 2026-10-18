@@ -163,6 +163,19 @@ export const CAPABILITIES = {
    * See CREATURE_SLOTS for the other half.
    */
   forgeCodex: 'admin',
+  /**
+   * Found a town for the table: the Fief tab's first button.
+   *
+   * Settled 2026-10-17 in the Fief plan: a Game Master with a premium account
+   * founds the town, and from then on every seated player uses it at any tier.
+   * So this is asked once, of the one founding, and never of anybody ordering
+   * a building afterwards.
+   *
+   * UI only for now, like the others above. The founding is a write to the
+   * campaign row, which only its Game Master can make anyway; a tier check in
+   * the policy would be the real gate, and it can follow when the Fief does.
+   */
+  fief: 'premium',
 };
 
 export function can(tier, capability) {

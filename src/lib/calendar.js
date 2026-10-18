@@ -1,5 +1,6 @@
 import { formatNumber } from './characterModel.js';
 import { ROOFS, getRest } from './rest.js';
+import { townGiftWords, townRest } from './fiefRest.js';
 
 /**
  * The campaign calendar: what day it is at the table, what is coming, and the
@@ -187,14 +188,21 @@ function normalizeEvent(raw) {
 }
 
 /** How a rest is paid for. A roof is a rulebook lodging and only means anything
-    on a Long Rest paid in coins. */
+    on a Long Rest paid in coins.
+
+    `town` is a rest in the party's own town, stamped with the tier of its best
+    open Tavern when the Game Master called it, so every sheet reads the night
+    the town had to give that day and not the one it has by the time they wake.
+    Null for a rest anywhere else. See fiefRest.js. */
 export function normalizePay(raw) {
   const mode = PAY_MODES.includes(raw?.mode) ? raw.mode : 'supplies';
-  if (mode !== 'coins') return { mode, coins: 0, roof: null };
+  const town = isRecord(raw?.town) ? { tavern: townRest(raw.town.tavern).tavern } : null;
+  if (mode !== 'coins') return { mode, coins: 0, roof: null, ...(town ? { town } : {}) };
   return {
     mode,
     coins: wholeNumber(raw?.coins, 0, COINS_MAX, 0),
     roof: ROOFS[raw?.roof] ? raw.roof : null,
+    ...(town ? { town } : {}),
   };
 }
 
@@ -531,12 +539,20 @@ export function callWords(call) {
  */
 export function payWords(pay, rest = 'long', { you = false } = {}) {
   const held = normalizePay(pay);
-  if (held.mode === 'free') return 'Free';
-  if (held.mode === 'supplies') return you ? 'Your own Supplies' : 'Their own Supplies';
+  const town = rest === 'long' && held.town ? 'In the town' : '';
+  const and = (words) => (town ? `${town} · ${words}` : words);
+  if (held.mode === 'free') return and('Free');
+  if (held.mode === 'supplies') return and(you ? 'Your own Supplies' : 'Their own Supplies');
 
   const roof = rest === 'long' && held.roof ? ROOFS[held.roof] : null;
   const price = `${formatNumber(held.coins)} coins a night`;
-  return roof ? `${roof.label} · ${price}` : price;
+  return and(roof ? `${roof.label} · ${price}` : price);
+}
+
+/** What the town's Tavern gives on top of a Long Rest, in a few words, or ''. */
+export function townWords(pay) {
+  const held = normalizePay(pay);
+  return held.town ? townGiftWords(held.town.tavern) : '';
 }
 
 /** And what a roof gives on top, in a line, or '' for a roof that gives nothing. */
