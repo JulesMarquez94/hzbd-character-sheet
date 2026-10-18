@@ -495,6 +495,13 @@ them. Run it again after adding a model to a look in `src/lib/fiefLooks.js`. The
 the hex pack's ground at its atlas's green swatch rather than its yellow one, and makes
 `hex_grass_pale` for the paler patches.
 
+The ground is painted in watercolour. The bake cuts three sheets of the Voxel Core Lab Watercolor
+Terrain Textures pack (CC0, by Jonas Voland), unzipped into the same `data/` folder, down to
+512 pixels: `grass.jpg`, `water.jpg` and `dirt.jpg`, 38 KB in all. The board's hex material lays
+them over the grass, the water and the sand in world space, so the paint runs on from hex to hex
+(`paintGround` in `FiefStage.jsx`, where `PAINTED` holds how strong each one is). The streets
+beside the Keep join a ring round it rather than running into it, except the one at its door.
+
 ### The Temporary Effects tracker
 
 The bottom of the Character tab holds what is **running on you**: a name, how many of your turns it

@@ -218,10 +218,27 @@ function slopeOf(h) {
   return null;
 }
 
+/**
+ * The streets go round the Keep rather than into it. Jules, 2026-10-18: "the
+ * road ... they don't just connect all to it, so you just circle it as
+ * enough." So a street beside the Keep joins the ring and not the Keep, except
+ * the one at its door, which is the street the Keep is turned to face. Only the
+ * drawing: the rules still count the Keep as the heart of the street network.
+ */
+function keepDoor(town) {
+  const keep = town.keep();
+  const at = [keep.q, keep.r];
+  for (const e of [1, 2, 0, 3, 5, 4]) {
+    if (town.state.roads[hk(nb(at, e))]) return { keep: hk(at), door: hk(nb(at, e)) };
+  }
+  return { keep: hk(at), door: null };
+}
+
 /** Every hex a kit tile, its roads, river and coast picked by which neighbours it joins. */
 function groundPieces(list, town, o) {
   const st = town.state;
   const sloped = new Set();
+  const ring = keepDoor(town);
   for (const h of ALL) {
     const k = hk(h);
     const [x, z] = world(h);
@@ -253,7 +270,10 @@ function groundPieces(list, town, o) {
     const b = o[k] ? town.bById(o[k]) : null;
     const tile = b && !b.ruined && KLOOK[b.type] ? KLOOK[b.type](b.level, hsh(h)).tile : null;
     if (st.roads[k]) {
-      const es = town.roadEdges(h).sort((p, q) => p - q);
+      const es = town
+        .roadEdges(h)
+        .filter((i) => hk(nb(h, i)) !== ring.keep || k === ring.door)
+        .sort((p, q) => p - q);
       const ramp = rampOf(h, es);
       if (ramp) {
         list.push(['hex_road_A_sloped_low', x, lv - STEP, z, ramp.k]);

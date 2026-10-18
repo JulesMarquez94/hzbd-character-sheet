@@ -12,6 +12,7 @@
  *   kit.bin     every model's triangles with its node transforms baked in, so
  *               the board needs no glTF loader at all
  *   <atlas>.png the four packs' colour atlases, one each
+ *   <ground>.jpg the watercolour the ground is painted with (below)
  *   LICENSE.txt the packs' own licence files
  *
  * Only the models src/lib/fiefLooks.js can ask for are packed (`everyModel`),
@@ -28,6 +29,16 @@
  * roofs and the flags never read it and are untouched. `hex_grass_pale` is the
  * same tile pointed higher up the green, for the patches of a paler shade.
  *
+ * ------------------------------------------------------------ the watercolour
+ * The atlas paints a hex one smooth gradient, and a field of them still reads
+ * as tiles. Jules, 2026-10-18, after the hunt for a better ground texture: the
+ * Voxel Core Lab watercolour pack (CC0, by Jonas Voland), which sits in the
+ * same data folder. Three of its sheets ship, cut from 1024 pixels to 512: the
+ * grass, the water, and the dirt the streets and the beaches are painted with.
+ * The board lays them over the tops of the tiles in world space, so the paint
+ * runs on from hex to hex (`paintGround` in FiefStage.jsx). They are cut with
+ * the edges wrapped round first, so a sheet that tiles still tiles.
+ *
  *   node scripts/build-fief-kit.mjs [path/to/data]
  *
  * The data folder defaults to ./data, then to the sheet's old checkout beside
@@ -37,6 +48,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import sharp from 'sharp';
 import { everyModel } from '../src/lib/fiefLooks.js';
 
 const OUT = 'public/models/fief';
@@ -69,6 +81,31 @@ function walk(dir, deep, out = new Map()) {
 }
 
 const FOUND = PACKS.map((p) => ({ ...p, files: walk(path.join(ROOT, p.pack, p.models), !!p.deep) }));
+
+/* The watercolour pack, unzipped either flat or into a folder of its own name. */
+const WATERCOLOUR = 'VoxelCoreLab_Watercolor_Terrain_Textures_1024px';
+const PAINT = [path.join(ROOT, WATERCOLOUR, WATERCOLOUR), path.join(ROOT, WATERCOLOUR)].find((dir) => fs.existsSync(path.join(dir, 'LICENCE.txt')));
+if (!PAINT) {
+  console.error(`build-fief-kit: no ${WATERCOLOUR} in ${ROOT}`);
+  process.exit(1);
+}
+/** Which sheet each ground is painted with. */
+const GROUND = { grass: 'Grass_01', water: 'Water_01', dirt: 'Dirt_03' };
+const SIDE = 512;
+
+/** One sheet cut down to SIDE, wrapped round its edges first so the cut still tiles. */
+async function cutSheet(file, out) {
+  const { width } = await sharp(file).metadata();
+  const pad = 32;
+  const wrapped = await sharp(file).removeAlpha().extend({ top: pad, bottom: pad, left: pad, right: pad, extendWith: 'repeat' }).raw().toBuffer({ resolveWithObject: true });
+  const scale = SIDE / width;
+  const at = Math.round(pad * scale);
+  await sharp(wrapped.data, { raw: wrapped.info })
+    .resize(Math.round((width + 2 * pad) * scale), Math.round((width + 2 * pad) * scale), { kernel: 'lanczos3' })
+    .extract({ left: at, top: at, width: SIDE, height: SIDE })
+    .jpeg({ quality: 86, mozjpeg: true })
+    .toFile(out);
+}
 
 /** Names the looks ask for that are a kit model read another way: the source and the shade. */
 const VARIANTS = { hex_grass_pale: { from: 'hex_grass', shade: 'pale' } };
@@ -273,8 +310,13 @@ for (const p of PACKS) {
   fs.copyFileSync(path.join(ROOT, p.pack, p.atlas), path.join(OUT, file));
   atlases[p.id] = file;
 }
+const ground = {};
+for (const [id, sheet] of Object.entries(GROUND)) {
+  ground[id] = `${id}.jpg`;
+  await cutSheet(path.join(PAINT, `${sheet}.png`), path.join(OUT, ground[id]));
+}
 const binBytes = Buffer.concat(chunks);
-const jsonText = `${JSON.stringify({ v: 1, bytes: offset, atlases, models: index })}\n`;
+const jsonText = `${JSON.stringify({ v: 1, bytes: offset, atlases, ground, models: index })}\n`;
 fs.writeFileSync(path.join(OUT, 'kit.bin'), binBytes);
 fs.writeFileSync(path.join(OUT, 'kit.json'), jsonText);
 
@@ -287,6 +329,7 @@ const fingerprint = createHash('sha1');
 fingerprint.update(binBytes);
 fingerprint.update(jsonText);
 for (const p of PACKS) fingerprint.update(fs.readFileSync(path.join(OUT, `${p.id}.png`)));
+for (const file of Object.values(ground)) fingerprint.update(fs.readFileSync(path.join(OUT, file)));
 const version = fingerprint.digest('hex').slice(0, 12);
 fs.writeFileSync(
   'src/lib/fiefKitVersion.js',
@@ -294,11 +337,12 @@ fs.writeFileSync(
 );
 fs.writeFileSync(
   path.join(OUT, 'LICENSE.txt'),
-  `The models and atlases in this folder are cut from four KayKit packs by Kay Lousberg (www.kaylousberg.com), released under CC0. Each pack's own licence follows.\n\n${PACKS.map((p) => fs.readFileSync(path.join(ROOT, p.pack, 'License.txt'), 'utf8').trim()).join('\n\n----------------------------------------------------------------------\n\n')}\n`
+  `The models and atlases in this folder are cut from four KayKit packs by Kay Lousberg (www.kaylousberg.com), released under CC0. Each pack's own licence follows.\n\n${PACKS.map((p) => fs.readFileSync(path.join(ROOT, p.pack, 'License.txt'), 'utf8').trim()).join('\n\n----------------------------------------------------------------------\n\n')}\n\n----------------------------------------------------------------------\n\nThe ground sheets (${Object.values(ground).join(', ')}) are cut from ${Object.values(GROUND).join(', ')} of the Watercolor Terrain Textures pack by Jonas Voland of Voxel Core Lab, released under CC0. Its own licence follows.\n\n${fs.readFileSync(path.join(PAINT, 'LICENCE.txt'), 'utf8').trim()}\n`
 );
 
 const kb = (n) => `${(n / 1024).toFixed(0)} KB`;
-console.log(`build-fief-kit: ${Object.keys(index).length} models, ${kb(offset)} of geometry, from ${ROOT}`);
+const sheets = Object.values(ground).reduce((n, file) => n + fs.statSync(path.join(OUT, file)).size, 0);
+console.log(`build-fief-kit: ${Object.keys(index).length} models, ${kb(offset)} of geometry, ${kb(sheets)} of ground sheets, from ${ROOT}`);
 if (missing.length) {
   console.error(`build-fief-kit: ${missing.length} names found in no pack: ${missing.join(', ')}`);
   process.exit(1);

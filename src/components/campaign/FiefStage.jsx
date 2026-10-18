@@ -23,7 +23,8 @@ import { repairAndReload } from '../../lib/deployReload.js';
  * their own space with every node transform applied, so there is no glTF loader
  * here. Every placement that reads the same atlas is merged into one mesh, so a
  * town of six hundred is four draw calls. It draws on demand: when the town, the
- * view, the hover or the selection changes, and never in a loop.
+ * view, the hover or the selection changes, and never in a loop. The ground is
+ * painted over in watercolour by the hex atlas's own material (`paintGround`).
  */
 
 const BASE = `${import.meta.env.BASE_URL}models/fief/`;
@@ -71,6 +72,21 @@ function loadKit() {
         mats[id] = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95, metalness: 0 });
       })
     );
+    /* The watercolour is dress, not the board: a sheet that will not load
+       leaves the ground in the atlas's own gradient. */
+    const sheets = {};
+    await Promise.all(
+      Object.entries(index.ground ?? {}).map(async ([id, file]) => {
+        const tex = await loader.loadAsync(`${BASE}${file}?v=${KIT_VERSION}`).catch((error) => console.warn(`The Fief's ground sheet ${file} did not load.`, error));
+        if (!tex) return;
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 4;
+        sheets[id] = tex;
+      })
+    );
+    if (Object.keys(PAINTED).every((id) => sheets[id])) paintGround(mats.hex, sheets);
     const geo = {};
     const boxes = {};
     for (const [name, m] of Object.entries(index.models)) {
@@ -160,6 +176,83 @@ function merge(kit, places) {
   geo.setIndex(new THREE.BufferAttribute(idx, 1));
   geo.computeBoundingSphere();
   return geo;
+}
+
+/* ------------------------------------------------------- the watercolour */
+
+/*
+ * Where in the hex atlas each ground reads its colour, as [u0, v0, u1, v1]:
+ * the green the bake points the grass at, the blue of the water, and the sand
+ * of the streets and the beaches. Apart from a few specks on a market stall
+ * and a wheelbarrow, nothing but the tiles, the hills and the mountains reads
+ * them, so a face that does is ground. For each:
+ *
+ *   wash  how strongly the sheet's light and dark shows (1 is as painted)
+ *   own   how far the ground takes the sheet's colour over the atlas's; the
+ *         dirt keeps the sand's, or every beach would be mud
+ *   tone  a last darkening, which the grass needs to sit under the buildings
+ *   size  how many board units one repeat of the sheet covers (a hex is 2)
+ *
+ * Set by eye on 2026-10-18 against the close and whole-island views.
+ */
+const PAINTED = {
+  grass: { box: [0.5, 0.25, 0.625, 0.5], wash: 2.2, own: 0.75, tone: 0.85, size: 9 },
+  water: { box: [0.125, 0.25, 0.25, 0.5], wash: 1.4, own: 0.6, tone: 1, size: 13 },
+  dirt: { box: [0.375, 0.5, 0.625, 0.75], wash: 1.6, own: 0.15, tone: 1, size: 7 },
+};
+
+/**
+ * Paints the watercolour sheets over the tops of the ground tiles. Each sheet
+ * is laid in world space, not per tile, so the paint runs on across hexes, and
+ * read twice at two sizes and angles so its own repeat never lines up. The
+ * paint goes only on faces turned to the sky, where a sheet laid flat lands
+ * true; a terrace's sides take the new colour without it, or they would stand
+ * out from the tops in the atlas's old bright green.
+ */
+function paintGround(mat, sheets) {
+  mat.onBeforeCompile = (shader) => {
+    for (const [id, p] of Object.entries(PAINTED)) {
+      shader.uniforms[`paint_${id}`] = { value: sheets[id] };
+      shader.uniforms[`paint_${id}_box`] = { value: new THREE.Vector4(...p.box) };
+      shader.uniforms[`paint_${id}_k`] = { value: new THREE.Vector4(p.wash, p.own, p.tone, p.size) };
+    }
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec2 vGround;\nvarying float vSky;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGround = (modelMatrix * vec4(transformed, 1.0)).xz;\nvSky = normalize(mat3(modelMatrix) * objectNormal).y;');
+    const coats = Object.keys(PAINTED)
+      .map((id) => `paint = coat(paint, paint_${id}, vMapUv, paint_${id}_box, paint_${id}_k, sky);`)
+      .join('\n');
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        '#include <common>',
+        `#include <common>
+${Object.keys(PAINTED).map((id) => `uniform sampler2D paint_${id};\nuniform vec4 paint_${id}_box;\nuniform vec4 paint_${id}_k;`).join('\n')}
+varying vec2 vGround;
+varying float vSky;
+vec3 coat(vec3 base, sampler2D sheet, vec2 at, vec4 box, vec4 k, float sky) {
+  vec2 inside = step(box.xy, at) * step(at, box.zw);
+  if (inside.x * inside.y <= 0.0) return base;
+  vec3 mean = max(textureLod(sheet, vec2(0.5), 16.0).rgb, vec3(0.001));
+  vec3 a = texture2D(sheet, vGround / k.w).rgb / mean;
+  vec3 b = texture2D(sheet, mat2(0.8, -0.6, 0.6, 0.8) * vGround / (k.w * 2.45) + 0.37).rgb / mean;
+  vec3 light = mix(vec3(1.0), sqrt(a * b), k.x * sky);
+  float lum = dot(base, vec3(0.2126, 0.7152, 0.0722)) / max(dot(mean, vec3(0.2126, 0.7152, 0.0722)), 0.001);
+  return mix(base, mean * lum, k.y) * light * k.z;
+}`
+      )
+      .replace(
+        '#include <map_fragment>',
+        `#include <map_fragment>
+{
+  float sky = smoothstep(0.35, 0.75, vSky);
+  vec3 paint = diffuseColor.rgb;
+  ${coats}
+  diffuseColor.rgb = paint;
+}`
+      );
+  };
+  mat.customProgramCacheKey = () => 'fief-ground';
+  mat.needsUpdate = true;
 }
 
 /* ------------------------------------------------------------ plain hexes */

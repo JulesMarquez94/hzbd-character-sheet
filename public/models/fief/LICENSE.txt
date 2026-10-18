@@ -216,3 +216,22 @@ KayKit : Resource Bits (1.0)
 	http://twitter.com/KayLousberg
 	https://mastodon.gamedev.place/@Kay
 	http://twitter.com/KayLousberg
+
+----------------------------------------------------------------------
+
+The ground sheets (grass.jpg, water.jpg, dirt.jpg) are cut from Grass_01, Water_01, Dirt_03 of the Watercolor Terrain Textures pack by Jonas Voland of Voxel Core Lab, released under CC0. Its own licence follows.
+
+Hand-Painted Watercolor Terrain Texture Pack
+Created by Jonas Voland
+Distributed by Voxel Core Lab GmbH
+
+This work is released under the Creative Commons Zero 1.0 Universal license (CC0).
+
+You may copy, modify, distribute and use the textures for any purpose, even commercially, without asking for permission.
+
+Attribution is not required.  
+If you wish to credit me, you can simply write: Jonas Voland
+
+Link to the license: https://creativecommons.org/publicdomain/zero/1.0/
+
+Enjoy creating!
