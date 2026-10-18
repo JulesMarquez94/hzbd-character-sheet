@@ -7,6 +7,7 @@ import { keyAt } from '../../lib/fiefLooks.js';
 import { addDays, dateWords } from '../../lib/calendar.js';
 import { listShopWords, postEvent, shopBuyEvent } from '../../lib/campaignLog.js';
 import { subscribeToTable } from '../../lib/realtime.js';
+import { repairAndReload } from '../../lib/deployReload.js';
 import './fief.css';
 
 /**
@@ -138,8 +139,9 @@ export default function FiefTab({ campaign, members, canEdit, userId, mayFound, 
 
   /* The board is fetched only once a town stands, and only by a reader on this tab. */
   const [Stage, setStage] = useState(null);
-  /* Why there is no board, if there is not: 'load' or 'webgl'. */
+  /* Why there is no board, if there is not: 'load' or 'webgl', and what said so. */
   const [stageFailed, setStageFailed] = useState(null);
+  const [stageError, setStageError] = useState(null);
   useEffect(() => {
     if (!town) return undefined;
     let live = true;
@@ -152,7 +154,10 @@ export default function FiefTab({ campaign, members, canEdit, userId, mayFound, 
       })
       .catch((error) => {
         console.warn('The Fief board did not load.', error);
-        if (live) setStageFailed('load');
+        if (live) {
+          setStageError(error);
+          setStageFailed('load');
+        }
       });
     return () => {
       live = false;
@@ -455,7 +460,10 @@ export default function FiefTab({ campaign, members, canEdit, userId, mayFound, 
               placing={placing}
               selected={selected}
               onPick={pick}
-              onFail={(kind) => setStageFailed(kind)}
+              onFail={(kind, error) => {
+                setStageError(error);
+                setStageFailed(kind);
+              }}
               label={`${town.fief.name} on a hex island: ${plural(st.buildings.length, 'building')}, ${plural(st.houses.length, 'hex', 'hexes')} of houses and ${num(st.pop)} people.`}
             />
           ) : (
@@ -466,9 +474,12 @@ export default function FiefTab({ campaign, members, canEdit, userId, mayFound, 
                   ? (
                     <span className="fief-missing">
                       <span>The board did not load. The site was probably updated while this page was open.</span>
-                      <button type="button" className="btn btn-copper btn-sm" onClick={() => window.location.reload()}>
+                      <button type="button" className="btn btn-copper btn-sm" onClick={() => repairAndReload(stageError)}>
                         Reload the page
                       </button>
+                      {stageError && (
+                        <span className="fief-small fief-muted">What went wrong: {String(stageError?.message ?? stageError).slice(0, 240)}</span>
+                      )}
                     </span>
                   )
                   : 'Laying out the island...'}

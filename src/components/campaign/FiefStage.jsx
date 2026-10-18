@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { CAT, REACH, wallRun } from '../../lib/fief.js';
 import { ALL, DEFAULT_ISLAND, axial, hk, inmap, islandOf, world } from '../../lib/fiefIsland.js';
 import { CR, footOf, ghostPieces, setBoxes, townPieces } from '../../lib/fiefLooks.js';
+import { KIT_VERSION } from '../../lib/fiefKitVersion.js';
+import { repairAndReload } from '../../lib/deployReload.js';
 
 /**
  * The Fief's board: the island and the town on it, in KayKit miniatures.
@@ -34,24 +36,36 @@ const BG = '#1b1830';
 
 let KIT = null;
 
+/* One file of the kit, by its fingerprinted address. A web page in its place
+   is the host's answer for a file it does not have, and is said so. */
+function kitFile(file, read, cache) {
+  return fetch(`${BASE}${file}?v=${KIT_VERSION}`, { cache }).then((r) => {
+    if (!r.ok) throw new Error(`${file} answered ${r.status}.`);
+    if ((r.headers.get('content-type') ?? '').includes('text/html')) throw new Error(`${file} came back as a web page.`);
+    return read(r);
+  });
+}
+
+/* The index and the geometry, which must be from the same bake: every model
+   is read out of the geometry at offsets the index gives. */
+async function kitPair(cache) {
+  const [index, bin] = await Promise.all([kitFile('kit.json', (r) => r.json(), cache), kitFile('kit.bin', (r) => r.arrayBuffer(), cache)]);
+  if (index.bytes !== bin.byteLength) throw new Error(`kit.json and kit.bin are from different bakes (${index.bytes} and ${bin.byteLength} bytes).`);
+  return [index, bin];
+}
+
 /** The kit, fetched once per visit and shared by every board that opens. */
 function loadKit() {
   KIT ??= (async () => {
-    const [index, bin] = await Promise.all([
-      fetch(`${BASE}kit.json`).then((r) => {
-        if (!r.ok) throw new Error(`kit.json ${r.status}`);
-        return r.json();
-      }),
-      fetch(`${BASE}kit.bin`).then((r) => {
-        if (!r.ok) throw new Error(`kit.bin ${r.status}`);
-        return r.arrayBuffer();
-      }),
-    ]);
+    /* A kit the cache got wrong is fetched once more past the cache. */
+    const [index, bin] = await kitPair('default').catch(() => kitPair('reload'));
     const loader = new THREE.TextureLoader();
     const mats = {};
     await Promise.all(
       Object.entries(index.atlases).map(async ([id, file]) => {
-        const tex = await loader.loadAsync(`${BASE}${file}`);
+        const tex = await loader.loadAsync(`${BASE}${file}?v=${KIT_VERSION}`).catch(() => {
+          throw new Error(`The atlas ${file} did not load.`);
+        });
         tex.flipY = false;
         tex.colorSpace = THREE.SRGBColorSpace;
         mats[id] = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95, metalness: 0 });
@@ -361,7 +375,7 @@ export default function FiefStage({ town, view = 'town', placing = null, selecte
     } catch (error) {
       /* No WebGL at all. Said after this render rather than inside it. */
       queueMicrotask(() => {
-        setFailed('webgl');
+        setFailed({ kind: 'webgl', error });
         onFail?.('webgl', error);
       });
       return undefined;
@@ -415,7 +429,7 @@ export default function FiefStage({ town, view = 'town', placing = null, selecte
       .catch((error) => {
         console.warn('The Fief board could not load its models.', error);
         if (live) {
-          setFailed('load');
+          setFailed({ kind: 'load', error });
           onFail?.('load', error);
         }
       });
@@ -599,7 +613,7 @@ export default function FiefStage({ town, view = 'town', placing = null, selecte
         }}
       />
       {!kit && !failed && <div className="fief-loading">Laying out the island...</div>}
-      {failed && <BoardMissing kind={failed} />}
+      {failed && <BoardMissing kind={failed.kind} error={failed.error} />}
     </div>
   );
 }
@@ -609,16 +623,18 @@ export default function FiefStage({ town, view = 'town', placing = null, selecte
  * the panels still work; anything else is nearly always a page opened before
  * the site was last updated, and a reload is the whole fix.
  */
-export function BoardMissing({ kind }) {
+export function BoardMissing({ kind, error = null }) {
   if (kind === 'webgl') {
     return <div className="fief-loading">This browser cannot draw the board. The panels beside it hold every order.</div>;
   }
+  const detail = String(error?.message ?? error ?? '').slice(0, 240);
   return (
     <div className="fief-missing">
       <p>The board did not load. The site was probably updated while this page was open.</p>
-      <button type="button" className="btn btn-copper btn-sm" onClick={() => window.location.reload()}>
+      <button type="button" className="btn btn-copper btn-sm" onClick={() => repairAndReload(error)}>
         Reload the page
       </button>
+      {detail && <p className="fief-small fief-muted">What went wrong: {detail}</p>}
     </div>
   );
 }

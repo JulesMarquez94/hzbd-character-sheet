@@ -273,8 +273,25 @@ for (const p of PACKS) {
   fs.copyFileSync(path.join(ROOT, p.pack, p.atlas), path.join(OUT, file));
   atlases[p.id] = file;
 }
-fs.writeFileSync(path.join(OUT, 'kit.bin'), Buffer.concat(chunks));
-fs.writeFileSync(path.join(OUT, 'kit.json'), `${JSON.stringify({ v: 1, bytes: offset, atlases, models: index })}\n`);
+const binBytes = Buffer.concat(chunks);
+const jsonText = `${JSON.stringify({ v: 1, bytes: offset, atlases, models: index })}\n`;
+fs.writeFileSync(path.join(OUT, 'kit.bin'), binBytes);
+fs.writeFileSync(path.join(OUT, 'kit.json'), jsonText);
+
+/* The kit's own fingerprint, for the board to ask for these files by. The names
+   never change, so without it a cache anywhere between here and a player can
+   hand them last week's index with this week's geometry, and the geometry is
+   read at offsets the old index never wrote. A changed kit is a changed URL.
+   See art-url versioning for the same rule on the card art. */
+const fingerprint = createHash('sha1');
+fingerprint.update(binBytes);
+fingerprint.update(jsonText);
+for (const p of PACKS) fingerprint.update(fs.readFileSync(path.join(OUT, `${p.id}.png`)));
+const version = fingerprint.digest('hex').slice(0, 12);
+fs.writeFileSync(
+  'src/lib/fiefKitVersion.js',
+  `/* Written by scripts/build-fief-kit.mjs. Do not edit: run the bake again. */\n/** The fingerprint of public/models/fief, asked for by the board as ?v= so a cached kit can never be half old. */\nexport const KIT_VERSION = '${version}';\n`
+);
 fs.writeFileSync(
   path.join(OUT, 'LICENSE.txt'),
   `The models and atlases in this folder are cut from four KayKit packs by Kay Lousberg (www.kaylousberg.com), released under CC0. Each pack's own licence follows.\n\n${PACKS.map((p) => fs.readFileSync(path.join(ROOT, p.pack, 'License.txt'), 'utf8').trim()).join('\n\n----------------------------------------------------------------------\n\n')}\n`

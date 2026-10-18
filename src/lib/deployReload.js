@@ -10,11 +10,34 @@
  * only. If the reload a moment ago did not help, the failure is something else
  * and is let through to whatever was waiting on it, which says so itself.
  *
+ * ------------------------------------------------------------ the cache
+ * And a reload alone is not always enough. The host marks everything under
+ * /assets/ as cached for a year, and that header rides on its HTML answer for a
+ * missing file too, so a browser that asked for a script at the wrong moment
+ * keeps the page in its place for a year and a plain reload never asks again.
+ * So before reloading, the scripts the failed import needed are fetched again
+ * past the cache, which writes the real file over the bad copy.
+ *
  * Imported for its effect, first thing, by src/main.jsx.
  */
 
 const RELOADED_AT = 'hzbd-reloaded-for-deploy';
 const ONCE_MS = 30_000;
+
+/** The scripts a failed import needed: any address the error names, and every preload on the page. */
+function scriptsOf(error) {
+  const urls = new Set();
+  const named = /(https?:\/\/[^\s'"()]+?\.js)\b/.exec(String(error?.message ?? error ?? ''));
+  if (named) urls.add(named[1]);
+  for (const link of document.querySelectorAll('link[rel="modulepreload"]')) if (link.href) urls.add(link.href);
+  return [...urls].filter((url) => url.startsWith(window.location.origin));
+}
+
+/** Fetch those scripts past the cache, so a bad copy is overwritten, then load the page again. */
+export async function repairAndReload(error) {
+  await Promise.all(scriptsOf(error).map((url) => fetch(url, { cache: 'reload' }).catch(() => {})));
+  window.location.reload();
+}
 
 export function reloadOnStaleDeploy(event) {
   try {
@@ -27,7 +50,7 @@ export function reloadOnStaleDeploy(event) {
     return false;
   }
   event.preventDefault();
-  window.location.reload();
+  repairAndReload(event.payload);
   return true;
 }
 
