@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BuildPanel, BuildingPanel, GmPanel, HexPanel, HousePanel, PersonPanel, ProjectPanel, TownPanel } from './FiefPanels.jsx';
-import { CAT, RES, foundFief, keepName, num, plural, wallRun } from '../../lib/fief.js';
+import { CAT, RES, foundFief, keepName, num, plural, unfoundFief, wallRun } from '../../lib/fief.js';
 import { DEFAULT_ISLAND, ISLANDS, hk, unk } from '../../lib/fiefIsland.js';
 import FiefMap from './FiefMap.jsx';
 import { keyAt } from '../../lib/fiefLooks.js';
@@ -129,9 +129,10 @@ function Founding({ canEdit, mayFound, calendarOn, onFound, goCalendar }) {
  * `submit(order)` puts one order in the book and hands back the row the book
  * stored, with its place in it. CampaignPage's writes to fief_orders; anything
  * else that hands back a row with a `seq` will do, which is how the tab is
- * tried without a database.
+ * tried without a database. `bookEnd()` is the last row of the book, which a
+ * deleted town is closed at and a new one starts after.
  */
-export default function FiefTab({ campaign, members, canEdit, userId, mayFound, town, calendar, changeFief, submit, goCalendar }) {
+export default function FiefTab({ campaign, members, canEdit, userId, mayFound, town, calendar, changeFief, submit, bookEnd = async () => 0, goCalendar }) {
   const today = calendar.day;
   const dateOf = useCallback((day) => (calendar.start ? dateWords(addDays(calendar.start, day - 1)) : `Day ${day}`), [calendar.start]);
 
@@ -299,13 +300,20 @@ export default function FiefTab({ campaign, members, canEdit, userId, mayFound, 
 
   if (!town) {
     return (
-      <Founding
+      <>
+        {said?.text && <p className={`fief-said fief-found-said is-${said.tone || 'plain'}`}>{said.text}</p>}
+        <Founding
         canEdit={canEdit}
         mayFound={mayFound}
         calendarOn={calendar.enabled}
         goCalendar={goCalendar}
-        onFound={(name, island) => changeFief(() => foundFief(name, today, island))}
-      />
+        onFound={async (name, island) => {
+          const end = await bookEnd();
+          changeFief((f) => foundFief(name, today, island, undefined, Math.max(f.since, end)));
+          setSaid(null);
+        }}
+        />
+      </>
     );
   }
 
@@ -476,6 +484,15 @@ export default function FiefTab({ campaign, members, canEdit, userId, mayFound, 
                   addTo={addTo}
                   setAddTo={setAddTo}
                   onOpen={setSelected}
+                  onDelete={async () => {
+                    const end = await bookEnd();
+                    const gone = town.fief.name;
+                    setPlacing(null);
+                    setSelected(null);
+                    setSide('build');
+                    changeFief((f) => unfoundFief(f, end));
+                    say(`${gone} is gone. Found a new town on any island.`, 'info');
+                  }}
                   onCustom={(draft) => {
                     setSelected(null);
                     setPlacing({ type: 'custom', model: draft.model, draft });

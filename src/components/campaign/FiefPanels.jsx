@@ -913,7 +913,50 @@ const PRESETS = [
   { id: 'refugees', label: 'Refugees', title: 'Refugees at the edge', people: 20 },
 ];
 
-export function GmPanel({ town, today, dateOf, order, edit, addTo, setAddTo, onCustom, onOpen }) {
+/**
+ * Taking the whole town down, so the table can found another. Two presses, and
+ * the second names everything that goes, because nothing brings it back.
+ */
+function DeleteTown({ town, onDelete }) {
+  const [asking, setAsking] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const name = town.fief.name;
+  if (!asking) {
+    return (
+      <div className="fief-row">
+        <button type="button" className="btn btn-danger btn-sm" onClick={() => setAsking(true)}>
+          Delete the town
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="fief-confirm">
+      <span>
+        Delete {name}? Every building, street, key person, card, picture, shelf and event goes with it, and the
+        players lose the Fief tab until a new town is founded. What was bought in its shops stays on the sheets.
+      </span>
+      <div className="fief-row">
+        <button
+          type="button"
+          className="btn btn-danger btn-sm"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            await onDelete();
+          }}
+        >
+          {busy ? 'Deleting...' : `Delete ${name}`}
+        </button>
+        <button type="button" className="btn btn-minimal btn-sm" disabled={busy} onClick={() => setAsking(false)}>
+          Keep it
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function GmPanel({ town, today, dateOf, order, edit, addTo, setAddTo, onCustom, onOpen, onDelete }) {
   const fief = town.fief;
   const st = town.state;
   const spots = st.buildings.filter((x) => x.type !== 'wall' && !x.ruined);
@@ -1181,6 +1224,15 @@ export function GmPanel({ town, today, dateOf, order, edit, addTo, setAddTo, onC
           {KEEP_UP[2].days} days. The Castle costs {listJoin(Object.entries(KEEP_UP[3].cost).map(([r, n]) => `${num(n)} ${r}`))}{' '}
           and {KEEP_UP[3].days} days.
         </p>
+      </div>
+
+      <div className="fief-sub">
+        <h4>Start again</h4>
+        <p className="fief-small fief-muted">
+          Delete the town to found a new one, on the same island or another. The new town starts from nothing on its
+          founding day.
+        </p>
+        <DeleteTown town={town} onDelete={onDelete} />
       </div>
     </div>
   );

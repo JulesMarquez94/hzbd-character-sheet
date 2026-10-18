@@ -829,6 +829,11 @@
   gap: 10px;
 }
 
+.fief-found-said {
+  max-width: 960px;
+  margin: 0 auto 12px;
+}
+
 .fief-credit {
   margin-top: 12px;
 }

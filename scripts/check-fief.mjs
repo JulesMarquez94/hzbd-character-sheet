@@ -33,6 +33,7 @@ import {
   normalizeFief,
   townRest,
   townRestWords,
+  unfoundFief,
   upCost,
   wallRun,
 } from '../src/lib/fief.js';
@@ -209,6 +210,23 @@ check(foldFief(FIEF, [row(1, 'trade', { res: 'wood', n: 1 })], 1).state.log.some
 {
   const cells = wallRun([3, -5], [3, -1]);
   check(cells.length === 5 && cells.every((c, i) => c[0] === 3 && c[1] === -5 + i), 'a run of wall follows a hex line');
+}
+
+/* Deleting a town and founding another: the book is closed, never emptied. */
+{
+  const old = foldFief(FIEF, book, 5);
+  const lastSeq = Math.max(...book.map((r) => r.seq));
+  const gone = unfoundFief(FIEF, lastSeq);
+  check(foldFief(gone, book, 5) === null, 'a deleted town folds to nothing');
+  check(gone.since === lastSeq && !Object.keys(gone.cards).length && !gone.events.length && !gone.extras.length, 'and keeps only the mark where its book was closed');
+  const again = foundFief('Newport', 7, 'rivercross', undefined, gone.since);
+  const fresh = foldFief(again, book, 7);
+  check(fresh && fresh.island.id === 'rivercross' && fresh.state.founded === 7, 'a new town can be founded on another island');
+  check(fresh.state.buildings.length === 2 && !fresh.state.log.some((l) => l.seq !== undefined), "and none of the old town's orders reach it");
+  const next = { seq: lastSeq + 1, day: 7, kind: 'build', data: { type: 'woodcutter', at: fresh.nearestFree('woodcutter', [-5, 4]) }, actor: 'Kael', character_id: 'c-kael' };
+  check(foldFief(again, [...book, next], 7).pById(`o${next.seq}`)?.type === 'woodcutter', 'while its own orders do');
+  check(old.state.buildings.length > 2, 'and the old book is still there to be read');
+  check(unfoundFief(gone, 1).since === lastSeq, 'a mark never moves back');
 }
 
 /* People: ids from the building, and a Castle brings its Chief. */

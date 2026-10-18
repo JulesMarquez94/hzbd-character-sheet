@@ -31,6 +31,19 @@ export async function listOrders(campaignId) {
   return out;
 }
 
+/** The last row of a town's book, or 0 for an empty one. What a deleted town is closed at. */
+export async function latestSeq(campaignId) {
+  const sb = requireSupabase();
+  const { data, error } = await sb
+    .from('fief_orders')
+    .select('seq')
+    .eq('campaign_id', campaignId)
+    .order('seq', { ascending: false })
+    .limit(1);
+  if (error) throw error;
+  return Number(data?.[0]?.seq) || 0;
+}
+
 /**
  * One move on the town. `characterId` is the sheet that ordered it, or null for
  * the Game Master's own hand, which the trigger only lets the Game Master write.

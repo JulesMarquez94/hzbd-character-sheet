@@ -17,7 +17,7 @@ import CalendarTab from '../components/campaign/CalendarTab.jsx';
 import CalendarBlock from '../components/campaign/CalendarBlock.jsx';
 import FiefTab from '../components/campaign/FiefTab.jsx';
 import { foldFief, normalizeFief } from '../lib/fief.js';
-import { listOrders, placeOrder } from '../lib/fiefStore.js';
+import { latestSeq, listOrders, placeOrder } from '../lib/fiefStore.js';
 import { foldAnswer, normalizeCalendar, waitingCalls } from '../lib/calendar.js';
 import { listRestAnswers } from '../lib/campaignLog.js';
 import {
@@ -392,6 +392,17 @@ export default function CampaignPage() {
     if (!row?.id) return;
     setFiefOrders((was) => (was.some((o) => o.id === row.id) ? was : [...was, row]));
   }, []);
+  /* Where the book ends, for closing it when the town is deleted. Read off the
+     table rather than the rows this page holds, so an order that landed a
+     moment ago is closed with the rest. */
+  const bookEnd = useCallback(async () => {
+    const loaded = fiefOrders.reduce((m, o) => Math.max(m, Number(o.seq) || 0), 0);
+    try {
+      return Math.max(loaded, await latestSeq(id));
+    } catch {
+      return loaded;
+    }
+  }, [id, fiefOrders]);
   const submitOrder = useCallback(
     async (order) => {
       const row = await placeOrder(id, order);
@@ -828,6 +839,7 @@ export default function CampaignPage() {
             calendar={normalizeCalendar(campaign.calendar)}
             changeFief={changeFief}
             submit={submitOrder}
+            bookEnd={bookEnd}
             goCalendar={() => setTab('Calendar')}
           />
         )}

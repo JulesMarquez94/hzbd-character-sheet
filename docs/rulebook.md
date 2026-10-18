@@ -1541,6 +1541,10 @@ templates or of their own, raise custom buildings with their own name, text and 
 destroy a building. A destroyed building is rubble, and rubble rebuilds at half the price in
 half the days.
 
+From the bottom of their panel the Game Master can also delete the whole town and found a
+new one on any island. Everything the old town held goes with it: its buildings, streets,
+people, cards, shelves and events. What the party bought in its shops stays on their sheets.
+
 > **Designer's note.** The buildings, the tiers, the shop ranks, quality of life and what
 > the Tavern gives are rulings. The yields, the costs, the crews and the days are proposals
 > for playtesting.

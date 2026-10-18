@@ -52,6 +52,15 @@ import { keyPeopleOf, keyRoles, generatedTitle, LORE, QUARTERS, CUSTOM_MODELS } 
  * spending the same wood at once) is refused inside the replay, so it is refused
  * the same way everywhere, and the town's log says so.
  *
+ * ------------------------------------------------------------ a new town
+ * Jules, 2026-10-18: "make sure there's an option for deleting a fif, so you
+ * can delete it and recreate it." The book is insert-only and stays that way,
+ * so a town is never deleted by emptying it. It is closed instead: `since` on
+ * campaigns.fief is the last row of the book the old town was given, and the
+ * replay reads nothing at or before it. Deleting the town leaves a fief with no
+ * founding and that mark; founding again keeps the mark, so the new town starts
+ * on an empty page while every old row is still there to be read.
+ *
  * ------------------------------------------------------------------ the ids
  * A building is named after the order that raised it (`o<seq>`, and
  * `o<seq>.<n>` for each hex of a run of wall), never after a counter. A counter
@@ -303,6 +312,8 @@ export function normalizeFief(value) {
     /* Which of the six islands the town stands on, picked at the founding and
        never changed after: every building in the book stands on its ground. */
     island: ISLAND_IDS.includes(raw.island) ? raw.island : DEFAULT_ISLAND,
+    /* The last row of the book an earlier town was given. The replay starts after it. */
+    since: wholeNumber(raw.since, 0, Number.MAX_SAFE_INTEGER, 0),
     rules: normalizeRules(raw.rules),
     events: (Array.isArray(raw.events) ? raw.events : []).map(normalizeEvent).filter(Boolean).slice(0, EVENTS_MAX),
     cards: recordOf(raw.cards, normalizeCard),
@@ -313,8 +324,19 @@ export function normalizeFief(value) {
 }
 
 /** The founding, as the Game Master writes it. */
-export function foundFief(name, day, island = DEFAULT_ISLAND, rules = DEFAULT_RULES) {
-  return normalizeFief({ name, founded: day, island, rules });
+export function foundFief(name, day, island = DEFAULT_ISLAND, rules = DEFAULT_RULES, since = 0) {
+  return normalizeFief({ name, founded: day, island, rules, since });
+}
+
+/**
+ * The town taken down: no founding, and the book closed at `lastSeq`, the last
+ * row it holds, so whatever is founded next starts after it. Everything the
+ * Game Master wrote on the old town (its cards, people, events and shelves)
+ * goes with it.
+ */
+export function unfoundFief(fiefValue, lastSeq = 0) {
+  const held = normalizeFief(fiefValue);
+  return normalizeFief({ since: Math.max(held.since, wholeNumber(lastSeq, 0, Number.MAX_SAFE_INTEGER, 0)) });
 }
 
 /** A row off the order book, held to what the replay can read. Null if unreadable. */
@@ -1455,7 +1477,10 @@ export function foldFief(fiefValue, orders = [], today = 1) {
   const end = Math.max(fief.founded, Math.floor(Number(today) || fief.founded));
 
   const book = new Map();
-  const held = orders.map(normalizeOrder).filter(Boolean).sort((a, b) => a.seq - b.seq);
+  const held = orders
+    .map(normalizeOrder)
+    .filter((o) => o && o.seq > fief.since)
+    .sort((a, b) => a.seq - b.seq);
   for (const o of held) {
     const day = Math.max(fief.founded, o.day);
     if (day > end) continue;
