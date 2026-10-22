@@ -1108,9 +1108,13 @@ begin
   from public.campaigns c where c.id = new.campaign_id;
 
   if new.character_id is not null then
-    if not exists (select 1 from public.characters ch
-                   where ch.id = new.character_id
-                     and (ch.user_id = auth.uid() or public.is_admin())) then
+    -- The Game Master may sign for any character seated at their table, so an
+    -- absent player's turn in the town can still be taken. Whose hand it was
+    -- is still on the row, in user_id.
+    if not (coalesce(is_dm, false) or public.is_admin()
+            or exists (select 1 from public.characters ch
+                       where ch.id = new.character_id
+                         and ch.user_id = auth.uid())) then
       raise exception 'Only a character you own can order in a town.';
     end if;
     if not exists (select 1 from public.campaign_members m

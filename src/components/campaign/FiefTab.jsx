@@ -165,13 +165,24 @@ export default function FiefTab({ campaign, members, canEdit, userId, mayFound, 
   }, [Boolean(town)]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const mine = useMemo(() => members.filter((m) => m.user_id === userId && m.characters).map((m) => m.characters), [members, userId]);
+  /* Who this reader may sign an order as. A player signs as their own
+     characters; the Game Master as any character seated at the table, so an
+     absent player's turn in the town can still be taken for them (Jules,
+     2026-10-22). claim_fief_actor in supabase/schema.sql allows the same. */
+  const signable = useMemo(() => {
+    if (!canEdit) return mine;
+    const seen = new Set();
+    return members
+      .map((m) => m.characters)
+      .filter((c) => c && !seen.has(c.id) && seen.add(c.id));
+  }, [canEdit, members, mine]);
   const [actingId, setActingId] = useState(null);
   /* Who an order is signed by: the Game Master's own hand, or one of the
-     reader's own characters at this table. A Game Master starts as themselves
-     and a player as their first character; a reader with neither only watches. */
+     characters above. A Game Master starts as themselves and a player as their
+     first character; a reader with neither only watches. */
   const acting = (() => {
     if (actingId === 'gm' && canEdit) return 'gm';
-    const own = mine.find((c) => c.id === actingId);
+    const own = signable.find((c) => c.id === actingId);
     if (own) return own;
     return canEdit ? 'gm' : mine[0] ?? null;
   })();
@@ -421,7 +432,7 @@ export default function FiefTab({ campaign, members, canEdit, userId, mayFound, 
           ))}
         </dl>
         <div className="fief-acting">
-          {(canEdit || mine.length > 1) && (
+          {(canEdit || signable.length > 1) && (
             <>
               <label className="form-label" htmlFor="fief-acting">
                 Acting as
@@ -433,7 +444,7 @@ export default function FiefTab({ campaign, members, canEdit, userId, mayFound, 
                 onChange={(e) => setActingId(e.target.value)}
               >
                 {canEdit && <option value="gm">The Game Master</option>}
-                {mine.map((c) => (
+                {signable.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
