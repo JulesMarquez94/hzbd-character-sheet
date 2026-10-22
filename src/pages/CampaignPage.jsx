@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
 import SiteMenu from '../components/SiteMenu.jsx';
 import BlockArrange from '../components/sheet/BlockArrange.jsx';
@@ -99,7 +99,10 @@ export default function CampaignPage() {
   const [forged, setForged] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [chosenTab, setTab] = useState('Overview');
+  /* A link can open the page on a tab, `?tab=Fief`, which is how the Fief tab
+     on a player's sheet lands them in the town. See FiefSheetTabs.jsx. */
+  const [searchParams] = useSearchParams();
+  const [chosenTab, setTab] = useState(() => searchParams.get('tab') || 'Overview');
   const [arranging, setArranging] = useState(false);
   const [saveState, setSaveState] = useState('idle'); // idle | saving | saved | error
   const [unit] = useState(readStoredUnit);

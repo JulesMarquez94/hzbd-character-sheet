@@ -68,8 +68,16 @@ export async function listTables(characterId) {
      and the sheet simply has no calendar until schema.sql is run. */
   let { data, error } = await supabase
     .from('campaign_members')
-    .select('campaign_id, campaigns ( id, name, calendar )')
+    .select('campaign_id, campaigns ( id, name, calendar, fief )')
     .eq('character_id', characterId);
+  /* And the town, for the Fief tab the sheet grows once one is founded. Same
+     fallback, one step down. */
+  if (error) {
+    ({ data, error } = await supabase
+      .from('campaign_members')
+      .select('campaign_id, campaigns ( id, name, calendar )')
+      .eq('character_id', characterId));
+  }
   if (error) {
     ({ data, error } = await supabase
       .from('campaign_members')
@@ -84,6 +92,7 @@ export async function listTables(characterId) {
       id: row.campaign_id,
       name: row.campaigns.name,
       calendar: row.campaigns.calendar ?? {},
+      fief: row.campaigns.fief ?? {},
     }));
 }
 

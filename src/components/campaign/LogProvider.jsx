@@ -49,9 +49,9 @@ export default function LogProvider({ characterId, canWrite = false, children })
     });
   }, [characterId, read]);
 
-  /* And the campaign rows themselves, for the calendar on each: the Game Master
-     moving the day, adding to the agenda or calling a rest reaches this sheet
-     without a reload. One channel with an `in` filter, joined on the ids so a
+  /* And the campaign rows themselves, for the calendar and the town on each: the
+     Game Master moving the day, adding to the agenda, calling a rest or founding
+     a town reaches this sheet without a reload. One channel with an `in` filter, joined on the ids so a
      calendar changing does not tear it down. See CalendarBlock and RestCall. */
   const ids = tables
     .map((table) => table.id)
@@ -71,7 +71,7 @@ export default function LogProvider({ characterId, canWrite = false, children })
         setTables((was) =>
           was.map((table) =>
             table.id === row.id
-              ? { ...table, name: row.name ?? table.name, calendar: row.calendar ?? table.calendar }
+              ? { ...table, name: row.name ?? table.name, calendar: row.calendar ?? table.calendar, fief: row.fief ?? table.fief }
               : table
           )
         );

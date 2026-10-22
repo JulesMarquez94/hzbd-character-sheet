@@ -3,9 +3,10 @@ import { createContext, useContext } from 'react';
 /**
  * The tables this sheet is sitting at, and the way to tell them something.
  *
- * `{ tables, log }`: tables is `[{ id, name, calendar }]`, log takes an event
- * built by src/lib/campaignLog.js and posts it to every one of them. The
- * calendar is the campaign row's own, live; see src/lib/calendar.js.
+ * `{ tables, log }`: tables is `[{ id, name, calendar, fief }]`, log takes an
+ * event built by src/lib/campaignLog.js and posts it to every one of them. The
+ * calendar and the town are the campaign row's own, live; see
+ * src/lib/calendar.js and src/lib/fief.js.
  *
  * The provider lives in components/campaign/LogProvider.jsx, exactly as the
  * card stack's does. Anything that spends something reaches it here.

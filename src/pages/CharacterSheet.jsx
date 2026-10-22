@@ -19,6 +19,7 @@ import FightProvider from '../components/campaign/FightProvider.jsx';
 import HandoverCall from '../components/campaign/HandoverCall.jsx';
 import RestCall from '../components/campaign/RestCall.jsx';
 import ShopCall from '../components/campaign/ShopCall.jsx';
+import FiefSheetTabs from '../components/campaign/FiefSheetTabs.jsx';
 import LogCall from '../components/campaign/LogCall.jsx';
 import LogProvider from '../components/campaign/LogProvider.jsx';
 import ReactionCall from '../components/campaign/ReactionCall.jsx';
@@ -566,6 +567,8 @@ export default function CharacterSheet({ creating = false }) {
                 )}
               </button>
             ))}
+            {/* The town at this sheet's table, once one is founded. */}
+            {canEdit && <FiefSheetTabs />}
           </nav>
 
           {/* Below 820px the tab row and its controls collapse into this. */}
@@ -610,6 +613,7 @@ export default function CharacterSheet({ creating = false }) {
                     )}
                   </button>
                 ))}
+                {canEdit && <FiefSheetTabs as="menu" onPick={() => setTabMenuOpen(false)} />}
 
                 <div className="dropdown-divider" />
 

@@ -154,6 +154,13 @@ body.sheet-fixed #root {
   color: var(--text-silver);
 }
 
+/* The Fief tab is a link to the campaign rather than a tab of the sheet's own.
+   See FiefSheetTabs.jsx. */
+a.sheet-tab {
+  text-decoration: none;
+  display: inline-block;
+}
+
 .sheet-tab.active {
   color: var(--copper);
   border-bottom-color: var(--copper);
