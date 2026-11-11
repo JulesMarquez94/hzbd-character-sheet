@@ -170,6 +170,9 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
           flat: resolveValue(attribute.key, who, stat, sums).flat,
           advantage: (Number(mods.advantage) || 0) + printed.advantage,
           disadvantage: (Number(mods.disadvantage) || 0) + printed.disadvantage,
+          /* The check's own dice, when something swapped them: SKILLED's 2d8,
+             ticked in the Skill Check prompt. Null is the ordinary 2d6. */
+          base: mods.checkDice ?? null,
           /* Which of the target's numbers this is judged by, when the card says.
              "against the Reflex of" and "against the Grit of" name the defense
              outright; an attack with no name rolls against Defense, which is

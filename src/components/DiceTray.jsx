@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { DiceTrayContext } from '../context/dice-tray.js';
 import { useAuth } from '../context/auth-context.js';
-import { previewOf, rollCheck, rollValue } from '../lib/dice.js';
+import { overrideSpec, previewOf, rollCheck, rollValue } from '../lib/dice.js';
 import { applyIntervention, interventionsFor } from '../lib/interventions.js';
 import { REPLAY_DEPTH } from '../lib/logChain.js';
 import CustomRoll from './CustomRoll.jsx';
@@ -454,8 +454,28 @@ export function DiceTrayProvider({ children }) {
    */
   function throwIt() {
     if (!job || job.phase !== 'ready') return;
-    const result = job.spec.shape === 'check' ? rollCheck(job.spec) : rollValue(job.spec);
+    const thrown = job.spec.shape === 'check' ? rollCheck(job.spec) : rollValue(job.spec);
+    /* What the player changed by hand rides on the result, because the result is
+       what the log is written from. See overrideSpec in dice.js. */
+    const result = job.spec.override?.length > 0 ? { ...thrown, override: job.spec.override } : thrown;
     setJob({ ...job, result, phase: 'rolling' });
+  }
+
+  /**
+   * The player changing what the roll throws, before it is thrown.
+   *
+   * Always applied to the spec the caller asked for, which the job keeps as
+   * `original`, so a second change replaces the first rather than stacking on
+   * it. The preview is worked out again so the dice waiting on the surface are
+   * the dice that will be thrown.
+   */
+  function override(change) {
+    if (!job || (job.phase !== 'ready' && job.phase !== 'dc')) return;
+    const original = job.original ?? job.spec;
+    /* The DC is answered after the spec was asked for, so it is carried over
+       from the spec as it stands rather than lost with the old override. */
+    const changed = overrideSpec({ ...original, dc: job.spec.dc }, change);
+    setJob({ ...job, original, spec: { ...changed, preview: previewOf(changed) } });
   }
 
   /**
@@ -773,6 +793,7 @@ export function DiceTrayProvider({ children }) {
                     onCall={call}
                     onDone={landed}
                     onDc={setDc}
+                    onOverride={override}
                     offers={offers}
                     onSpend={spend}
                     onClose={() => finish(panel.own.result)}
@@ -827,6 +848,10 @@ function normalize(spec) {
     advantage: spec.advantage ?? 0,
     disadvantage: spec.disadvantage ?? 0,
     dice: spec.dice ?? [],
+    /* A check's own dice when they are not 2d6: SKILLED's 2d8. See checkBase. */
+    base: spec.base ?? null,
+    /* What the player changed by hand, in words. Empty until they do. */
+    override: [],
     maximize: Boolean(spec.maximize),
     explode: spec.explode !== false,
     parts: spec.parts ?? [],

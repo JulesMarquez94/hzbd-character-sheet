@@ -570,6 +570,7 @@ function Aside({ row, who }) {
 function Throw({ roll, named = true }) {
   const { dice = [], flat = 0, total = 0, verdict = null, dc = null, called = false } =
     roll.data ?? {};
+  const override = Array.isArray(roll.data?.override) ? roll.data.override : [];
 
   return (
     <div className={`log-throw${verdict ? ` is-${verdict}` : ''}`}>
@@ -594,6 +595,14 @@ function Throw({ roll, named = true }) {
         >
           {verdictLabel(verdict)}
           {called && <span className="log-throw-called">called</span>}
+        </span>
+      )}
+
+      {/* Changed by hand before it was thrown. Said on the row itself, so nobody
+          reads an overridden roll as the one the card asked for. */}
+      {override.length > 0 && (
+        <span className="log-throw-override" title={override.join(' · ')}>
+          Overridden · {override.join(' · ')}
         </span>
       )}
     </div>

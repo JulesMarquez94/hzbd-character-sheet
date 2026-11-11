@@ -157,8 +157,9 @@ export function parseDie(term) {
 export function previewOf(spec = {}) {
   if (spec.shape === 'check') {
     const swing = netSwing(spec.advantage, spec.disadvantage);
+    const base = checkBase(spec.base);
     return [
-      { count: CHECK_DICE.count, faces: CHECK_DICE.faces, role: 'base' },
+      { count: base.count, faces: base.faces, role: 'base' },
       ...(swing.advantage > 0
         ? [{ count: swing.advantage, faces: SWING_FACES, role: 'advantage' }]
         : []),
@@ -190,6 +191,8 @@ export function previewOf(spec = {}) {
  *                 them.
  *   parts         the caller's own explanation of `flat`, carried untouched so
  *                 the log can print where the number came from.
+ *   base          the check's own dice, when they are not 2d6: SKILLED's 2d8,
+ *                 or whatever an override swapped them for. See checkBase.
  */
 export function rollCheck({
   flat = 0,
@@ -198,13 +201,15 @@ export function rollCheck({
   dc = null,
   kind = 'attack',
   parts = [],
+  base = null,
   random = Math.random,
 } = {}) {
   const swing = netSwing(advantage, disadvantage);
+  const own = checkBase(base);
   const dice = [];
 
-  for (let i = 0; i < CHECK_DICE.count; i += 1) {
-    dice.push(die(dice.length, CHECK_DICE.faces, rollDie(CHECK_DICE.faces, random), 'base'));
+  for (let i = 0; i < own.count; i += 1) {
+    dice.push(die(dice.length, own.faces, rollDie(own.faces, random), 'base'));
   }
   for (let i = 0; i < swing.advantage; i += 1) {
     dice.push(die(dice.length, SWING_FACES, rollDie(SWING_FACES, random), 'advantage'));
@@ -214,6 +219,98 @@ export function rollCheck({
   }
 
   return settle({ shape: 'check', kind, dice, flat: whole(flat), dc: asDc(dc), parts });
+}
+
+/**
+ * The dice a check throws before advantage: 2d6, unless something says
+ * otherwise. Takes `{ count, faces }` or "2d8", and anything it cannot read is
+ * the ordinary 2d6, so a bad value can never put no dice on the table.
+ */
+export function checkBase(base) {
+  const read = typeof base === 'string' ? parseDie(base) : base;
+  const count = Math.floor(Number(read?.count));
+  const faces = Math.floor(Number(read?.faces));
+  if (count >= 1 && count <= OVERRIDE_MAX_DICE && faces >= 2 && faces <= 100) return { count, faces };
+  return { ...CHECK_DICE };
+}
+
+/* ------------------------------------------------------------- the override
+ *
+ * Jules, 2026-11-11: "whenever you do a roll add an option to manual override
+ * modifier in case need, which means add or remove advantage, or bonus, or
+ * change the type of dice rolled. Display in log if roll has been overridden."
+ *
+ * The table is the final word on a roll, and the sheet cannot know every ruling
+ * a Game Master makes: a circumstance that lends advantage, a penalty for
+ * fighting in the dark, a house rule that rolls bigger dice. So before a roll is
+ * thrown the player can change what it throws, and the roll says so wherever it
+ * is read. An override is applied to the spec the caller asked for, never on top
+ * of an earlier override, so changing your mind twice is the second change and
+ * not both of them.
+ */
+
+/** How many base dice an override may ask for. Enough for any roll the game makes. */
+export const OVERRIDE_MAX_DICE = 12;
+
+/** The dice an override can swap a roll's own for. The game's ladder, and a d20. */
+export const OVERRIDE_FACES = [4, 6, 8, 10, 12, 20];
+
+/**
+ * A spec with the player's override applied, and what it changed.
+ *
+ *   change   { advantage, disadvantage, bonus, base, dice }. Advantage and
+ *            disadvantage are the counts the roll should carry, before they
+ *            cancel; bonus is added to the flat number; base is the check's own
+ *            dice ("2d8"); dice is a value roll's dice (['2d8', '1d4']). Any
+ *            field left out is left as the caller asked for it.
+ *
+ * `override` on what comes back is the list of what changed, in words, which is
+ * what the surface and the log print. Empty when the change changed nothing,
+ * and then the spec is the original, so a player who opens the panel and closes
+ * it has not overridden anything.
+ */
+export function overrideSpec(original, change = {}) {
+  const spec = { ...original };
+  const said = [];
+  const count = (value) => Math.max(0, Math.min(OVERRIDE_MAX_DICE, Math.floor(Number(value) || 0)));
+
+  if (spec.shape === 'check') {
+    const was = { advantage: count(original.advantage), disadvantage: count(original.disadvantage) };
+    for (const key of ['advantage', 'disadvantage']) {
+      if (change[key] === undefined) continue;
+      const next = count(change[key]);
+      if (next === was[key]) continue;
+      spec[key] = next;
+      const word = key === 'advantage' ? 'Advantage' : 'Disadvantage';
+      said.push(next > was[key] ? `${word} +${next - was[key]}` : `${word} -${was[key] - next}`);
+    }
+
+    if (change.base !== undefined) {
+      const from = checkBase(original.base);
+      const to = checkBase(change.base);
+      if (to.count !== from.count || to.faces !== from.faces) {
+        spec.base = `${to.count}d${to.faces}`;
+        said.push(`${from.count}d${from.faces} to ${to.count}d${to.faces}`);
+      }
+    }
+  } else if (change.dice !== undefined) {
+    const to = [].concat(change.dice).map((term) => parseDie(term)).filter(Boolean);
+    const from = [].concat(original.dice ?? []).map((term) => parseDie(term)).filter(Boolean);
+    const words = (terms) => terms.map((term) => `${term.count}d${term.faces}`).join(' + ');
+    if (to.length > 0 && words(to) !== words(from)) {
+      spec.dice = to.map((term) => `${term.count}d${term.faces}`);
+      said.push(`${words(from) || 'no dice'} to ${words(to)}`);
+    }
+  }
+
+  const bonus = Math.round(Number(change.bonus) || 0);
+  if (bonus !== 0) {
+    spec.flat = (Number(original.flat) || 0) + bonus;
+    said.push(`${bonus > 0 ? '+' : ''}${bonus} bonus`);
+  }
+
+  if (said.length === 0) return { ...original, override: [] };
+  return { ...spec, override: said };
 }
 
 /* ---------------------------------------------------------------- the value */

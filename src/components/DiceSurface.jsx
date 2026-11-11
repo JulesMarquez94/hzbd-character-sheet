@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { VERDICTS, rollNotation, verdictLabel } from '../lib/dice.js';
+import {
+  OVERRIDE_FACES,
+  OVERRIDE_MAX_DICE,
+  VERDICTS,
+  checkBase,
+  parseDie,
+  rollNotation,
+  verdictLabel,
+} from '../lib/dice.js';
 import Die from './Die.jsx';
 import useCodexArt from './useCodexArt.js';
 
@@ -87,12 +95,17 @@ export default function DiceSurface({
   onDone,
   onClose,
   onDc,
+  onOverride = null,
   onSpend = null,
   offers = [],
   Stage = null,
   hotkeys = true,
 }) {
   const { spec, result, phase } = job;
+  /* What the player changed by hand, from the spec before the throw and from the
+     result after it, which is also what a watcher's replay carries. */
+  const overridden = result?.override ?? spec.override ?? [];
+  const [overriding, setOverriding] = useState(false);
 
   /* The header's face, gated. Every other art surface on the site asks
      useCodexArt at the moment of drawing, and this one did not: the tray is
@@ -363,6 +376,20 @@ export default function DiceSurface({
           )}
         </div>
 
+        {/* ---------- THE OVERRIDE ----------
+            Before the throw, what it throws is the player's to change: a ruling
+            the sheet could not know about, as advantage, a bonus or other dice.
+            See overrideSpec in dice.js. */}
+        {!watching && overriding && phase === 'ready' && onOverride && (
+          <OverridePanel job={job} onOverride={onOverride} />
+        )}
+
+        {overridden.length > 0 && (
+          <p className="dice-overridden">
+            <b>Overridden</b> · {overridden.join(' · ')}
+          </p>
+        )}
+
         {landed && (
           <p className="dice-total">
             {result.flat !== 0 && <span className="dice-flat">{signed(result.flat)}</span>}
@@ -429,6 +456,16 @@ export default function DiceSurface({
         )}
 
         <div className="dice-tools">
+          {!watching && phase === 'ready' && onOverride && (
+            <button
+              type="button"
+              className={`btn btn-minimal btn-sm${overriding ? ' is-on' : ''}`}
+              onClick={() => setOverriding((was) => !was)}
+              aria-expanded={overriding}
+            >
+              {overriding ? 'Hide override' : 'Override'}
+            </button>
+          )}
           {!watching && phase === 'ready' && (
             <button type="button" className="btn btn-copper" onClick={onThrow}>
               Roll
@@ -461,6 +498,142 @@ export default function DiceSurface({
         </p>
       </div>
     </div>
+  );
+}
+
+/**
+ * The override, as controls: advantage, disadvantage and a bonus, and the dice
+ * themselves. Every control applies at once, so the dice waiting on the surface
+ * are always the dice the Roll button will throw. Read off the spec the caller
+ * asked for (`job.original`), which is what the tray applies each change to.
+ */
+function OverridePanel({ job, onOverride }) {
+  const asked = job.original ?? job.spec;
+  const check = asked.shape === 'check';
+  const askedBase = checkBase(asked.base);
+  const askedDice = [].concat(asked.dice ?? []).join(' + ');
+
+  const [form, setForm] = useState(() => ({
+    advantage: Number(job.spec.advantage) || 0,
+    disadvantage: Number(job.spec.disadvantage) || 0,
+    bonus: (Number(job.spec.flat) || 0) - (Number(asked.flat) || 0),
+    count: checkBase(job.spec.base).count,
+    faces: checkBase(job.spec.base).faces,
+    dice: [].concat(job.spec.dice ?? []).join(' + '),
+  }));
+
+  function apply(next) {
+    setForm(next);
+    const change = { bonus: next.bonus };
+    if (check) {
+      change.advantage = next.advantage;
+      change.disadvantage = next.disadvantage;
+      change.base = `${next.count}d${next.faces}`;
+    } else {
+      const terms = next.dice.split('+').map((term) => term.trim()).filter(Boolean);
+      /* A half-typed "2d" is not dice yet, so the roll keeps what it had until
+         the field reads as dice again. */
+      if (terms.length > 0 && terms.every((term) => parseDie(term))) change.dice = terms;
+    }
+    onOverride(change);
+  }
+
+  const step = (key, by, min = 0, max = OVERRIDE_MAX_DICE) =>
+    apply({ ...form, [key]: Math.max(min, Math.min(max, form[key] + by)) });
+
+  return (
+    <div className="dice-override">
+      {check && (
+        <>
+          <Stepper label="Advantage" value={form.advantage} onStep={(by) => step('advantage', by)} />
+          <Stepper label="Disadvantage" value={form.disadvantage} onStep={(by) => step('disadvantage', by)} />
+        </>
+      )}
+      <Stepper
+        label="Bonus"
+        value={form.bonus}
+        signed
+        onStep={(by) => step('bonus', by, -99, 99)}
+      />
+
+      {check ? (
+        <label className="dice-override-row">
+          <span className="dice-override-label">Dice</span>
+          <span className="dice-override-dice">
+            <select
+              className="dice-input"
+              value={form.count}
+              onChange={(event) => apply({ ...form, count: Number(event.target.value) })}
+              aria-label="How many dice"
+            >
+              {Array.from({ length: OVERRIDE_MAX_DICE }, (_, i) => i + 1).map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+            <select
+              className="dice-input"
+              value={form.faces}
+              onChange={(event) => apply({ ...form, faces: Number(event.target.value) })}
+              aria-label="Which die"
+            >
+              {OVERRIDE_FACES.map((faces) => (
+                <option key={faces} value={faces}>
+                  d{faces}
+                </option>
+              ))}
+            </select>
+          </span>
+        </label>
+      ) : (
+        <label className="dice-override-row">
+          <span className="dice-override-label">Dice</span>
+          <input
+            className="dice-input"
+            value={form.dice}
+            onChange={(event) => apply({ ...form, dice: event.target.value })}
+            placeholder={askedDice || '2d6'}
+            aria-label="Dice to roll"
+          />
+        </label>
+      )}
+
+      <button
+        type="button"
+        className="btn btn-minimal btn-sm dice-override-reset"
+        onClick={() =>
+          apply({
+            advantage: Number(asked.advantage) || 0,
+            disadvantage: Number(asked.disadvantage) || 0,
+            bonus: 0,
+            count: askedBase.count,
+            faces: askedBase.faces,
+            dice: askedDice,
+          })
+        }
+      >
+        Put it back
+      </button>
+    </div>
+  );
+}
+
+/** A number with a minus and a plus either side of it. */
+function Stepper({ label, value, onStep, signed: withSign = false }) {
+  return (
+    <span className="dice-override-row">
+      <span className="dice-override-label">{label}</span>
+      <span className="dice-override-step">
+        <button type="button" className="icon-btn" onClick={() => onStep(-1)} aria-label={`Less ${label}`}>
+          −
+        </button>
+        <span className="dice-override-value">{withSign ? signed(value) : value}</span>
+        <button type="button" className="icon-btn" onClick={() => onStep(1)} aria-label={`More ${label}`}>
+          +
+        </button>
+      </span>
+    </span>
   );
 }
 

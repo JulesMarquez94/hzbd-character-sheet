@@ -28,10 +28,12 @@ import { ATTRIBUTES } from '../../lib/attributes.js';
  * beside that, and ticking one adds its price to the buttons below and its die
  * to the roll.
  *
+ * SKILLED is offered too, though it lends no d4: ticking it pays 2 Willpower
+ * and throws the check on 2d8 instead of 2d6 (Jules, 2026-11-11).
+ *
  * A card that speaks to a check and is not wired is *named* rather than
- * offered: SKILLED swaps the check's own dice, MASTERMIND maximises them and
- * DISTRACT buys a retry once the roll has already failed. None of the three is
- * a die added to this roll. A dead toggle would be worse than a line saying the
+ * offered: MASTERMIND maximises the dice and DISTRACT buys a retry once the
+ * roll has already failed. Neither is a die added to this roll. A dead toggle would be worse than a line saying the
  * card is yours to apply. See checks.js, which is where a card is read, and
  * `characterCheckCards` in levelPicks.js, which is where they are gathered.
  *
@@ -39,8 +41,10 @@ import { ATTRIBUTES } from '../../lib/attributes.js';
  * to, once, on the button that was actually pressed.
  */
 export default function CheckPick({ who, stat, onStat, cards = [], brought = [], onBring }) {
-  const offered = cards.filter((card) => card.advantage > 0);
-  const named = cards.filter((card) => card.advantage === 0);
+  /* A card is offered when it lends something the dice can throw: a d4 of
+     advantage, or SKILLED's 2d8 in place of the 2d6. */
+  const offered = cards.filter((card) => card.advantage > 0 || card.dice);
+  const named = cards.filter((card) => card.advantage === 0 && !card.dice);
 
   return (
     <div className="use-check">
@@ -93,7 +97,9 @@ export default function CheckPick({ who, stat, onStat, cards = [], brought = [],
                 >
                   <span className="use-check-skill-name">{card.name}</span>
                   <span className="use-check-skill-gives">
-                    {card.wp > 0 ? `${card.wp} Willpower · advantage` : 'advantage'}
+                    {[card.wp > 0 ? `${card.wp} Willpower` : null, card.dice ? `roll ${card.dice}` : null, card.advantage > 0 ? 'advantage' : null]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </span>
                   {/* Where it came from, in front of what it covers. Two cards
                       can cover the same ground at two different prices, and the

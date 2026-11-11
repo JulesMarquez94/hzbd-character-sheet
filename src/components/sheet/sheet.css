@@ -13716,6 +13716,13 @@ button.tgt-chip:disabled {
   content: '· ';
 }
 
+/* A roll the player changed by hand before throwing. See Throw in LogBlock.jsx. */
+.log-throw-override {
+  flex-basis: 100%;
+  font-size: 0.72rem;
+  color: var(--level-amber);
+}
+
 /* ---------- A LINE ABOUT THE ACTION ----------
    The verdicts, what landed, the row it laid and everything the reaction stack
    said. All of these were entries of their own until one action became one

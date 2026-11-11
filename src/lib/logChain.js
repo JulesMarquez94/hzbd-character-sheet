@@ -72,12 +72,17 @@ export function rollEvent(
   { chain = null, card = null, name = '', damage = [] } = {}
 ) {
   const step = result?.kind ?? 'attack';
+  const override = Array.isArray(result?.override) ? result.override : [];
 
   return {
     kind: 'roll',
     actor: character?.name ?? '',
     title: name || STEP_WORDS[step] || 'Roll',
-    detail: rollWorking(result),
+    /* An override is said in the working as well as stamped on the data, so a
+       reader of the plain text knows the dice were changed by hand. */
+    detail: [rollWorking(result), override.length > 0 ? `overridden: ${override.join(', ')}` : null]
+      .filter(Boolean)
+      .join(' · '),
     data: {
       chain,
       step,
@@ -98,6 +103,10 @@ export function rollEvent(
          Worth keeping: a verdict nobody could compute is a different kind of
          fact from one the DC decided. */
       called: Boolean(result?.calledByHand),
+      /* What the player changed by hand before the throw, in words: "Advantage
+         +1", "2d6 to 2d8", "+2 bonus". Empty for a roll thrown as asked. See
+         overrideSpec in dice.js. */
+      override,
     },
   };
 }
@@ -255,6 +264,7 @@ export function resultFromRow(row) {
     total: Number(data.total) || 0,
     verdict: data.verdict ?? null,
     calledByHand: Boolean(data.called),
+    override: Array.isArray(data.override) ? data.override : [],
     parts: [],
   };
 }

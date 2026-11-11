@@ -807,6 +807,68 @@
   background: rgba(234, 242, 248, 0.08);
 }
 
+/* ---------- THE OVERRIDE ----------
+   What a roll throws, changed by hand before it is thrown, and the line that
+   says it was. See OverridePanel in DiceSurface.jsx. */
+.dice-override {
+  margin: 14px auto 0;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  background: var(--inset-bg);
+  text-align: left;
+}
+
+.dice-override-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dice-override-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.dice-override-step,
+.dice-override-dice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dice-override-dice .dice-input {
+  width: auto;
+  padding: 4px 6px;
+}
+
+.dice-override-row > .dice-input {
+  max-width: 150px;
+  padding: 4px 8px;
+}
+
+.dice-override-value {
+  min-width: 2.2em;
+  text-align: center;
+  font-weight: 700;
+  color: var(--text-silver);
+}
+
+.dice-override-reset {
+  align-self: flex-end;
+}
+
+.dice-overridden {
+  margin: 10px 0 0;
+  font-size: 0.74rem;
+  color: var(--level-amber);
+}
+
 .dice-tools {
   margin-top: 20px;
   display: flex;

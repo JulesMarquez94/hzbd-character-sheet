@@ -482,11 +482,14 @@ export default function UsePrompt({
   /* What is actually riding: ticked, and wired. Read on render rather than
      trimmed by an effect, exactly as the target list is. */
   const riding = useMemo(
-    () => checkable.filter((card) => card.advantage > 0 && brought.includes(card.id)),
+    () => checkable.filter((card) => (card.advantage > 0 || card.dice) && brought.includes(card.id)),
     [checkable, brought]
   );
   const bringWp = riding.reduce((sum, card) => sum + card.wp, 0);
   const bringSwing = riding.reduce((sum, card) => sum + card.advantage, 0);
+  /* SKILLED's 2d8, when it is ticked: the check's own dice rather than a die on
+     top of them. See checkBase in dice.js. */
+  const bringDice = riding.find((card) => card.dice)?.dice ?? null;
 
   // What the card rolls with, for a tithe written off an attribute.
   const stat = picks ? attribute : request.modifiers?.stat ?? request.card?.stat ?? 'instinct';
@@ -544,6 +547,7 @@ export default function UsePrompt({
           ...request.modifiers,
           stat: attribute,
           advantage: (Number(request.modifiers?.advantage) || 0) + bringSwing,
+          ...(bringDice ? { checkDice: bringDice } : {}),
           /* And its receipt. "Everything that is modified need to be seen but
              only what modifies it": a card brought to a check lends a die exactly
              as a Martial Move does, so it is named on the arrow and itemised in
@@ -585,6 +589,7 @@ export default function UsePrompt({
     request.modifiers,
     attribute,
     bringSwing,
+    bringDice,
     riding,
     moveCards,
     spellCards,

@@ -585,6 +585,10 @@ const SKILLED = {
   tags: ['Skill', 'Passive', 'Insight'],
   summary: 'Roll any skill check on 2d8 instead of 2d6 for 2 Willpower.',
   body: 'Whenever you make a skill check, you can spend 2 Willpower to use 2d8 instead of 2d6.',
+  /* Offered in the Skill Check prompt like the domain skills, except that what
+     it lends is the check's own dice rather than a d4. See checkRow in checks.js
+     and checkBase in dice.js. */
+  grants: { checkWp: 2, checkDice: '2d8' },
 };
 
 const QUICK_DRAW = {

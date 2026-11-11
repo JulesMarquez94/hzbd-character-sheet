@@ -27,10 +27,11 @@
  *
  * A card that speaks and carries no rider comes back with both numbers at zero,
  * and the prompt prints it as what it is: a card that is yours to apply and that
- * the sheet cannot spend for you. Three do today. SKILLED swaps the check's own
- * 2d6 for 2d8, MASTERMIND maximises them once a Long Rest, and DISTRACT buys a
- * retry after the roll has already failed. None of the three is a die added to
- * this roll, and a dead toggle would be worse than a line naming the card.
+ * the sheet cannot spend for you. Two do today: MASTERMIND maximises the dice
+ * once a Long Rest, and DISTRACT buys a retry after the roll has already failed.
+ * SKILLED was the third until 2026-11-11, when Jules asked for it to be paid
+ * for in the prompt: it now carries `grants.checkDice`, the dice the check is
+ * thrown on instead of 2d6, and is offered like any other card that lends.
  *
  * ------------------------------------------------------------ matching phrases
  * The prose is matched as **phrases and never as the words "skill check"**,
@@ -96,6 +97,9 @@ export function checkRow(card, from = '') {
     from,
     wp: Math.max(0, Math.floor(Number(card.grants?.checkWp) || 0)),
     advantage: Math.max(0, Math.floor(Number(card.grants?.checkAdvantage) || 0)),
+    /* The check's own dice swapped for these, rather than a die added: SKILLED's
+       2d8. Null for every card that lends advantage instead. */
+    dice: typeof card.grants?.checkDice === 'string' ? card.grants.checkDice : null,
   };
 }
 
