@@ -20,6 +20,7 @@ import HandoverCall from '../components/campaign/HandoverCall.jsx';
 import RestCall from '../components/campaign/RestCall.jsx';
 import ShopCall from '../components/campaign/ShopCall.jsx';
 import FiefSheetTabs from '../components/campaign/FiefSheetTabs.jsx';
+import { CardStackProvider } from '../components/CardStack.jsx';
 import LogCall from '../components/campaign/LogCall.jsx';
 import LogProvider from '../components/campaign/LogProvider.jsx';
 import ReactionCall from '../components/campaign/ReactionCall.jsx';
@@ -467,6 +468,13 @@ export default function CharacterSheet({ creating = false }) {
         table log, because the encounter row itself is the Game Master's alone.
         See FightProvider.jsx. */}
     <FightProvider characterId={character.id}>
+    {/* A card can be opened from anywhere on the page, not only from inside a
+        tab. The windows raised by the table rather than by a tab (a rest the
+        Game Master called, a turn, a reaction) stand outside every tab's own
+        stack, and a spell tapped in one of them used to open nothing: Jules,
+        2026-11-12, "when changing spell you cannot preview the spell". Each tab
+        still keeps its own, which wins inside it. See CardStack.jsx. */}
+    <CardStackProvider character={shown}>
     {/* And who the dice tray is rolling for, so a Skill Check thrown from the
         corner of the screen adds the right attribute. Only when the sheet is
         yours: a reader on somebody else's public sheet must not be handed their
@@ -772,6 +780,7 @@ export default function CharacterSheet({ creating = false }) {
         )}
       </main>
     </div>
+    </CardStackProvider>
     </FightProvider>
     </LogProvider>
     </UnitContext.Provider>
